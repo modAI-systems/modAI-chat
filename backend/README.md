@@ -5,24 +5,23 @@ Core technologies:
 * FastAPI
 * UV for dependency management
 
+Architecture Documents:
+* [Core Arhitecture](architecture/core.md)
+* [AI Chat Handling](architecture/chat.md)
 
 ## Setup
 
 To set up the development environment:
 
 ```bash
-make dev
+uv sync --dev
 ```
 
 To run the application:
 
 ```bash
-# Using Makefile (recommended)
-make serve  # Run with uvicorn development server
+uv run uvicorn modai.main:app --reload
 ```
-
-## Architecture
-
 
 ## Tests
 
@@ -33,13 +32,13 @@ If one or more of those keys are not provided, the corresponding tests will be s
 
 Run tests with:
 ```bash
-# Using Makefile (recommended)
-make test
+uv run pytest
 ```
 
-## Available Commands
+## 👥 Shared Responsibility
 
-See all available commands:
-```bash
-make help
-```
+| Component | Responsibility |
+|-----------|-------------------|
+| Module Concept  | @guenhter |
+| Config Handling | @guenhter and maybe you? |
+| Chat Module     | @guenhter and maybe you? |

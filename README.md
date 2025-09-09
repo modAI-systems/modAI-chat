@@ -37,7 +37,7 @@ Why more than one frontend: because there are different use cases. e.g. one full
 ```bash
 cd backend
 uv sync
-PYTHONPATH=src uv run uvicorn modai.main:app --reload
+uv run uvicorn modai.main:app --reload
 ```
 
 ### Frontend Setup
@@ -52,6 +52,8 @@ Browse to http://localhost:5173/
 ## 🤝 Contribution
 
 Contributions are welcome in form of pull requests, issues or discussions. If you plan to implement something new or bigger, it is advisable to start a discussion first.
+
+For details, see our [contribution guidelines](CONTRIBUTION.md)
 
 ## 👥 Shared Responsibility
 
