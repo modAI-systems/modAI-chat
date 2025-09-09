@@ -6,7 +6,7 @@ Provides JWT token creation, validation, and session management.
 from fastapi import Request, Response
 import jwt
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any
 from modai.module import ModuleDependencies
 from modai.modules.session.module import SessionModule, Session
 
@@ -32,8 +32,7 @@ class JwtSessionModule(SessionModule):
             request: FastAPI request object
             response: FastAPI response object
             user_id: Unique identifier for the user
-            username: Username of the user
-            **kwargs: Additional data to include in the session
+            **kwargs: Additional data to include in the session (e.g., email)
 
         Does not return anything - operates on response object by setting cookie.
         """

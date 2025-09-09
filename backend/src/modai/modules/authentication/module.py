@@ -8,20 +8,20 @@ Authentication Module: Provides authentication endpoints and dependency injectio
 from abc import ABC, abstractmethod
 from fastapi import APIRouter, Request, Response, Body
 from fastapi.security import HTTPBearer
-from typing import Any, Optional
+from typing import Any
 from pydantic import BaseModel
 from modai.module import ModaiModule, ModuleDependencies
 
 
 class LoginRequest(BaseModel):
-    username: str
+    email: str
     password: str
 
 
 class User(BaseModel):
     id: str
-    username: str
-    email: Optional[str] = None
+    email: str
+    full_name: str | None = None
 
 
 class AuthenticationModule(ModaiModule, ABC):

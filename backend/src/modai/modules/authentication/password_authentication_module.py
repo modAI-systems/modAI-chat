@@ -14,7 +14,7 @@ from modai.modules.authentication.module import (
 from modai.modules.session.module import SessionModule
 
 
-class UsernamePasswordAuthenticationModule(AuthenticationModule):
+class PasswordAuthenticationModule(AuthenticationModule):
     """Default implementation of the Authentication module."""
 
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
@@ -29,17 +29,17 @@ class UsernamePasswordAuthenticationModule(AuthenticationModule):
 
         # Simple user database (in production, use real database)
         self.users_db = {
-            "admin": {
+            "admin@example.com": {
                 "id": "1",
-                "username": "admin",
-                "password": "admin",
                 "email": "admin@example.com",
+                "password": "admin",
+                "full_name": "Administrator",
             },
-            "user": {
+            "user@example.com": {
                 "id": "2",
-                "username": "user",
-                "password": "user",
                 "email": "user@example.com",
+                "password": "user",
+                "full_name": "User",
             },
         }
 
@@ -51,21 +51,21 @@ class UsernamePasswordAuthenticationModule(AuthenticationModule):
     ) -> dict[str, str]:
         """
         Authenticates user and returns session token.
-        Simple validation - checks username/password against configured users.
+        Simple validation - checks email/password against configured users.
         """
 
         # Check if user exists and password matches
-        user_data = self.users_db.get(login_data.username)
+        user_data = self.users_db.get(login_data.email)
         if not user_data or user_data["password"] != login_data.password:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid username or password",
+                detail="Invalid email or password",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
         # Create session token using session module
         self.session_module.start_new_session(
-            request, response, user_data["id"], username=user_data["username"]
+            request, response, user_data["id"], email=user_data["email"]
         )
 
         return {"message": "Successfully logged in"}

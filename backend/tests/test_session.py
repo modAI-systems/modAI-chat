@@ -29,7 +29,7 @@ def test_create_session_token(mock_request_response):
     mock_request, mock_response = mock_request_response
 
     session_module.start_new_session(
-        mock_request, mock_response, "user123", username="testuser"
+        mock_request, mock_response, "user123", email="testuser@example.com"
     )
 
     # Verify set_cookie was called
@@ -42,7 +42,7 @@ def test_create_session_token(mock_request_response):
     # Verify token can be decoded
     payload = jwt.decode(token, "test-secret", algorithms=["HS256"])
     assert payload["user_id"] == "user123"
-    assert payload["username"] == "testuser"
+    assert payload["email"] == "testuser@example.com"
     assert "exp" in payload
     assert "iat" in payload
 
@@ -57,7 +57,7 @@ def test_create_session_token_with_kwargs(mock_request_response):
         mock_request,
         mock_response,
         "user123",
-        username="testuser",
+        email="testuser@example.com",
         role="admin",
         department="IT",
     )
@@ -68,7 +68,7 @@ def test_create_session_token_with_kwargs(mock_request_response):
 
     payload = jwt.decode(token, "test-secret", algorithms=["HS256"])
     assert payload["user_id"] == "user123"
-    assert payload["username"] == "testuser"
+    assert payload["email"] == "testuser@example.com"
     assert payload["role"] == "admin"
     assert payload["department"] == "IT"
 
@@ -83,7 +83,7 @@ def test_validate_session_with_kwargs(mock_request_response):
         mock_request,
         mock_response,
         "user123",
-        username="testuser",
+        email="testuser@example.com",
         role="admin",
         department="IT",
     )
@@ -100,7 +100,7 @@ def test_validate_session_with_kwargs(mock_request_response):
 
     assert isinstance(session, Session)
     assert session.user_id == "user123"
-    assert session.additional["username"] == "testuser"
+    assert session.additional["email"] == "testuser@example.com"
     assert session.additional["role"] == "admin"
     assert session.additional["department"] == "IT"
     # JWT standard fields should not be in additional
@@ -115,7 +115,7 @@ def test_validate_session_token_success(mock_request_response):
     mock_request, mock_response = mock_request_response
 
     session_module.start_new_session(
-        mock_request, mock_response, "user123", username="testuser"
+        mock_request, mock_response, "user123", email="testuser@example.com"
     )
 
     # Extract the token from the set_cookie call
@@ -130,7 +130,7 @@ def test_validate_session_token_success(mock_request_response):
 
     assert isinstance(session, Session)
     assert session.user_id == "user123"
-    assert session.additional["username"] == "testuser"
+    assert session.additional["email"] == "testuser@example.com"
 
 
 def test_validate_session_token_invalid():
@@ -196,7 +196,7 @@ def test_end_session_after_session_creation(mock_request_response):
 
     # Start a session
     session_module.start_new_session(
-        mock_request, mock_response, "user123", username="testuser"
+        mock_request, mock_response, "user123", email="testuser@example.com"
     )
 
     # Extract the token from the set_cookie call
@@ -211,7 +211,7 @@ def test_end_session_after_session_creation(mock_request_response):
     session = session_module.validate_session(mock_request_with_cookie)
     assert isinstance(session, Session)
     assert session.user_id == "user123"
-    assert session.additional["username"] == "testuser"
+    assert session.additional["email"] == "testuser@example.com"
 
     # Reset the mock to clear previous calls
     mock_response.reset_mock()

@@ -7,8 +7,8 @@ from fastapi import FastAPI, Request, Response
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from modai.module import ModuleDependencies
-from modai.modules.authentication.username_password_authentication_module import (
-    UsernamePasswordAuthenticationModule,
+from modai.modules.authentication.password_authentication_module import (
+    PasswordAuthenticationModule,
 )
 from modai.modules.session.module import SessionModule, Session
 
@@ -24,7 +24,7 @@ def client():
     session_module.validate_session = MagicMock()
 
     # Create authentication module
-    auth_module = UsernamePasswordAuthenticationModule(
+    auth_module = PasswordAuthenticationModule(
         dependencies=ModuleDependencies({"session": session_module}), config={}
     )
     app.include_router(auth_module.router)
@@ -37,7 +37,7 @@ def test_login_success(client):
     # Mock successful session creation
     session_module.start_new_session.return_value = None
 
-    payload = {"username": "admin", "password": "admin"}
+    payload = {"email": "admin@example.com", "password": "admin"}
     response = test_client.post("/api/v1/auth/login", json=payload)
     assert response.status_code == 200
 
@@ -48,15 +48,15 @@ def test_login_success(client):
     session_module.start_new_session.assert_called_once()
     call_args = session_module.start_new_session.call_args
     assert call_args[0][2] == "1"  # user_id
-    assert call_args[1]["username"] == "admin"  # username passed as kwarg
+    assert call_args[1]["email"] == "admin@example.com"  # email passed as kwarg
 
 
 def test_login_invalid_credentials(client):
     test_client, auth_module, session_module = client
-    payload = {"username": "admin", "password": "wrong-password"}
+    payload = {"email": "admin@example.com", "password": "wrong-password"}
     response = test_client.post("/api/v1/auth/login", json=payload)
     assert response.status_code == 401
-    assert response.json()["detail"] == "Invalid username or password"
+    assert response.json()["detail"] == "Invalid email or password"
 
     # Verify that start_new_session was NOT called due to invalid credentials
     session_module.start_new_session.assert_not_called()
@@ -64,10 +64,10 @@ def test_login_invalid_credentials(client):
 
 def test_login_nonexistent_user(client):
     test_client, auth_module, session_module = client
-    payload = {"username": "nonexistent", "password": "password"}
+    payload = {"email": "nonexistent@example.com", "password": "password"}
     response = test_client.post("/api/v1/auth/login", json=payload)
     assert response.status_code == 401
-    assert response.json()["detail"] == "Invalid username or password"
+    assert response.json()["detail"] == "Invalid email or password"
 
     # Verify that start_new_session was NOT called due to invalid user
     session_module.start_new_session.assert_not_called()
@@ -122,9 +122,7 @@ def test_logout_without_session_cookie(client):
 def test_constructor_raises_exception_without_session_module():
     """Test that the constructor raises ValueError when session module dependency is missing."""
     with pytest.raises(ValueError) as exc_info:
-        UsernamePasswordAuthenticationModule(
-            dependencies=ModuleDependencies(), config={}
-        )
+        PasswordAuthenticationModule(dependencies=ModuleDependencies(), config={})
 
     assert (
         str(exc_info.value)

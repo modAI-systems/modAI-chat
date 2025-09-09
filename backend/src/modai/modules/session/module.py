@@ -59,7 +59,7 @@ class SessionModule(ModaiModule, ABC):
             request: FastAPI request object
 
         Returns:
-            Dictionary containing session data (user_id, username, etc.)
+            Dictionary containing session data (user_id, email, etc.)
 
         Raises:
             Exception: If session is invalid or expired

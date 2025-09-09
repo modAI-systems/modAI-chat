@@ -179,7 +179,7 @@ modules:
       jwt_algorithm: "HS256"
       jwt_expiration_hours: 24
   authentication:
-    class: modai.modules.authentication.username_password_authentication_module.UsernamePasswordAuthenticationModule
+    class: modai.modules.authentication.password_authentication_module.PasswordAuthenticationModule
     module_dependencies:
       session: "jwt_session"
 ```
