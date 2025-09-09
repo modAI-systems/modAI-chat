@@ -1,0 +1,4 @@
+button
+collapsible
+sidebar
+resizable

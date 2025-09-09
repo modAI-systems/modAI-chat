@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  width="50" height="52"
+  viewBox="0 0 50 50"
+  xmlns="http://www.w3.org/2000/svg"
+  stroke="#000"
+  stroke-width="2"
+  stroke-linejoin="round"
+  stroke-linecap="round"
+>
+  <!-- Define fills -->
+  <defs>
+    <style><![CDATA[
+      .white { fill: #fff; }
+      .blue  { fill: #00A9E0; }
+    ]]></style>
+  </defs>
+
+  <!-- Top-left piece (white) -->
+  <path class="white" d="
+    M 5 0
+    h 20
+    v 6
+    a 5,5 1 1 1 0,8
+    v 6
+    h -8
+    a 5,5 1 1 0 -8,0
+    h -8
+    v -16
+    a 4,4 0 0 1 4,-4
+  "/>
+
+  <!-- Top-right piece (blue) -->
+    <path class="blue" d="
+    M 25,0
+    h 20
+    a 4,4 0 0 1 4,4
+    v 16
+    h -8
+    a 5,5 1 1 1 -8,0
+    h -8
+    v -6
+    a 5,5 1 1 0 0,-8
+    Z
+  "/>
+
+  <!-- Bottom-right piece (white) -->
+  <path class="white" d="
+    M 25,20
+    h 8
+    a 5,5 1 1 0 8,0
+    h 8
+    v 16
+    a 4,4 0 0 1 -4,4
+    h -20
+    v -6
+    a 5,5 1 1 1 0,-8
+    Z
+  "/>
+
+  <!-- Bottom-left piece + speech-tail (blue) -->
+  <path class="blue" d="
+    M 1,20
+    h 8
+    a 5,5 1 1 1 8,0
+    h 8
+    v 6
+    a 5,5 1 1 0 0,8
+    v 6
+    h -6
+    l -12,9
+    l 0,-9
+    h -2
+    a 4,4 0 0 1 -4,-4
+    Z
+  "/>
+</svg>
