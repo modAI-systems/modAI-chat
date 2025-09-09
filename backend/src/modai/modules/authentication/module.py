@@ -1,8 +1,17 @@
 """
-Authentication Module: Provides authentication endpoints and dependency injection.
-- Login endpoint with session token generation
-- Logout endpoint
-- get_user dependency for protecting other endpoints
+Authentication Module: Core security module providing user authentication.
+
+This web module handles user authentication flows.
+It integrates with session management modules to maintain user state across requests.
+
+Features:
+- Login endpoint with credential validation and session token generation
+- Logout endpoint for secure session termination
+- Integration with session modules for token management
+- Abstract interface allowing multiple authentication strategies (password, OIDC, etc.)
+
+The module follows the modular architecture pattern, allowing different authentication implementations
+to be plugged in based on configuration requirements.
 """
 
 from abc import ABC, abstractmethod
