@@ -7,6 +7,7 @@ import jwt
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from modai.module import ModuleDependencies
 from modai.modules.session.jwt_session_module import JwtSessionModule
+from modai.modules.session.module import Session
 
 
 @pytest.fixture
@@ -27,7 +28,9 @@ def test_create_session_token(mock_request_response):
     session_module = JwtSessionModule(dependencies=ModuleDependencies(), config=config)
     mock_request, mock_response = mock_request_response
 
-    session_module.start_new_session(mock_request, mock_response, "user123", "testuser")
+    session_module.start_new_session(
+        mock_request, mock_response, "user123", username="testuser"
+    )
 
     # Verify set_cookie was called
     mock_response.set_cookie.assert_called_once()
@@ -54,7 +57,7 @@ def test_create_session_token_with_kwargs(mock_request_response):
         mock_request,
         mock_response,
         "user123",
-        "testuser",
+        username="testuser",
         role="admin",
         department="IT",
     )
@@ -70,13 +73,20 @@ def test_create_session_token_with_kwargs(mock_request_response):
     assert payload["department"] == "IT"
 
 
-def test_validate_session_token_success(mock_request_response):
-    """Test successful token validation."""
+def test_validate_session_with_kwargs(mock_request_response):
+    """Test validating session with additional data returns correct Session object."""
     config = {"jwt_secret": "test-secret"}
     session_module = JwtSessionModule(dependencies=ModuleDependencies(), config=config)
     mock_request, mock_response = mock_request_response
 
-    session_module.start_new_session(mock_request, mock_response, "user123", "testuser")
+    session_module.start_new_session(
+        mock_request,
+        mock_response,
+        "user123",
+        username="testuser",
+        role="admin",
+        department="IT",
+    )
 
     # Extract the token from the set_cookie call
     call_args = mock_response.set_cookie.call_args
@@ -86,10 +96,41 @@ def test_validate_session_token_success(mock_request_response):
     mock_request_with_cookie = MagicMock()
     mock_request_with_cookie.cookies = {"session_token": token}
 
-    payload = session_module.validate_session(mock_request_with_cookie)
+    session = session_module.validate_session(mock_request_with_cookie)
 
-    assert payload["user_id"] == "user123"
-    assert payload["username"] == "testuser"
+    assert isinstance(session, Session)
+    assert session.user_id == "user123"
+    assert session.additional["username"] == "testuser"
+    assert session.additional["role"] == "admin"
+    assert session.additional["department"] == "IT"
+    # JWT standard fields should not be in additional
+    assert "exp" not in session.additional
+    assert "iat" not in session.additional
+
+
+def test_validate_session_token_success(mock_request_response):
+    """Test successful token validation."""
+    config = {"jwt_secret": "test-secret"}
+    session_module = JwtSessionModule(dependencies=ModuleDependencies(), config=config)
+    mock_request, mock_response = mock_request_response
+
+    session_module.start_new_session(
+        mock_request, mock_response, "user123", username="testuser"
+    )
+
+    # Extract the token from the set_cookie call
+    call_args = mock_response.set_cookie.call_args
+    token = call_args.kwargs["value"]
+
+    # Create a new mock request with the token in cookies
+    mock_request_with_cookie = MagicMock()
+    mock_request_with_cookie.cookies = {"session_token": token}
+
+    session = session_module.validate_session(mock_request_with_cookie)
+
+    assert isinstance(session, Session)
+    assert session.user_id == "user123"
+    assert session.additional["username"] == "testuser"
 
 
 def test_validate_session_token_invalid():
@@ -154,7 +195,9 @@ def test_end_session_after_session_creation(mock_request_response):
     mock_request, mock_response = mock_request_response
 
     # Start a session
-    session_module.start_new_session(mock_request, mock_response, "user123", "testuser")
+    session_module.start_new_session(
+        mock_request, mock_response, "user123", username="testuser"
+    )
 
     # Extract the token from the set_cookie call
     call_args = mock_response.set_cookie.call_args
@@ -165,9 +208,10 @@ def test_end_session_after_session_creation(mock_request_response):
     mock_request_with_cookie.cookies = {"session_token": token}
 
     # Validate the session
-    payload = session_module.validate_session(mock_request_with_cookie)
-    assert payload["user_id"] == "user123"
-    assert payload["username"] == "testuser"
+    session = session_module.validate_session(mock_request_with_cookie)
+    assert isinstance(session, Session)
+    assert session.user_id == "user123"
+    assert session.additional["username"] == "testuser"
 
     # Reset the mock to clear previous calls
     mock_response.reset_mock()

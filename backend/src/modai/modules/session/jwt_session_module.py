@@ -8,7 +8,7 @@ import jwt
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 from modai.module import ModuleDependencies
-from modai.modules.session.module import SessionModule
+from modai.modules.session.module import SessionModule, Session
 
 
 class JwtSessionModule(SessionModule):
@@ -23,12 +23,7 @@ class JwtSessionModule(SessionModule):
         self.cookie_secure = self.config.get("cookie_secure", True)
 
     def start_new_session(
-        self,
-        request: Request,
-        response: Response,
-        user_id: str,
-        username: str,
-        **kwargs
+        self, request: Request, response: Response, user_id: str, **kwargs
     ):
         """
         Creates a session token for the given user and applies it to the response.
@@ -47,7 +42,6 @@ class JwtSessionModule(SessionModule):
         )
         payload = {
             "user_id": user_id,
-            "username": username,
             "exp": expiration,
             "iat": datetime.now(timezone.utc),
             **kwargs,  # Include any additional session data
@@ -68,7 +62,7 @@ class JwtSessionModule(SessionModule):
     def validate_session(
         self,
         request: Request,
-    ) -> Dict[str, Any]:
+    ) -> Session:
         """
         Validates and decodes JWT token.
 
@@ -76,7 +70,7 @@ class JwtSessionModule(SessionModule):
             request: FastAPI request object
 
         Returns:
-            Dictionary containing decoded token payload
+            Session object containing user_id and additional data
 
         Raises:
             jwt.InvalidTokenError: If token is invalid or expired
@@ -94,7 +88,14 @@ class JwtSessionModule(SessionModule):
             self.jwt_secret,
             algorithms=[self.jwt_algorithm],
         )
-        return payload
+
+        # Extract user_id and all other data as additional
+        user_id = payload.pop("user_id")
+        # Remove JWT standard fields from additional data
+        payload.pop("exp", None)
+        payload.pop("iat", None)
+
+        return Session(user_id=user_id, additional=payload)
 
     def end_session(
         self,

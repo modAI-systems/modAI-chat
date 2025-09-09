@@ -12,7 +12,7 @@ from modai.modules.authentication.module import (
     LoginRequest,
     User,
 )
-from modai.modules.session.module import SessionModule
+from modai.modules.session.module import SessionModule, Session
 
 
 class UsernamePasswordAuthenticationModule(AuthenticationModule):
@@ -66,7 +66,7 @@ class UsernamePasswordAuthenticationModule(AuthenticationModule):
 
         # Create session token using session module
         self.session_module.start_new_session(
-            request, response, user_data["id"], user_data["username"]
+            request, response, user_data["id"], username=user_data["username"]
         )
 
         return {"message": "Successfully logged in"}
@@ -102,19 +102,18 @@ class UsernamePasswordAuthenticationModule(AuthenticationModule):
         """
         try:
             # Get user information from session module
-            user_info = self.session_module.validate_session(request)
+            session = self.session_module.validate_session(request)
 
-            if not user_info:
+            if not session:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid token",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
 
-            user_id = user_info.get("user_id")
-            username = user_info.get("username")
+            user_id = session.user_id
 
-            if not user_id or not username:
+            if not user_id:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid token payload",
@@ -124,7 +123,7 @@ class UsernamePasswordAuthenticationModule(AuthenticationModule):
             # Find user in database to get additional info
             user_data = None
             for user in self.users_db.values():
-                if user["id"] == user_id and user["username"] == username:
+                if user["id"] == user_id:
                     user_data = user
                     break
 

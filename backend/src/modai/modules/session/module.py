@@ -6,10 +6,17 @@ Session Module: Provides session management handling capabilities.
 """
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Any, Dict
 
 from fastapi import Request, Response
 from modai.module import ModaiModule, ModuleDependencies
+
+
+@dataclass
+class Session:
+    user_id: str
+    additional: dict[str, Any]
 
 
 class SessionModule(ModaiModule, ABC):
@@ -27,8 +34,7 @@ class SessionModule(ModaiModule, ABC):
         request: Request,
         response: Response,
         user_id: str,
-        username: str,
-        **kwargs
+        **kwargs,
     ):
         """
         Creates a session for the given user and applies it to the response.
@@ -37,7 +43,6 @@ class SessionModule(ModaiModule, ABC):
             request: FastAPI request object
             response: FastAPI response object
             user_id: Unique identifier for the user
-            username: Username of the user
             **kwargs: Additional data to include in the session
         """
         pass
@@ -46,7 +51,7 @@ class SessionModule(ModaiModule, ABC):
     def validate_session(
         self,
         request: Request,
-    ) -> Dict[str, Any]:
+    ) -> Session:
         """
         Validates and decodes a session.
 
@@ -66,7 +71,7 @@ class SessionModule(ModaiModule, ABC):
         self,
         request: Request,
         response: Response,
-    ) -> Dict[str, Any]:
+    ):
         """
         Ends the session by invalidating the session.
 

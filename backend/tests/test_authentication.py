@@ -10,7 +10,7 @@ from modai.module import ModuleDependencies
 from modai.modules.authentication.username_password_authentication_module import (
     UsernamePasswordAuthenticationModule,
 )
-from modai.modules.session.module import SessionModule
+from modai.modules.session.module import SessionModule, Session
 
 
 @pytest.fixture
@@ -48,7 +48,7 @@ def test_login_success(client):
     session_module.start_new_session.assert_called_once()
     call_args = session_module.start_new_session.call_args
     assert call_args[0][2] == "1"  # user_id
-    assert call_args[0][3] == "admin"  # username
+    assert call_args[1]["username"] == "admin"  # username passed as kwarg
 
 
 def test_login_invalid_credentials(client):
@@ -123,8 +123,9 @@ def test_get_current_user_success(client):
     """Test get_current_user with valid session."""
     test_client, auth_module, session_module = client
 
-    # Mock successful session validation
-    session_module.validate_session.return_value = {"user_id": "1", "username": "admin"}
+    # Mock successful session validation with Session object
+    session_obj = Session(user_id="1", additional={"username": "admin"})
+    session_module.validate_session.return_value = session_obj
 
     # Create a mock request and response
     from fastapi import Request, Response
