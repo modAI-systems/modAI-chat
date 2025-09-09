@@ -23,6 +23,14 @@ Our promise to you:
 1. not close your requests without any comment
 1. when turning something down we give you reasons why and allow a discussion
 
+## AI assistend coding
+
+We totoally appreaciate and support AI assisted coding. Therefore important concepts are documented
+in a humand and AI friendly way make it easy start implementing certain features.
+
+Keep in mind, that pure vibe coding without reviewing a single line of produced code is not
+what we understand under "AI assisted coding". Feel free to let the AI write all your code
+but at least ensure that it did a good job by reviewing it.
 
 ## Conventions
 
