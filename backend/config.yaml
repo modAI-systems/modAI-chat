@@ -1,0 +1,19 @@
+modules:
+  health:
+    class: modai.modules.health.simple_health_module.SimpleHealthModule
+  chat:
+    class: modai.modules.chat.opean_ai_chat_module.OpenAIChatModule
+    config:
+      openai_client:
+        api_key: ${OPENAI_API_KEY}
+  session:
+    class: modai.modules.session.jwt_session_module.JwtSessionModule
+    config:
+      jwt_secret: ${JWT_SECRET}
+      jwt_algorithm: "HS256"
+      jwt_expiration_hours: 24
+      cookie_secure: false
+  authentication:
+    class: modai.modules.authentication.username_password_authentication_module.UsernamePasswordAuthenticationModule
+    module_dependencies:
+      session: "session"

@@ -1,0 +1,20 @@
+[project]
+name = "modai-backend"
+version = "0.1.0"
+description = "ModAI Chat Backend"
+requires-python = ">=3.8"
+dependencies = [
+    "uvicorn",
+    "fastapi",
+    "pydantic",
+    "pyyaml",
+    "openai",
+    "pyjwt",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.uv]
+dev-dependencies = ["pytest"]

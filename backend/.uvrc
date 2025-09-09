@@ -1,0 +1,11 @@
+# UV configuration for modAI backend
+# This file configures UV for this project
+
+# Use local virtual environment
+VIRTUAL_ENV=.venv
+
+# Enable all security features
+UV_SECURE=true
+
+# Cache location (optional, UV will use default if not set)
+# UV_CACHE_DIR=.uv-cache
