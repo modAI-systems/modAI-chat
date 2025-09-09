@@ -1,0 +1,9 @@
+__pycache__/
+node_modules/
+venv/
+.venv/
+uv.lock
+.env
+.vscode/
+.github/
+.pytest_cache/
