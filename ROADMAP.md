@@ -22,3 +22,6 @@ This roadmap should show the direction of modAI goes.
 * i18n
 * Mobile Layout
 * OIDC User Authentication
+* Docs: User Manual
+* Docs: Technical Manual
+* Audit Log for Adminstrative and sensitive Operations
