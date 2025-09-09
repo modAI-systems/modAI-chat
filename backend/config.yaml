@@ -6,6 +6,8 @@ modules:
     config:
       openai_client:
         api_key: ${OPENAI_API_KEY}
+  user_store:
+    class: modai.modules.user_store.inmemory_user_store.InMemoryUserStore
   session:
     class: modai.modules.session.jwt_session_module.JwtSessionModule
     config:
@@ -17,3 +19,4 @@ modules:
     class: modai.modules.authentication.password_authentication_module.PasswordAuthenticationModule
     module_dependencies:
       session: "session"
+      user_store: "user_store"

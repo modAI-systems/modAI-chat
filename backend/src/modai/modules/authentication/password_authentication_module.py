@@ -1,9 +1,10 @@
 """
 Default implementation of the Authentication module.
-Provides session-based authentication with simple user validation.
+Provides session-based authentication with user store integration.
 """
 
 from typing import Any
+import hashlib
 from fastapi import Request, Body, HTTPException, Response, status
 
 from modai.module import ModuleDependencies
@@ -12,6 +13,7 @@ from modai.modules.authentication.module import (
     LoginRequest,
 )
 from modai.modules.session.module import SessionModule
+from modai.modules.user_store.module import UserStore
 
 
 class PasswordAuthenticationModule(AuthenticationModule):
@@ -25,23 +27,17 @@ class PasswordAuthenticationModule(AuthenticationModule):
                 "Missing module dependency: 'session' module is required for authentication"
             )
 
-        self.session_module: SessionModule = dependencies.modules.get("session")
+        if not dependencies.modules.get("user_store"):
+            raise ValueError(
+                "Missing module dependency: 'user_store' module is required for authentication"
+            )
 
-        # Simple user database (in production, use real database)
-        self.users_db = {
-            "admin@example.com": {
-                "id": "1",
-                "email": "admin@example.com",
-                "password": "admin",
-                "full_name": "Administrator",
-            },
-            "user@example.com": {
-                "id": "2",
-                "email": "user@example.com",
-                "password": "user",
-                "full_name": "User",
-            },
-        }
+        self.session_module: SessionModule = dependencies.modules.get("session")
+        self.user_store: UserStore = dependencies.modules.get("user_store")
+
+    def _hash_password(self, password: str) -> str:
+        """Simple password hashing using SHA-256. In production, use proper password hashing like bcrypt."""
+        return hashlib.sha256(password.encode()).hexdigest()
 
     async def login(
         self,
@@ -51,12 +47,30 @@ class PasswordAuthenticationModule(AuthenticationModule):
     ) -> dict[str, str]:
         """
         Authenticates user and returns session token.
-        Simple validation - checks email/password against configured users.
+        Validates email/password against user store.
         """
 
-        # Check if user exists and password matches
-        user_data = self.users_db.get(login_data.email)
-        if not user_data or user_data["password"] != login_data.password:
+        # Get user by email from user store
+        user = await self.user_store.get_user_by_email(login_data.email)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # Get user credentials
+        credentials = await self.user_store.get_user_credentials(user.id)
+        if not credentials:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # Verify password
+        password_hash = self._hash_password(login_data.password)
+        if credentials.password_hash != password_hash:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password",
@@ -65,7 +79,7 @@ class PasswordAuthenticationModule(AuthenticationModule):
 
         # Create session token using session module
         self.session_module.start_new_session(
-            request, response, user_data["id"], email=user_data["email"]
+            request, response, user.id, email=user.email
         )
 
         return {"message": "Successfully logged in"}
