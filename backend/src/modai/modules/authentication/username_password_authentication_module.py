@@ -10,9 +10,8 @@ from modai.module import ModuleDependencies
 from modai.modules.authentication.module import (
     AuthenticationModule,
     LoginRequest,
-    User,
 )
-from modai.modules.session.module import SessionModule, Session
+from modai.modules.session.module import SessionModule
 
 
 class UsernamePasswordAuthenticationModule(AuthenticationModule):
@@ -88,63 +87,5 @@ class UsernamePasswordAuthenticationModule(AuthenticationModule):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-    async def get_current_user(
-        self,
-        request: Request,
-        response: Response,
-    ) -> User:
-        """
-        Dependency function to extract user from session token.
-        Used with FastAPI Depends() to protect endpoints.
-        """
-        try:
-            # Get user information from session module
-            session = self.session_module.validate_session(request)
-
-            if not session:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid token",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-
-            user_id = session.user_id
-
-            if not user_id:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid token payload",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-
-            # Find user in database to get additional info
-            user_data = None
-            for user in self.users_db.values():
-                if user["id"] == user_id:
-                    user_data = user
-                    break
-
-            if not user_data:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="User not found",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-
-            return User(
-                id=user_data["id"],
-                username=user_data["username"],
-                email=user_data.get("email"),
-            )
-
-        except HTTPException:
-            raise
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication failed",
                 headers={"WWW-Authenticate": "Bearer"},
             )

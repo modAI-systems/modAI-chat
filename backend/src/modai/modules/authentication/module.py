@@ -74,22 +74,3 @@ class AuthenticationModule(ModaiModule, ABC):
             Success message
         """
         pass
-
-    @abstractmethod
-    async def get_current_user(
-        self,
-    ) -> User:
-        """
-        Dependency function to extract user from session token.
-        Used with FastAPI Depends() to protect endpoints.
-
-        Args:
-            credentials: Bearer token from Authorization header
-
-        Returns:
-            User object if token is valid
-
-        Raises:
-            HTTPException: If token is invalid or expired
-        """
-        pass

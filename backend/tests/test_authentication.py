@@ -119,56 +119,6 @@ def test_logout_without_session_cookie(client):
     session_module.end_session.assert_called_once()
 
 
-def test_get_current_user_success(client):
-    """Test get_current_user with valid session."""
-    test_client, auth_module, session_module = client
-
-    # Mock successful session validation with Session object
-    session_obj = Session(user_id="1", additional={"username": "admin"})
-    session_module.validate_session.return_value = session_obj
-
-    # Create a mock request and response
-    from fastapi import Request, Response
-    import asyncio
-
-    async def test_get_user():
-        request = Mock(spec=Request)
-        response = Mock(spec=Response)
-        user = await auth_module.get_current_user(request, response)
-        return user
-
-    user = asyncio.run(test_get_user())
-
-    assert user.id == "1"
-    assert user.username == "admin"
-    assert user.email == "admin@example.com"
-
-    # Verify that validate_session was called
-    session_module.validate_session.assert_called_once()
-
-
-def test_get_current_user_invalid_session(client):
-    """Test get_current_user with invalid session."""
-    test_client, auth_module, session_module = client
-
-    # Mock invalid session (returns None)
-    session_module.validate_session.return_value = None
-
-    from fastapi import Request, Response, HTTPException
-    import asyncio
-
-    async def test_get_user():
-        request = Mock(spec=Request)
-        response = Mock(spec=Response)
-        return await auth_module.get_current_user(request, response)
-
-    with pytest.raises(HTTPException) as exc_info:
-        asyncio.run(test_get_user())
-
-    assert exc_info.value.status_code == 401
-    assert exc_info.value.detail == "Invalid token"
-
-
 def test_constructor_raises_exception_without_session_module():
     """Test that the constructor raises ValueError when session module dependency is missing."""
     with pytest.raises(ValueError) as exc_info:
