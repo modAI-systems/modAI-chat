@@ -14,10 +14,15 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { login } from "@/services/authService"
 
+interface LoginFormProps extends React.ComponentPropsWithoutRef<"div"> {
+  enableForgetPassword?: boolean;
+}
+
 export function LoginForm({
   className,
+  enableForgetPassword = true,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: LoginFormProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -71,12 +76,14 @@ export function LoginForm({
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  <a
-                    href="#"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
+                  {enableForgetPassword && (
+                    <a
+                      href="#"
+                      className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                    >
+                      Forgot your password?
+                    </a>
+                  )}
                 </div>
                 <Input
                   id="password"
@@ -89,9 +96,6 @@ export function LoginForm({
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Logging in..." : "Login"}
-              </Button>
-              <Button variant="outline" className="w-full" disabled={isLoading}>
-                Login with Google
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
