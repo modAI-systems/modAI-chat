@@ -20,3 +20,8 @@ modules:
     module_dependencies:
       session: "session"
       user_store: "user_store"
+  user:
+    class: modai.modules.user.simple_user_module.SimpleUserModule
+    module_dependencies:
+      session: "session"
+      user_store: "user_store"
