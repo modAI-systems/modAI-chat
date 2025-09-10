@@ -1,13 +1,38 @@
-import type { GenericModule } from '../types/module'
+import type { GenericModule, FullPageModule, RoutingModule, SidebarModule, WebModule } from '../types/module'
 
 class ModuleManager {
-    private modules: GenericModule[] = []
+    private modules: WebModule[] = []
 
-    getModules(): GenericModule[] {
+    getAllModules(): WebModule[] {
         return [...this.modules]
     }
 
-    registerModule(module: GenericModule): void {
+    getSidebarModules(): SidebarModule[] {
+        return this.modules.filter((module): module is SidebarModule =>
+            'createSidebarItem' in module && 'createSidebarFooterItem' in module
+        )
+    }
+
+    getGenericModules(): GenericModule[] {
+        return this.modules.filter((module): module is GenericModule =>
+            'install' in module && typeof module.install === 'function'
+        )
+    }
+
+    getRoutingModules(): RoutingModule[] {
+        return this.modules.filter((module): module is RoutingModule =>
+            'createRoute' in module && typeof module.createRoute === 'function'
+        )
+    }
+
+    getFullPageModules(): FullPageModule[] {
+        return this.getRoutingModules().filter((module): module is FullPageModule =>
+            'moduleType' in module &&
+            module.moduleType === 'full-page'
+        )
+    }
+
+    registerModule(module: WebModule): void {
         // Check if module with same ID already exists to prevent duplicates during hot reload
         const existingIndex = this.modules.findIndex(m => m.id === module.id)
         if (existingIndex >= 0) {

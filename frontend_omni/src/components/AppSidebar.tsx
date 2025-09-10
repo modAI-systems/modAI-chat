@@ -9,7 +9,7 @@ import {
 import { moduleManager } from "@/services/moduleManager"
 
 export function AppSidebar() {
-    const modules = moduleManager.getModules()
+    const modules = moduleManager.getSidebarModules()
 
     return (
         <Sidebar collapsible="icon">

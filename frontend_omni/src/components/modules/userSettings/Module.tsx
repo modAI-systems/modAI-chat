@@ -1,22 +1,17 @@
-import type { GenericModule } from "@/types/module";
+import type { RoutingModule, SidebarModule, WebModule } from "@/types/module";
 import { SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { Settings } from "lucide-react";
 import { Link, Route } from "react-router-dom";
 import UserSettings from "@/components/modules/userSettings/UserSettings";
 
-class Module implements GenericModule {
+class Module implements RoutingModule, SidebarModule {
     id = 'usersettings';
     version = '1.0.0';
     description = 'User settings page and sidebar navigation';
     author = 'ModAI Team';
-    requiredModules = [];
 
     path = '/settings';
     title = "Settings";
-
-    install(): void {
-        // Not needed
-    }
 
     createRoute(): React.ReactElement {
         return (
@@ -46,6 +41,6 @@ class Module implements GenericModule {
     }
 }
 
-export function createModule(): GenericModule {
+export function createModule(): WebModule {
     return new Module();
 }

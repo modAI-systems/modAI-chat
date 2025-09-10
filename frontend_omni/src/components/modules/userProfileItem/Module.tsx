@@ -1,4 +1,4 @@
-import type { GenericModule } from "@/types/module";
+import type { SidebarModule, WebModule } from "@/types/module";
 import { SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { LogOut } from "lucide-react";
 import React, { Suspense, use } from "react";
@@ -16,25 +16,16 @@ const userPromise = getCurrentUser().catch((error) => {
     } as User;
 });
 
-class Module implements GenericModule {
+class Module implements SidebarModule {
     id = 'userprofileitem';
     version = '1.0.0';
     description = 'User profile display and logout functionality in sidebar footer';
     author = 'ModAI Team';
-    requiredModules = [];
 
     private handleLogout = () => {
         // TODO: Implement actual logout logic
         console.log("Logging out...")
         // You can add your logout logic here
-    }
-
-    install(): void {
-        // Not needed
-    }
-
-    createRoute(): React.ReactElement {
-        return <></>; // Not needed
     }
 
     createSidebarItem(): React.ReactElement {
@@ -65,6 +56,6 @@ class Module implements GenericModule {
     }
 }
 
-export function createModule(): GenericModule {
+export function createModule(): WebModule {
     return new Module();
 }

@@ -5,20 +5,28 @@ export interface ModuleMetadata {
     version: string
     description?: string
     author?: string
-    requiredModules: string[]
 }
 
-// Module type for a generic module without further specification
-// This can be used for modules that do not fit into the other categories
-// e.g. to install some logic into existing modules which are extensible
-export interface GenericModule extends ModuleMetadata {
+// Marker inteface for modules that run in the web client
+export interface WebModule extends ModuleMetadata { }
+
+export interface GenericModule extends WebModule {
     // Allows the module do some non predefined logic during installation
     // like extending some other module
     install(): void
+}
 
+export interface RoutingModule extends WebModule {
     // Called when the routes are created. If not needed, just return an empty fragment '<></>'
     createRoute(): React.ReactElement
+}
 
+export interface FullPageModule extends RoutingModule {
+    // Needed workaround to make the ModuleManager can identify this as FullPageModule
+    readonly moduleType: 'full-page'
+}
+
+export interface SidebarModule extends WebModule {
     // Called when the sidebar is created. If not needed, just return an empty fragment '<></>'
     createSidebarItem(): React.ReactElement
 

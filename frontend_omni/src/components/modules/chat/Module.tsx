@@ -1,22 +1,17 @@
-import type { GenericModule } from "@/types/module";
+import type { SidebarModule, RoutingModule, WebModule } from "@/types/module";
 import { Link, Route, useSearchParams } from "react-router-dom";
 import ChatComponent from "./ChatComponent";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Plus } from "lucide-react";
 
-class Module implements GenericModule {
+class Module implements RoutingModule, SidebarModule {
     id = 'chat';
     version = '1.0.0';
     description = 'AI Chat interface with configurable providers and models';
     author = 'ModAI Team';
-    requiredModules = [];
 
     path = '/chat';
     title = "New Chat";
-
-    install(): void {
-        // Not needed
-    }
 
     createRoute(): React.ReactElement {
         return <Route
@@ -52,6 +47,6 @@ function ChatComponentWrapper() {
     return <ChatComponent key={timeParam} />;
 }
 
-export function createModule(): GenericModule {
+export function createModule(): WebModule {
     return new Module()
 }
