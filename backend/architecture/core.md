@@ -5,7 +5,14 @@
 - **Design Principles**: KISS (Keep It Simple, Stupid), clear separation of concerns, fail-safe module loading
 - **Quality Attributes**: Reliability through graceful failure handling, modularity for independent development, testability through clear interfaces
 
-## 2. Architecture
+## 2. Technology Stack
+- **Programming Language**: Python 3.12+
+- **Dependency Management**: [UV](https://docs.astral.sh/uv/)
+- **Configuration**: YAML format with flexible parsing
+- **REST Framework**: [FastAPI](https://fastapi.tiangolo.com/)
+- **Development Tools**: [pytest](https://docs.pytest.org/en/stable/)
+
+## 3. Architecture
 - **System Boundary**: Core server handles configuration, module loading, and REST server management
 - **External Systems**: Modules (loaded as plugins), configuration file
 
@@ -29,13 +36,13 @@ flowchart TD
 5. **Server Ready**: All REST endpoints from web modules are registered and server is ready to accept requests
 
 
-## 3. Module Organization
+## 4. Module Organization
 - **Base Module**: Each module has `modai.module.ModaiModule` as base class
 - **Abstract Modules**: Located in `modai/modules/[module]/module.py`
 - **Module Structure**: Each abstract module defines the interface and contract
 - **Module Contract Documentation**: The abstract module contains the documentation how the module must behave
 - **Module Implementations**: The implementation can be stored in the same folder as the `module.py`
-- **Constructor Signature**: All module constructors must use the signature `def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):` so that the `ModuleLoader` can instantiate it
+- **Constructor Signature**: All module constructors must use the signature `def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):` to be createable by the `ModuleLoader`
 - **Configuration Access**: Modules receive their configuration through the constructor parameter
 - **Dependencies**: Modules can be dependent on other modules. Those dependencies are configured via the config file and passed through the constructor parameter
 
@@ -48,7 +55,7 @@ A module has one or more types. Each type has certain conditions and if a module
 
 That means if a module has e.g. a `router` attribute, it will be of the type `plain module` and `web module`.
 
-### Boostrap Modules
+### Bootstrap Modules
 
 Some modules are so called "bootstrap modules" because they are involved in the startup process before the actual module handling is available. For that reason, they are not configurable via the config as normal modules are.
 
@@ -56,21 +63,9 @@ The following modules are boostrap modules
 * startup config module
 
 
-## 4. Technology Stack
-- **Programming Language**: Python 3.12+
-- **Dependency Management**: [UV](https://docs.astral.sh/uv/)
-- **Configuration**: YAML format with flexible parsing
-- **REST Framework**: [FastAPI](https://fastapi.tiangolo.com/)
-- **Development Tools**: [pytest](https://docs.pytest.org/en/stable/)
+## 5. Sample Abstract Web Module
 
-## 5. Design Decisions and Trade-offs
-- **Decision 1**: Dependent modules are passed as dependencies instead of modules accessing the module loader directly.
-- **Trade-offs**: More isolated development of modules possible. Testing is easier.
-- **Risks and Mitigation**: If dependent modules are replaced or shutdown at runtime, modules they depend on it must also be updated.
-
-## 6. Sample Abstract Web Module
-
-Abstract modules are defined in the `modai.modules.[module]` package. Each module file contains both the abstract interface and a default implementation. This example shows a **web module** because it provides a `router` attribute:
+Abstract modules are defined in the `modai.modules.[module]` package. This example shows a **web module** that provides a `router` attribute (file `modai/modules/health/module.py`):
 
 ```python
 from abc import ABC, abstractmethod
@@ -107,9 +102,9 @@ class HealthModule(ModaiModule, ABC):
 
 ```
 
-## 7. Sample Default Implementation
+## 6. Sample Module Implementation
 
-The default implementation is contained in the same file as the abstract module (`modai.modules`):
+The module implementation is contained in the same package as the abstract module ((file `modai/modules/health/simple_health_module.py`):
 
 ```python
 from typing import Any
@@ -127,7 +122,7 @@ class SimpleHealthModule(HealthModule):
         return {"status": "healthy"}
 ```
 
-## 7.1. Sample Plain Module
+## 6.1. Sample Plain Module
 
 Here's an example of a **plain module** that doesn't provide REST endpoints:
 
@@ -165,7 +160,7 @@ class SomeModuleImplementation(SomeModule):
         print(f"[LOG] {message}")
 ```
 
-## 8. Configuration Structure Example
+## 7. Configuration Structure Example
 
 ```yaml
 modules:
@@ -191,3 +186,9 @@ This sample config defines three modules
 1. authentication module: with a requirement "session" module set to the module "jwt_session"
 
 The names ("health", "jwt_session", "authentication") have no deeper meaning within the application and can be freely named. It is advisable to give them understandable names for better readability.
+
+
+## 58 Design Decisions and Trade-offs
+- **Decision 1**: Dependent modules are passed to the module instead of modules accessing the module loader directly.
+   - **Trade-offs**: More isolated development of modules possible. Testing is easier.
+   - **Risks and Mitigation**: If dependent modules are replaced or shutdown at runtime, modules they depend on it must also be updated.

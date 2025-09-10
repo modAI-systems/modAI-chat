@@ -40,8 +40,6 @@ class SessionModule(ModaiModule, ABC):
         Creates a session for the given user and applies it to the response.
 
         Args:
-            request: FastAPI request object
-            response: FastAPI response object
             user_id: Unique identifier for the user
             **kwargs: Additional data to include in the session
         """
@@ -55,14 +53,11 @@ class SessionModule(ModaiModule, ABC):
         """
         Validates and decodes a session.
 
-        Args:
-            request: FastAPI request object
-
         Returns:
-            Dictionary containing session data (user_id, email, etc.)
+            The active valid session
 
         Raises:
-            Exception: If session is invalid or expired
+            HttpException: If session is invalid or expired
         """
         pass
 
@@ -74,9 +69,5 @@ class SessionModule(ModaiModule, ABC):
     ):
         """
         Ends the session by invalidating the session.
-
-        Args:
-            request: FastAPI request object
-            response: FastAPI response object
         """
         pass

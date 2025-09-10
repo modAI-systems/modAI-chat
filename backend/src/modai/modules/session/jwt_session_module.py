@@ -69,11 +69,10 @@ class JwtSessionModule(SessionModule):
             request: FastAPI request object
 
         Returns:
-            Session object containing user_id and additional data
+            The active valid session
 
         Raises:
-            jwt.InvalidTokenError: If token is invalid or expired
-            ValueError: If no session token found in cookies
+            HttpException: If session is invalid or expired
         """
         # Get token from cookies
         token = request.cookies.get("session_token")
