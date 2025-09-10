@@ -137,14 +137,14 @@ def test_get_current_user_invalid_session(client):
     from fastapi import HTTPException
 
     session_module.validate_session_for_http.side_effect = HTTPException(
-        status_code=401, detail="Invalid or expired session"
+        status_code=401, detail="Missing, invalid or expired session"
     )
 
     # Call the endpoint
     response = test_client.get("/api/v1/user")
 
     assert response.status_code == 401
-    assert response.json()["detail"] == "Invalid or expired session"
+    assert response.json()["detail"] == "Missing, invalid or expired session"
 
     # Verify session validation was called
     session_module.validate_session_for_http.assert_called_once()

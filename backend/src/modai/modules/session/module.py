@@ -94,5 +94,5 @@ class SessionModule(ModaiModule, ABC):
             from fastapi import HTTPException
 
             raise HTTPException(
-                status_code=401, detail="Invalid or expired session"
+                status_code=401, detail="Missing, invalid or expired session"
             ) from e
