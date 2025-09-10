@@ -3,6 +3,7 @@ import os
 import pytest
 from unittest.mock import MagicMock
 import jwt
+from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from modai.module import ModuleDependencies
@@ -221,3 +222,28 @@ def test_end_session_after_session_creation(mock_request_response):
 
     # Verify delete_cookie was called
     mock_response.delete_cookie.assert_called_once_with(key="session_token")
+
+
+def test_validate_session_token_expired():
+    """Test validation of expired token raises ExpiredSignatureError."""
+    config = {"jwt_secret": "test-secret", "jwt_algorithm": "HS256"}
+    session_module = JwtSessionModule(dependencies=ModuleDependencies(), config=config)
+
+    # Create an expired token manually
+    expired_time = datetime.now(timezone.utc) - timedelta(hours=1)  # 1 hour ago
+    payload = {
+        "user_id": "user123",
+        "email": "testuser@example.com",
+        "exp": expired_time,
+        "iat": datetime.now(timezone.utc) - timedelta(hours=2),  # 2 hours ago
+    }
+
+    expired_token = jwt.encode(payload, "test-secret", algorithm="HS256")
+
+    # Create mock request with expired token
+    mock_request = MagicMock()
+    mock_request.cookies = {"session_token": expired_token}
+
+    # Verify that ExpiredSignatureError is raised
+    with pytest.raises(jwt.ExpiredSignatureError):
+        session_module.validate_session(mock_request)

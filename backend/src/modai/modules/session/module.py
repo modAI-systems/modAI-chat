@@ -5,6 +5,7 @@ Session Module: Provides session management handling capabilities.
 - Session-based user identification
 """
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Dict
@@ -27,6 +28,7 @@ class SessionModule(ModaiModule, ABC):
 
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
         super().__init__(dependencies, config)
+        self.logger = logging.getLogger(__name__)
 
     @abstractmethod
     def start_new_session(
@@ -57,7 +59,7 @@ class SessionModule(ModaiModule, ABC):
             The active valid session
 
         Raises:
-            HttpException: If session is invalid or expired
+            If session is invalid or expired
         """
         pass
 
@@ -71,3 +73,26 @@ class SessionModule(ModaiModule, ABC):
         Ends the session by invalidating the session.
         """
         pass
+
+    def validate_session_for_http(
+        self,
+        request: Request,
+    ) -> Session:
+        """
+        Helper function which wraps the #validate_session method for HTTP request handling.
+
+        Returns:
+            The active valid session
+
+        Raises:
+            An HTTPException if session is invalid or expired
+        """
+        try:
+            return self.validate_session(request)
+        except Exception as e:
+            self.logger.exception("Session validation failed: %s", str(e))
+            from fastapi import HTTPException
+
+            raise HTTPException(
+                status_code=401, detail="Invalid or expired session"
+            ) from e

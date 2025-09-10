@@ -119,7 +119,7 @@ async def validate_session(
         The active valid session
 
     Raises:
-        HTTPException: If session is invalid or expired
+        If session is invalid or expired
     """
 
 async def end_session(
@@ -318,11 +318,11 @@ class SomeWebModule(ModaiModule):
         ...
 
     async def get_some(self, request: Request):
-        # 1. Validate session
-        session = await self.session_module.validate_session(request)
+        # 1. Validate session (raises a 401 if session invalid)
+        session = await self.session_module.validate_session_for_http(request)
 
         # 2. Validate endpoint permissions
-        await self.authorization_module.check_permission(
+        await self.authorization_module.validate_permission(
             session.user_id, "/api/v1/some", "read"
         )
 

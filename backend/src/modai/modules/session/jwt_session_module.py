@@ -72,7 +72,7 @@ class JwtSessionModule(SessionModule):
             The active valid session
 
         Raises:
-            HttpException: If session is invalid or expired
+            If session is invalid or expired
         """
         # Get token from cookies
         token = request.cookies.get("session_token")
