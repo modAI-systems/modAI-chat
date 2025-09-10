@@ -30,14 +30,17 @@ class Module implements GenericModule {
     createSidebarItem(): React.ReactElement {
         return <SidebarMenuItem key={this.id}>
             <SidebarMenuButton asChild tooltip={this.title}>
-                <Link
-                    to={`${this.path}?t=${Date.now()}`}
-                >
+                <Link to={`${this.path}`}>
                     <Plus />
                     <span>{this.title}</span>
                 </Link>
             </SidebarMenuButton>
         </SidebarMenuItem >;
+    }
+
+
+    createSidebarFooterItem(): React.ReactElement {
+        return <></>;
     }
 }
 

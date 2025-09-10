@@ -21,4 +21,7 @@ export interface GenericModule extends ModuleMetadata {
 
     // Called when the sidebar is created. If not needed, just return an empty fragment '<></>'
     createSidebarItem(): React.ReactElement
+
+    // Called when the sidebar footer is created. If not needed, just return an empty fragment '<></>'
+    createSidebarFooterItem(): React.ReactElement
 }

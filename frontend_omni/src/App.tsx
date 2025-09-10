@@ -4,7 +4,6 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { SidebarProvider } from './components/ui/sidebar'
 import { AppSidebar } from './components/AppSidebar'
 import { registerBuiltInModules } from './services/builtInModules'
-import UserSettings from './components/UserSettings'
 import { moduleManager } from './services/moduleManager'
 
 // Register built-in modules
@@ -14,10 +13,10 @@ registerBuiltInModules()
 function AppRoutes() {
   const modules = moduleManager.getModules()
 
+  // TODO make the "/" redirect path configurable
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/chat" replace />} />
-      <Route path="/settings" element={<UserSettings />} />
       {modules.map((module) => (
         module.createRoute()
       ))}

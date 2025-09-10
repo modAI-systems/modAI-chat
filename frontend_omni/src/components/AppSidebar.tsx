@@ -1,27 +1,14 @@
-import { Settings } from "lucide-react"
-import { Link, useLocation } from "react-router-dom"
 import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
     SidebarHeader,
     SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
     SidebarRail,
 } from "./ui/sidebar"
 import { moduleManager } from "@/services/moduleManager"
 
-const footerItems = [
-    {
-        title: "Settings",
-        url: "/settings",
-        icon: Settings,
-    },
-]
-
 export function AppSidebar() {
-    const location = useLocation()
     const modules = moduleManager.getModules()
 
     return (
@@ -38,19 +25,8 @@ export function AppSidebar() {
             </SidebarContent>
             <SidebarFooter>
                 <SidebarMenu>
-                    {footerItems.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton
-                                asChild
-                                isActive={location.pathname === item.url}
-                                tooltip={item.title}
-                            >
-                                <Link to={item.url}>
-                                    <item.icon />
-                                    <span>{item.title}</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
+                    {modules.map((module) => (
+                        module.createSidebarFooterItem?.()
                     ))}
                 </SidebarMenu>
             </SidebarFooter>
