@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { chatApi, type ChatMessage } from './chatApi'
+import { chatApi, type ChatMessage } from './services/chatApi'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { Button } from '../../ui/button'
 import { useEventBus } from '@/hooks/useEventBus'

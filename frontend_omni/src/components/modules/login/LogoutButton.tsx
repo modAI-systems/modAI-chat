@@ -1,6 +1,6 @@
 import { SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { LogOut } from "lucide-react";
-import { logout } from "@/components/modules/login/authService";
+import { logout } from "@/components/modules/login/services/authService";
 import { useNavigate } from "react-router-dom";
 
 interface LogoutButtonProps {
