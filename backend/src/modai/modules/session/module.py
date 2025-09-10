@@ -90,7 +90,7 @@ class SessionModule(ModaiModule, ABC):
         try:
             return self.validate_session(request)
         except Exception as e:
-            self.logger.exception("Session validation failed: %s", str(e))
+            self.logger.error("Session validation failed: %s", str(e))
             from fastapi import HTTPException
 
             raise HTTPException(

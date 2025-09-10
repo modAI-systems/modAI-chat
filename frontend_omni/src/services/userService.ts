@@ -10,7 +10,7 @@ export interface User {
 
 /**
  * Fetches the current authenticated user from the backend
- * 
+ *
  * @returns Promise<User> The current user data
  * @throws Error if the request fails or user is not authenticated
  */

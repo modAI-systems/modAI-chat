@@ -22,7 +22,7 @@ class Module implements RoutingModule, SidebarModule {
             ;
     }
 
-    createSidebarItem(): React.ReactElement {
+    createSidebarItem(): React.ReactElement | null {
         return <SidebarMenuItem key={this.id}>
             <SidebarMenuButton asChild tooltip={this.title}>
                 <Link to={`${this.path}`}>
@@ -34,8 +34,8 @@ class Module implements RoutingModule, SidebarModule {
     }
 
 
-    createSidebarFooterItem(): React.ReactElement {
-        return <></>;
+    createSidebarFooterItem(): React.ReactElement | null {
+        return null;
     }
 }
 

@@ -26,9 +26,9 @@ export interface FullPageModule extends WebModule {
 }
 
 export interface SidebarModule extends WebModule {
-    // Called when the sidebar is created. If not needed, just return an empty fragment '<></>'
-    createSidebarItem(): React.ReactElement
+    // Called when the sidebar is created. If not needed, just return null or undefined
+    createSidebarItem(): React.ReactElement | null
 
-    // Called when the sidebar footer is created. If not needed, just return an empty fragment '<></>'
-    createSidebarFooterItem(): React.ReactElement
+    // Called when the sidebar footer is created. If not needed, just return null or undefined
+    createSidebarFooterItem(): React.ReactElement | null
 }

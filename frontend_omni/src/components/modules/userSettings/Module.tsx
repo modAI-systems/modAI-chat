@@ -23,11 +23,11 @@ class Module implements RoutingModule, SidebarModule {
         );
     }
 
-    createSidebarItem(): React.ReactElement {
-        return <></>; // Not needed
+    createSidebarItem(): React.ReactElement | null {
+        return null; // Not needed
     }
 
-    createSidebarFooterItem(): React.ReactElement {
+    createSidebarFooterItem(): React.ReactElement | null {
         return (
             <SidebarMenuItem key={this.id}>
                 <SidebarMenuButton asChild tooltip={this.title}>

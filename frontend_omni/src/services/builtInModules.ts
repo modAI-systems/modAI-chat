@@ -8,7 +8,12 @@ import { createModule as createLoginPageModule } from '../components/modules/log
 
 
 export function registerBuiltInModules() {
-    const allModules = [createChatModule(), createUserSettingsModule(), createUserProfileItemModule(), createLoginPageModule()]
+    const allModules = [
+        createChatModule(),
+        createUserSettingsModule(),
+        createLoginPageModule(),
+        createUserProfileItemModule(),
+    ]
 
     allModules.forEach(module => {
         moduleManager.registerModule(module)

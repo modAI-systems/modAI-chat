@@ -18,16 +18,18 @@ export function AppSidebar() {
             </SidebarHeader>
             <SidebarContent>
                 <SidebarMenu>
-                    {modules.map((module) => (
-                        module.createSidebarItem()
-                    ))}
+                    {modules.map((module) => {
+                        const item = module.createSidebarItem();
+                        return item;
+                    }).filter(Boolean)}
                 </SidebarMenu>
             </SidebarContent>
             <SidebarFooter>
                 <SidebarMenu>
-                    {modules.map((module) => (
-                        module.createSidebarFooterItem?.()
-                    ))}
+                    {modules.map((module) => {
+                        const item = module.createSidebarFooterItem();
+                        return item;
+                    }).filter(Boolean)}
                 </SidebarMenu>
             </SidebarFooter>
         </Sidebar>

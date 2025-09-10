@@ -1,12 +1,14 @@
-import type { FullPageModule, WebModule } from "@/types/module";
+import type { FullPageModule, SidebarModule, WebModule } from "@/types/module";
 import { Route } from "react-router-dom";
+import React from "react";
 import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
+import { LogoutButton } from "./LogoutButton";
 
-class Module implements FullPageModule {
+class Module implements FullPageModule, SidebarModule {
     id = 'login';
     version = '1.0.0';
-    description = 'User authentication pages (login and register)';
+    description = 'User authentication pages (login and register) and logout functionality';
     author = 'ModAI Team';
 
     path = '/login';
@@ -26,6 +28,14 @@ class Module implements FullPageModule {
                 />
             </>
         );
+    }
+
+    createSidebarItem(): React.ReactElement | null {
+        return null; // Not needed
+    }
+
+    createSidebarFooterItem(): React.ReactElement | null {
+        return <LogoutButton key={`${this.id}-logout`} />;
     }
 }
 
