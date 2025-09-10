@@ -21,9 +21,8 @@ export interface RoutingModule extends WebModule {
     createRoute(): React.ReactElement
 }
 
-export interface FullPageModule extends RoutingModule {
-    // Needed workaround to make the ModuleManager can identify this as FullPageModule
-    readonly moduleType: 'full-page'
+export interface FullPageModule extends WebModule {
+    createFullPageRoute(): React.ReactElement
 }
 
 export interface SidebarModule extends WebModule {

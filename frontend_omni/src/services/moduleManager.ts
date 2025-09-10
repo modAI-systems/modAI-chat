@@ -26,9 +26,8 @@ class ModuleManager {
     }
 
     getFullPageModules(): FullPageModule[] {
-        return this.getRoutingModules().filter((module): module is FullPageModule =>
-            'moduleType' in module &&
-            module.moduleType === 'full-page'
+        return this.modules.filter((module): module is FullPageModule =>
+            'createFullPageRoute' in module && typeof module.createFullPageRoute === 'function'
         )
     }
 
