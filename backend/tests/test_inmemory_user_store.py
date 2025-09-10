@@ -38,6 +38,9 @@ async def test_simple_user_store_integration(user_store):
     await user_store.add_user_to_group(user1.id, group2.id)  # Alice is also user
     await user_store.add_user_to_group(user2.id, group2.id)  # Bob is user
 
+    # Test idempotent behavior - adding user to group they're already in should not raise
+    await user_store.add_user_to_group(user1.id, group1.id)  # Alice already in admin group
+
     # Set passwords
     await user_store.set_user_password(user1.id, "hashed_alice_password")
     await user_store.set_user_password(user2.id, "hashed_bob_password")
@@ -84,16 +87,14 @@ async def test_simple_user_store_integration(user_store):
     assert updated_user.full_name == "Alice Johnson"
 
     # Test removal from group
-    removed = await user_store.remove_user_from_group(user1.id, group1.id)
-    assert removed is True
+    await user_store.remove_user_from_group(user1.id, group1.id)  # Should not raise
 
     alice_groups_after = await user_store.get_user_groups(user1.id)
     assert len(alice_groups_after) == 1
     assert alice_groups_after[0].name == "users"
 
     # Test deletion
-    deleted_user = await user_store.delete_user(user2.id)
-    assert deleted_user is True
+    await user_store.delete_user(user2.id)  # Should not raise
 
     remaining_users = await user_store.list_users()
     assert len(remaining_users) == 1
@@ -128,8 +129,16 @@ async def test_simple_user_store_error_cases(user_store):
     result = await user_store.update_user("nonexistent", full_name="Test")
     assert result is None
 
-    result = await user_store.delete_user("nonexistent")
-    assert result is False
+    # Test that idempotent operations don't raise exceptions
+    # These operations should succeed silently if the desired state is already achieved
+    await user_store.delete_user("nonexistent")  # Should not raise
+    await user_store.delete_group("nonexistent")  # Should not raise
+    await user_store.remove_user_from_group("nonexistent", "somegroup")  # Should not raise
+    await user_store.delete_user_credentials("nonexistent")  # Should not raise
 
-    result = await user_store.set_user_password("nonexistent", "password")
-    assert result is False
+    # But operations that require existing entities should still raise exceptions
+    with pytest.raises(ValueError, match="User with ID 'nonexistent' not found"):
+        await user_store.set_user_password("nonexistent", "password")
+
+    with pytest.raises(ValueError, match="User with ID 'nonexistent' not found"):
+        await user_store.add_user_to_group("nonexistent", "somegroup")

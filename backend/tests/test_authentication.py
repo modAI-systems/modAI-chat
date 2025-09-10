@@ -28,6 +28,9 @@ def client():
     user_store = Mock(spec=UserStore)
     user_store.get_user_by_email = AsyncMock()
     user_store.get_user_credentials = AsyncMock()
+    user_store.create_user = AsyncMock()
+    user_store.set_user_password = AsyncMock()
+    user_store.delete_user = AsyncMock()
 
     # Create authentication module
     auth_module = PasswordAuthenticationModule(
@@ -171,3 +174,79 @@ def test_login_user_without_credentials(client):
 
     # Verify that start_new_session was NOT called
     session_module.start_new_session.assert_not_called()
+
+
+def test_signup_success(client):
+    """Test successful user signup."""
+    test_client, auth_module, session_module, user_store = client
+
+    # Mock user store responses for new user
+    user_store.get_user_by_email.return_value = None  # No existing user
+    new_user = User(id="2", email="newuser@example.com", full_name="New User")
+    user_store.create_user.return_value = new_user
+    user_store.set_user_password.return_value = None  # No exception = success
+
+    payload = {
+        "email": "newuser@example.com",
+        "password": "password123",
+        "full_name": "New User",
+    }
+    response = test_client.post("/api/v1/auth/signup", json=payload)
+    assert response.status_code == 200
+
+    response_data = response.json()
+    assert response_data["message"] == "User registered successfully"
+    assert response_data["user_id"] == "2"
+
+    # Verify that create_user and set_user_password were called
+    user_store.create_user.assert_called_once_with(
+        email="newuser@example.com", full_name="New User"
+    )
+    user_store.set_user_password.assert_called_once()
+
+
+def test_signup_existing_user(client):
+    """Test signup when user already exists."""
+    test_client, auth_module, session_module, user_store = client
+
+    # Mock that user already exists
+    existing_user = User(
+        id="1", email="existing@example.com", full_name="Existing User"
+    )
+    user_store.get_user_by_email.return_value = existing_user
+
+    payload = {
+        "email": "existing@example.com",
+        "password": "password123",
+        "full_name": "New User",
+    }
+    response = test_client.post("/api/v1/auth/signup", json=payload)
+    assert response.status_code == 400
+    assert response.json()["detail"] == "User with this email already exists"
+
+    # Verify that create_user was NOT called
+    user_store.create_user.assert_not_called()
+
+
+def test_signup_password_creation_failure(client):
+    """Test signup when password setting fails."""
+    test_client, auth_module, session_module, user_store = client
+
+    # Mock user store responses
+    user_store.get_user_by_email.return_value = None  # No existing user
+    new_user = User(id="3", email="testuser@example.com", full_name="Test User")
+    user_store.create_user.return_value = new_user
+    user_store.set_user_password.side_effect = ValueError("User not found")  # Password setting fails
+    user_store.delete_user.return_value = None
+
+    payload = {
+        "email": "testuser@example.com",
+        "password": "password123",
+        "full_name": "Test User",
+    }
+    response = test_client.post("/api/v1/auth/signup", json=payload)
+    assert response.status_code == 500
+    assert response.json()["detail"] == "Failed to create user account"
+
+    # Verify cleanup occurred
+    user_store.delete_user.assert_called_once_with("3")

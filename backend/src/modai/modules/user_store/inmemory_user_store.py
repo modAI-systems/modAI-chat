@@ -96,9 +96,10 @@ class InMemoryUserStore(UserStore):
         user.updated_at = datetime.now()
         return user
 
-    async def delete_user(self, user_id: str) -> bool:
+    async def delete_user(self, user_id: str) -> None:
+        # Idempotent operation - no error if user doesn't exist
         if user_id not in self.users:
-            return False
+            return  # Already "deleted"
 
         # Remove user
         del self.users[user_id]
@@ -114,8 +115,6 @@ class InMemoryUserStore(UserStore):
         # Clean up credentials
         if user_id in self.user_credentials:
             del self.user_credentials[user_id]
-
-        return True
 
     async def list_users(
         self,
@@ -181,9 +180,10 @@ class InMemoryUserStore(UserStore):
         group.updated_at = datetime.now()
         return group
 
-    async def delete_group(self, group_id: str) -> bool:
+    async def delete_group(self, group_id: str) -> None:
+        # Idempotent operation - no error if group doesn't exist
         if group_id not in self.groups:
-            return False
+            return  # Already "deleted"
 
         # Remove group
         del self.groups[group_id]
@@ -195,8 +195,6 @@ class InMemoryUserStore(UserStore):
                 if user_id in self.user_groups:
                     self.user_groups[user_id].discard(group_id)
             del self.group_users[group_id]
-
-        return True
 
     async def list_groups(
         self,
@@ -212,12 +210,16 @@ class InMemoryUserStore(UserStore):
         return groups[start:end]
 
     # User-Group Membership Operations
-    async def add_user_to_group(self, user_id: str, group_id: str) -> bool:
-        if user_id not in self.users or group_id not in self.groups:
-            return False
+    async def add_user_to_group(self, user_id: str, group_id: str) -> None:
+        if user_id not in self.users:
+            raise ValueError(f"User with ID '{user_id}' not found")
 
+        if group_id not in self.groups:
+            raise ValueError(f"Group with ID '{group_id}' not found")
+
+        # Idempotent - no error if user is already in group
         if group_id in self.user_groups.get(user_id, set()):
-            raise ValueError(f"User {user_id} is already in group {group_id}")
+            return  # Already in group
 
         # Ensure user_groups entry exists
         if user_id not in self.user_groups:
@@ -230,19 +232,16 @@ class InMemoryUserStore(UserStore):
         self.user_groups[user_id].add(group_id)
         self.group_users[group_id].add(user_id)
 
-        return True
-
-    async def remove_user_from_group(self, user_id: str, group_id: str) -> bool:
+    async def remove_user_from_group(self, user_id: str, group_id: str) -> None:
+        # Idempotent - no error if user is not in group or doesn't exist
         if user_id not in self.user_groups or group_id not in self.user_groups.get(
             user_id, set()
         ):
-            return False
+            return  # Already not in group
 
         self.user_groups[user_id].remove(group_id)
         if group_id in self.group_users:
             self.group_users[group_id].discard(user_id)
-
-        return True
 
     async def get_user_groups(self, user_id: str) -> List[Group]:
         if user_id not in self.user_groups:
@@ -259,9 +258,9 @@ class InMemoryUserStore(UserStore):
         return [self.users[uid] for uid in user_ids if uid in self.users]
 
     # User Credentials Operations
-    async def set_user_password(self, user_id: str, password_hash: str) -> bool:
+    async def set_user_password(self, user_id: str, password_hash: str) -> None:
         if user_id not in self.users:
-            return False
+            raise ValueError(f"User with ID '{user_id}' not found")
 
         now = datetime.now()
 
@@ -279,13 +278,10 @@ class InMemoryUserStore(UserStore):
                 updated_at=now,
             )
 
-        return True
-
     async def get_user_credentials(self, user_id: str) -> UserCredentials | None:
         return self.user_credentials.get(user_id)
 
-    async def delete_user_credentials(self, user_id: str) -> bool:
+    async def delete_user_credentials(self, user_id: str) -> None:
+        # Idempotent operation - no error if credentials don't exist
         if user_id in self.user_credentials:
             del self.user_credentials[user_id]
-            return True
-        return False

@@ -5,7 +5,9 @@ Provides session-based authentication with user store integration.
 
 from typing import Any
 import hashlib
+import logging
 from fastapi import Request, Body, HTTPException, Response, status
+from pydantic import BaseModel
 
 from modai.module import ModuleDependencies
 from modai.modules.authentication.module import (
@@ -16,11 +18,20 @@ from modai.modules.session.module import SessionModule
 from modai.modules.user_store.module import UserStore
 
 
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+    full_name: str | None = None
+
+
 class PasswordAuthenticationModule(AuthenticationModule):
     """Default implementation of the Authentication module."""
 
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
         super().__init__(dependencies, config)
+
+        # Set up logger
+        self.logger = logging.getLogger(__name__)
 
         if not dependencies.modules.get("session"):
             raise ValueError(
@@ -35,9 +46,8 @@ class PasswordAuthenticationModule(AuthenticationModule):
         self.session_module: SessionModule = dependencies.modules.get("session")
         self.user_store: UserStore = dependencies.modules.get("user_store")
 
-    def _hash_password(self, password: str) -> str:
-        """Simple password hashing using SHA-256. In production, use proper password hashing like bcrypt."""
-        return hashlib.sha256(password.encode()).hexdigest()
+        # Add password authentication specific routes
+        self.router.add_api_route("/api/v1/auth/signup", self.signup, methods=["POST"])
 
     async def login(
         self,
@@ -84,6 +94,72 @@ class PasswordAuthenticationModule(AuthenticationModule):
 
         return {"message": "Successfully logged in"}
 
+    async def signup(
+        self,
+        request: Request,
+        response: Response,
+        signup_data: SignupRequest = Body(...),
+    ) -> dict[str, str]:
+        """
+        Registers a new user with email and password.
+        Creates user in user store and sets password credentials.
+        """
+
+        # Check if user already exists
+        existing_user = await self.user_store.get_user_by_email(signup_data.email)
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User with this email already exists",
+            )
+
+        # Create new user
+        try:
+            user = await self.user_store.create_user(
+                email=signup_data.email,
+                full_name=signup_data.full_name,
+            )
+        except ValueError as e:
+            # Log the actual error for debugging but don't expose it to client
+            self.logger.error(f"Failed to create user {signup_data.email}: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid user data provided",
+            )
+        except Exception as e:
+            # Log unexpected errors
+            self.logger.error(
+                f"Unexpected error creating user {signup_data.email}: {str(e)}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create user account",
+            )
+
+        # Set user password
+        password_hash = self._hash_password(signup_data.password)
+        try:
+            await self.user_store.set_user_password(user.id, password_hash)
+        except Exception as e:
+            # Log unexpected errors
+            self.logger.error(
+                f"Unexpected error setting password for user {user.id} ({signup_data.email}): {str(e)}"
+            )
+            # Clean up - delete the user if password setting failed
+            try:
+                await self.user_store.delete_user(user.id)
+            except Exception as cleanup_error:
+                self.logger.error(
+                    f"Failed to cleanup user {user.id} after password creation failure: {str(cleanup_error)}"
+                )
+
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create user account",
+            )
+
+        return {"message": "User registered successfully", "user_id": user.id}
+
     async def logout(
         self,
         request: Request,
@@ -96,10 +172,16 @@ class PasswordAuthenticationModule(AuthenticationModule):
             # Simply forward to session module - let it handle the implementation details
             self.session_module.end_session(request, response)
             return {"message": "Successfully logged out"}
-        except Exception:
+        except Exception as e:
+            # Log the actual error for debugging but don't expose it to client
+            self.logger.error(f"Error during logout: {str(e)}")
             # For any other exception (like JWT errors), treat as invalid token
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+
+    def _hash_password(self, password: str) -> str:
+        """Simple password hashing using SHA-256. In production, use proper password hashing like bcrypt."""
+        return hashlib.sha256(password.encode()).hexdigest()

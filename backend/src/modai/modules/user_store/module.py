@@ -117,15 +117,15 @@ class UserStore(ModaiModule, ABC):
         pass
 
     @abstractmethod
-    async def delete_user(self, user_id: str) -> bool:
+    async def delete_user(self, user_id: str) -> None:
         """
-        Deletes a user.
+        Deletes a user. Idempotent operation - no error if user doesn't exist.
 
         Args:
             user_id: ID of the user to delete
 
-        Returns:
-            True if user was deleted, False if user not found
+        Raises:
+            For unexpected system errors
         """
         pass
 
@@ -209,15 +209,15 @@ class UserStore(ModaiModule, ABC):
         pass
 
     @abstractmethod
-    async def delete_group(self, group_id: str) -> bool:
+    async def delete_group(self, group_id: str) -> None:
         """
-        Deletes a group.
+        Deletes a group. Idempotent operation - no error if group doesn't exist.
 
         Args:
             group_id: ID of the group to delete
 
-        Returns:
-            True if group was deleted, False if group not found
+        Raises:
+            For unexpected system errors
         """
         pass
 
@@ -241,33 +241,30 @@ class UserStore(ModaiModule, ABC):
 
     # User-Group Membership Operations
     @abstractmethod
-    async def add_user_to_group(self, user_id: str, group_id: str) -> bool:
+    async def add_user_to_group(self, user_id: str, group_id: str) -> None:
         """
-        Adds a user to a group.
+        Adds a user to a group. Idempotent for existing membership.
 
         Args:
             user_id: ID of the user to add
             group_id: ID of the group to add user to
 
-        Returns:
-            True if successful, False if user or group not found
-
         Raises:
-            ValueError: If user is already in the group
+            ValueError: If user or group not found
         """
         pass
 
     @abstractmethod
-    async def remove_user_from_group(self, user_id: str, group_id: str) -> bool:
+    async def remove_user_from_group(self, user_id: str, group_id: str) -> None:
         """
-        Removes a user from a group.
+        Removes a user from a group. Idempotent operation - no error if user is not in group.
 
         Args:
             user_id: ID of the user to remove
             group_id: ID of the group to remove user from
 
-        Returns:
-            True if successful, False if user not in group
+        Raises:
+            For unexpected system errors
         """
         pass
 
@@ -299,7 +296,7 @@ class UserStore(ModaiModule, ABC):
 
     # User Credentials Operations
     @abstractmethod
-    async def set_user_password(self, user_id: str, password_hash: str) -> bool:
+    async def set_user_password(self, user_id: str, password_hash: str) -> None:
         """
         Sets or updates a user's password hash.
 
@@ -307,8 +304,8 @@ class UserStore(ModaiModule, ABC):
             user_id: ID of the user
             password_hash: Hashed password to store
 
-        Returns:
-            True if successful, False if user not found
+        Raises:
+            ValueError: If user not found
         """
         pass
 
@@ -326,14 +323,14 @@ class UserStore(ModaiModule, ABC):
         pass
 
     @abstractmethod
-    async def delete_user_credentials(self, user_id: str) -> bool:
+    async def delete_user_credentials(self, user_id: str) -> None:
         """
-        Deletes user credentials.
+        Deletes user credentials. Idempotent operation - no error if credentials don't exist.
 
         Args:
             user_id: ID of the user
 
-        Returns:
-            True if credentials were deleted, False if not found
+        Raises:
+            For unexpected system errors
         """
         pass
