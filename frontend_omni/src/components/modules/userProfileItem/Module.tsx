@@ -1,8 +1,20 @@
 import type { GenericModule } from "@/types/module";
 import { SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { UserDisplay } from "@/components/modules/userProfileItem/UserProfileItem";
 import { LogOut } from "lucide-react";
-import React from "react";
+import React, { Suspense, use } from "react";
+import { UserDisplay } from "./UserDisplay";
+import { getCurrentUser, type User } from "@/services/userService";
+
+// Create the promise OUTSIDE the component to prevent recreation on each render
+// This is the recommended pattern according to React docs
+const userPromise = getCurrentUser().catch((error) => {
+    console.error('Failed to fetch user:', error);
+    // Return fallback data instead of throwing
+    return {
+        id: 'unknown',
+        full_name: 'Unknown'
+    } as User;
+});
 
 class Module implements GenericModule {
     id = 'userprofileitem';
@@ -30,6 +42,8 @@ class Module implements GenericModule {
     }
 
     createSidebarFooterItem(): React.ReactElement {
+        const user = use(userPromise);
+
         return (
             <React.Fragment key={this.id}>
                 <SidebarMenuItem>
@@ -39,7 +53,12 @@ class Module implements GenericModule {
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                    <UserDisplay username="John Doe" userEmail="john@example.com" />
+                    <Suspense fallback={<UserDisplay username="Loading..." userEmail="" />}>
+                        <UserDisplay
+                            username={user.full_name || user.email}
+                            userEmail={user.email}
+                        />
+                    </Suspense>
                 </SidebarMenuItem>
             </React.Fragment>
         );
