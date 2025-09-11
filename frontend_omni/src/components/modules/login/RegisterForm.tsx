@@ -67,6 +67,7 @@ export function RegisterForm({
                                 <Input
                                     id="fullName"
                                     type="text"
+                                    autoComplete="name"
                                     placeholder="John Doe"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
@@ -78,6 +79,7 @@ export function RegisterForm({
                                 <Input
                                     id="email"
                                     type="email"
+                                    autoComplete="email"
                                     placeholder="m@example.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -90,6 +92,7 @@ export function RegisterForm({
                                 <Input
                                     id="password"
                                     type="password"
+                                    autoComplete="new-password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     disabled={isLoading}
