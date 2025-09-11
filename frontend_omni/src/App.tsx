@@ -35,6 +35,9 @@ function AppRoutes() {
           module.createRoute()
         ))}
       </Route>
+
+      {/* Catch-all route for unavailable paths - redirect to root */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
