@@ -36,7 +36,6 @@ export function RegisterForm({
                 password,
                 full_name: fullName.trim() || undefined
             })
-            console.log("Registration successful")
             navigate("/login")
         } catch (err) {
             setError(err instanceof Error ? err.message : "Registration failed")

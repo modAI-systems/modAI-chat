@@ -260,8 +260,6 @@ function ChatComponent() {
     const [ActiveSidebarComponent, setActiveSidebarComponent] = useState<React.ComponentType<unknown> | null>(null)
 
     useEventBus<ToggleSidebar>('toggleSidebar', (notification) => {
-        console.log(`Notification: ${notification.sidebarId}`)
-
         // If the sidebar is not open, open it with the provided component
         if (!sidebarOpen) {
             setSidebarOpen(true)

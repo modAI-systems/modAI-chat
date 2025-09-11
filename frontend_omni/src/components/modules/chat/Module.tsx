@@ -1,4 +1,4 @@
-import type { SidebarModule, RoutingModule, WebModule } from "@/types/module";
+import { type SidebarModule, type RoutingModule, type WebModule } from "@/types/module";
 import { Link, Route, useSearchParams } from "react-router-dom";
 import ChatComponent from "./ChatComponent";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
@@ -32,7 +32,6 @@ class Module implements RoutingModule, SidebarModule {
             </SidebarMenuButton>
         </SidebarMenuItem >;
     }
-
 
     createSidebarFooterItem(): React.ReactElement | null {
         return null;

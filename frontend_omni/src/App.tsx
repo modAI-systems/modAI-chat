@@ -1,16 +1,11 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { BrowserRouter as Router } from 'react-router-dom'
 import { ThemeProvider } from './contexts/ThemeContext'
-import { registerBuiltInModules } from './services/builtInModules'
-import { moduleManager } from './services/moduleManager'
+import { WebModuleProvider, useWebModules } from './contexts/WebModulesContext'
 import { SidebarProvider } from './components/ui/sidebar'
 import { AppSidebar } from './components/AppSidebar'
 
-// Register built-in modules
-registerBuiltInModules()
-
-
-export function Layout() {
+export function SidebarFullPage() {
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -21,28 +16,37 @@ export function Layout() {
   )
 }
 
-function App() {
-  const routingModules = moduleManager.getRoutingModules()
-  const fullPageModules = moduleManager.getFullPageModules()
+function AppRoutes() {
+  const { routingModules, fullPageModules } = useWebModules()
 
+
+  console.log('Render main')
+  return (
+    <Routes>
+      {/* Full page routes (like login) without layout */}
+      {fullPageModules.map((module) => (
+        module.createFullPageRoute()
+      ))}
+
+      {/* All other routes with sidebar layout */}
+      <Route path="/" element={<SidebarFullPage />}>
+        <Route index element={<Navigate to="/chat" replace />} />
+        {routingModules.map((module) => (
+          module.createRoute()
+        ))}
+      </Route>
+    </Routes>
+  )
+}
+
+function App() {
   return (
     <ThemeProvider>
-      <Router>
-        <Routes>
-          {/* Full page routes (like login) without layout */}
-          {fullPageModules.map((module) => (
-            module.createFullPageRoute()
-          ))}
-
-          {/* All other routes with sidebar layout */}
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Navigate to="/chat" replace />} />
-            {routingModules.map((module) => (
-              module.createRoute()
-            ))}
-          </Route>
-        </Routes>
-      </Router>
+      <WebModuleProvider>
+        <Router>
+          <AppRoutes />
+        </Router>
+      </WebModuleProvider>
     </ThemeProvider>
   )
 }
