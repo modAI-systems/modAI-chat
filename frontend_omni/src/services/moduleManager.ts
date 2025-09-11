@@ -34,6 +34,36 @@ export class ModuleManager {
         this.moduleSetters = moduleSetters
     }
 
+    /**
+     * Check if all dependencies of a module are currently active
+     */
+    private areDependenciesActive(module: WebModule): boolean {
+        return module.dependentModules.every(depId => this.activeModulesById.has(depId));
+    }
+
+    /**
+     * Find all active modules that depend on the given module
+     */
+    private findDependentModules(moduleId: string): WebModule[] {
+        const dependents: WebModule[] = [];
+        for (const activeModule of this.activeModulesById.values()) {
+            if (activeModule.dependentModules.includes(moduleId)) {
+                dependents.push(activeModule);
+            }
+        }
+        return dependents;
+    }
+
+    /**
+     * Recursively deactivate all modules that depend on the given module
+     */
+    private deactivateDependentModules(moduleId: string): void {
+        const dependentModules = this.findDependentModules(moduleId);
+        for (const dependentModule of dependentModules) {
+            this.deactivateModule(dependentModule.id);
+        }
+    }
+
     getAllModules(): WebModule[] {
         return [...this.registeredModulesById.values()]
     }
@@ -53,8 +83,13 @@ export class ModuleManager {
             return;
         }
 
-        this.activeModulesById.set(moduleId, updatedModule)
+        // Check if all dependencies are active before activating
+        if (!this.areDependenciesActive(updatedModule)) {
+            console.warn(`Cannot activate module '${moduleId}' because not all dependencies are active.`);
+            return;
+        }
 
+        this.activeModulesById.set(moduleId, updatedModule)
         this.moduleActivationChangedd(updatedModule)
     }
 
@@ -64,8 +99,9 @@ export class ModuleManager {
             return;
         }
 
+        // First deactivate all modules that depend on this module
+        this.deactivateDependentModules(moduleId);
         this.activeModulesById.delete(moduleId)
-
         this.moduleActivationChangedd(updatedModule)
     }
 

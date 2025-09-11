@@ -5,6 +5,7 @@ export interface ModuleMetadata {
     version: string
     description?: string
     author?: string
+    dependentModules: string[]
 }
 
 // Marker inteface for modules that run in the web client

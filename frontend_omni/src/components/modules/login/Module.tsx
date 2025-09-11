@@ -10,6 +10,7 @@ class Module implements FullPageModule, SidebarModule {
     version = '1.0.0';
     description = 'User authentication pages (login and register) and logout functionality';
     author = 'ModAI Team';
+    dependentModules = [];
 
     path = '/login';
 

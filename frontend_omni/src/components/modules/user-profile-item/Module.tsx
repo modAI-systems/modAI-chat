@@ -8,6 +8,7 @@ class Module implements SidebarModule {
     version = '1.0.0';
     description = 'User profile display in sidebar footer';
     author = 'ModAI Team';
+    dependentModules = [];
 
     createSidebarItem(): React.ReactElement | null {
         return null; // Not needed

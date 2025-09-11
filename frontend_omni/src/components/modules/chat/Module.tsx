@@ -9,6 +9,7 @@ class Module implements RoutingModule, SidebarModule {
     version = '1.0.0';
     description = 'AI Chat interface with configurable providers and models';
     author = 'ModAI Team';
+    dependentModules = [];
 
     path = '/chat';
     title = "New Chat";
