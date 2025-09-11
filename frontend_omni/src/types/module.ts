@@ -17,6 +17,11 @@ export interface GenericModule extends WebModule {
     install(): void
 }
 
+export interface ContextProviderModule extends WebModule {
+    // Called when the context providers are created. If not needed, just return an empty fragment '<></>'
+    createContextProvider(children: React.ReactNode): React.ReactElement
+}
+
 export interface RoutingModule extends WebModule {
     // Called when the routes are created. If not needed, just return an empty fragment '<></>'
     createRoute(): React.ReactElement

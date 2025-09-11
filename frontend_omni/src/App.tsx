@@ -5,6 +5,20 @@ import { WebModuleProvider, useWebModules } from './contexts/WebModulesContext'
 import { SidebarProvider } from './components/ui/sidebar'
 import { AppSidebar } from './components/AppSidebar'
 
+interface ModuleContextProviderProps {
+  children: React.ReactNode
+}
+
+function ModuleContextProviders({ children }: ModuleContextProviderProps) {
+  const { contextProviderModules } = useWebModules()
+
+  // Wrap children with all context provider modules
+  return contextProviderModules.reduce(
+    (wrappedChildren, module) => module.createContextProvider(wrappedChildren),
+    children
+  )
+}
+
 export function SidebarFullPage() {
   return (
     <SidebarProvider>
@@ -19,8 +33,6 @@ export function SidebarFullPage() {
 function AppRoutes() {
   const { routingModules, fullPageModules } = useWebModules()
 
-
-  console.log('Render main')
   return (
     <Routes>
       {/* Full page routes (like login) without layout */}
@@ -46,9 +58,11 @@ function App() {
   return (
     <ThemeProvider>
       <WebModuleProvider>
-        <Router>
-          <AppRoutes />
-        </Router>
+        <ModuleContextProviders>
+          <Router>
+            <AppRoutes />
+          </Router>
+        </ModuleContextProviders>
       </WebModuleProvider>
     </ThemeProvider>
   )

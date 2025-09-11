@@ -1,4 +1,4 @@
-import { type GenericModule, type FullPageModule, type RoutingModule, type SidebarModule, type WebModule } from '../types/module'
+import { type GenericModule, type FullPageModule, type RoutingModule, type SidebarModule, type WebModule, type ContextProviderModule } from '../types/module'
 
 interface ModuleSetters {
     setAllModules: (modules: WebModule[]) => void
@@ -6,6 +6,7 @@ interface ModuleSetters {
     setFullPageModules: (modules: FullPageModule[]) => void
     setSidebarModules: (modules: SidebarModule[]) => void
     setGenericModules: (modules: GenericModule[]) => void
+    setContextProviderModules: (modules: ContextProviderModule[]) => void
 }
 
 function isRoutingModule(module: WebModule): module is RoutingModule {
@@ -22,6 +23,10 @@ function isSidebarModule(module: WebModule): module is SidebarModule {
 
 function isGenericModule(module: WebModule): module is GenericModule {
     return 'install' in module && typeof module.install === 'function'
+}
+
+function isContextProviderModule(module: WebModule): module is ContextProviderModule {
+    return 'createContextProvider' in module && typeof module.createContextProvider === 'function'
 }
 
 export class ModuleManager {
@@ -124,6 +129,10 @@ export class ModuleManager {
         if (isGenericModule(updatedModule)) {
             const genericModules = allModules.filter(isGenericModule)
             this.moduleSetters.setGenericModules(genericModules)
+        }
+        if (isContextProviderModule(updatedModule)) {
+            const contextProviderModules = allModules.filter(isContextProviderModule)
+            this.moduleSetters.setContextProviderModules(contextProviderModules)
         }
     }
 }

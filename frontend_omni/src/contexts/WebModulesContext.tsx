@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react'
+import React, { createContext, useContext, useState, useMemo } from 'react'
 import { ModuleManager } from '../services/moduleManager'
 import { registerBuiltInModules } from '../services/builtInModules'
-import type { WebModule, RoutingModule, FullPageModule, SidebarModule, GenericModule } from '../types/module'
+import type { WebModule, RoutingModule, FullPageModule, SidebarModule, GenericModule, ContextProviderModule } from '../types/module'
 
 interface WebModulesContextType {
     allModules: WebModule[]
@@ -9,6 +9,7 @@ interface WebModulesContextType {
     fullPageModules: FullPageModule[]
     sidebarModules: SidebarModule[]
     genericModules: GenericModule[]
+    contextProviderModules: ContextProviderModule[]
     moduleManager: ModuleManager
 }
 
@@ -24,6 +25,7 @@ export function WebModuleProvider({ children }: WebModuleProviderProps) {
     const [fullPageModules, setFullPageModules] = useState<FullPageModule[]>([])
     const [sidebarModules, setSidebarModules] = useState<SidebarModule[]>([])
     const [genericModules, setGenericModules] = useState<GenericModule[]>([])
+    const [contextProviderModules, setContextProviderModules] = useState<ContextProviderModule[]>([])
 
     // Create module manager instance with setters
     const moduleManager = useMemo(() => {
@@ -33,6 +35,7 @@ export function WebModuleProvider({ children }: WebModuleProviderProps) {
             setFullPageModules,
             setSidebarModules,
             setGenericModules,
+            setContextProviderModules,
         });
         registerBuiltInModules(mgr);
         return mgr
@@ -44,6 +47,7 @@ export function WebModuleProvider({ children }: WebModuleProviderProps) {
         fullPageModules,
         sidebarModules,
         genericModules,
+        contextProviderModules,
         moduleManager,
     }
 
