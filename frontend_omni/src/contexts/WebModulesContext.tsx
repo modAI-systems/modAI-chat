@@ -11,6 +11,8 @@ interface WebModulesContextType {
     moduleManager: ModuleManager
     isLoading: boolean
     error: string | null
+    // Dynamic module access - modules can be accessed by their ID or ID + "Module"
+    [key: string]: any
 }
 
 const WebModulesContext = createContext<WebModulesContextType | undefined>(undefined)
@@ -68,6 +70,13 @@ export function WebModuleProvider({ children }: WebModuleProviderProps) {
         error,
     }
 
+    // Add dynamic module access properties
+    allModules.forEach(module => {
+        // Create camelCase property name: "session" -> "sessionModule"
+        const modulePropertyName = `${module.id}Module`
+        contextValue[modulePropertyName] = module
+    })
+
     return (
         <WebModulesContext.Provider value={contextValue}>
             {children}
@@ -81,4 +90,24 @@ export function useWebModules() {
         throw new Error('useWebModules must be used within a WebModulesProvider')
     }
     return context
+}
+
+/**
+ * Hook to access active modules dynamically
+ *
+ * @returns Object with modules accessible by their names
+ *
+ * @example
+ * const { sessionModule, chatModule } = useModules()
+ */
+export function useModules() {
+    return useWebModules()
+}
+
+/**
+ * Type-safe hook for accessing specific modules with better TypeScript support
+ */
+export function useModule<T extends WebModule = WebModule>(moduleId: string): T | undefined {
+    const context = useWebModules()
+    return context[moduleId] as T | undefined
 }
