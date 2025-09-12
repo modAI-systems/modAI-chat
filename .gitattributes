@@ -1,0 +1,2 @@
+# Exclude generated shadcn UI components from language statistics
+frontend_omni/src/components/ui/** linguist-generated=true
