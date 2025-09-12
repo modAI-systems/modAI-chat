@@ -1,20 +1,22 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { BrowserRouter as Router } from 'react-router-dom'
 import { ThemeProvider } from './contexts/ThemeContext'
-import { WebModuleProvider, useWebModules } from './contexts/WebModulesContext'
 import { SidebarProvider } from './components/ui/sidebar'
 import { AppSidebar } from './components/AppSidebar'
+import { ModuleManagerProvider, useModules } from './contexts/ModuleManagerContext'
 
 interface ModuleContextProviderProps {
   children: React.ReactNode
 }
 
 function ModuleContextProviders({ children }: ModuleContextProviderProps) {
-  const { contextProviderModules } = useWebModules()
+  const modules = useModules()
+
+  const contextProviders = modules.getComponentsByName("ContextProvider")
 
   // Wrap children with all context provider modules
-  return contextProviderModules.reduce(
-    (wrappedChildren, module) => module.createContextProvider(wrappedChildren),
+  return contextProviders.reduce(
+    (wrappedChildren, Component) => <Component>{wrappedChildren}</Component>,
     children
   )
 }
@@ -31,38 +33,40 @@ export function SidebarFullPage() {
 }
 
 function AppRoutes() {
-  const { routingModules, fullPageModules } = useWebModules()
+  const modules = useModules()
+  const fullPageRouteFunctions = modules.getComponentsByName("FullPageRoute")
+  const sidebarPageRouteFunctions = modules.getComponentsByName("SidebarPageRoute")
 
-  return (
-    <Routes>
-      {/* Full page routes (like login) without layout */}
-      {fullPageModules.map((module) => (
-        module.createFullPageRoute()
+  return <Routes>
+
+    {fullPageRouteFunctions.map((createRoute) => (
+      // Unfortunately I cannot treat this like a component because
+      // if I would, the Router complains that it is not of type "Route"
+      // therefor for routes I have to call the function here directly
+      // PLEASE: If you know a better way, let me know!
+      createRoute()
+    ))}
+
+    {/* All other routes with sidebar layout */}
+    <Route path="/" element={<SidebarFullPage />}>
+      {sidebarPageRouteFunctions.map((createRoute) => (
+        createRoute()
       ))}
-
-      {/* All other routes with sidebar layout */}
-      <Route path="/" element={<SidebarFullPage />}>
-        {routingModules.map((module) => (
-          module.createRoute()
-        ))}
-      </Route>
-
-      {/* Catch-all route for unavailable paths - redirect to root */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  )
+    </Route>
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </Routes>
 }
 
 function App() {
   return (
     <ThemeProvider>
-      <WebModuleProvider>
+      <ModuleManagerProvider>
         <ModuleContextProviders>
           <Router>
             <AppRoutes />
           </Router>
         </ModuleContextProviders>
-      </WebModuleProvider>
+      </ModuleManagerProvider>
     </ThemeProvider>
   )
 }

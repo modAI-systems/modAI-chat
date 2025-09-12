@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { login } from "./services/authService"
-import { useSession } from "@/services/module/session/SessionProvider"
+import { useSession } from "@/services/modules/session/ContextProvider"
 
 interface LoginFormProps extends React.ComponentPropsWithoutRef<"div"> {
   enableForgetPassword?: boolean;

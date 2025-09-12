@@ -29,7 +29,7 @@ interface SessionProviderProps {
 /**
  * SessionProvider component that manages session state using the Session class
  */
-export function SessionProvider({ children }: SessionProviderProps): React.ReactElement {
+export function ContextProvider({ children }: SessionProviderProps): React.ReactElement {
     const [session, setSession] = useState<Session | null>(null)
     const [isLoading, setIsLoading] = useState(false)
 

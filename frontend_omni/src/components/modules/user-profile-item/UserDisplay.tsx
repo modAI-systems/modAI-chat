@@ -6,11 +6,11 @@ import {
 } from "../../ui/tooltip"
 
 interface UserDisplayProps {
-    username?: string
-    userEmail?: string
+    username: string
+    userEmail: string
 }
 
-export function UserDisplay({ username = "User", userEmail }: UserDisplayProps) {
+export function UserDisplay({ username, userEmail }: UserDisplayProps) {
     const userInitials = username
         .split(" ")
         .map((name) => name[0])

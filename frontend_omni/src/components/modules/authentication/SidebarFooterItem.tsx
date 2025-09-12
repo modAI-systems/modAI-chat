@@ -1,14 +1,14 @@
-import { SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
+import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { useSession } from "@/services/modules/session/ContextProvider";
 import { LogOut } from "lucide-react";
-import { logout } from "./services/authService";
 import { useNavigate } from "react-router-dom";
-import { useSession } from "@/services/module/session/SessionProvider";
+import { logout } from "./services/authService";
 
 interface LogoutButtonProps {
     className?: string;
 }
 
-export function LogoutButton({ className }: LogoutButtonProps) {
+export function SidebarFooterItem({ className }: LogoutButtonProps) {
     const navigate = useNavigate()
     const { clearSession } = useSession()
 

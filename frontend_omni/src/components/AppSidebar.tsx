@@ -1,3 +1,4 @@
+import { useModules } from "@/contexts/ModuleManagerContext"
 import {
     Sidebar,
     SidebarContent,
@@ -6,10 +7,11 @@ import {
     SidebarMenu,
     SidebarRail,
 } from "./ui/sidebar"
-import { useWebModules } from "@/contexts/WebModulesContext"
 
 export function AppSidebar() {
-    const { sidebarModules } = useWebModules()
+    const modules = useModules()
+    const sidebarItems = modules.getComponentsByName("SidebarItem")
+    const sidebarFooterItems = modules.getComponentsByName("SidebarFooterItem")
 
     return (
         <Sidebar collapsible="icon">
@@ -18,18 +20,16 @@ export function AppSidebar() {
             </SidebarHeader>
             <SidebarContent>
                 <SidebarMenu>
-                    {sidebarModules.map((module) => {
-                        const item = module.createSidebarItem();
-                        return item;
-                    }).filter(Boolean)}
+                    {sidebarItems.map((Component, index) => (
+                        <Component key={index} />
+                    ))}
                 </SidebarMenu>
             </SidebarContent>
             <SidebarFooter>
                 <SidebarMenu>
-                    {sidebarModules.map((module) => {
-                        const item = module.createSidebarFooterItem();
-                        return item;
-                    }).filter(Boolean)}
+                    {sidebarFooterItems.map((Component, index) => (
+                        <Component key={index} />
+                    ))}
                 </SidebarMenu>
             </SidebarFooter>
         </Sidebar>
