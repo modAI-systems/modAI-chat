@@ -10,7 +10,7 @@ class Module implements FullPageModule, SidebarModule {
     version = '1.0.0';
     description = 'User authentication pages (login and register) and logout functionality';
     author = 'ModAI Team';
-    dependentModules = [];
+    dependentModules = ["session"];
 
     path = '/login';
 
@@ -46,8 +46,4 @@ class Module implements FullPageModule, SidebarModule {
 
 export function createModule(): WebModule {
     return new Module()
-}
-
-export function moduleDependencies(): string[] {
-    return ["session"];
 }

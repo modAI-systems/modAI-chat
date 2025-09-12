@@ -8,7 +8,7 @@ class Module implements SidebarModule {
     version = '1.0.0';
     description = 'User profile display in sidebar footer';
     author = 'ModAI Team';
-    dependentModules = [];
+    dependentModules = ["session"];
 
     install() {
         // Not needed
@@ -25,8 +25,4 @@ class Module implements SidebarModule {
 
 export function createModule(): WebModule {
     return new Module();
-}
-
-export function moduleDependencies(): string[] {
-    return ["session"];
 }

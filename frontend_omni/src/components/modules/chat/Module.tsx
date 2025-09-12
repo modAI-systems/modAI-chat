@@ -9,7 +9,7 @@ class Module implements RoutingModule, SidebarModule {
     version = '1.0.0';
     description = 'AI Chat interface with configurable providers and models';
     author = 'ModAI Team';
-    dependentModules = [];
+    dependentModules = ["session"];
 
     path = '/chat';
     title = "New Chat";
@@ -45,8 +45,4 @@ class Module implements RoutingModule, SidebarModule {
 
 export function createModule(): WebModule {
     return new Module()
-}
-
-export function moduleDependencies(): string[] {
-    return ["session"];
 }

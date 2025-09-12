@@ -21,7 +21,3 @@ class Module implements ContextProviderModule {
 export function createModule(): WebModule {
     return new Module()
 }
-
-export function moduleDependencies(): string[] {
-    return [];
-}

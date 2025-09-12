@@ -101,6 +101,10 @@ export class ModuleManager {
             // First register all modules
             moduleData.forEach(({ module }) => {
                 this.registerModule(module)
+            })
+
+            // Activate all modules
+            moduleData.forEach(({ module }) => {
                 this.activateModule(module.id)
             })
 
