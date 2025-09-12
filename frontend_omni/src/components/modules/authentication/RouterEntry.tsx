@@ -4,7 +4,7 @@ import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
 
 
-export function FullPageRoute() {
+export function RouterEntry() {
     return (
         <>
             <Route

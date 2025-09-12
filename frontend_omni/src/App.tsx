@@ -21,7 +21,7 @@ function ModuleContextProviders({ children }: ModuleContextProviderProps) {
   )
 }
 
-export function SidebarFullPage() {
+export function SidebarLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -34,22 +34,12 @@ export function SidebarFullPage() {
 
 function AppRoutes() {
   const modules = useModules()
-  const fullPageRouteFunctions = modules.getComponentsByName("FullPageRoute")
-  const sidebarPageRouteFunctions = modules.getComponentsByName("SidebarPageRoute")
+  const routerEntryFunctions = modules.getComponentsByName("RouterEntry")
 
   return <Routes>
-
-    {fullPageRouteFunctions.map((createRoute) => (
-      // Unfortunately I cannot treat this like a component because
-      // if I would, the Router complains that it is not of type "Route"
-      // therefor for routes I have to call the function here directly
-      // PLEASE: If you know a better way, let me know!
-      createRoute()
-    ))}
-
     {/* All other routes with sidebar layout */}
-    <Route path="/" element={<SidebarFullPage />}>
-      {sidebarPageRouteFunctions.map((createRoute) => (
+    <Route path="/" element={<SidebarLayout />}>
+      {routerEntryFunctions.map((createRoute) => (
         createRoute()
       ))}
     </Route>

@@ -1,6 +1,6 @@
 import type { ModuleMetadata } from "@/types/module";
 import { SidebarItem } from "./SidebarItem";
-import { SidebarPageRoute } from "./SidebarPageRoute";
+import { RouterEntry } from "./RouterEntry";
 
 export const Metadata: ModuleMetadata = {
     id: 'chat',
@@ -8,7 +8,7 @@ export const Metadata: ModuleMetadata = {
     description: 'AI Chat interface with configurable providers and models',
     author: 'ModAI Team',
     dependentModules: ["session"],
-    components: [SidebarItem, SidebarPageRoute]
+    components: [SidebarItem, RouterEntry]
 }
 
 export const title = "New Chat";
