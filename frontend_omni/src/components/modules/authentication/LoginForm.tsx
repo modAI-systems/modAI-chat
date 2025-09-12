@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { login } from "@/components/modules/login/services/authService"
+import { login } from "./services/authService"
+import { useSession } from "@/services/module/session/SessionProvider"
 
 interface LoginFormProps extends React.ComponentPropsWithoutRef<"div"> {
   enableForgetPassword?: boolean;
@@ -28,6 +29,7 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
+  const { refreshSession } = useSession()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,6 +38,8 @@ export function LoginForm({
 
     try {
       await login({ email, password })
+      // Refresh the session after successful login
+      await refreshSession()
       navigate("/")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")

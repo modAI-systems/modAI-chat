@@ -1,49 +1,9 @@
 import { SidebarMenuItem } from "@/components/ui/sidebar";
-import { useState, useEffect } from "react";
 import { UserDisplay } from "./UserDisplay";
-import { getCurrentUser, type User } from "@/services/userService";
+import { useSession } from "@/services/module/session/SessionProvider";
 
 export function UserDisplaySidebarItem() {
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        let isMounted = true;
-
-        const fetchUser = async () => {
-            try {
-                setIsLoading(true);
-                setError(null);
-                const userData = await getCurrentUser();
-
-                if (isMounted) {
-                    setUser(userData);
-                }
-            } catch (err) {
-                console.error('Failed to fetch user:', err);
-                if (isMounted) {
-                    setError(err instanceof Error ? err.message : 'Failed to fetch user');
-                    // Set fallback user data
-                    setUser({
-                        id: 'unknown',
-                        email: '',
-                        full_name: 'Unknown'
-                    });
-                }
-            } finally {
-                if (isMounted) {
-                    setIsLoading(false);
-                }
-            }
-        };
-
-        fetchUser();
-
-        return () => {
-            isMounted = false;
-        };
-    }, []);
+    const { session, isLoading } = useSession();
 
     if (isLoading) {
         return (
@@ -53,13 +13,15 @@ export function UserDisplaySidebarItem() {
         );
     }
 
-    if (error || !user) {
+    if (!session) {
         return (
             <SidebarMenuItem>
-                <UserDisplay username="Error loading user" userEmail="" />
+                <UserDisplay username="Not authenticated" userEmail="" />
             </SidebarMenuItem>
         );
     }
+
+    const user = session.getUser();
 
     return (
         <SidebarMenuItem>

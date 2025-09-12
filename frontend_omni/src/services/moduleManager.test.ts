@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ModuleManager } from '@/services/moduleManager'
-import type { RoutingModule, FullPageModule, SidebarModule, GenericModule } from '@/types/module'
+import type { RoutingModule, FullPageModule, SidebarModule, GenericModule, ContextProviderModule } from '@/types/module'
 
 // Mock setters for testing
 const mockSetters = {
@@ -9,6 +9,7 @@ const mockSetters = {
     setFullPageModules: vi.fn(),
     setSidebarModules: vi.fn(),
     setGenericModules: vi.fn(),
+    setContextProviderModules: vi.fn(),
 }
 
 // Mock modules for testing
@@ -43,6 +44,14 @@ const mockSidebarModule: SidebarModule = {
     dependentModules: [],
     createSidebarItem: vi.fn(),
     createSidebarFooterItem: vi.fn()
+}
+
+const mockContextProviderModule: ContextProviderModule = {
+    id: 'context-provider-module',
+    version: '1.0.0',
+    description: 'A context provider module',
+    dependentModules: [],
+    createContextProvider: vi.fn()
 }
 
 describe('ModuleManager', () => {
@@ -137,6 +146,14 @@ describe('ModuleManager', () => {
 
             expect(mockSetters.setAllModules).toHaveBeenCalledWith([mockSidebarModule])
             expect(mockSetters.setSidebarModules).toHaveBeenCalledWith([mockSidebarModule])
+        })
+
+        it('should activate a registered context provider module', () => {
+            moduleManager.registerModule(mockContextProviderModule)
+            moduleManager.activateModule(mockContextProviderModule.id)
+
+            expect(mockSetters.setAllModules).toHaveBeenCalledWith([mockContextProviderModule])
+            expect(mockSetters.setContextProviderModules).toHaveBeenCalledWith([mockContextProviderModule])
         })
 
         it('should handle activating non-existent module', () => {
