@@ -1,5 +1,5 @@
 import { type SidebarModule, type RoutingModule, type WebModule } from "@/types/module";
-import { Link, Route, useSearchParams } from "react-router-dom";
+import { Link, Route } from "react-router-dom";
 import ChatComponent from "./ChatComponent";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Plus } from "lucide-react";
@@ -18,7 +18,7 @@ class Module implements RoutingModule, SidebarModule {
         return <Route
             key={this.id}
             path={this.path}
-            element={<ChatComponentWrapper />}
+            element={<ChatComponent />}
         />
             ;
     }
@@ -37,14 +37,6 @@ class Module implements RoutingModule, SidebarModule {
     createSidebarFooterItem(): React.ReactElement | null {
         return null;
     }
-}
-
-// Wrapper component that uses the URL parameter as a key to force re-rendering
-function ChatComponentWrapper() {
-    const [searchParams] = useSearchParams();
-    const timeParam = searchParams.get('t') || '0';
-
-    return <ChatComponent key={timeParam} />;
 }
 
 export function createModule(): WebModule {
