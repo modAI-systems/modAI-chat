@@ -9,6 +9,10 @@ class Module implements ContextProviderModule {
     author = 'ModAI Team'
     dependentModules = []
 
+    install() {
+        // Not needed
+    }
+
     createContextProvider(children: React.ReactNode): React.ReactElement {
         return <SessionProvider>{children}</SessionProvider>
     }
@@ -16,4 +20,8 @@ class Module implements ContextProviderModule {
 
 export function createModule(): WebModule {
     return new Module()
+}
+
+export function moduleDependencies(): string[] {
+    return [];
 }

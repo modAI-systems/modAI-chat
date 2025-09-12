@@ -1,11 +1,12 @@
-import { type GenericModule, type FullPageModule, type RoutingModule, type SidebarModule, type WebModule, type ContextProviderModule } from '../types/module'
+import { type FullPageModule, type RoutingModule, type SidebarModule, type WebModule, type ContextProviderModule } from '../types/module'
+import { manifestLoader } from './manifestLoader'
+import type { ModuleManifest, ModuleManifestEntry } from './manifestLoader'
 
 interface ModuleSetters {
     setAllModules: (modules: WebModule[]) => void
     setRoutingModules: (modules: RoutingModule[]) => void
     setFullPageModules: (modules: FullPageModule[]) => void
     setSidebarModules: (modules: SidebarModule[]) => void
-    setGenericModules: (modules: GenericModule[]) => void
     setContextProviderModules: (modules: ContextProviderModule[]) => void
 }
 
@@ -21,10 +22,6 @@ function isSidebarModule(module: WebModule): module is SidebarModule {
     return 'createSidebarItem' in module && 'createSidebarFooterItem' in module
 }
 
-function isGenericModule(module: WebModule): module is GenericModule {
-    return 'install' in module && typeof module.install === 'function'
-}
-
 function isContextProviderModule(module: WebModule): module is ContextProviderModule {
     return 'createContextProvider' in module && typeof module.createContextProvider === 'function'
 }
@@ -37,6 +34,82 @@ export class ModuleManager {
 
     constructor(moduleSetters: ModuleSetters) {
         this.moduleSetters = moduleSetters
+    }
+
+    /**
+     * Load modules from manifest entry
+     */
+    async loadModulesFromManifest(manifest: ModuleManifest): Promise<{ module: WebModule }[]> {
+        const loadedModules: { module: WebModule }[] = []
+
+        for (const manifestEntry of manifest.modules) {
+            if (!manifestEntry.enabled) {
+                continue
+            }
+
+            try {
+                const module = await this.loadModule(manifestEntry)
+                if (module) {
+                    loadedModules.push({ module })
+                }
+            } catch (error) {
+                console.error(`Failed to load module ${manifestEntry.id}:`, error)
+            }
+        }
+
+        return loadedModules
+    }
+
+    private async loadModule(manifestEntry: ModuleManifestEntry): Promise<WebModule | null> {
+        try {
+            const moduleExports = await this.importModule(manifestEntry.path)
+
+            if (!moduleExports || typeof moduleExports.createModule !== 'function') {
+                console.warn(`Module ${manifestEntry.id} does not export a createModule function`)
+                return null
+            }
+
+            const module = moduleExports.createModule()
+
+            if (!module || typeof module !== 'object' || !module.id) {
+                console.warn(`Module ${manifestEntry.id} createModule() did not return a valid module`)
+                return null
+            }
+
+            return module
+        } catch (error) {
+            throw new Error(`Failed to load module ${manifestEntry.id}: ${error}`)
+        }
+    }
+
+    private async importModule(path: string): Promise<{ createModule?: () => WebModule }> {
+        try {
+            return await import(/* @vite-ignore */ path)
+        } catch (error) {
+            throw new Error(`Failed to import module from ${path}: ${error}`)
+        }
+    }
+
+    /**
+     * Load modules from manifest and register/activate them
+     */
+    async loadFromManifest(): Promise<void> {
+        try {
+            const manifest = await manifestLoader.loadManifest()
+            const moduleData = await this.loadModulesFromManifest(manifest)
+
+            // First register all modules
+            moduleData.forEach(({ module }) => {
+                this.registerModule(module)
+                this.activateModule(module.id)
+            })
+
+            // Always update state after loading to ensure UI reflects current state
+            this.updateSettersForAllModule()
+        } catch (error) {
+            console.error('Failed to load modules from manifest:', error)
+            throw error
+        }
     }
 
     /**
@@ -95,7 +168,7 @@ export class ModuleManager {
         }
 
         this.activeModulesById.set(moduleId, updatedModule)
-        this.moduleActivationChangedd(updatedModule)
+        this.updateSettersForSingleModule(updatedModule)
     }
 
     deactivateModule(moduleId: string): void {
@@ -107,30 +180,48 @@ export class ModuleManager {
         // First deactivate all modules that depend on this module
         this.deactivateDependentModules(moduleId);
         this.activeModulesById.delete(moduleId)
-        this.moduleActivationChangedd(updatedModule)
+
+        // Only call the specific type setter for the deactivated module
+        this.updateSettersForSingleModule(updatedModule)
     }
 
-    private moduleActivationChangedd(updatedModule: WebModule) {
+    /**
+     * Update all module setters with current state
+     */
+    private updateSettersForAllModule(): void {
         const allModules = [...this.activeModulesById.values()]
         this.moduleSetters.setAllModules(allModules)
 
-        if (isRoutingModule(updatedModule)) {
+        const routingModules = allModules.filter(isRoutingModule)
+        this.moduleSetters.setRoutingModules(routingModules)
+
+        const fullPageModules = allModules.filter(isFullPageModule)
+        this.moduleSetters.setFullPageModules(fullPageModules)
+
+        const sidebarModules = allModules.filter(isSidebarModule)
+        this.moduleSetters.setSidebarModules(sidebarModules)
+
+        const contextProviderModules = allModules.filter(isContextProviderModule)
+        this.moduleSetters.setContextProviderModules(contextProviderModules)
+    }
+
+    /**
+     * Update specific type setter for a module when activated
+     */
+    private updateSettersForSingleModule(module: WebModule): void {
+        const allModules = [...this.activeModulesById.values()]
+        this.moduleSetters.setAllModules(allModules)
+
+        if (isRoutingModule(module)) {
             const routingModules = allModules.filter(isRoutingModule)
             this.moduleSetters.setRoutingModules(routingModules)
-        }
-        if (isFullPageModule(updatedModule)) {
+        } else if (isFullPageModule(module)) {
             const fullPageModules = allModules.filter(isFullPageModule)
             this.moduleSetters.setFullPageModules(fullPageModules)
-        }
-        if (isSidebarModule(updatedModule)) {
+        } else if (isSidebarModule(module)) {
             const sidebarModules = allModules.filter(isSidebarModule)
             this.moduleSetters.setSidebarModules(sidebarModules)
-        }
-        if (isGenericModule(updatedModule)) {
-            const genericModules = allModules.filter(isGenericModule)
-            this.moduleSetters.setGenericModules(genericModules)
-        }
-        if (isContextProviderModule(updatedModule)) {
+        } else if (isContextProviderModule(module)) {
             const contextProviderModules = allModules.filter(isContextProviderModule)
             this.moduleSetters.setContextProviderModules(contextProviderModules)
         }

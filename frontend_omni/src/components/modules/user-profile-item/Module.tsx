@@ -10,6 +10,10 @@ class Module implements SidebarModule {
     author = 'ModAI Team';
     dependentModules = [];
 
+    install() {
+        // Not needed
+    }
+
     createSidebarItem(): React.ReactElement | null {
         return null; // Not needed
     }
@@ -21,4 +25,8 @@ class Module implements SidebarModule {
 
 export function createModule(): WebModule {
     return new Module();
+}
+
+export function moduleDependencies(): string[] {
+    return ["session"];
 }

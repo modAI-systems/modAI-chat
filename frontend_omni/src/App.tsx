@@ -42,7 +42,6 @@ function AppRoutes() {
 
       {/* All other routes with sidebar layout */}
       <Route path="/" element={<SidebarFullPage />}>
-        <Route index element={<Navigate to="/chat" replace />} />
         {routingModules.map((module) => (
           module.createRoute()
         ))}

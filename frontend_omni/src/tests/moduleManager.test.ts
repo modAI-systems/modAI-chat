@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ModuleManager } from '@/services/moduleManager'
-import type { RoutingModule, FullPageModule, SidebarModule, GenericModule, ContextProviderModule } from '@/types/module'
+import type { RoutingModule, FullPageModule, SidebarModule, WebModule, ContextProviderModule } from '@/types/module'
 
 // Mock setters for testing
 const mockSetters = {
@@ -8,12 +8,11 @@ const mockSetters = {
     setRoutingModules: vi.fn(),
     setFullPageModules: vi.fn(),
     setSidebarModules: vi.fn(),
-    setGenericModules: vi.fn(),
     setContextProviderModules: vi.fn(),
 }
 
 // Mock modules for testing
-const mockGenericModule: GenericModule = {
+const mockWebModule: WebModule = {
     id: 'generic-module',
     version: '1.0.0',
     description: 'A generic module',
@@ -26,6 +25,7 @@ const mockRoutingModule: RoutingModule = {
     version: '1.0.0',
     description: 'A routing module',
     dependentModules: [],
+    install: vi.fn(),
     createRoute: vi.fn()
 }
 
@@ -34,6 +34,7 @@ const mockFullPageModule: FullPageModule = {
     version: '1.0.0',
     description: 'A fullpage module',
     dependentModules: [],
+    install: vi.fn(),
     createFullPageRoute: vi.fn()
 }
 
@@ -42,6 +43,7 @@ const mockSidebarModule: SidebarModule = {
     version: '1.0.0',
     description: 'A sidebar module',
     dependentModules: [],
+    install: vi.fn(),
     createSidebarItem: vi.fn(),
     createSidebarFooterItem: vi.fn()
 }
@@ -51,6 +53,7 @@ const mockContextProviderModule: ContextProviderModule = {
     version: '1.0.0',
     description: 'A context provider module',
     dependentModules: [],
+    install: vi.fn(),
     createContextProvider: vi.fn()
 }
 
@@ -65,31 +68,31 @@ describe('ModuleManager', () => {
 
     describe('module registration', () => {
         it('should register a module', () => {
-            moduleManager.registerModule(mockGenericModule)
+            moduleManager.registerModule(mockWebModule)
 
             const allModules = moduleManager.getAllModules()
             expect(allModules).toHaveLength(1)
-            expect(allModules[0]).toBe(mockGenericModule)
+            expect(allModules[0]).toBe(mockWebModule)
         })
 
         it('should register multiple modules', () => {
-            moduleManager.registerModule(mockGenericModule)
+            moduleManager.registerModule(mockWebModule)
             moduleManager.registerModule(mockRoutingModule)
 
             const allModules = moduleManager.getAllModules()
             expect(allModules).toHaveLength(2)
-            expect(allModules).toContain(mockGenericModule)
+            expect(allModules).toContain(mockWebModule)
             expect(allModules).toContain(mockRoutingModule)
         })
 
         it('should replace module with same id when registering', () => {
-            const updatedGenericModule: GenericModule = {
-                ...mockGenericModule,
+            const updatedWebModule: WebModule = {
+                ...mockWebModule,
                 version: '2.0.0'
             }
 
-            moduleManager.registerModule(mockGenericModule)
-            moduleManager.registerModule(updatedGenericModule)
+            moduleManager.registerModule(mockWebModule)
+            moduleManager.registerModule(updatedWebModule)
 
             const allModules = moduleManager.getAllModules()
             expect(allModules).toHaveLength(1)
@@ -99,10 +102,10 @@ describe('ModuleManager', () => {
 
     describe('module unregistration', () => {
         it('should unregister a module', () => {
-            moduleManager.registerModule(mockGenericModule)
-            moduleManager.activateModule(mockGenericModule.id)
+            moduleManager.registerModule(mockWebModule)
+            moduleManager.activateModule(mockWebModule.id)
 
-            moduleManager.unregisterModule(mockGenericModule.id)
+            moduleManager.unregisterModule(mockWebModule.id)
 
             const allModules = moduleManager.getAllModules()
             expect(allModules).toHaveLength(0)
@@ -117,11 +120,11 @@ describe('ModuleManager', () => {
 
     describe('module activation', () => {
         it('should activate a registered generic module', () => {
-            moduleManager.registerModule(mockGenericModule)
-            moduleManager.activateModule(mockGenericModule.id)
+            moduleManager.registerModule(mockWebModule)
+            moduleManager.activateModule(mockWebModule.id)
 
-            expect(mockSetters.setAllModules).toHaveBeenCalledWith([mockGenericModule])
-            expect(mockSetters.setGenericModules).toHaveBeenCalledWith([mockGenericModule])
+            expect(mockSetters.setAllModules).toHaveBeenCalledWith([mockWebModule])
+            // No specific setter called for generic WebModule since we removed that concept
         })
 
         it('should activate a registered routing module', () => {
@@ -163,30 +166,30 @@ describe('ModuleManager', () => {
         })
 
         it('should activate multiple modules of different types', () => {
-            moduleManager.registerModule(mockGenericModule)
+            moduleManager.registerModule(mockWebModule)
             moduleManager.registerModule(mockRoutingModule)
 
-            moduleManager.activateModule(mockGenericModule.id)
+            moduleManager.activateModule(mockWebModule.id)
             moduleManager.activateModule(mockRoutingModule.id)
 
             // Should be called twice - once for each activation
             expect(mockSetters.setAllModules).toHaveBeenCalledTimes(2)
-            expect(mockSetters.setAllModules).toHaveBeenLastCalledWith([mockGenericModule, mockRoutingModule])
+            expect(mockSetters.setAllModules).toHaveBeenLastCalledWith([mockWebModule, mockRoutingModule])
         })
     })
 
     describe('module deactivation', () => {
         it('should deactivate an active module', () => {
-            moduleManager.registerModule(mockGenericModule)
-            moduleManager.activateModule(mockGenericModule.id)
+            moduleManager.registerModule(mockWebModule)
+            moduleManager.activateModule(mockWebModule.id)
 
             // Clear previous calls
             vi.clearAllMocks()
 
-            moduleManager.deactivateModule(mockGenericModule.id)
+            moduleManager.deactivateModule(mockWebModule.id)
 
             expect(mockSetters.setAllModules).toHaveBeenCalledWith([])
-            expect(mockSetters.setGenericModules).toHaveBeenCalledWith([])
+            // No specific setter called for generic WebModule since we removed that concept
         })
 
         it('should handle deactivating non-existent module', () => {
@@ -196,21 +199,20 @@ describe('ModuleManager', () => {
         })
 
         it('should maintain other active modules when deactivating one', () => {
-            moduleManager.registerModule(mockGenericModule)
+            moduleManager.registerModule(mockWebModule)
             moduleManager.registerModule(mockRoutingModule)
 
-            moduleManager.activateModule(mockGenericModule.id)
+            moduleManager.activateModule(mockWebModule.id)
             moduleManager.activateModule(mockRoutingModule.id)
 
             // Clear previous calls
             vi.clearAllMocks()
 
-            moduleManager.deactivateModule(mockGenericModule.id)
+            moduleManager.deactivateModule(mockWebModule.id)
 
             expect(mockSetters.setAllModules).toHaveBeenCalledWith([mockRoutingModule])
-            // Only the deactivated module type setter is called (genericModules in this case)
-            expect(mockSetters.setGenericModules).toHaveBeenCalledWith([])
-            // Routing modules setter is not called since the updated module is not a routing module
+            // No specific setters called for generic WebModule since we removed that concept
+            // Routing modules setter is not called since the deactivated module is not a routing module
             expect(mockSetters.setRoutingModules).not.toHaveBeenCalled()
         })
     })
@@ -222,15 +224,15 @@ describe('ModuleManager', () => {
         })
 
         it('should return all registered modules regardless of activation status', () => {
-            moduleManager.registerModule(mockGenericModule)
+            moduleManager.registerModule(mockWebModule)
             moduleManager.registerModule(mockRoutingModule)
 
             // Only activate one
-            moduleManager.activateModule(mockGenericModule.id)
+            moduleManager.activateModule(mockWebModule.id)
 
             const allModules = moduleManager.getAllModules()
             expect(allModules).toHaveLength(2)
-            expect(allModules).toContain(mockGenericModule)
+            expect(allModules).toContain(mockWebModule)
             expect(allModules).toContain(mockRoutingModule)
         })
     })
@@ -238,14 +240,14 @@ describe('ModuleManager', () => {
     describe('dependency management', () => {
         describe('activation with dependencies', () => {
             it('should activate module when all dependencies are active', () => {
-                const dependencyModule: GenericModule = {
+                const dependencyModule: WebModule = {
                     id: 'dependency-module',
                     version: '1.0.0',
                     dependentModules: [],
                     install: vi.fn()
                 }
 
-                const dependentModule: GenericModule = {
+                const dependentModule: WebModule = {
                     id: 'dependent-module',
                     version: '1.0.0',
                     dependentModules: ['dependency-module'],
@@ -266,14 +268,14 @@ describe('ModuleManager', () => {
             })
 
             it('should not activate module when dependencies are not active', () => {
-                const dependencyModule: GenericModule = {
+                const dependencyModule: WebModule = {
                     id: 'dependency-module',
                     version: '1.0.0',
                     dependentModules: [],
                     install: vi.fn()
                 }
 
-                const dependentModule: GenericModule = {
+                const dependentModule: WebModule = {
                     id: 'dependent-module',
                     version: '1.0.0',
                     dependentModules: ['dependency-module'],
@@ -290,7 +292,7 @@ describe('ModuleManager', () => {
             })
 
             it('should not activate module when some dependencies are missing', () => {
-                const dependentModule: GenericModule = {
+                const dependentModule: WebModule = {
                     id: 'dependent-module',
                     version: '1.0.0',
                     dependentModules: ['non-existent-dependency'],
@@ -306,21 +308,21 @@ describe('ModuleManager', () => {
             })
 
             it('should handle multiple dependencies correctly', () => {
-                const dependency1: GenericModule = {
+                const dependency1: WebModule = {
                     id: 'dependency-1',
                     version: '1.0.0',
                     dependentModules: [],
                     install: vi.fn()
                 }
 
-                const dependency2: GenericModule = {
+                const dependency2: WebModule = {
                     id: 'dependency-2',
                     version: '1.0.0',
                     dependentModules: [],
                     install: vi.fn()
                 }
 
-                const dependentModule: GenericModule = {
+                const dependentModule: WebModule = {
                     id: 'dependent-module',
                     version: '1.0.0',
                     dependentModules: ['dependency-1', 'dependency-2'],
@@ -350,14 +352,14 @@ describe('ModuleManager', () => {
 
         describe('deactivation with dependents', () => {
             it('should deactivate dependent modules when deactivating a dependency', () => {
-                const dependencyModule: GenericModule = {
+                const dependencyModule: WebModule = {
                     id: 'dependency-module',
                     version: '1.0.0',
                     dependentModules: [],
                     install: vi.fn()
                 }
 
-                const dependentModule: GenericModule = {
+                const dependentModule: WebModule = {
                     id: 'dependent-module',
                     version: '1.0.0',
                     dependentModules: ['dependency-module'],
@@ -380,21 +382,21 @@ describe('ModuleManager', () => {
             })
 
             it('should handle cascade deactivation with multiple levels', () => {
-                const baseModule: GenericModule = {
+                const baseModule: WebModule = {
                     id: 'base-module',
                     version: '1.0.0',
                     dependentModules: [],
                     install: vi.fn()
                 }
 
-                const middleModule: GenericModule = {
+                const middleModule: WebModule = {
                     id: 'middle-module',
                     version: '1.0.0',
                     dependentModules: ['base-module'],
                     install: vi.fn()
                 }
 
-                const topModule: GenericModule = {
+                const topModule: WebModule = {
                     id: 'top-module',
                     version: '1.0.0',
                     dependentModules: ['middle-module'],
@@ -419,28 +421,28 @@ describe('ModuleManager', () => {
             })
 
             it('should handle multiple dependents correctly', () => {
-                const dependencyModule: GenericModule = {
+                const dependencyModule: WebModule = {
                     id: 'dependency-module',
                     version: '1.0.0',
                     dependentModules: [],
                     install: vi.fn()
                 }
 
-                const dependent1: GenericModule = {
+                const dependent1: WebModule = {
                     id: 'dependent-1',
                     version: '1.0.0',
                     dependentModules: ['dependency-module'],
                     install: vi.fn()
                 }
 
-                const dependent2: GenericModule = {
+                const dependent2: WebModule = {
                     id: 'dependent-2',
                     version: '1.0.0',
                     dependentModules: ['dependency-module'],
                     install: vi.fn()
                 }
 
-                const independentModule: GenericModule = {
+                const independentModule: WebModule = {
                     id: 'independent-module',
                     version: '1.0.0',
                     dependentModules: [],
@@ -467,14 +469,14 @@ describe('ModuleManager', () => {
             })
 
             it('should not affect independent modules when deactivating', () => {
-                const module1: GenericModule = {
+                const module1: WebModule = {
                     id: 'module-1',
                     version: '1.0.0',
                     dependentModules: [],
                     install: vi.fn()
                 }
 
-                const module2: GenericModule = {
+                const module2: WebModule = {
                     id: 'module-2',
                     version: '1.0.0',
                     dependentModules: [],
@@ -498,28 +500,28 @@ describe('ModuleManager', () => {
 
         describe('complex dependency scenarios', () => {
             it('should handle diamond dependency pattern', () => {
-                const baseModule: GenericModule = {
+                const baseModule: WebModule = {
                     id: 'base',
                     version: '1.0.0',
                     dependentModules: [],
                     install: vi.fn()
                 }
 
-                const left: GenericModule = {
+                const left: WebModule = {
                     id: 'left',
                     version: '1.0.0',
                     dependentModules: ['base'],
                     install: vi.fn()
                 }
 
-                const right: GenericModule = {
+                const right: WebModule = {
                     id: 'right',
                     version: '1.0.0',
                     dependentModules: ['base'],
                     install: vi.fn()
                 }
 
-                const top: GenericModule = {
+                const top: WebModule = {
                     id: 'top',
                     version: '1.0.0',
                     dependentModules: ['left', 'right'],
@@ -545,14 +547,14 @@ describe('ModuleManager', () => {
             })
 
             it('should prevent activation when circular dependencies exist', () => {
-                const module1: GenericModule = {
+                const module1: WebModule = {
                     id: 'module-1',
                     version: '1.0.0',
                     dependentModules: ['module-2'],
                     install: vi.fn()
                 }
 
-                const module2: GenericModule = {
+                const module2: WebModule = {
                     id: 'module-2',
                     version: '1.0.0',
                     dependentModules: ['module-1'],

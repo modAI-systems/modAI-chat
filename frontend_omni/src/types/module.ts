@@ -8,10 +8,13 @@ export interface ModuleMetadata {
     dependentModules: string[]
 }
 
-// Marker inteface for modules that run in the web client
-export interface WebModule extends ModuleMetadata { }
+export interface ModuleExports {
+    createModule(): WebModule
+    moduleDependencies?(): string[]
+}
 
-export interface GenericModule extends WebModule {
+// Marker inteface for modules that run in the web client
+export interface WebModule extends ModuleMetadata {
     // Allows the module do some non predefined logic during installation
     // like extending some other module
     install(): void

@@ -14,6 +14,10 @@ class Module implements FullPageModule, SidebarModule {
 
     path = '/login';
 
+    install() {
+        // Not needed
+    }
+
     createFullPageRoute(): React.ReactElement {
         return (
             <>
@@ -42,4 +46,8 @@ class Module implements FullPageModule, SidebarModule {
 
 export function createModule(): WebModule {
     return new Module()
+}
+
+export function moduleDependencies(): string[] {
+    return ["session"];
 }

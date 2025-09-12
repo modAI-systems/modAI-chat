@@ -36,7 +36,6 @@ export function SessionProvider({ children }: SessionProviderProps): React.React
     const refreshSession = useCallback(async () => {
         setIsLoading(true)
         try {
-            console.log('Refreshing session...')
             // Use the session service to refresh/create a new session
             const newSession = await SessionService.refreshSession()
             setSession(newSession)

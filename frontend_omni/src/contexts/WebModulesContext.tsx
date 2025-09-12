@@ -1,16 +1,16 @@
-import React, { createContext, useContext, useState, useMemo } from 'react'
+import React, { createContext, useContext, useState, useMemo, useEffect } from 'react'
 import { ModuleManager } from '../services/moduleManager'
-import { registerBuiltInModules } from '../services/builtInModules'
-import type { WebModule, RoutingModule, FullPageModule, SidebarModule, GenericModule, ContextProviderModule } from '../types/module'
+import type { WebModule, RoutingModule, FullPageModule, SidebarModule, ContextProviderModule } from '../types/module'
 
 interface WebModulesContextType {
     allModules: WebModule[]
     routingModules: RoutingModule[]
     fullPageModules: FullPageModule[]
     sidebarModules: SidebarModule[]
-    genericModules: GenericModule[]
     contextProviderModules: ContextProviderModule[]
     moduleManager: ModuleManager
+    isLoading: boolean
+    error: string | null
 }
 
 const WebModulesContext = createContext<WebModulesContextType | undefined>(undefined)
@@ -24,31 +24,48 @@ export function WebModuleProvider({ children }: WebModuleProviderProps) {
     const [routingModules, setRoutingModules] = useState<RoutingModule[]>([])
     const [fullPageModules, setFullPageModules] = useState<FullPageModule[]>([])
     const [sidebarModules, setSidebarModules] = useState<SidebarModule[]>([])
-    const [genericModules, setGenericModules] = useState<GenericModule[]>([])
     const [contextProviderModules, setContextProviderModules] = useState<ContextProviderModule[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
     // Create module manager instance with setters
     const moduleManager = useMemo(() => {
-        const mgr = new ModuleManager({
+        return new ModuleManager({
             setAllModules,
             setRoutingModules,
             setFullPageModules,
             setSidebarModules,
-            setGenericModules,
             setContextProviderModules,
         });
-        registerBuiltInModules(mgr);
-        return mgr
     }, [])
+
+    useEffect(() => {
+        const loadModules = async () => {
+            try {
+                setIsLoading(true)
+                setError(null)
+                await moduleManager.loadFromManifest()
+            } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
+                setError(errorMessage)
+                console.error('Failed to load modules from manifest:', err)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        loadModules()
+    }, [moduleManager])
 
     const contextValue: WebModulesContextType = {
         allModules,
         routingModules,
         fullPageModules,
         sidebarModules,
-        genericModules,
         contextProviderModules,
         moduleManager,
+        isLoading,
+        error,
     }
 
     return (

@@ -1,4 +1,29 @@
 {
     "version": "1.0.0",
-    "modules": []
+    "modules": [
+        {
+            "id": "session",
+            "name": "Session Management",
+            "path": "../services/module/session/Module.tsx",
+            "enabled": true
+        },
+        {
+            "id": "chat",
+            "name": "AI Chat",
+            "path": "../components/modules/chat/Module.tsx",
+            "enabled": true
+        },
+        {
+            "id": "login",
+            "name": "Authentication",
+            "path": "../components/modules/authentication/Module.tsx",
+            "enabled": true
+        },
+        {
+            "id": "userprofileitem",
+            "name": "User Profile Item",
+            "path": "../components/modules/user-profile-item/Module.tsx",
+            "enabled": true
+        }
+    ]
 }

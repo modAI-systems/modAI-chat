@@ -63,6 +63,7 @@ class PasswordAuthenticationModule(AuthenticationModule):
         # Get user by email from user store
         user = await self.user_store.get_user_by_email(login_data.email)
         if not user:
+            self.logger.info(f"Login attempt with unknown email: {login_data.email}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password",
@@ -72,6 +73,9 @@ class PasswordAuthenticationModule(AuthenticationModule):
         # Get user credentials
         credentials = await self.user_store.get_user_credentials(user.id)
         if not credentials:
+            self.logger.info(
+                f"Credentials for user id {user.id} ({login_data.email}) not found"
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password",
@@ -81,6 +85,9 @@ class PasswordAuthenticationModule(AuthenticationModule):
         # Verify password
         password_hash = self._hash_password(login_data.password)
         if credentials.password_hash != password_hash:
+            self.logger.info(
+                f"Invalid password attempt for user id {user.id} ({login_data.email})"
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password",

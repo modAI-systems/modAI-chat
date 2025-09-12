@@ -14,6 +14,10 @@ class Module implements RoutingModule, SidebarModule {
     path = '/chat';
     title = "New Chat";
 
+    install() {
+        // Not needed
+    }
+
     createRoute(): React.ReactElement {
         return <Route
             key={this.id}
@@ -41,4 +45,8 @@ class Module implements RoutingModule, SidebarModule {
 
 export function createModule(): WebModule {
     return new Module()
+}
+
+export function moduleDependencies(): string[] {
+    return ["session"];
 }
