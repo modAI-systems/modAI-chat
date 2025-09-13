@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes } from 'react-router-dom'
 import { BrowserRouter as Router } from 'react-router-dom'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { SidebarProvider } from './components/ui/sidebar'
@@ -45,15 +45,10 @@ function RoutedSidebarLayout() {
           {routerEntryFunctions.map((createRoute) => (
             createRoute()
           ))}
-          {fallbackRoute()}
         </Routes>
       </main>
     </SidebarProvider>
   </Router>
-}
-
-function fallbackRoute() {
-  return <Route path="*" element={<Navigate to="/" replace />} />;
 }
 
 function App() {
