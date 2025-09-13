@@ -1,3 +1,5 @@
+import { useQuery } from "@tanstack/react-query"
+
 export interface ModuleManifestEntry {
     id: string
     name: string
@@ -10,32 +12,28 @@ export interface ModuleManifest {
     modules: ModuleManifestEntry[]
 }
 
-export class ManifestLoader {
-    private manifestCache: ModuleManifest | null = null
-
-    async loadManifest(): Promise<ModuleManifest> {
-        if (this.manifestCache) {
-            return this.manifestCache
-        }
-
-        try {
-            const response = await fetch('/modules/manifest.json')
-            if (!response.ok) {
-                throw new Error(`Failed to fetch manifest: ${response.statusText}`)
-            }
-
-            const manifest: ModuleManifest = await response.json()
-            this.manifestCache = manifest
-            return manifest
-        } catch (error) {
-            console.error('Failed to load module manifest:', error)
-            throw new Error('Failed to load module manifest')
-        }
+// Fetch function that can be used independently
+async function fetchManifest(): Promise<ModuleManifest> {
+    const response = await fetch('/modules/manifest.json')
+    if (!response.ok) {
+        throw new Error(`Failed to fetch manifest: ${response.statusText}`)
     }
-
-    clearCache(): void {
-        this.manifestCache = null
-    }
+    return await response.json()
 }
 
-export const manifestLoader = new ManifestLoader()
+export function useModuleManifest(): ModuleManifest {
+    const { data, error } = useQuery({
+        queryKey: ['modulesManifest'],
+        queryFn: fetchManifest,
+    })
+
+    if (error) {
+        throw new Error('Error loading module manifest:', error as Error)
+    }
+
+    if (!data) {
+        throw new Error('Module manifest data is undefined')
+    }
+
+    return data
+}

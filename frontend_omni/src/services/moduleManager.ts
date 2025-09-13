@@ -1,5 +1,5 @@
 import type { ModuleMetadata } from '@/types/module'
-import { manifestLoader, type ModuleManifestEntry } from './manifestLoader'
+import { type ModuleManifest, type ModuleManifestEntry } from './manifestLoader'
 
 export class ModuleManager {
     private registeredModules: Map<string, ModuleMetadata> = new Map()
@@ -7,24 +7,13 @@ export class ModuleManager {
     /**
      * Load modules from manifest and metadata files
      */
-    async loadFromManifest() {
-        try {
-            const manifest = await manifestLoader.loadManifest()
+    async loadModulesFromManifest(manifest: ModuleManifest) {
+        for (const manifestEntry of manifest.modules) {
+            const metadata = await this.loadModule(manifestEntry)
 
-            for (const manifestEntry of manifest.modules) {
-                try {
-                    const metadata = await this.loadModule(manifestEntry)
-
-                    if (metadata) {
-                        this.registeredModules.set(metadata.id, metadata)
-                    }
-                } catch (error) {
-                    console.error(`Failed to load module ${manifestEntry.id}:`, error)
-                }
+            if (metadata) {
+                this.registeredModules.set(metadata.id, metadata)
             }
-        } catch (error) {
-            console.error('Failed to load modules from manifest:', error)
-            throw error
         }
     }
 
@@ -32,33 +21,29 @@ export class ModuleManager {
      * Load a single module from manifest entry
      */
     private async loadModule(manifestEntry: ModuleManifestEntry): Promise<ModuleMetadata | null> {
-        try {
-            if (!manifestEntry.enabled) {
-                console.log(`Module ${manifestEntry.id} is disabled, skipping.`)
-                return null
-            }
-
-            // Load the metadata file
-            const metadataPath = `${manifestEntry.path}/Metadata.ts`
-            const metadataFile = await this.importModule(metadataPath)
-
-            if (!metadataFile || !metadataFile.Metadata) {
-                console.warn(`Module ${manifestEntry.id} does not have valid metadata`)
-                return null
-            }
-
-            // Add path to metadata
-            const metadata: ModuleMetadata = metadataFile.Metadata
-
-            if (metadata.components.length === 0) {
-                console.warn(`Module ${manifestEntry.id} has no components defined in metadata. skipping.`)
-                return null
-            }
-
-            return metadata
-        } catch (error) {
-            throw new Error(`Failed to load module ${manifestEntry.id}: ${error}`)
+        if (!manifestEntry.enabled) {
+            console.log(`Module ${manifestEntry.id} is disabled, skipping.`)
+            return null
         }
+
+        // Load the metadata file
+        const metadataPath = `${manifestEntry.path}/Metadata.ts`
+        const metadataFile = await this.importModule(metadataPath)
+
+        if (!metadataFile || !metadataFile.Metadata) {
+            console.warn(`Module ${manifestEntry.id} does not have valid metadata`, metadataFile)
+            return null
+        }
+
+        // Add path to metadata
+        const metadata: ModuleMetadata = metadataFile.Metadata
+
+        if (metadata.components.length === 0) {
+            console.warn(`Module ${manifestEntry.id} has no components defined in metadata. skipping.`)
+            return null
+        }
+
+        return metadata
     }
 
     /**
@@ -69,7 +54,8 @@ export class ModuleManager {
             const importPath = path.startsWith('../') ? path : `../${path}`
             return await import(/* @vite-ignore */ importPath)
         } catch (error) {
-            throw new Error(`Failed to import module from ${path}: ${error}`)
+            console.warn(`Failed to import module from ${path}: ${error}`)
+            return null
         }
     }
 

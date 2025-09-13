@@ -1,9 +1,21 @@
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { BrowserRouter as Router } from 'react-router-dom'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { SidebarProvider } from './components/ui/sidebar'
 import { AppSidebar } from './components/AppSidebar'
 import { ModuleManagerProvider, useModules } from './contexts/ModuleManagerContext'
+import { Suspense } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PageLoadingScreen } from './components/PageLoadingScreen'
+
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      suspense: true, // Enables Suspense for queries
+    },
+  },
+});
 
 interface ModuleContextProviderProps {
   children: React.ReactNode
@@ -21,42 +33,41 @@ function ModuleContextProviders({ children }: ModuleContextProviderProps) {
   )
 }
 
-export function SidebarLayout() {
-  return (
-    <SidebarProvider>
-      <AppSidebar />
-      <main className="min-h-screen h-screen flex-1 bg-background text-foreground">
-        <Outlet />
-      </main>
-    </SidebarProvider>
-  )
-}
-
-function AppRoutes() {
+function RoutedSidebarLayout() {
   const modules = useModules()
   const routerEntryFunctions = modules.getComponentsByName("RouterEntry")
 
-  return <Routes>
-    {/* All other routes with sidebar layout */}
-    <Route path="/" element={<SidebarLayout />}>
-      {routerEntryFunctions.map((createRoute) => (
-        createRoute()
-      ))}
-    </Route>
-    <Route path="*" element={<Navigate to="/" replace />} />
-  </Routes>
+  return <Router>
+    <SidebarProvider>
+      <AppSidebar />
+      <main className="min-h-screen h-screen flex-1 bg-background text-foreground">
+        <Routes>
+          {routerEntryFunctions.map((createRoute) => (
+            createRoute()
+          ))}
+          {fallbackRoute()}
+        </Routes>
+      </main>
+    </SidebarProvider>
+  </Router>
+}
+
+function fallbackRoute() {
+  return <Route path="*" element={<Navigate to="/" replace />} />;
 }
 
 function App() {
   return (
     <ThemeProvider>
-      <ModuleManagerProvider>
-        <ModuleContextProviders>
-          <Router>
-            <AppRoutes />
-          </Router>
-        </ModuleContextProviders>
-      </ModuleManagerProvider>
+      <QueryClientProvider client={queryClient}>
+        <Suspense fallback={<PageLoadingScreen />}>
+          <ModuleManagerProvider>
+            <ModuleContextProviders>
+              <RoutedSidebarLayout />
+            </ModuleContextProviders>
+          </ModuleManagerProvider>
+        </Suspense>
+      </QueryClientProvider>
     </ThemeProvider>
   )
 }

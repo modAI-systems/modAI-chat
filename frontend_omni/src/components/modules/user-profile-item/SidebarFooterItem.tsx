@@ -14,11 +14,7 @@ export function SidebarFooterItem() {
     }
 
     if (!session) {
-        return (
-            <SidebarMenuItem>
-                <UserDisplay username="Not authenticated" userEmail="" />
-            </SidebarMenuItem>
-        );
+        return null
     }
 
     const user = session.getUser();

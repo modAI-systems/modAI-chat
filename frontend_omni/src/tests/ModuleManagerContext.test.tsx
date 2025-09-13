@@ -76,7 +76,7 @@ describe('ModuleManagerContext', () => {
                 // Manually simulate the hook behavior outside provider
                 const mockContext = null
                 if (!mockContext) {
-                    throw new Error('useModuleManager2Context must be used within a ModuleManager2Provider')
+                    throw new Error('useModuleManagerContext must be used within a ModuleManagerProvider')
                 }
             } catch (error) {
                 errorThrown = true
@@ -84,7 +84,7 @@ describe('ModuleManagerContext', () => {
             }
 
             expect(errorThrown).toBe(true)
-            expect(errorMessage).toBe('useModuleManager2Context must be used within a ModuleManager2Provider')
+            expect(errorMessage).toBe('useModuleManagerContext must be used within a ModuleManagerProvider')
         })
     })
 
