@@ -4,6 +4,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "../../ui/tooltip"
+import { useSidebar } from "../../ui/sidebar"
 
 interface UserDisplayProps {
     username: string
@@ -11,6 +12,7 @@ interface UserDisplayProps {
 }
 
 export function UserDisplay({ username, userEmail }: UserDisplayProps) {
+    const { isMobile, state } = useSidebar()
     const userInitials = username
         .split(" ")
         .map((name) => name[0])
@@ -35,7 +37,7 @@ export function UserDisplay({ username, userEmail }: UserDisplayProps) {
                     </div>
                 </div>
             </TooltipTrigger>
-            <TooltipContent side="right">
+            <TooltipContent side="right" hidden={state !== "collapsed" || isMobile}>
                 <p>{username}</p>
             </TooltipContent>
         </Tooltip>
