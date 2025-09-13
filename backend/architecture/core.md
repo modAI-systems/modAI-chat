@@ -52,6 +52,7 @@ A module has one or more types. Each type has certain conditions and if a module
 
 - **Plain Modules**: All modules are automatically plain modules by default
 - **Web Modules**: Modules that provide a `router` attribute (APIRouter) after instantiation
+- **Persistence Modules**: Modules that inherit from the core `PersistenceModule` interface and implement `migrate_data()` method
 
 That means if a module has e.g. a `router` attribute, it will be of the type `plain module` and `web module`.
 
