@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { useSuspenseQuery } from "@tanstack/react-query"
 
 export interface ModuleManifestEntry {
     id: string
@@ -22,7 +22,7 @@ async function fetchManifest(): Promise<ModuleManifest> {
 }
 
 export function useModuleManifest(): ModuleManifest {
-    const { data, error } = useQuery({
+    const { data, error } = useSuspenseQuery({
         queryKey: ['modulesManifest'],
         queryFn: fetchManifest,
     })

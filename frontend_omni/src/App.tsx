@@ -9,13 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PageLoadingScreen } from './components/PageLoadingScreen'
 
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      suspense: true, // Enables Suspense for queries
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 interface ModuleContextProviderProps {
   children: React.ReactNode
