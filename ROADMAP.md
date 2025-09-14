@@ -12,6 +12,7 @@ This roadmap should show the direction of modAI goes.
 
 * DB Persistence for Settings
 * User Authorization
+* Multi Tenant Support
 * Chat History Support
 * Comprehensive Permission Handling
 * Chat to Document support
