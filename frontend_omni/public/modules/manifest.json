@@ -2,6 +2,11 @@
     "version": "1.0.0",
     "modules": [
         {
+            "id": "global-settings",
+            "path": "../components/modules/global-settings",
+            "enabled": true
+        },
+        {
             "id": "authentication",
             "path": "../components/modules/authentication",
             "enabled": true
