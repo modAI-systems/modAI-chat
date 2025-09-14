@@ -4,28 +4,8 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { Button } from '../../ui/button'
 import { useEventBus } from '@/hooks/useEventBus'
 import type { ToggleSidebar } from './Events'
-
-export interface ChatConfig {
-    provider: string
-    model: string
-}
-
-interface ChatConfigProps {
-    config: ChatConfig
-    onConfigChange: (config: ChatConfig) => void
-}
-
-const PROVIDERS = [
-    { value: 'open-ai', label: 'OpenAI' },
-    { value: 'anthropic', label: 'Anthropic' },
-    { value: 'ollama', label: 'Ollama' }
-]
-
-const MODELS_BY_PROVIDER: Record<string, string[]> = {
-    'open-ai': ['gpt-4o-2024-08-06', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-    'anthropic': ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
-    'ollama': ['llama2', 'mistral', 'codellama']
-}
+import { ModelSelector, type ChatConfig } from './ModelSelector'
+import { getBackendProviderString } from '@/services/providerService'
 export interface MessageData {
     id: string
     content: string
@@ -77,82 +57,13 @@ function Message({ message }: MessageProps) {
     )
 }
 
-function ChatConfig({ config, onConfigChange }: ChatConfigProps) {
-    const [isOpen, setIsOpen] = useState(false)
-
-    const handleProviderChange = (provider: string) => {
-        const models = MODELS_BY_PROVIDER[provider] || []
-        const model = models[0] || 'gpt-4o-2024-08-06'
-        onConfigChange({ provider, model })
-    }
-
-    const handleModelChange = (model: string) => {
-        onConfigChange({ ...config, model })
-    }
-
-    return (
-        <div className="relative">
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-3 py-2 text-sm bg-secondary hover:bg-secondary/80 rounded-md border border-border"
-            >
-                <span>⚙️</span>
-                <span>{config.provider} / {config.model}</span>
-                <span className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}>▼</span>
-            </button>
-
-            {isOpen && (
-                <div className="absolute top-full left-0 mt-1 w-80 bg-card border border-border rounded-md shadow-lg z-50">
-                    <div className="p-4 space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Provider</label>
-                            <select
-                                value={config.provider}
-                                onChange={(e) => handleProviderChange(e.target.value)}
-                                className="w-full px-3 py-2 bg-background border border-border rounded-md text-sm"
-                            >
-                                {PROVIDERS.map(provider => (
-                                    <option key={provider.value} value={provider.value}>
-                                        {provider.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Model</label>
-                            <select
-                                value={config.model}
-                                onChange={(e) => handleModelChange(e.target.value)}
-                                className="w-full px-3 py-2 bg-background border border-border rounded-md text-sm"
-                            >
-                                {(MODELS_BY_PROVIDER[config.provider] || []).map(model => (
-                                    <option key={model} value={model}>
-                                        {model}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <button
-                            onClick={() => setIsOpen(false)}
-                            className="w-full px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90"
-                        >
-                            Apply Settings
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
-    )
-}
-
 interface ChatAreaProps {
     messages: MessageData[]
 }
 
 interface ChatInputProps {
     onSendMessage: (message: string) => void
+    disabled?: boolean
 }
 
 function ChatArea({ messages }: ChatAreaProps) {
@@ -192,12 +103,12 @@ function ChatArea({ messages }: ChatAreaProps) {
     )
 }
 
-function ChatInput({ onSendMessage }: ChatInputProps) {
+function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
     const [message, setMessage] = useState('')
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        if (message.trim()) {
+        if (message.trim() && !disabled) {
             onSendMessage(message.trim())
             setMessage('')
         }
@@ -226,7 +137,7 @@ function ChatInput({ onSendMessage }: ChatInputProps) {
                 <Button
                     type="button"
                     onClick={handleSubmit}
-                    disabled={!message.trim()}
+                    disabled={!message.trim() || disabled}
                 >
                     Send
                 </Button>
@@ -238,8 +149,9 @@ function ChatInput({ onSendMessage }: ChatInputProps) {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Type your message..."
+                    placeholder={disabled ? "Please select a provider and model first..." : "Type your message..."}
                     className="w-full h-full bg-transparent resize-none focus:outline-none placeholder-muted-foreground"
+                    disabled={disabled}
                 />
             </div>
         </div>
@@ -250,8 +162,9 @@ function ChatComponent() {
     const [messages, setMessages] = useState<MessageData[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [config, setConfig] = useState<ChatConfig>({
-        provider: 'open-ai',
-        model: 'gpt-4o-2024-08-06'
+        providerType: 'openai',
+        providerId: '',
+        modelId: ''
     })
 
     // Sidebar state management
@@ -284,6 +197,12 @@ function ChatComponent() {
     }
 
     const handleSendMessage = async (messageContent: string) => {
+        // Validate configuration before sending
+        if (!config.providerType || !config.providerId || !config.modelId) {
+            console.error('Invalid configuration: provider and model must be selected')
+            return
+        }
+
         const userMessage: MessageData = {
             id: generateId(),
             content: messageContent,
@@ -320,8 +239,8 @@ function ChatComponent() {
             // Use streaming API
             await chatApi.sendMessageStream(
                 chatMessages,
-                config.provider,
-                config.model,
+                getBackendProviderString(config.providerType),
+                config.modelId,
                 // On chunk received
                 (chunk) => {
                     setMessages(prev => prev.map(msg =>
@@ -396,7 +315,7 @@ function ChatComponent() {
                 <div className="flex flex-col h-full max-h-screen">
                     {/* Configuration Header */}
                     <div className="flex justify-between items-center p-4 border-b border-border flex-shrink-0">
-                        <ChatConfig config={config} onConfigChange={setConfig} />
+                        <ModelSelector config={config} onConfigChange={setConfig} />
                     </div>
 
                     {/* Resizable layout for ChatArea and ChatInput */}
@@ -422,7 +341,10 @@ function ChatComponent() {
                                 )}
 
                                 <div className="flex-1">
-                                    <ChatInput onSendMessage={handleSendMessage} />
+                                    <ChatInput 
+                                        onSendMessage={handleSendMessage} 
+                                        disabled={!config.providerId || !config.modelId}
+                                    />
                                 </div>
                             </div>
                         </ResizablePanel>
