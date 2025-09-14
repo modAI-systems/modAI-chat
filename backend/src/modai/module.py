@@ -32,3 +32,7 @@ class PersistenceModule(ModaiModule, ABC):
 class ModuleDependencies:
     def __init__(self, modules: dict[str, ModaiModule] | None = None):
         self.modules = modules or {}
+
+    def get_module(self, module_name: str) -> ModaiModule | None:
+        """Get a module by name from the dependencies"""
+        return self.modules.get(module_name)

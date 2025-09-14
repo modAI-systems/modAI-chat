@@ -6,6 +6,15 @@ modules:
     config:
       openai_client:
         api_key: ${OPENAI_API_KEY}
+  llm_provider_store:
+    class: modai.modules.llm_provider_store.sql_model_llm_provider_store.SQLModelLLMProviderStore
+    config:
+      database_url: "sqlite:///./llm.db"
+      echo: false
+  openai_llm_provider:
+    class: modai.modules.llm_provider.openai_provider.OpenAIProviderModule
+    module_dependencies:
+      llm_provider_store: "llm_provider_store"
   user_store:
     class: modai.modules.user_store.sql_model_user_store.SQLModelUserStore
     config:
