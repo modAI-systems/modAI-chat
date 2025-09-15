@@ -100,8 +100,12 @@ class TestLLMProviderModule:
         provider = data["providers"][0]
         assert provider["id"] == "test-id-123"
         assert provider["name"] == "TestProvider"
-        assert provider["url"] == "https://api.openai.com/v1"
+        assert provider["base_url"] == "https://api.openai.com/v1"
         assert provider["properties"]["key"] == "value"
+        # Verify that api_key is available as a direct field
+        assert "api_key" in provider
+        # Verify that api_key is not in properties
+        assert "api_key" not in provider["properties"]
 
         # Verify the mock was called correctly
         mock_provider_store.get_providers.assert_called_once_with(
@@ -148,8 +152,12 @@ class TestLLMProviderModule:
 
         assert data["id"] == "test-id-123"
         assert data["name"] == "TestProvider"
-        assert data["url"] == "https://api.openai.com/v1"
+        assert data["base_url"] == "https://api.openai.com/v1"
         assert data["properties"]["key"] == "value"
+        # Verify that api_key is available as a direct field
+        assert "api_key" in data
+        # Verify that api_key is not in properties
+        assert "api_key" not in data["properties"]
         assert data["created_at"] == "2024-01-01T12:00:00"
         assert data["updated_at"] == "2024-01-01T12:00:00"
 
@@ -173,7 +181,8 @@ class TestLLMProviderModule:
         """Test POST /api/v1/llm-provider/openai endpoint for creating new provider"""
         request_data = {
             "name": "NewProvider",
-            "url": "https://api.new.com",
+            "base_url": "https://api.new.com",
+            "api_key": "test-api-key-123",
             "properties": {"model": "new-model", "temperature": 0.8},
         }
 
@@ -185,11 +194,21 @@ class TestLLMProviderModule:
         assert data["id"] == "test-id-123"  # From mock
         assert data["name"] == "TestProvider"  # From mock
 
-        # Verify the store was called with correct parameters
+        # Verify that api_key is available as a direct field
+        assert "api_key" in data
+        # Verify that api_key is not in properties
+        assert "api_key" not in data["properties"]
+
+        # Verify the store was called with correct parameters (including api_key in properties)
+        expected_properties = {
+            "model": "new-model",
+            "temperature": 0.8,
+            "api_key": "test-api-key-123",
+        }
         mock_provider_store.add_provider.assert_called_once_with(
             name="NewProvider",
             url="https://api.new.com",
-            properties={"model": "new-model", "temperature": 0.8},
+            properties=expected_properties,
         )
 
     def test_create_provider_validation_error(
@@ -202,7 +221,8 @@ class TestLLMProviderModule:
 
         request_data = {
             "name": "DuplicateName",
-            "url": "https://api.test.com",
+            "base_url": "https://api.test.com",
+            "api_key": "test-api-key",
             "properties": {},
         }
 
@@ -216,13 +236,22 @@ class TestLLMProviderModule:
         """Test POST /api/v1/llm-provider/openai with missing required fields"""
         # Missing name
         response = test_client.post(
-            "/api/v1/llm-provider/openai", json={"url": "https://api.test.com"}
+            "/api/v1/llm-provider/openai",
+            json={"base_url": "https://api.test.com", "api_key": "test-key"},
         )
         assert response.status_code == 422
 
-        # Missing url
+        # Missing base_url
         response = test_client.post(
-            "/api/v1/llm-provider/openai", json={"name": "TestProvider"}
+            "/api/v1/llm-provider/openai",
+            json={"name": "TestProvider", "api_key": "test-key"},
+        )
+        assert response.status_code == 422
+
+        # Missing api_key
+        response = test_client.post(
+            "/api/v1/llm-provider/openai",
+            json={"name": "TestProvider", "base_url": "https://api.test.com"},
         )
         assert response.status_code == 422
 
@@ -232,7 +261,8 @@ class TestLLMProviderModule:
         """Test PUT /api/v1/llm-provider/openai/{provider_id} endpoint for updating existing provider"""
         request_data = {
             "name": "UpdatedProvider",
-            "url": "https://api.updated.com",
+            "base_url": "https://api.updated.com",
+            "api_key": "updated-api-key",
             "properties": {"model": "updated-model"},
         }
 
@@ -244,13 +274,19 @@ class TestLLMProviderModule:
         data = response.json()
 
         assert data["id"] == "test-id-123"  # From mock return
+        
+        # Verify that api_key is available as a direct field
+        assert "api_key" in data
+        # Verify that api_key is not in properties
+        assert "api_key" not in data["properties"]
 
-        # Verify the store was called with correct parameters
+        # Verify the store was called with correct parameters (including api_key in properties)
+        expected_properties = {"model": "updated-model", "api_key": "updated-api-key"}
         mock_provider_store.update_provider.assert_called_once_with(
             provider_id="existing-id",
             name="UpdatedProvider",
             url="https://api.updated.com",
-            properties={"model": "updated-model"},
+            properties=expected_properties,
         )
 
     def test_update_provider_not_found(
@@ -261,7 +297,8 @@ class TestLLMProviderModule:
 
         request_data = {
             "name": "UpdatedName",
-            "url": "https://api.updated.com",
+            "base_url": "https://api.updated.com",
+            "api_key": "updated-api-key",
             "properties": {},
         }
         response = test_client.put(
@@ -318,7 +355,8 @@ class TestLLMProviderModule:
 
         request_data = {
             "name": "ComplexProvider",
-            "url": "https://api.complex.com",
+            "base_url": "https://api.complex.com",
+            "api_key": "complex-api-key",
             "properties": complex_properties,
         }
 
@@ -326,11 +364,13 @@ class TestLLMProviderModule:
 
         assert response.status_code == 201
 
-        # Verify complex properties were passed correctly
+        # Verify complex properties and api_key were passed correctly
+        expected_properties = complex_properties.copy()
+        expected_properties["api_key"] = "complex-api-key"
         mock_provider_store.add_provider.assert_called_once_with(
             name="ComplexProvider",
             url="https://api.complex.com",
-            properties=complex_properties,
+            properties=expected_properties,
         )
 
     @pytest.mark.skipif(

@@ -16,17 +16,19 @@ class LLMProviderResponse(BaseModel):
 
     id: str
     name: str
-    url: str
+    base_url: str
+    api_key: str
     properties: dict[str, Any]
     created_at: str | None
     updated_at: str | None
 
 
-class LLMProviderRequest(BaseModel):
+class LLMProviderCreateRequest(BaseModel):
     """Request model for creating or updating LLM Provider"""
 
     name: str
-    url: str
+    base_url: str
+    api_key: str
     properties: dict[str, Any] = {}
 
 
@@ -154,7 +156,7 @@ class LLMProviderModule(ModaiModule, ABC):
 
     @abstractmethod
     async def create_provider(
-        self, request: LLMProviderRequest
+        self, request: LLMProviderCreateRequest
     ) -> LLMProviderResponse:
         """
         Create a new LLM provider.
@@ -172,7 +174,7 @@ class LLMProviderModule(ModaiModule, ABC):
 
     @abstractmethod
     async def update_provider(
-        self, provider_id: str, request: LLMProviderRequest
+        self, provider_id: str, request: LLMProviderCreateRequest
     ) -> LLMProviderResponse:
         """
         Update an existing LLM provider.

@@ -11,12 +11,12 @@ from modai.module import ModuleDependencies
 from modai.modules.llm_provider.module import (
     LLMProviderModule,
     LLMProviderResponse,
-    LLMProviderRequest,
+    LLMProviderCreateRequest,
     LLMProvidersListResponse,
     LargeLanguageModel,
     LargeLanguageModelResponse,
 )
-from modai.modules.llm_provider_store.module import LLMProviderStore
+from modai.modules.llm_provider_store.module import LLMProviderStore, LLMProvider
 
 
 class OpenAIProviderModule(LLMProviderModule):
@@ -52,15 +52,7 @@ class OpenAIProviderModule(LLMProviderModule):
 
         # Convert to response models
         provider_responses = [
-            LLMProviderResponse(
-                id=p.id,
-                name=p.name,
-                url=p.url,
-                properties=p.properties,
-                created_at=p.created_at.isoformat() if p.created_at else None,
-                updated_at=p.updated_at.isoformat() if p.updated_at else None,
-            )
-            for p in providers
+            self._create_provider_response(p) for p in providers
         ]
 
         return LLMProvidersListResponse(
@@ -79,41 +71,23 @@ class OpenAIProviderModule(LLMProviderModule):
                 detail=f"Provider with ID '{provider_id}' not found",
             )
 
-        return LLMProviderResponse(
-            id=provider.id,
-            name=provider.name,
-            url=provider.url,
-            properties=provider.properties,
-            created_at=(
-                provider.created_at.isoformat() if provider.created_at else None
-            ),
-            updated_at=(
-                provider.updated_at.isoformat() if provider.updated_at else None
-            ),
-        )
+        return self._create_provider_response(provider)
 
     async def create_provider(
-        self, request: LLMProviderRequest
+        self, request: LLMProviderCreateRequest
     ) -> LLMProviderResponse:
         """Create a new LLM provider"""
         try:
+            # Prepare properties with api_key included
+            properties = request.properties.copy()
+            properties["api_key"] = request.api_key
+
             # Create new provider
             provider = await self.provider_store.add_provider(
-                name=request.name, url=request.url, properties=request.properties
+                name=request.name, url=request.base_url, properties=properties
             )
 
-            return LLMProviderResponse(
-                id=provider.id,
-                name=provider.name,
-                url=provider.url,
-                properties=provider.properties,
-                created_at=(
-                    provider.created_at.isoformat() if provider.created_at else None
-                ),
-                updated_at=(
-                    provider.updated_at.isoformat() if provider.updated_at else None
-                ),
-            )
+            return self._create_provider_response(provider)
         except ValueError as e:
             # Handle validation errors (like duplicate names) as 400 Bad Request
             raise HTTPException(status_code=400, detail=str(e))
@@ -122,16 +96,20 @@ class OpenAIProviderModule(LLMProviderModule):
             raise
 
     async def update_provider(
-        self, provider_id: str, request: LLMProviderRequest
+        self, provider_id: str, request: LLMProviderCreateRequest
     ) -> LLMProviderResponse:
         """Update an existing LLM provider"""
         try:
+            # Prepare properties with api_key included
+            properties = request.properties.copy()
+            properties["api_key"] = request.api_key
+
             # Update existing provider
             provider = await self.provider_store.update_provider(
                 provider_id=provider_id,
                 name=request.name,
-                url=request.url,
-                properties=request.properties,
+                url=request.base_url,
+                properties=properties,
             )
             if not provider:
                 raise HTTPException(
@@ -139,18 +117,7 @@ class OpenAIProviderModule(LLMProviderModule):
                     detail=f"Provider with ID '{provider_id}' not found",
                 )
 
-            return LLMProviderResponse(
-                id=provider.id,
-                name=provider.name,
-                url=provider.url,
-                properties=provider.properties,
-                created_at=(
-                    provider.created_at.isoformat() if provider.created_at else None
-                ),
-                updated_at=(
-                    provider.updated_at.isoformat() if provider.updated_at else None
-                ),
-            )
+            return self._create_provider_response(provider)
         except ValueError as e:
             # Handle validation errors (like duplicate names) as 400 Bad Request
             raise HTTPException(status_code=400, detail=str(e))
@@ -256,3 +223,21 @@ class OpenAIProviderModule(LLMProviderModule):
         await self.provider_store.delete_provider(provider_id)
         # Return 204 No Content for successful deletion (idempotent)
         return None
+
+    def _create_provider_response(self, provider: LLMProvider) -> LLMProviderResponse:
+        """Create a LLMProviderResponse from a provider object"""
+        return LLMProviderResponse(
+            id=provider.id,
+            name=provider.name,
+            base_url=provider.url,
+            api_key=provider.properties.get("api_key", ""),
+            properties=self._delete_key(provider.properties, "api_key"),
+            created_at=provider.created_at.isoformat() if provider.created_at else None,
+            updated_at=provider.updated_at.isoformat() if provider.updated_at else None,
+        )
+
+    def _delete_key(self, properties: dict[str, Any], key: str) -> dict[str, Any]:
+        """Delete a key from properties and return the cleaned properties"""
+        cleaned_properties = properties.copy()
+        cleaned_properties.pop(key, None)
+        return cleaned_properties
