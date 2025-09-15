@@ -26,3 +26,4 @@ This roadmap should show the direction of modAI goes.
 * Docs: User Manual
 * Docs: Technical Manual
 * Audit Log for Adminstrative and sensitive Operations
+* Auto Model support (choose the right model for the job e.g. vision, text, ...)
