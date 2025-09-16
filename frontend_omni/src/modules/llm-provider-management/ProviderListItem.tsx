@@ -1,13 +1,6 @@
-import type { LLMProvider } from '@/moduleif/llmProviderService'
+import type { ProviderListItemProps } from '@/moduleif/llmProviderManagement'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-
-interface ProviderListItemProps {
-    provider: LLMProvider
-    onEdit: (provider: LLMProvider) => void
-    onDelete: (provider: LLMProvider) => void
-    isLoading?: boolean
-}
 
 export function ProviderListItem({ provider, onEdit, onDelete, isLoading = false }: ProviderListItemProps) {
     const handleEdit = () => {

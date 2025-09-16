@@ -27,6 +27,11 @@
             "enabled": true
         },
         {
+            "id": "llm-provider-management",
+            "path": "../modules/llm-provider-management",
+            "enabled": true
+        },
+        {
             "id": "chat",
             "path": "../modules/chat",
             "enabled": true

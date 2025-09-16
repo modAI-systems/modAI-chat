@@ -190,12 +190,20 @@ class LLMProviderService implements IProviderService {
      * Legacy method: Get OpenAI providers (for backward compatibility)
      */
     async getLegacyProviders(): Promise<LLMProvider[]> {
-        const response = await this.getProviders('openai')
-        return response.providers.map(provider => ({
+        const response = await fetch('/api/v1/llm-provider/openai')
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch legacy providers: ${response.status} ${response.statusText}`)
+        }
+
+        const data = await response.json()
+
+        // The backend already returns data in the LLMProvider format
+        return data.providers.map((provider: any) => ({
             id: provider.id,
             name: provider.name,
-            base_url: provider.url,
-            api_key: provider.properties.api_key || '',
+            base_url: provider.base_url,
+            api_key: provider.api_key,
             created_at: provider.created_at || '',
             updated_at: provider.updated_at || ''
         }))

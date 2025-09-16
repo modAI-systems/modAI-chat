@@ -10,15 +10,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { type ProviderTypeGroup } from '@/moduleif/llmProviderService'
 import { Settings } from 'lucide-react'
-import type { SelectedModel } from '@/moduleif/llmPicker'
-
-interface ModelSelectorProps {
-    initialModel: SelectedModel
-    setSelectedModel: (config: SelectedModel) => void
-    providerTypes: ProviderTypeGroup[]
-}
+import type { ModelSelectorProps, SelectedModel, ProviderTypeGroup } from '@/moduleif/llmPicker'
 
 // Display logic functions
 const useDisplayText = (

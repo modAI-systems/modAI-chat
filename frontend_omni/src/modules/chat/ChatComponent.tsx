@@ -172,8 +172,9 @@ function ChatComponent() {
 
     // Provider data state
     const [providerTypes, setProviderTypes] = useState<ProviderTypeGroup[]>([])
-    const [providersLoading, setProvidersLoading] = useState(true)
-    const [providersError, setProvidersError] = useState<string | null>(null)
+    // Note: Loading and error states for providers could be used in UI for better UX
+    // const [providersLoading, setProvidersLoading] = useState(true)
+    // const [providersError, setProvidersError] = useState<string | null>(null)
 
     // Sidebar state management
     const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -187,15 +188,15 @@ function ChatComponent() {
 
     const loadProviders = async () => {
         try {
-            setProvidersLoading(true)
-            setProvidersError(null)
+            // setProvidersLoading(true)
+            // setProvidersError(null)
             const data = await llmProviderService.getAllProvidersWithModels()
             setProviderTypes(data)
         } catch (err) {
             console.error('Failed to load providers:', err)
-            setProvidersError('Failed to load providers. Please try again.')
+            // setProvidersError('Failed to load providers. Please try again.')
         } finally {
-            setProvidersLoading(false)
+            // setProvidersLoading(false)
         }
     }
 
