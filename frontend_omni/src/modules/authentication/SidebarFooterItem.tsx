@@ -1,5 +1,5 @@
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
-import { useSession } from "@/services/modules/session/ContextProvider";
+import { useSession } from "@/modules/session/ContextProvider";
 import { LogOut, LogIn, UserPlus } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { logout } from "./services/authService";

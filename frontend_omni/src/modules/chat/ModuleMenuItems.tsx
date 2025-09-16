@@ -2,7 +2,7 @@ import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Metadata, path, title } from "./Metadata";
-import { useSession } from "@/services/modules/session/ContextProvider";
+import { useSession } from "@/modules/session/ContextProvider";
 
 export function SidebarItem() {
     const { session } = useSession();

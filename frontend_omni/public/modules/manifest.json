@@ -3,32 +3,32 @@
     "modules": [
         {
             "id": "global-settings",
-            "path": "../components/modules/global-settings",
+            "path": "../modules/global-settings",
             "enabled": true
         },
         {
             "id": "authentication",
-            "path": "../components/modules/authentication",
+            "path": "../modules/authentication",
             "enabled": true
         },
         {
             "id": "chat",
-            "path": "../components/modules/chat",
+            "path": "../modules/chat",
             "enabled": true
         },
         {
             "id": "llm_picker",
-            "path": "../components/modules/llm_picker",
+            "path": "../modules/llm_picker",
             "enabled": true
         },
         {
             "id": "userprofileitem",
-            "path": "../components/modules/user-profile-item",
+            "path": "../modules/user-profile-item",
             "enabled": true
         },
         {
             "id": "session",
-            "path": "../services/modules/session",
+            "path": "../modules/session",
             "enabled": true
         }
     ]

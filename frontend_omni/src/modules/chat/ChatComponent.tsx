@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { chatApi, type ChatMessage } from './chatApiService'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
-import { Button } from '../../ui/button'
+import { Button } from '@/components/ui/button'
 import { useEventBus } from '@/hooks/useEventBus'
 import type { ToggleSidebar } from './Events'
 import type { SelectedModel } from '../llm_picker/ModuleContract'

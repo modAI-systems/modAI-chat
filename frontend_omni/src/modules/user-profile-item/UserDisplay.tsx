@@ -1,10 +1,10 @@
-import { Avatar, AvatarFallback } from "../../ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from "../../ui/tooltip"
-import { useSidebar } from "../../ui/sidebar"
+} from "@/components/ui/tooltip"
+import { useSidebar } from "@/components/ui/sidebar"
 
 interface UserDisplayProps {
     username: string

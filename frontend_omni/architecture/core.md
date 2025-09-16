@@ -54,8 +54,7 @@ flowchart TD
 
 The frontend uses a hierarchical module system where modules can depend on and extend each other:
 
-- **UI Modules**: Located in `src/components/modules/[module-name]/`
-- **Service Modules**: Located in `src/services/modules/[module-name]/`
+- **All Modules**: Located in `src/modules/[module-name]/`
 - **Module Manifest**: Global registry at `public/modules/manifest.json`
 - **Module Metadata**: Each module contains `Metadata.ts` defining its contract
 
@@ -64,7 +63,7 @@ The frontend uses a hierarchical module system where modules can depend on and e
 Each module must follow this standardized structure:
 
 ```
-src/components/modules/[module-name]/
+src/modules/[module-name]/
 ├── Metadata.ts          # Required: Module definition and component registry
 ├── [ComponentName].tsx  # Module components
 └── ...                  # Additional module files
@@ -250,7 +249,7 @@ Consumer modules import and use the hooks provided by the provider module. This 
 
 ```typescript
 // Consuming module imports and uses the hook
-import { useSession } from "@/services/modules/session/ContextProvider";
+import { useSession } from "@/modules/session/ContextProvider";
 
 export function SomeComponent() {
     const { session } = useSession();
@@ -336,7 +335,7 @@ dependentModules: ["session", "auth"]
 ### 9.1 Simple UI Module
 
 ```typescript
-// src/components/modules/chat/Metadata.ts
+// src/modules/chat/Metadata.ts
 export const Metadata: ModuleMetadata = {
     id: 'chat',
     version: '1.0.0',
@@ -371,7 +370,7 @@ export function RouterEntry() {
 ### 9.2 Service-Only Module
 
 ```typescript
-// src/services/modules/session/Metadata.ts
+// src/modules/session/Metadata.ts
 export const Metadata: ModuleMetadata = {
     id: 'session',
     version: '1.0.0',
@@ -401,12 +400,12 @@ The global module registry defines which modules are loaded:
     "modules": [
         {
             "id": "global-settings",
-            "path": "../components/modules/global-settings",
+            "path": "../modules/global-settings",
             "enabled": true
         },
         {
             "id": "session",
-            "path": "../services/modules/session",
+            "path": "../modules/session",
             "enabled": true
         }
     ]
@@ -414,7 +413,7 @@ The global module registry defines which modules are loaded:
 ```
 
 - **Selective Loading**: Modules can be enabled/disabled via manifest
-- **Dynamic Paths**: Supports both component and service module locations
+- **Dynamic Paths**: All modules are located under the `modules` directory
 - **Version Control**: Manifest versioning for deployment management
 
 ## 11. Design Decisions and Trade-offs
@@ -433,7 +432,7 @@ The global module registry defines which modules are loaded:
 
 ### 12.1 Creating New Modules
 
-1. **Create Module Directory**: `src/components/modules/[module-name]/` or `src/services/modules/[module-name]/`
+1. **Create Module Directory**: `src/modules/[module-name]/`
 2. **Define Metadata**: Export `ModuleMetadata` object with unique ID and component registry
 3. **Implement Components**: Create components for desired integration points
 4. **Register in Manifest**: Add module entry to `public/modules/manifest.json`
