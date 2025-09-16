@@ -6,8 +6,8 @@ import { useEventBus } from '@/hooks/useEventBus'
 import type { ToggleSidebar } from './Events'
 import type { SelectedModel } from '@/moduleif/llmPicker'
 import type { ProviderTypeGroup } from '@/moduleif/llmProviderService'
-import { ModelSelector } from '../llm-picker/ModelSelector'
 import { llmProviderService } from '../llm-provider-service/LLMProviderService'
+import { useModules } from '@/contexts/ModuleManagerContext'
 
 export interface MessageData {
     id: string
@@ -162,6 +162,7 @@ function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
 }
 
 function ChatComponent() {
+    const modules = useModules()
     const [messages, setMessages] = useState<MessageData[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [selectedModel, setSelectedModel] = useState<SelectedModel>({
@@ -169,6 +170,9 @@ function ChatComponent() {
         providerId: '',
         modelId: ''
     })
+
+    const modelPickers = modules.getComponentsByName("ModelPicker")
+    const ModelPicker = modelPickers.length > 0 ? modelPickers[0] : null;
 
     // Provider data state
     const [providerTypes, setProviderTypes] = useState<ProviderTypeGroup[]>([])
@@ -342,12 +346,15 @@ function ChatComponent() {
             <ResizablePanel>
                 <div className="flex flex-col h-full max-h-screen">
                     {/* Configuration Header */}
+
                     <div className="flex justify-between items-center p-4 border-b border-border flex-shrink-0">
-                        <ModelSelector
-                            initialModel={selectedModel}
-                            setSelectedModel={setSelectedModel}
-                            providerTypes={providerTypes}
-                        />
+                        {ModelPicker && (
+                            <ModelPicker
+                                initialModel={selectedModel}
+                                setSelectedModel={setSelectedModel}
+                                providerTypes={providerTypes}
+                            />
+                        )}
                     </div>
 
                     {/* Resizable layout for ChatArea and ChatInput */}

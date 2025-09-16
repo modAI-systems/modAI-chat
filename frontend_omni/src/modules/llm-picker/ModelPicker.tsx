@@ -11,7 +11,8 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Settings } from 'lucide-react'
-import type { ModelSelectorProps, SelectedModel, ProviderTypeGroup } from '@/moduleif/llmPicker'
+import type { ModelSelectorProps, SelectedModel } from '@/moduleif/llmPicker'
+import type { ProviderTypeGroup } from '@/moduleif/llmProviderService'
 
 // Display logic functions
 const useDisplayText = (
@@ -107,7 +108,7 @@ const useModelSelectionHandlers = (
     }
 }
 
-export function ModelSelector({ initialModel, setSelectedModel, providerTypes }: ModelSelectorProps) {
+export function ModelPicker({ initialModel, setSelectedModel, providerTypes }: ModelSelectorProps) {
     const [isOpen, setIsOpen] = useState(false)
 
     const {
