@@ -7,7 +7,7 @@ import { useSession } from "@/services/modules/session/ContextProvider";
 export function SidebarFooterItem() {
     const { session } = useSession();
     const location = useLocation();
-    const isActive = location.pathname === path;
+    const isActive = location.pathname.startsWith(path);
 
     if (!session) {
         return null; // Don't render the item if the user is not authenticated

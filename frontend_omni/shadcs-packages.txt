@@ -2,3 +2,6 @@ button
 collapsible
 sidebar
 resizable
+select
+alert-dialog
+tabs

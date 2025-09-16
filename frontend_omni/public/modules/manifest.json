@@ -17,6 +17,11 @@
             "enabled": true
         },
         {
+            "id": "llm_picker",
+            "path": "../components/modules/llm_picker",
+            "enabled": true
+        },
+        {
             "id": "userprofileitem",
             "path": "../components/modules/user-profile-item",
             "enabled": true

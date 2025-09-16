@@ -7,6 +7,7 @@ import { ModuleManagerProvider, useModules } from './contexts/ModuleManagerConte
 import { Suspense } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PageLoadingScreen } from './components/PageLoadingScreen'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 
 const queryClient = new QueryClient();
@@ -35,11 +36,13 @@ function RoutedSidebarLayout() {
     <SidebarProvider>
       <AppSidebar />
       <main className="min-h-screen h-screen flex-1 bg-background text-foreground">
-        <Routes>
-          {routerEntryFunctions.map((createRoute) => (
-            createRoute()
-          ))}
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            {routerEntryFunctions.map((createRoute) => (
+              createRoute()
+            ))}
+          </Routes>
+        </ErrorBoundary>
       </main>
     </SidebarProvider>
   </Router>
