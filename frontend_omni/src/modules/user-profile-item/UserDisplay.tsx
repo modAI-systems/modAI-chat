@@ -5,11 +5,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useSidebar } from "@/components/ui/sidebar"
-
-interface UserDisplayProps {
-    username: string
-    userEmail: string
-}
+import type { UserDisplayProps } from "@/moduleif/userProfileItem"
 
 export function UserDisplay({ username, userEmail }: UserDisplayProps) {
     const { isMobile, state } = useSidebar()
