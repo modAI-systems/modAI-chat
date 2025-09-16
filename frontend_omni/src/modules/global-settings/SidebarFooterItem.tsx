@@ -2,7 +2,7 @@ import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Settings } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Metadata, path, title } from "./Metadata";
-import { useSession } from "@/modules/session/ContextProvider";
+import { useSession } from "@/moduleif/sessionContext";
 
 export function SidebarFooterItem() {
     const { session } = useSession();

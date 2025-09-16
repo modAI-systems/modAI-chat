@@ -52,24 +52,80 @@ flowchart TD
 
 ### 4.1 Module Organization
 
-The frontend uses a hierarchical module system where modules can depend on and extend each other:
+The frontend uses a hierarchical module system with clear separation between interfaces and implementations:
 
-- **All Modules**: Located in `src/modules/[module-name]/`
+- **Module Interfaces**: Located in `src/moduleif/[module-name].ts` - Single file defining contracts and data structures
+- **Module Implementations**: Located in `src/modules/[module-name]/` - Concrete implementations of module interfaces
 - **Module Manifest**: Global registry at `public/modules/manifest.json`
 - **Module Metadata**: Each module contains `Metadata.ts` defining its contract
 
-### 4.2 Module Structure
+### 4.2 Module Architecture Pattern
 
-Each module must follow this standardized structure:
+The system follows a strict interface-implementation separation:
+
+```
+src/
+├── moduleif/               # Module interfaces and contracts
+│   ├── [module-name].ts    # Single file containing all interfaces, types, and contracts
+│   └── [another-module].ts
+└── modules/                # Module implementations
+    └── [module-name]/
+        ├── Metadata.ts     # Required: Module definition and component registry
+        ├── [ComponentName].tsx # Module components
+        └── ...             # Additional implementation files
+```
+
+### 4.3 Interface-Implementation Principles
+
+- **Interface Dependency**: Modules only import from `moduleif/` files, never directly from other `modules/` folders
+- **Contract Definition**: All data structures, types, and service contracts are defined in `moduleif/`
+- **Implementation Isolation**: Concrete implementations in `modules/` can be swapped without affecting dependent modules
+- **Multiple Implementations**: One interface can have multiple implementations (e.g., different chat providers)
+
+### 4.4 Module Structure
+
+Each module interface is defined in a single file:
+
+```
+src/moduleif/[module-name].ts    # Single file containing:
+                                 # - Data structures and interfaces
+                                 # - Service contracts and abstractions
+                                 # - Type definitions and enums
+                                 # - Hook declarations
+```
+
+Each module implementation must follow this standardized structure:
 
 ```
 src/modules/[module-name]/
 ├── Metadata.ts          # Required: Module definition and component registry
 ├── [ComponentName].tsx  # Module components
-└── ...                  # Additional module files
+└── ...                 # Additional implementation files
 ```
 
-### 4.3 Module Metadata Contract
+### 4.5 Import Guidelines
+
+**Correct Import Patterns:**
+```typescript
+// ✅ Import interfaces from moduleif
+import { SessionData, SessionService } from "@/moduleif/session";
+import { ChatMessage, ChatProvider } from "@/moduleif/chat";
+
+// ✅ Import hooks and utilities from same module
+import { useLocalState } from "./hooks";
+```
+
+**Incorrect Import Patterns:**
+```typescript
+// ❌ Never import directly from other modules
+import { SessionProvider } from "@/modules/session/SessionProvider";
+import { ChatComponent } from "@/modules/chat/ChatComponent";
+
+// ❌ Never import implementation details
+import { SQLiteSessionStore } from "@/modules/session/stores/SQLiteSessionStore";
+```
+
+### 4.6 Module Metadata Contract
 
 Every module must export a `Metadata` object conforming to the `ModuleMetadata` interface:
 
@@ -84,7 +140,7 @@ export interface ModuleMetadata {
 }
 ```
 
-### 4.4 Component Registration
+### 4.7 Component Registration
 
 Modules register components that can be discovered and used by other modules or the core application:
 
@@ -245,11 +301,11 @@ export function useSession() {
 
 #### 6.4.2 Consumer Module
 
-Consumer modules import and use the hooks provided by the provider module. This creates an import dependency - the consuming module must import hooks from the provider module, which means the provider module must be loaded for the consuming module to work properly.
+Consumer modules import and use the interfaces and types from the provider module's interface definition, not the implementation. This creates a dependency on the interface, allowing for flexible implementations.
 
 ```typescript
-// Consuming module imports and uses the hook
-import { useSession } from "@/modules/session/ContextProvider";
+// Consuming module imports from moduleif
+import { SessionData, useSession } from "@/moduleif/session";
 
 export function SomeComponent() {
     const { session } = useSession();
@@ -260,6 +316,15 @@ export function SomeComponent() {
 
     return <div>Welcome, {session.user.name}!</div>;
 }
+```
+
+**Interface-Based Dependencies**: Consuming modules depend on interface definitions, not implementations:
+
+```typescript
+// src/moduleif/session.ts
+...
+// Hook interface - implementation provided by module
+export declare function useSession(): SessionContextType;
 ```
 
 **Dependency Management**: Consuming modules must declare their dependency on provider modules in their metadata:
@@ -332,10 +397,46 @@ dependentModules: ["session", "auth"]
 
 ## 9. Example Module Implementations
 
-### 9.1 Simple UI Module
+### 9.1 Interface Definition Example
+
+```typescript
+// src/moduleif/chat.ts - Single file containing all chat-related interfaces
+export interface ChatMessage {
+    id: string;
+    content: string;
+    timestamp: Date;
+    role: 'user' | 'assistant';
+}
+
+export interface ChatSession {
+    id: string;
+    title: string;
+    messages: ChatMessage[];
+    createdAt: Date;
+}
+
+export interface ChatProvider {
+    sendMessage(content: string, sessionId: string): Promise<ChatMessage>;
+    createSession(): Promise<ChatSession>;
+    getSession(id: string): Promise<ChatSession | null>;
+}
+
+export interface ChatContextType {
+    currentSession: ChatSession | null;
+    sessions: ChatSession[];
+    sendMessage: (content: string) => Promise<void>;
+    createNewSession: () => Promise<void>;
+}
+
+export declare function useChat(): ChatContextType;
+```
+
+### 9.2 Simple UI Module Implementation
 
 ```typescript
 // src/modules/chat/Metadata.ts
+import { SidebarItem, RouterEntry } from './components';
+
 export const Metadata: ModuleMetadata = {
     id: 'chat',
     version: '1.0.0',
@@ -345,7 +446,9 @@ export const Metadata: ModuleMetadata = {
     components: [SidebarItem, RouterEntry]
 }
 
-// SidebarItem provides main navigation
+// src/modules/chat/components/SidebarItem.tsx
+import { ChatMessage } from "@/moduleif/chat"; // ✅ Import from interface
+
 export function SidebarItem() {
     return (
         <SidebarMenuItem>
@@ -359,7 +462,7 @@ export function SidebarItem() {
     );
 }
 
-// RouterEntry provides main routing
+// src/modules/chat/components/RouterEntry.tsx
 export function RouterEntry() {
     return (
         <Route path="/chat" element={<ChatComponent />} />
@@ -367,9 +470,37 @@ export function RouterEntry() {
 }
 ```
 
-### 9.2 Service-Only Module
+### 9.3 Service-Only Module Implementation
 
 ```typescript
+// src/moduleif/session.ts - Single interface file
+export interface SessionData {
+    user: {
+        id: string;
+        name: string;
+        email: string;
+    };
+    isAuthenticated: boolean;
+}
+
+export interface SessionContextType {
+    session: SessionData | null;
+    isLoading: boolean;
+    refreshSession: () => Promise<void>;
+    clearSession: () => void;
+}
+
+export declare function useSession(): SessionContextType;
+
+// Export the actual hook implementation
+export function useSession(): SessionContextType {
+    const context = useContext(SessionContext);
+    if (!context) {
+        throw new Error('useSession must be used within SessionProvider');
+    }
+    return context;
+}
+
 // src/modules/session/Metadata.ts
 export const Metadata: ModuleMetadata = {
     id: 'session',
@@ -380,13 +511,46 @@ export const Metadata: ModuleMetadata = {
     components: [ContextProvider]
 }
 
-// Provides session state to entire application
+// src/modules/session/ContextProvider.tsx
+import { SessionData, SessionContextType } from "@/moduleif/session";
+
 export function ContextProvider({ children }: { children: React.ReactNode }) {
+    const [session, setSession] = useState<SessionData | null>(null);
+    // Implementation details...
+
     return (
-        <SessionProvider>
+        <SessionContext value={contextValue}>
             {children}
-        </SessionProvider>
+        </SessionContext>
     );
+}
+```
+
+### 9.4 Multiple Implementation Example
+
+```typescript
+// src/moduleif/chat.ts - Single interface
+export interface ChatProvider {
+    sendMessage(content: string): Promise<ChatMessage>;
+    // ... other methods
+}
+
+// src/modules/chat-openai/OpenAIChatProvider.ts - Implementation 1
+import { ChatProvider } from "@/moduleif/chat";
+
+export class OpenAIChatProvider implements ChatProvider {
+    async sendMessage(content: string): Promise<ChatMessage> {
+        // OpenAI implementation
+    }
+}
+
+// src/modules/chat-anthropic/AnthropicChatProvider.ts - Implementation 2
+import { ChatProvider } from "@/moduleif/chat";
+
+export class AnthropicChatProvider implements ChatProvider {
+    async sendMessage(content: string): Promise<ChatMessage> {
+        // Anthropic implementation
+    }
 }
 ```
 
@@ -432,23 +596,30 @@ The global module registry defines which modules are loaded:
 
 ### 12.1 Creating New Modules
 
-1. **Create Module Directory**: `src/modules/[module-name]/`
-2. **Define Metadata**: Export `ModuleMetadata` object with unique ID and component registry
-3. **Implement Components**: Create components for desired integration points
-4. **Register in Manifest**: Add module entry to `public/modules/manifest.json`
-5. **Test Integration**: Verify components appear in appropriate UI locations
+1. **Define Module Interface**: Create `src/moduleif/[module-name].ts` with all types, contracts, and declarations
+2. **Create Module Directory**: `src/modules/[module-name]/`
+3. **Define Metadata**: Export `ModuleMetadata` object with unique ID and component registry
+4. **Implement Components**: Create components for desired integration points, importing only from `moduleif/`
+5. **Register in Manifest**: Add module entry to `public/modules/manifest.json`
+6. **Test Integration**: Verify components appear in appropriate UI locations
 
 ### 12.2 Extending Existing Modules
 
-1. **Identify Extension Points**: Find module that accepts extension components (e.g., `GlobalSettings*`)
-2. **Implement Extension Components**: Create components following parent module's naming pattern
-3. **Register Components**: Add extension components to your module's metadata
-4. **Verify Integration**: Ensure components appear in parent module's UI
+1. **Study Interface**: Review existing module interfaces in `src/moduleif/[module-name].ts`
+2. **Identify Extension Points**: Find module that accepts extension components (e.g., `GlobalSettings*`)
+3. **Implement Extension Components**: Create components following parent module's naming pattern
+4. **Use Interface Dependencies**: Import only from `moduleif/` files, never from `modules/`
+5. **Register Components**: Add extension components to your module's metadata
+6. **Verify Integration**: Ensure components appear in parent module's UI
 
 ### 12.3 Best Practices
 
+- **Interface First**: Always define interfaces in `moduleif/` before implementing in `modules/`
+- **Import Discipline**: Never import directly from other `modules/` folders - use `moduleif/` files only
 - **Component Naming**: Use descriptive, consistent names following established patterns
 - **Dependency Declaration**: Always declare dependent modules in metadata
+- **Type Safety**: Define comprehensive TypeScript interfaces for all data structures
 - **Error Handling**: Components should gracefully handle missing dependencies
 - **Authentication**: Check session state in components that require authentication
 - **Responsive Design**: Follow established UI patterns and responsive design principles
+- **Interface Stability**: Keep interfaces stable - breaking changes affect all dependent modules

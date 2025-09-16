@@ -1,26 +1,6 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { Session } from './Session'
+import React, { useEffect, useState, useCallback } from 'react'
 import { SessionService } from './sessionService'
-
-interface SessionContextType {
-    session: Session | null
-    isLoading: boolean
-    refreshSession: () => Promise<void>
-    clearSession: () => void
-}
-
-const SessionContext = createContext<SessionContextType | undefined>(undefined)
-
-/**
- * Hook to use the session context
- */
-export function useSession(): SessionContextType {
-    const context = useContext(SessionContext)
-    if (context === undefined) {
-        throw new Error('useSession must be used within a SessionProvider')
-    }
-    return context
-}
+import { Session, SessionContext, type SessionContextType } from '@/moduleif/sessionContext'
 
 interface SessionProviderProps {
     children: React.ReactNode
@@ -65,8 +45,8 @@ export function ContextProvider({ children }: SessionProviderProps): React.React
     }
 
     return (
-        <SessionContext.Provider value={contextValue}>
+        <SessionContext value={contextValue}>
             {children}
-        </SessionContext.Provider>
+        </SessionContext>
     )
 }

@@ -1,5 +1,5 @@
+import { Session } from '@/moduleif/sessionContext'
 import { getCurrentUser } from '@/services/userService'
-import { Session } from './Session'
 
 /**
  * Service for session-related operations

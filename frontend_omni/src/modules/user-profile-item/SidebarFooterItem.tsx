@@ -1,6 +1,6 @@
 import { SidebarMenuItem } from "@/components/ui/sidebar";
 import { UserDisplay } from "./UserDisplay";
-import { useSession } from "@/modules/session/ContextProvider";
+import { useSession } from "@/moduleif/sessionContext";
 
 export function SidebarFooterItem() {
     const { session, isLoading } = useSession();
