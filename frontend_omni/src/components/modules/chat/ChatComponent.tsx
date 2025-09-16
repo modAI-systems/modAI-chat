@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { chatApi, type ChatMessage } from './services/chatApi'
+import { chatApi, type ChatMessage } from './chatApiService'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { Button } from '../../ui/button'
 import { useEventBus } from '@/hooks/useEventBus'
 import type { ToggleSidebar } from './Events'
-import { ModelSelector, type ChatConfig } from './ModelSelector'
-import { getBackendProviderString } from '@/services/providerService'
+import type { SelectedModel } from '../llm_picker/ModuleContract'
+import { ModelSelector } from '../llm_picker/ModelSelector'
+
 export interface MessageData {
     id: string
     content: string
@@ -161,7 +162,7 @@ function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
 function ChatComponent() {
     const [messages, setMessages] = useState<MessageData[]>([])
     const [isLoading, setIsLoading] = useState(false)
-    const [config, setConfig] = useState<ChatConfig>({
+    const [config, setConfig] = useState<SelectedModel>({
         providerType: 'openai',
         providerId: '',
         modelId: ''
@@ -239,7 +240,7 @@ function ChatComponent() {
             // Use streaming API
             await chatApi.sendMessageStream(
                 chatMessages,
-                getBackendProviderString(config.providerType),
+                config.providerType,
                 config.modelId,
                 // On chunk received
                 (chunk) => {
@@ -341,8 +342,8 @@ function ChatComponent() {
                                 )}
 
                                 <div className="flex-1">
-                                    <ChatInput 
-                                        onSendMessage={handleSendMessage} 
+                                    <ChatInput
+                                        onSendMessage={handleSendMessage}
                                         disabled={!config.providerId || !config.modelId}
                                     />
                                 </div>

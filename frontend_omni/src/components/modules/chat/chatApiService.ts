@@ -56,8 +56,8 @@ export class ChatApiService {
 
     async sendMessageStream(
         messages: ChatMessage[],
-        provider: string = 'open-ai',
-        model: string = 'gpt-4o-2024-08-06',
+        provider: string,
+        model: string,
         onChunk: (chunk: StreamChunk) => void,
         onError: (error: string) => void,
         onComplete: () => void
