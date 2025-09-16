@@ -556,7 +556,15 @@ export class AnthropicChatProvider implements ChatProvider {
 
 ## 10. Module Manifest Configuration
 
-The global module registry defines which modules are loaded:
+### 10.1 Overview and Purpose
+
+The module manifest (`public/modules/manifest.json`) is the **central registry** that controls which modules are loaded by the frontend application. This file serves as the authoritative source for module discovery and is **critical for the module system to function**.
+
+**⚠️ CRITICAL REQUIREMENT**: Every module **MUST** be registered in the `manifest.json` file to be loaded by the application. Modules not listed in the manifest will be completely ignored, regardless of their implementation quality or placement in the modules directory.
+
+### 10.2 Manifest File Structure
+
+The manifest follows a strict JSON schema:
 
 ```json
 {
@@ -576,9 +584,130 @@ The global module registry defines which modules are loaded:
 }
 ```
 
-- **Selective Loading**: Modules can be enabled/disabled via manifest
-- **Dynamic Paths**: All modules are located under the `modules` directory
-- **Version Control**: Manifest versioning for deployment management
+### 10.3 Manifest Schema Definition
+
+#### 10.3.1 Root Level Properties
+
+- **`version`** (string, required): Semantic version of the manifest schema itself
+  - Used for manifest compatibility checking and deployment management
+  - Format: "MAJOR.MINOR.PATCH" (e.g., "1.0.0")
+
+- **`modules`** (array, required): Array of module registration objects
+  - Contains all modules that should be considered for loading
+  - Order in array may affect loading sequence
+
+#### 10.3.2 Module Registration Properties
+
+Each module entry **must** contain the following properties:
+
+- **`id`** (string, required): Unique module identifier
+  - Must match the `id` field in the module's `Metadata.ts` file
+  - Used for dependency resolution and module references
+  - Convention: kebab-case (e.g., "llm-provider-service")
+  - Must be unique across all modules
+
+- **`path`** (string, required): Relative path to the module directory
+  - Path is relative to the `src/` directory
+  - Convention: "../modules/[module-directory-name]"
+  - Must point to a directory containing a valid `Metadata.ts` file
+
+- **`enabled`** (boolean, required): Whether the module should be loaded
+  - `true`: Module will be loaded and its components registered
+  - `false`: Module will be ignored during application startup
+  - Allows for easy feature toggling without removing module entries
+
+### 10.4 Module Loading Process
+
+The manifest drives the entire module loading lifecycle:
+
+1. **Manifest Parsing**: Application fetches and parses `public/modules/manifest.json`
+2. **Filtering**: Only modules with `"enabled": true` are considered for loading
+3. **Path Resolution**: Each enabled module's path is resolved relative to `src/`
+4. **Metadata Import**: Dynamic import of `[module-path]/Metadata.ts`
+5. **Validation**: Verify module ID matches between manifest and metadata
+6. **Component Registration**: Register all components from module metadata
+7. **Dependency Resolution**: Process declared module dependencies (future feature)
+
+### 10.5 Manifest Management Best Practices
+
+#### 10.5.1 Adding New Modules
+
+When creating a new module, you **MUST**:
+
+1. **Create the module implementation** in `src/modules/[module-name]/`
+2. **Define the module metadata** in `src/modules/[module-name]/Metadata.ts`
+3. **Register in manifest** by adding an entry to `public/modules/manifest.json`
+4. **Verify the ID match** between manifest entry and metadata export
+
+```json
+// Example: Adding a new "notifications" module
+{
+    "id": "notifications",
+    "path": "../modules/notifications",
+    "enabled": true
+}
+```
+
+#### 10.5.2 Module ID Consistency
+
+The module `id` must be consistent across:
+- Manifest entry (`manifest.json`)
+- Module metadata (`Metadata.ts`)
+- Directory naming convention (recommended)
+
+```typescript
+// src/modules/notifications/Metadata.ts
+export const Metadata: ModuleMetadata = {
+    id: 'notifications', // Must match manifest.json
+    version: '1.0.0',
+    // ...
+}
+```
+
+#### 10.5.3 Feature Toggling
+
+Use the `enabled` flag for feature management:
+
+```json
+{
+    "id": "experimental-feature",
+    "path": "../modules/experimental-feature",
+    "enabled": false // Disable for production
+}
+```
+
+### 10.6 Error Handling and Debugging
+
+#### 10.6.1 Common Manifest Issues
+
+- **Module Not Loading**: Check if module is listed in manifest with `"enabled": true`
+- **Path Resolution Errors**: Verify the `path` points to correct module directory
+- **ID Mismatch**: Ensure manifest `id` matches the `id` in module's `Metadata.ts`
+- **Invalid JSON**: Use a JSON validator to check manifest syntax
+
+### 10.7 Deployment Considerations
+
+#### 10.7.1 Environment-Specific Manifests
+
+Different environments may require different module configurations:
+
+```json
+// Development manifest - includes debug modules
+{
+    "version": "1.0.0",
+    "modules": [
+        {"id": "debug-tools", "path": "../modules/debug-tools", "enabled": true}
+    ]
+}
+
+// Production manifest - excludes debug modules
+{
+    "version": "1.0.0",
+    "modules": [
+        {"id": "debug-tools", "path": "../modules/debug-tools", "enabled": false}
+    ]
+}
+```
 
 ## 11. Design Decisions and Trade-offs
 
