@@ -7,7 +7,7 @@ export const Metadata: ModuleMetadata = {
     version: '1.0.0',
     description: 'AI Chat interface with configurable providers and models',
     author: 'ModAI Team',
-    dependentModules: ["session", "llm_picker"],
+    dependentModules: ["session", "llm-picker", "llm-provider-service"],
     components: [SidebarItem, RouterEntry]
 }
 

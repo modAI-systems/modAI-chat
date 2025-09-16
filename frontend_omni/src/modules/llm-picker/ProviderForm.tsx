@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import type { LLMProvider, CreateProviderRequest, UpdateProviderRequest } from './providerService'
+import type { LLMProvider, CreateLegacyProviderRequest, UpdateLegacyProviderRequest } from '@/moduleif/llmProviderService'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 interface ProviderFormProps {
     provider?: LLMProvider
-    onSubmit: (data: CreateProviderRequest | UpdateProviderRequest) => void
+    onSubmit: (data: CreateLegacyProviderRequest | UpdateLegacyProviderRequest) => void
     isLoading?: boolean
 }
 

@@ -4,8 +4,10 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { Button } from '@/components/ui/button'
 import { useEventBus } from '@/hooks/useEventBus'
 import type { ToggleSidebar } from './Events'
-import type { SelectedModel } from '../llm_picker/ModuleContract'
-import { ModelSelector } from '../llm_picker/ModelSelector'
+import type { SelectedModel } from '@/moduleif/llmPicker'
+import type { ProviderTypeGroup } from '@/moduleif/llmProviderService'
+import { ModelSelector } from '../llm-picker/ModelSelector'
+import { llmProviderService } from '../llm-provider-service/LLMProviderService'
 
 export interface MessageData {
     id: string
@@ -162,16 +164,40 @@ function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
 function ChatComponent() {
     const [messages, setMessages] = useState<MessageData[]>([])
     const [isLoading, setIsLoading] = useState(false)
-    const [config, setConfig] = useState<SelectedModel>({
+    const [selectedModel, setSelectedModel] = useState<SelectedModel>({
         providerType: 'openai',
         providerId: '',
         modelId: ''
     })
 
+    // Provider data state
+    const [providerTypes, setProviderTypes] = useState<ProviderTypeGroup[]>([])
+    const [providersLoading, setProvidersLoading] = useState(true)
+    const [providersError, setProvidersError] = useState<string | null>(null)
+
     // Sidebar state management
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [activeSidebarId, setActiveSidebarId] = useState<string | null>(null)
     const [ActiveSidebarComponent, setActiveSidebarComponent] = useState<React.ComponentType<unknown> | null>(null)
+
+    // Load providers on component mount
+    useEffect(() => {
+        loadProviders()
+    }, [])
+
+    const loadProviders = async () => {
+        try {
+            setProvidersLoading(true)
+            setProvidersError(null)
+            const data = await llmProviderService.getAllProvidersWithModels()
+            setProviderTypes(data)
+        } catch (err) {
+            console.error('Failed to load providers:', err)
+            setProvidersError('Failed to load providers. Please try again.')
+        } finally {
+            setProvidersLoading(false)
+        }
+    }
 
     useEventBus<ToggleSidebar>('toggleSidebar', (notification) => {
         // If the sidebar is not open, open it with the provided component
@@ -199,7 +225,7 @@ function ChatComponent() {
 
     const handleSendMessage = async (messageContent: string) => {
         // Validate configuration before sending
-        if (!config.providerType || !config.providerId || !config.modelId) {
+        if (!selectedModel.providerType || !selectedModel.providerId || !selectedModel.modelId) {
             console.error('Invalid configuration: provider and model must be selected')
             return
         }
@@ -240,8 +266,8 @@ function ChatComponent() {
             // Use streaming API
             await chatApi.sendMessageStream(
                 chatMessages,
-                config.providerType,
-                config.modelId,
+                selectedModel.providerType,
+                selectedModel.modelId,
                 // On chunk received
                 (chunk) => {
                     setMessages(prev => prev.map(msg =>
@@ -316,7 +342,11 @@ function ChatComponent() {
                 <div className="flex flex-col h-full max-h-screen">
                     {/* Configuration Header */}
                     <div className="flex justify-between items-center p-4 border-b border-border flex-shrink-0">
-                        <ModelSelector config={config} onConfigChange={setConfig} />
+                        <ModelSelector
+                            initialModel={selectedModel}
+                            setSelectedModel={setSelectedModel}
+                            providerTypes={providerTypes}
+                        />
                     </div>
 
                     {/* Resizable layout for ChatArea and ChatInput */}
@@ -344,7 +374,7 @@ function ChatComponent() {
                                 <div className="flex-1">
                                     <ChatInput
                                         onSendMessage={handleSendMessage}
-                                        disabled={!config.providerId || !config.modelId}
+                                        disabled={!selectedModel.providerId || !selectedModel.modelId}
                                     />
                                 </div>
                             </div>

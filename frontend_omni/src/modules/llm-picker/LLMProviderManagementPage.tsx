@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { ProviderSection } from './ProviderSection'
 import { ProviderListItem } from './ProviderListItem'
 import { ProviderForm } from './ProviderForm'
-import { type LLMProvider, type CreateProviderRequest, type UpdateProviderRequest, getProviders, deleteProvider, createProvider, updateProvider } from './providerService'
+import { type LLMProvider, type CreateLegacyProviderRequest, type UpdateLegacyProviderRequest } from '@/moduleif/llmProviderService'
+import { getProviders, deleteProvider, createProvider, updateProvider } from '../llm-provider-service/LLMProviderService'
 import { Button } from '@/components/ui/button'
 import {
     AlertDialog,
@@ -230,7 +231,7 @@ export function LLMProviderManagementPage() {
         }
     }
 
-    const handleFormSubmit = async (data: CreateProviderRequest | UpdateProviderRequest) => {
+    const handleFormSubmit = async (data: CreateLegacyProviderRequest | UpdateLegacyProviderRequest) => {
         try {
             setSaving(true)
             setError(null)

@@ -1,78 +1,30 @@
 /**
- * Service for fetching LLM providers and models from the backend API
+ * LLM Provider Service
+ *
+ * Service for interacting with the backend REST API for LLM providers and models.
+ * This service handles all HTTP requests and provides a clean interface for
+ * managing providers and models across different provider types.
  */
 
-export interface Provider {
-    id: string
-    name: string
-    url: string
-    properties: Record<string, any>
-    created_at: string | null
-    updated_at: string | null
-}
-
-export interface ProvidersResponse {
-    providers: Provider[]
-    total: number
-    limit: number | null
-    offset: number | null
-}
-
-export interface Model {
-    id: string
-    name: string
-    description: string
-    context_length: number
-    supports_streaming: boolean
-    supports_functions: boolean
-}
-
-export interface ModelsResponse {
-    provider_id: string
-    models: Model[]
-}
-
-export interface ProviderType {
-    value: string
-    label: string
-}
+import type {
+    Provider,
+    ProvidersResponse,
+    ModelsResponse,
+    ProviderType,
+    ProviderTypeGroup,
+    CreateProviderRequest,
+    UpdateProviderRequest,
+    ApiErrorResponse,
+    LLMProvider,
+    CreateLegacyProviderRequest,
+    UpdateLegacyProviderRequest,
+    ProviderService as IProviderService
+} from "@/moduleif/llmProviderService"
 
 // Provider type mapping - maps to backend provider types
 export const PROVIDER_TYPES: ProviderType[] = [
     { value: 'openai', label: 'OpenAI' }
 ] as const
-
-// Legacy interfaces for backward compatibility
-export interface LLMProvider {
-    id: string
-    name: string
-    base_url: string
-    api_key: string
-    created_at: string
-    updated_at: string
-}
-
-export interface CreateProviderRequest {
-    name: string
-    base_url: string
-    api_key: string
-}
-
-export interface UpdateProviderRequest {
-    name: string
-    base_url: string
-    api_key: string
-}
-
-export interface ProvidersListResponse {
-    providers: LLMProvider[]
-}
-
-export interface ApiErrorResponse {
-    message: string
-    error_code: string
-    details?: Record<string, any>
-}
 
 async function handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
@@ -96,7 +48,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
     return await response.json()
 }
 
-class ProviderService {
+class LLMProviderService implements IProviderService {
     /**
      * Get all providers for a specific provider type
      */
@@ -142,11 +94,7 @@ class ProviderService {
     /**
      * Get all available provider types with their configured providers
      */
-    async getAllProvidersWithModels(): Promise<Array<{
-        type: ProviderType
-        label: string
-        providers: Array<Provider & { models?: Model[] }>
-    }>> {
+    async getAllProvidersWithModels(): Promise<ProviderTypeGroup[]> {
         const result = []
 
         for (const providerType of PROVIDER_TYPES) {
@@ -190,11 +138,7 @@ class ProviderService {
      */
     async createProvider(
         providerType: ProviderType | string,
-        data: {
-            name: string
-            url: string
-            properties: Record<string, any>
-        }
+        data: CreateProviderRequest
     ): Promise<Provider> {
         const typeValue = typeof providerType === 'string' ? providerType : providerType.value
         const response = await fetch(`/api/v1/llm-provider/${typeValue}`, {
@@ -214,11 +158,7 @@ class ProviderService {
     async updateProvider(
         providerType: ProviderType | string,
         providerId: string,
-        data: {
-            name: string
-            url: string
-            properties: Record<string, any>
-        }
+        data: UpdateProviderRequest
     ): Promise<Provider> {
         const typeValue = typeof providerType === 'string' ? providerType : providerType.value
         const response = await fetch(`/api/v1/llm-provider/${typeValue}/${providerId}`, {
@@ -264,7 +204,7 @@ class ProviderService {
     /**
      * Legacy method: Create OpenAI provider (for backward compatibility)
      */
-    async createLegacyProvider(provider: CreateProviderRequest): Promise<LLMProvider> {
+    async createLegacyProvider(provider: CreateLegacyProviderRequest): Promise<LLMProvider> {
         const result = await this.createProvider('openai', {
             name: provider.name,
             url: provider.base_url,
@@ -284,7 +224,7 @@ class ProviderService {
     /**
      * Legacy method: Update OpenAI provider (for backward compatibility)
      */
-    async updateLegacyProvider(providerId: string, provider: UpdateProviderRequest): Promise<LLMProvider> {
+    async updateLegacyProvider(providerId: string, provider: UpdateLegacyProviderRequest): Promise<LLMProvider> {
         const result = await this.updateProvider('openai', providerId, {
             name: provider.name,
             url: provider.base_url,
@@ -309,21 +249,21 @@ class ProviderService {
     }
 }
 
-export const providerService = new ProviderService()
+export const llmProviderService = new LLMProviderService()
 
 // Legacy functional API for backward compatibility
 export async function getProviders(): Promise<LLMProvider[]> {
-    return await providerService.getLegacyProviders()
+    return await llmProviderService.getLegacyProviders()
 }
 
-export async function createProvider(provider: CreateProviderRequest): Promise<LLMProvider> {
-    return await providerService.createLegacyProvider(provider)
+export async function createProvider(provider: CreateLegacyProviderRequest): Promise<LLMProvider> {
+    return await llmProviderService.createLegacyProvider(provider)
 }
 
-export async function updateProvider(providerId: string, provider: UpdateProviderRequest): Promise<LLMProvider> {
-    return await providerService.updateLegacyProvider(providerId, provider)
+export async function updateProvider(providerId: string, provider: UpdateLegacyProviderRequest): Promise<LLMProvider> {
+    return await llmProviderService.updateLegacyProvider(providerId, provider)
 }
 
 export async function deleteProvider(providerId: string): Promise<void> {
-    await providerService.deleteLegacyProvider(providerId)
+    await llmProviderService.deleteLegacyProvider(providerId)
 }

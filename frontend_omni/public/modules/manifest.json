@@ -2,6 +2,16 @@
     "version": "1.0.0",
     "modules": [
         {
+            "id": "session",
+            "path": "../modules/session",
+            "enabled": true
+        },
+        {
+            "id": "llm-provider-service",
+            "path": "../modules/llm-provider-service",
+            "enabled": true
+        },
+        {
             "id": "global-settings",
             "path": "../modules/global-settings",
             "enabled": true
@@ -12,23 +22,18 @@
             "enabled": true
         },
         {
+            "id": "llm-picker",
+            "path": "../modules/llm-picker",
+            "enabled": true
+        },
+        {
             "id": "chat",
             "path": "../modules/chat",
             "enabled": true
         },
         {
-            "id": "llm_picker",
-            "path": "../modules/llm_picker",
-            "enabled": true
-        },
-        {
             "id": "userprofileitem",
             "path": "../modules/user-profile-item",
-            "enabled": true
-        },
-        {
-            "id": "session",
-            "path": "../modules/session",
             "enabled": true
         }
     ]

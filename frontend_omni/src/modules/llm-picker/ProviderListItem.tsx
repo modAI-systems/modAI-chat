@@ -1,4 +1,4 @@
-import type { LLMProvider } from './providerService'
+import type { LLMProvider } from '@/moduleif/llmProviderService'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
