@@ -1,38 +1,20 @@
-export interface ChatMessage {
-    role: 'user' | 'assistant'
-    content: string
-}
+import type {
+    ChatApiService as ChatApiServiceInterface,
+    ChatMessage,
+    ChatRequest,
+    ChatResponse,
+    StreamChunk
+} from "@/moduleif/chatApiService";
 
-export interface ChatRequest {
-    provider: string
-    model: string
-    input: ChatMessage[]
-}
-
-export interface ChatResponseOutput {
-    text: string
-    type: string
-}
-
-export interface ChatResponse {
-    output: ChatResponseOutput[]
-    id: string
-    model: string
-    role: string
-    usage: {
-        input_tokens: number
-        output_tokens: number
-    }
-}
-
-export interface StreamChunk {
-    content: string
-    model: string
-    type: string
-}
-
-export class ChatApiService {
-    async sendMessage(messages: ChatMessage[], provider: string = 'open-ai', model: string = 'gpt-4o-2024-08-06'): Promise<ChatResponse> {
+/**
+ * HTTP-based implementation of the ChatApiService interface
+ */
+export class ChatApiService implements ChatApiServiceInterface {
+    async sendMessage(
+        messages: ChatMessage[],
+        provider: string = 'open-ai',
+        model: string = 'gpt-4o-2024-08-06'
+    ): Promise<ChatResponse> {
         const request: ChatRequest = {
             provider,
             model,
@@ -127,5 +109,3 @@ export class ChatApiService {
         }
     }
 }
-
-export const chatApi = new ChatApiService()

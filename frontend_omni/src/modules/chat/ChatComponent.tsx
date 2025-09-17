@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { chatApi, type ChatMessage } from './chatApiService'
+import type { ChatMessage } from '@/moduleif/chatApiService'
+import { useChatApiService } from '@/moduleif/chatApiService'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { Button } from '@/components/ui/button'
 import { useEventBus } from '@/hooks/useEventBus'
@@ -164,6 +165,7 @@ function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
 function ChatComponent() {
     const modules = useModules()
     const llmProviderService = useLLMProviderService()
+    const { chatApiService } = useChatApiService()
     const [messages, setMessages] = useState<MessageData[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [selectedModel, setSelectedModel] = useState<SelectedModel>({
@@ -270,7 +272,7 @@ function ChatComponent() {
             }))
 
             // Use streaming API
-            await chatApi.sendMessageStream(
+            await chatApiService.sendMessageStream(
                 chatMessages,
                 selectedModel.providerType,
                 selectedModel.modelId,

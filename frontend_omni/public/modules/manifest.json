@@ -37,6 +37,11 @@
             "enabled": true
         },
         {
+            "id": "chat-api-service",
+            "path": "../modules/chat-api-service",
+            "enabled": true
+        },
+        {
             "id": "chat",
             "path": "../modules/chat",
             "enabled": true
