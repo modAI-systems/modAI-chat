@@ -263,6 +263,67 @@ export function SidebarFooterItem() {
 - **Integration**: Core app chains all `ContextProvider` components around the main app
 - **When to create**: Create this component and register it in the Metadata if the module needs to make state or services available throughout the entire application. This is essential for modules that provide shared services like authentication, session management, or global configuration that other modules depend on.
 
+#### 6.4.1 Service Provider Pattern
+
+For modules that provide services (like authentication, LLM provider management, etc.), follow this standardized pattern:
+
+**1. Interface Definition**: Define the service contract in `src/moduleif/[service-name].ts`
+```typescript
+// Example: src/moduleif/authenticationService.ts
+export interface AuthService {
+    login(credentials: LoginRequest): Promise<LoginResponse>;
+    signup(credentials: SignupRequest): Promise<SignupResponse>;
+    logout(): Promise<LoginResponse>;
+}
+
+// Export the hook that will be provided by the implementation
+export { useAuthService } from "../modules/authentication-service/ContextProvider";
+```
+
+**2. Service Implementation**: Create the concrete service class in `src/modules/[service-module]/[ServiceName].ts`
+```typescript
+// Example: src/modules/authentication-service/AuthenticationService.ts
+export class AuthenticationService implements AuthService {
+    async login(credentials: LoginRequest): Promise<LoginResponse> {
+        // Implementation
+    }
+    // ... other methods
+}
+```
+
+**3. Context Provider**: Create a React context provider in `src/modules/[service-module]/ContextProvider.tsx`
+```typescript
+// Example: src/modules/authentication-service/ContextProvider.tsx
+const AuthServiceContext = createContext<AuthService | undefined>(undefined);
+
+export function ContextProvider({ children }: { children: React.ReactNode }) {
+    const authServiceInstance = new AuthenticationService();
+    return (
+        <AuthServiceContext value={authServiceInstance}>
+            {children}
+        </AuthServiceContext>
+    );
+}
+
+export function useAuthService(): AuthService {
+    const context = useContext(AuthServiceContext);
+    if (!context) {
+        throw new Error('useAuthService must be used within an AuthServiceProvider');
+    }
+    return context;
+}
+```
+
+**4. Module Registration**: Register the `ContextProvider` in the module's `Metadata.ts`
+```typescript
+// Example: src/modules/authentication-service/Metadata.ts
+export const Metadata: ModuleMetadata = {
+    id: 'authentication-service',
+    // ...
+    components: [ContextProvider]
+}
+```
+
 #### 6.4.1 Provider Module
 
 The provider module wants to make some state available throughout the application.It creates and exports the context provider and associated hooks:
@@ -526,7 +587,59 @@ export function ContextProvider({ children }: { children: React.ReactNode }) {
 }
 ```
 
-### 9.4 Multiple Implementation Example
+### 9.4 Service Module Implementation Example
+
+For modules that primarily provide services (like authentication, LLM provider management, etc.), follow this pattern:
+
+```typescript
+// src/moduleif/authenticationService.ts - Interface definition
+export interface AuthService {
+    login(credentials: LoginRequest): Promise<LoginResponse>;
+    signup(credentials: SignupRequest): Promise<SignupResponse>;
+    logout(): Promise<LoginResponse>;
+}
+
+// Export the hook - implementation provided by the module
+export { useAuthService } from "../modules/authentication-service/ContextProvider";
+
+// src/modules/authentication-service/AuthenticationService.ts - Service class
+export class AuthenticationService implements AuthService {
+    async login(credentials: LoginRequest): Promise<LoginResponse> {
+        // HTTP API implementation
+    }
+    // ... other methods
+}
+
+// src/modules/authentication-service/ContextProvider.tsx - Context provider
+export function ContextProvider({ children }: { children: React.ReactNode }) {
+    const authServiceInstance = new AuthenticationService();
+    return (
+        <AuthServiceContext value={authServiceInstance}>
+            {children}
+        </AuthServiceContext>
+    );
+}
+
+export function useAuthService(): AuthService {
+    const context = useContext(AuthServiceContext);
+    if (!context) {
+        throw new Error('useAuthService must be used within an AuthServiceProvider');
+    }
+    return context;
+}
+
+// src/modules/authentication-service/Metadata.ts - Module registration
+export const Metadata: ModuleMetadata = {
+    id: 'authentication-service',
+    version: '1.0.0',
+    description: 'Authentication service providing login, signup, and logout functionality',
+    author: 'ModAI Team',
+    dependentModules: [],
+    components: [ContextProvider]  // Register the context provider
+}
+```
+
+### 9.5 Multiple Implementation Example
 
 ```typescript
 // src/moduleif/chat.ts - Single interface
@@ -752,3 +865,4 @@ Different environments may require different module configurations:
 - **Authentication**: Check session state in components that require authentication
 - **Responsive Design**: Follow established UI patterns and responsive design principles
 - **Interface Stability**: Keep interfaces stable - breaking changes affect all dependent modules
+- **Service Pattern**: For shared services, use the interface-class-context pattern for dependency injection and testability
