@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { login } from "./services/authService"
+import { useAuthService } from "@/moduleif/authenticationService"
 import { useSession } from "@/moduleif/sessionContext"
 
 interface LoginFormProps extends React.ComponentPropsWithoutRef<"div"> {
@@ -30,6 +30,7 @@ export function LoginForm({
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
   const { refreshSession } = useSession()
+  const authService = useAuthService()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,7 +38,7 @@ export function LoginForm({
     setError(null)
 
     try {
-      await login({ email, password })
+      await authService.login({ email, password })
       // Refresh the session after successful login
       await refreshSession()
       navigate("/")

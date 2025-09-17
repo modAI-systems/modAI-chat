@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { signup } from "./services/authService"
+import { useAuthService } from "@/moduleif/authenticationService"
 
 export function RegisterForm({
     className,
@@ -24,6 +24,7 @@ export function RegisterForm({
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const navigate = useNavigate()
+    const authService = useAuthService()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -31,7 +32,7 @@ export function RegisterForm({
         setError(null)
 
         try {
-            await signup({
+            await authService.signup({
                 email,
                 password,
                 full_name: fullName.trim() || undefined

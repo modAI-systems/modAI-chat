@@ -1,8 +1,8 @@
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { useSession } from "@/moduleif/sessionContext";
+import { useAuthService } from "@/moduleif/authenticationService";
 import { LogOut, LogIn, UserPlus } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { logout } from "./services/authService";
 
 const LOGIN_PATH = "/login";
 const REGISTER_PATH = "/register";
@@ -15,10 +15,11 @@ export function SidebarFooterItem({ className }: LogoutButtonProps) {
     const navigate = useNavigate()
     const location = useLocation()
     const { clearSession, session } = useSession()
+    const authService = useAuthService()
 
     const handleLogout = async () => {
         try {
-            await logout()
+            await authService.logout()
             // Clear the session after successful logout
             clearSession()
             navigate(LOGIN_PATH)

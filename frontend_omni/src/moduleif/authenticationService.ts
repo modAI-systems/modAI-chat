@@ -1,0 +1,80 @@
+/**
+ * Module Name: Authentication
+ *
+ * Module Types: UI Components, Service Provider
+ *
+ * Description: This module provides user authentication functionality,
+ *      including login, registration, and logout operations.
+ *
+ * What this module offers to users:
+ *    - Authentication service functions (login, signup, logout)
+ *    - Authentication data types and interfaces
+ *    - Login and registration UI components through router integration
+ *    - Logout functionality through sidebar footer integration
+ *
+ * What this module demands when used: None
+ *
+ * What this module demands from other modules:
+ *    - Session module: Uses session context for state management after authentication
+ *
+ * Implementation Notes: This module provides authentication service functions
+ *     and UI components for user authentication. It integrates with the session
+ *     module to manage user state after successful authentication.
+ */
+
+// Authentication Request/Response Types
+export interface LoginRequest {
+    email: string;
+    password: string;
+}
+
+export interface SignupRequest {
+    email: string;
+    password: string;
+    full_name?: string;
+}
+
+export interface LoginResponse {
+    message: string;
+}
+
+export interface SignupResponse {
+    message: string;
+    user_id: string;
+}
+
+export interface AuthError {
+    detail: string;
+}
+
+// Authentication Service Interface
+export interface AuthService {
+    /**
+     * Authenticates a user with email and password
+     *
+     * @param credentials User login credentials
+     * @returns Promise<LoginResponse> Success message from backend
+     * @throws Error if login fails
+     */
+    login(credentials: LoginRequest): Promise<LoginResponse>;
+
+    /**
+     * Registers a new user account
+     *
+     * @param credentials User signup credentials
+     * @returns Promise<SignupResponse> Success message and user ID from backend
+     * @throws Error if signup fails
+     */
+    signup(credentials: SignupRequest): Promise<SignupResponse>;
+
+    /**
+     * Logs out the current user
+     *
+     * @returns Promise<LoginResponse> Success message from backend
+     * @throws Error if logout fails
+     */
+    logout(): Promise<LoginResponse>;
+}
+
+// Service hook implementation provided by the authentication-service module
+export { useAuthService } from "../modules/authentication-service/ContextProvider";

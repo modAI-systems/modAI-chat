@@ -7,6 +7,6 @@ export const Metadata: ModuleMetadata = {
     version: '1.0.0',
     description: 'User authentication pages (login and register) and logout functionality',
     author: 'ModAI Team',
-    dependentModules: ["session"],
+    dependentModules: ["session", "authentication-service"],
     components: [SidebarFooterItem, RouterEntry]
 }

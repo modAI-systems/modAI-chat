@@ -7,6 +7,11 @@
             "enabled": true
         },
         {
+            "id": "authentication-service",
+            "path": "../modules/authentication-service",
+            "enabled": true
+        },
+        {
             "id": "llm-provider-service",
             "path": "../modules/llm-provider-service",
             "enabled": true
