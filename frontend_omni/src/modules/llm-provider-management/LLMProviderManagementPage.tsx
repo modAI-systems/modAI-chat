@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react'
 import { ProviderSection } from './ProviderSection'
 import { ProviderListItem } from './ProviderListItem'
 import { ProviderForm } from './ProviderForm'
-import { type LLMProvider, type CreateLegacyProviderRequest, type UpdateLegacyProviderRequest } from '@/moduleif/llmProviderService'
-import { getProviders, deleteProvider, createProvider, updateProvider } from '../llm-provider-service/LLMProviderService'
+import { type LLMProvider, type CreateLegacyProviderRequest, type UpdateLegacyProviderRequest, useLLMProviderService } from '@/moduleif/llmProviderService'
 import { Button } from '@/components/ui/button'
 import {
     AlertDialog,
@@ -172,6 +171,7 @@ function DeleteConfirmDialog({ provider, saving, onConfirmDelete, onCancel }: De
 }
 
 export function LLMProviderManagementPage() {
+    const llmProviderService = useLLMProviderService()
     const [providers, setProviders] = useState<LLMProvider[]>([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -188,7 +188,7 @@ export function LLMProviderManagementPage() {
         try {
             setLoading(true)
             setError(null)
-            const providersData = await getProviders()
+            const providersData = await llmProviderService.getLegacyProviders()
             setProviders(providersData)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load providers')
@@ -219,7 +219,7 @@ export function LLMProviderManagementPage() {
             setSaving(true)
             setError(null)
 
-            await deleteProvider(showDeleteDialog.id)
+            await llmProviderService.deleteLegacyProvider(showDeleteDialog.id)
 
             // Remove from local state
             setProviders(prev => prev.filter(p => p.id !== showDeleteDialog.id))
@@ -237,10 +237,10 @@ export function LLMProviderManagementPage() {
             setError(null)
 
             if (formMode === 'create') {
-                const newProviderData = await createProvider(data)
+                const newProviderData = await llmProviderService.createLegacyProvider(data)
                 setProviders(prev => [...prev, newProviderData])
             } else if (formMode === 'edit' && editingProvider) {
-                const updatedProvider = await updateProvider(
+                const updatedProvider = await llmProviderService.updateLegacyProvider(
                     editingProvider.provider.id,
                     data
                 )

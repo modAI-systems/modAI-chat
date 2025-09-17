@@ -115,3 +115,6 @@ export interface ProviderService {
     updateLegacyProvider(providerId: string, provider: UpdateLegacyProviderRequest): Promise<LLMProvider>
     deleteLegacyProvider(providerId: string): Promise<void>
 }
+
+// Service hook implementation provided by the llm-provider-service module
+export { useLLMProviderService } from "../modules/llm-provider-service/ContextProvider.tsx";

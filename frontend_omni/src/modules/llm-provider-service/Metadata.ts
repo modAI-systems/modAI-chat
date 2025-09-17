@@ -1,4 +1,5 @@
 import type { ModuleMetadata } from "@/types/module";
+import { ContextProvider } from "./ContextProvider";
 
 export const Metadata: ModuleMetadata = {
     id: 'llm-provider-service',
@@ -6,5 +7,5 @@ export const Metadata: ModuleMetadata = {
     description: 'Core service module for LLM provider management and REST API interactions',
     author: 'ModAI Team',
     dependentModules: [],
-    components: []
+    components: [ContextProvider]
 }

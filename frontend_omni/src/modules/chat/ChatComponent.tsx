@@ -6,7 +6,7 @@ import { useEventBus } from '@/hooks/useEventBus'
 import type { ToggleSidebar } from './Events'
 import type { SelectedModel } from '@/moduleif/llmPicker'
 import type { ProviderTypeGroup } from '@/moduleif/llmProviderService'
-import { llmProviderService } from '../llm-provider-service/LLMProviderService'
+import { useLLMProviderService } from '@/moduleif/llmProviderService'
 import { useModules } from '@/contexts/ModuleManagerContext'
 
 export interface MessageData {
@@ -163,6 +163,7 @@ function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
 
 function ChatComponent() {
     const modules = useModules()
+    const llmProviderService = useLLMProviderService()
     const [messages, setMessages] = useState<MessageData[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [selectedModel, setSelectedModel] = useState<SelectedModel>({

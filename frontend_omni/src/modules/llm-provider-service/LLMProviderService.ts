@@ -48,7 +48,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
     return await response.json()
 }
 
-class LLMProviderService implements IProviderService {
+export class LLMProviderService implements IProviderService {
     /**
      * Get all providers for a specific provider type
      */
@@ -255,23 +255,4 @@ class LLMProviderService implements IProviderService {
     async deleteLegacyProvider(providerId: string): Promise<void> {
         await this.deleteProvider('openai', providerId)
     }
-}
-
-export const llmProviderService = new LLMProviderService()
-
-// Legacy functional API for backward compatibility
-export async function getProviders(): Promise<LLMProvider[]> {
-    return await llmProviderService.getLegacyProviders()
-}
-
-export async function createProvider(provider: CreateLegacyProviderRequest): Promise<LLMProvider> {
-    return await llmProviderService.createLegacyProvider(provider)
-}
-
-export async function updateProvider(providerId: string, provider: UpdateLegacyProviderRequest): Promise<LLMProvider> {
-    return await llmProviderService.updateLegacyProvider(providerId, provider)
-}
-
-export async function deleteProvider(providerId: string): Promise<void> {
-    await llmProviderService.deleteLegacyProvider(providerId)
 }
