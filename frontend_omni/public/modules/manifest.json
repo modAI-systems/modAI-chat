@@ -3,52 +3,52 @@
     "modules": [
         {
             "id": "session",
-            "path": "../modules/session",
+            "path": "../modules/session/Metadata.ts",
             "enabled": true
         },
         {
             "id": "authentication-service",
-            "path": "../modules/authentication-service",
+            "path": "../modules/authentication-service/Metadata.ts",
             "enabled": true
         },
         {
             "id": "llm-provider-service",
-            "path": "../modules/llm-provider-service",
+            "path": "../modules/llm-provider-service/Metadata.ts",
             "enabled": true
         },
         {
             "id": "global-settings",
-            "path": "../modules/global-settings",
+            "path": "../modules/global-settings/Metadata.ts",
             "enabled": true
         },
         {
             "id": "authentication",
-            "path": "../modules/authentication",
+            "path": "../modules/authentication/Metadata.ts",
             "enabled": true
         },
         {
             "id": "llm-picker",
-            "path": "../modules/llm-picker",
+            "path": "../modules/llm-picker/Metadata.ts",
             "enabled": true
         },
         {
             "id": "llm-provider-management",
-            "path": "../modules/llm-provider-management",
+            "path": "../modules/llm-provider-management/Metadata.ts",
             "enabled": true
         },
         {
             "id": "chat-api-service",
-            "path": "../modules/chat-api-service",
+            "path": "../modules/chat-api-service/Metadata.ts",
             "enabled": true
         },
         {
             "id": "chat",
-            "path": "../modules/chat",
+            "path": "../modules/chat/Metadata.ts",
             "enabled": true
         },
         {
             "id": "userprofileitem",
-            "path": "../modules/user-profile-item",
+            "path": "../modules/user-profile-item/Metadata.ts",
             "enabled": true
         }
     ]

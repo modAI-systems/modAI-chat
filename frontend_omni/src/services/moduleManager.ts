@@ -26,9 +26,8 @@ export class ModuleManager {
             return null
         }
 
-        // Load the metadata file
-        const metadataPath = `${manifestEntry.path}/Metadata.ts`
-        const metadataFile = await this.importModule(metadataPath)
+        // Load the metadata file directly from the path provided in manifest
+        const metadataFile = await this.importModule(manifestEntry.path)
 
         if (!metadataFile || !metadataFile.Metadata) {
             console.warn(`Module ${manifestEntry.id} does not have valid metadata`, metadataFile)
