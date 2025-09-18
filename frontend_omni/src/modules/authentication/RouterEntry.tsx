@@ -1,7 +1,7 @@
 import { Route } from "react-router-dom";
 import { Metadata } from "./Metadata";
-import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
+import LoginPage from "./LoginPage";
 
 
 export function RouterEntry() {
