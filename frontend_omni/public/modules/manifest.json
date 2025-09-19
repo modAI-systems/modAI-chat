@@ -55,6 +55,11 @@
             "id": "userprofileitem",
             "path": "../modules/user-profile-item/Metadata.ts",
             "enabled": true
+        },
+        {
+            "id": "user-settings-general",
+            "path": "../modules/user-settings-general/Metadata.ts",
+            "enabled": true
         }
     ]
 }
