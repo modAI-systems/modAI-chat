@@ -17,8 +17,13 @@
             "enabled": true
         },
         {
+            "id": "user-settings",
+            "path": "../modules/settings/MetaUserSettings.ts",
+            "enabled": true
+        },
+        {
             "id": "global-settings",
-            "path": "../modules/global-settings/Metadata.ts",
+            "path": "../modules/settings/MetaGlobalSettings.ts",
             "enabled": true
         },
         {

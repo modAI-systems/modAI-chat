@@ -1,13 +1,15 @@
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
-import { Settings } from "lucide-react";
+import { User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { Metadata, path, title } from "./Metadata";
 import { useSession } from "@/moduleif/sessionContext";
+import { Metadata, userSettingsPath } from "./MetaUserSettings";
 
-export function SidebarFooterItem() {
+export function UserSidebarFooterItem() {
     const { session } = useSession();
     const location = useLocation();
-    const isActive = location.pathname.startsWith(path);
+    const isActive = location.pathname.startsWith(userSettingsPath);
+
+    const title = "User Settings";
 
     if (!session) {
         return null; // Don't render the item if the user is not authenticated
@@ -16,8 +18,8 @@ export function SidebarFooterItem() {
     return (
         <SidebarMenuItem key={Metadata.id}>
             <SidebarMenuButton asChild tooltip={title} isActive={isActive}>
-                <Link to={`${path}`}>
-                    <Settings />
+                <Link to={userSettingsPath}>
+                    <User />
                     <span>{title}</span>
                 </Link>
             </SidebarMenuButton>

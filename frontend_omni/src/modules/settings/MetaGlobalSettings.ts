@@ -1,6 +1,6 @@
 import type { ModuleMetadata } from "@/types/module";
-import { SidebarFooterItem } from "./SidebarFooterItem";
-import { RouterEntry } from "./RouterEntry";
+import { GlobalSidebarFooterItem } from "./SidebarFooterItemGlobal";
+import { RouterEntry } from "./RouterEntryGlobal";
 
 export const Metadata: ModuleMetadata = {
     id: 'global-settings',
@@ -11,5 +11,9 @@ export const Metadata: ModuleMetadata = {
     components: [SidebarFooterItem, RouterEntry]
 }
 
-export const title = "Global Settings";
-export const path = '/globalsettings';
+export const globalSettingsPath = '/settings/global';
+
+
+function SidebarFooterItem() {
+    return GlobalSidebarFooterItem();
+}

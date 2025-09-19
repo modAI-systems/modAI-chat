@@ -1,19 +1,45 @@
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { useModules } from "@/contexts/ModuleManagerContext";
 import { Outlet } from "react-router-dom";
+import type { ReactNode } from "react";
 
-export default function GlobalSettingsPage() {
+interface SettingsPageProps {
+    children: ReactNode;
+}
+
+export function GlobalSettingsPage() {
     const modules = useModules()
     const globalSettingsNavItems = modules.getComponentsByName("GlobalSettingsNavItem")
 
+    return (
+        <SettingsPage>
+            {globalSettingsNavItems.map((NavItem, index) => (
+                <NavItem key={index} />
+            ))}
+        </SettingsPage>
+    );
+}
+
+export function UserSettingsPage() {
+    const modules = useModules()
+    const userSettingsNavItems = modules.getComponentsByName("UserSettingsNavItem")
+
+    return (
+        <SettingsPage>
+            {userSettingsNavItems.map((NavItem, index) => (
+                <NavItem key={index} />
+            ))}
+        </SettingsPage>
+    );
+}
+
+function SettingsPage({ children }: SettingsPageProps) {
     return (
         <ResizablePanelGroup direction="horizontal">
             <ResizablePanel defaultSize={20} minSize={10} maxSize={30}>
                 <div className="h-full bg-card border-r border-border p-4">
                     <div className="flex items-center justify-between mb-4">
-                        {globalSettingsNavItems.map((NavItem, index) => (
-                            <NavItem key={index} />
-                        ))}
+                        {children}
                     </div>
                 </div>
             </ResizablePanel>
