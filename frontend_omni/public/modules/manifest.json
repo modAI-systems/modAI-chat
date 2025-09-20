@@ -2,11 +2,6 @@
     "version": "1.0.0",
     "modules": [
         {
-            "id": "session",
-            "path": "../modules/session/Metadata.ts",
-            "enabled": true
-        },
-        {
             "id": "authentication-service",
             "path": "../modules/authentication-service/Metadata.ts",
             "enabled": true
@@ -59,6 +54,16 @@
         {
             "id": "user-settings-general",
             "path": "../modules/user-settings-general/Metadata.ts",
+            "enabled": true
+        },
+        {
+            "id": "user-settings-service",
+            "path": "../modules/user-settings-service/Metadata.ts",
+            "enabled": true
+        },
+        {
+            "id": "session",
+            "path": "../modules/session/Metadata.ts",
             "enabled": true
         }
     ]
