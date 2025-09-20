@@ -7,7 +7,6 @@ for different LLMProviderStore implementations.
 import pytest
 from abc import ABC, abstractmethod
 
-from modai.modules import llm_provider_store
 from modai.modules.llm_provider_store.module import LLMProviderStore
 
 

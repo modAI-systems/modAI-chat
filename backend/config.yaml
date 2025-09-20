@@ -20,6 +20,11 @@ modules:
     config:
       database_url: "sqlite:///./user_store.db"
       echo: false
+  user_settings_store:
+    class: modai.modules.user_settings_store.sqlmodel_user_settings_store.SQLModelUserSettingsStore
+    config:
+      database_url: "sqlite:///./user_settings.db"
+      echo: false
   session:
     class: modai.modules.session.jwt_session_module.JwtSessionModule
     config:
@@ -37,3 +42,8 @@ modules:
     module_dependencies:
       session: "session"
       user_store: "user_store"
+  user_settings:
+    class: modai.modules.user_settings.simple_user_settings_module.SimpleUserSettingsModule
+    module_dependencies:
+      session: "session"
+      user_settings_store: "user_settings_store"
