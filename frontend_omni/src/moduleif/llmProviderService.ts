@@ -6,11 +6,14 @@
  * for managing LLM providers and models across different provider types.
  */
 
+import { createContext, useContext } from "react";
+
 // Core data structures
 export interface Provider {
     id: string
     name: string
     url: string
+    api_key: string
     properties: Record<string, any>
     created_at: string | null
     updated_at: string | null
@@ -42,16 +45,18 @@ export interface ProviderType {
     label: string
 }
 
-// API request/response types
+// Request/Response types
 export interface CreateProviderRequest {
     name: string
-    url: string
+    base_url: string
+    api_key: string
     properties: Record<string, any>
 }
 
 export interface UpdateProviderRequest {
     name: string
-    url: string
+    base_url: string
+    api_key: string
     properties: Record<string, any>
 }
 
@@ -116,5 +121,19 @@ export interface ProviderService {
     deleteLegacyProvider(providerId: string): Promise<void>
 }
 
-// Service hook implementation provided by the llm-provider-service module
-export { useLLMProviderService } from "../modules/llm-provider-service/ContextProvider.tsx";
+// Create context for the LLM provider service
+export const LLMProviderServiceContext = createContext<ProviderService | undefined>(undefined);
+
+/**
+ * Hook to access the LLM provider service from any component
+ *
+ * @returns ProviderService instance
+ * @throws Error if used outside of LLMProviderServiceProvider
+ */
+export function useLLMProviderService(): ProviderService {
+    const context = useContext(LLMProviderServiceContext);
+    if (!context) {
+        throw new Error('useLLMProviderService must be used within an LLMProviderServiceProvider');
+    }
+    return context;
+}

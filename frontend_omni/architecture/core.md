@@ -267,17 +267,33 @@ export function SidebarFooterItem() {
 
 For modules that provide services (like authentication, LLM provider management, etc.), follow this standardized pattern:
 
-**1. Interface Definition**: Define the service contract in `src/moduleif/[service-name].ts`
+**1. Interface Definition**: Define the service contract and context/hook in `src/moduleif/[service-name].ts`
 ```typescript
 // Example: src/moduleif/authenticationService.ts
+import { createContext, useContext } from "react";
+
 export interface AuthService {
     login(credentials: LoginRequest): Promise<LoginResponse>;
     signup(credentials: SignupRequest): Promise<SignupResponse>;
     logout(): Promise<LoginResponse>;
 }
 
-// Export the hook that will be provided by the implementation
-export { useAuthService } from "../modules/authentication-service/ContextProvider";
+// Create context for the authentication service
+export const AuthServiceContext = createContext<AuthService | undefined>(undefined);
+
+/**
+ * Hook to access the authentication service from any component
+ *
+ * @returns AuthService instance
+ * @throws Error if used outside of AuthServiceProvider
+ */
+export function useAuthService(): AuthService {
+    const context = useContext(AuthServiceContext);
+    if (!context) {
+        throw new Error('useAuthService must be used within an AuthServiceProvider');
+    }
+    return context;
+}
 ```
 
 **2. Service Implementation**: Create the concrete service class in `src/modules/[service-module]/[ServiceName].ts`
@@ -294,7 +310,9 @@ export class AuthenticationService implements AuthService {
 **3. Context Provider**: Create a React context provider in `src/modules/[service-module]/ContextProvider.tsx`
 ```typescript
 // Example: src/modules/authentication-service/ContextProvider.tsx
-const AuthServiceContext = createContext<AuthService | undefined>(undefined);
+import React from 'react';
+import { AuthServiceContext } from "@/moduleif/authenticationService";
+import { AuthenticationService } from './AuthenticationService';
 
 export function ContextProvider({ children }: { children: React.ReactNode }) {
     const authServiceInstance = new AuthenticationService();
@@ -303,14 +321,6 @@ export function ContextProvider({ children }: { children: React.ReactNode }) {
             {children}
         </AuthServiceContext>
     );
-}
-
-export function useAuthService(): AuthService {
-    const context = useContext(AuthServiceContext);
-    if (!context) {
-        throw new Error('useAuthService must be used within an AuthServiceProvider');
-    }
-    return context;
 }
 ```
 
@@ -324,18 +334,41 @@ export const Metadata: ModuleMetadata = {
 }
 ```
 
-#### 6.4.1 Provider Module
+#### 6.4.2 Provider Module
 
-The provider module wants to make some state available throughout the application.It creates and exports the context provider and associated hooks:
+The provider module wants to make some state available throughout the application. The context and hook are defined in the interface, and the implementation only provides the context provider:
 
 ```typescript
-// Example: Session Module context provider
+// Example: src/moduleif/sessionContext.ts - Interface defines context and hook
+import { createContext, useContext } from "react";
 
-const SessionContext = createContext<SessionContextType | undefined>(undefined)
+export interface SessionContextType {
+    session: SessionData | null;
+    isLoading: boolean;
+    refreshSession: () => Promise<void>;
+    clearSession: () => void;
+}
+
+export const SessionContext = createContext<SessionContextType | undefined>(undefined);
+
+export function useSession(): SessionContextType {
+    const context = useContext(SessionContext);
+    if (!context) {
+        throw new Error('useSession must be used within a SessionProvider');
+    }
+    return context;
+}
+```
+
+```typescript
+// Example: src/modules/session/ContextProvider.tsx - Implementation only provides the provider
+import React, { useState } from 'react';
+import { SessionContext, SessionContextType } from "@/moduleif/sessionContext";
 
 export function ContextProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = useState<Session | null>(null)
-    ...
+    // ... other state and logic
+
     const contextValue: SessionContextType = {
         session,
         isLoading,
@@ -349,18 +382,9 @@ export function ContextProvider({ children }: { children: React.ReactNode }) {
         </SessionContext>
     );
 }
-
-// Provider module exports hooks for consumption
-export function useSession() {
-    const context = useContext(SessionContext);
-    if (!context) {
-        throw new Error('useSession must be used within SessionProvider');
-    }
-    return context;
-}
 ```
 
-#### 6.4.2 Consumer Module
+#### 6.4.3 Consumer Module
 
 Consumer modules import and use the interfaces and types from the provider module's interface definition, not the implementation. This creates a dependency on the interface, allowing for flexible implementations.
 
@@ -414,7 +438,7 @@ The system supports modules that extend other modules. For example, the global s
 export function GlobalSettingsNavItem() {
     return (
         <SidebarMenuButton asChild>
-            <Link to="/globalsettings/llmproviders">
+            <Link to="/settings/global/llmproviders">
                 <span>LLM Providers</span>
             </Link>
         </SidebarMenuButton>
@@ -551,9 +575,9 @@ export interface SessionContextType {
     clearSession: () => void;
 }
 
-export declare function useSession(): SessionContextType;
+// Create context and hook in the interface file
+export const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
-// Export the actual hook implementation
 export function useSession(): SessionContextType {
     const context = useContext(SessionContext);
     if (!context) {
@@ -573,7 +597,8 @@ export const Metadata: ModuleMetadata = {
 }
 
 // src/modules/session/ContextProvider.tsx
-import { SessionData, SessionContextType } from "@/moduleif/session";
+import React, { useState } from 'react';
+import { SessionContext, SessionContextType } from "@/moduleif/sessionContext";
 
 export function ContextProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = useState<SessionData | null>(null);
@@ -592,15 +617,28 @@ export function ContextProvider({ children }: { children: React.ReactNode }) {
 For modules that primarily provide services (like authentication, LLM provider management, etc.), follow this pattern:
 
 ```typescript
-// src/moduleif/authenticationService.ts - Interface definition
+// src/moduleif/authenticationService.ts - Interface definition with context and hook
+import { createContext, useContext } from "react";
+
 export interface AuthService {
     login(credentials: LoginRequest): Promise<LoginResponse>;
     signup(credentials: SignupRequest): Promise<SignupResponse>;
     logout(): Promise<LoginResponse>;
 }
 
-// Export the hook - implementation provided by the module
-export { useAuthService } from "../modules/authentication-service/ContextProvider";
+// Create context for the authentication service
+export const AuthServiceContext = createContext<AuthService | undefined>(undefined);
+
+/**
+ * Hook to access the authentication service from any component
+ */
+export function useAuthService(): AuthService {
+    const context = useContext(AuthServiceContext);
+    if (!context) {
+        throw new Error('useAuthService must be used within an AuthServiceProvider');
+    }
+    return context;
+}
 
 // src/modules/authentication-service/AuthenticationService.ts - Service class
 export class AuthenticationService implements AuthService {
@@ -611,6 +649,10 @@ export class AuthenticationService implements AuthService {
 }
 
 // src/modules/authentication-service/ContextProvider.tsx - Context provider
+import React from 'react';
+import { AuthServiceContext } from "@/moduleif/authenticationService";
+import { AuthenticationService } from './AuthenticationService';
+
 export function ContextProvider({ children }: { children: React.ReactNode }) {
     const authServiceInstance = new AuthenticationService();
     return (
@@ -618,14 +660,6 @@ export function ContextProvider({ children }: { children: React.ReactNode }) {
             {children}
         </AuthServiceContext>
     );
-}
-
-export function useAuthService(): AuthService {
-    const context = useContext(AuthServiceContext);
-    if (!context) {
-        throw new Error('useAuthService must be used within an AuthServiceProvider');
-    }
-    return context;
 }
 
 // src/modules/authentication-service/Metadata.ts - Module registration

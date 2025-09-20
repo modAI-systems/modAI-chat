@@ -5,12 +5,9 @@
  * via React Context.
  */
 
-import React, { createContext, useContext } from 'react';
-import type { ProviderService } from "@/moduleif/llmProviderService";
+import React from 'react';
+import { LLMProviderServiceContext } from "@/moduleif/llmProviderService";
 import { LLMProviderService } from './LLMProviderService';
-
-// Create context for the LLM provider service
-const LLMProviderServiceContext = createContext<ProviderService | undefined>(undefined);
 
 /**
  * Context provider that makes the LLM provider service available
@@ -24,18 +21,4 @@ export function ContextProvider({ children }: { children: React.ReactNode }) {
             {children}
         </LLMProviderServiceContext>
     );
-}
-
-/**
- * Hook to access the LLM provider service from any component
- *
- * @returns ProviderService instance
- * @throws Error if used outside of LLMProviderServiceProvider
- */
-export function useLLMProviderService(): ProviderService {
-    const context = useContext(LLMProviderServiceContext);
-    if (!context) {
-        throw new Error('useLLMProviderService must be used within an LLMProviderServiceProvider');
-    }
-    return context;
 }

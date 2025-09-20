@@ -22,6 +22,8 @@
  *     module to manage user state after successful authentication.
  */
 
+import { createContext, useContext } from "react";
+
 // Authentication Request/Response Types
 export interface LoginRequest {
     email: string;
@@ -76,5 +78,19 @@ export interface AuthService {
     logout(): Promise<LoginResponse>;
 }
 
-// Service hook implementation provided by the authentication-service module
-export { useAuthService } from "../modules/authentication-service/ContextProvider";
+// Create context for the authentication service
+export const AuthServiceContext = createContext<AuthService | undefined>(undefined);
+
+/**
+ * Hook to access the authentication service from any component
+ *
+ * @returns AuthService instance
+ * @throws Error if used outside of AuthServiceProvider
+ */
+export function useAuthService(): AuthService {
+    const context = useContext(AuthServiceContext);
+    if (!context) {
+        throw new Error('useAuthService must be used within an AuthServiceProvider');
+    }
+    return context;
+}

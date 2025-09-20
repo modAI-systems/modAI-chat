@@ -5,6 +5,8 @@
  * This module provides abstraction for different chat API implementations.
  */
 
+import { createContext, useContext } from "react";
+
 // ============================================================================
 // Core Message Structures
 // ============================================================================
@@ -104,5 +106,19 @@ export interface UseChatApiServiceHook {
     isAvailable: boolean
 }
 
-// Export the hook implementation from the module
-export { useChatApiService } from "../modules/chat-api-service/ContextProvider";
+// Create context for the chat API service
+export const ChatApiServiceContext = createContext<ChatApiService | undefined>(undefined);
+
+/**
+ * Hook to access the chat API service from any component
+ *
+ * @returns ChatApiService instance
+ * @throws Error if used outside of ChatApiServiceProvider
+ */
+export function useChatApiService(): ChatApiService {
+    const context = useContext(ChatApiServiceContext);
+    if (!context) {
+        throw new Error('useChatApiService must be used within a ChatApiServiceProvider');
+    }
+    return context;
+}
