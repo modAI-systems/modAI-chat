@@ -215,15 +215,16 @@ export class LLMProviderService implements IProviderService {
     async createLegacyProvider(provider: CreateLegacyProviderRequest): Promise<LLMProvider> {
         const result = await this.createProvider('openai', {
             name: provider.name,
-            url: provider.base_url,
-            properties: { api_key: provider.api_key }
+            base_url: provider.base_url,
+            api_key: provider.api_key,
+            properties: {}
         })
 
         return {
             id: result.id,
             name: result.name,
             base_url: result.url,
-            api_key: result.properties.api_key || '',
+            api_key: result.api_key,
             created_at: result.created_at || '',
             updated_at: result.updated_at || ''
         }
@@ -235,15 +236,16 @@ export class LLMProviderService implements IProviderService {
     async updateLegacyProvider(providerId: string, provider: UpdateLegacyProviderRequest): Promise<LLMProvider> {
         const result = await this.updateProvider('openai', providerId, {
             name: provider.name,
-            url: provider.base_url,
-            properties: { api_key: provider.api_key }
+            base_url: provider.base_url,
+            api_key: provider.api_key,
+            properties: {}
         })
 
         return {
             id: result.id,
             name: result.name,
             base_url: result.url,
-            api_key: result.properties.api_key || '',
+            api_key: result.api_key,
             created_at: result.created_at || '',
             updated_at: result.updated_at || ''
         }

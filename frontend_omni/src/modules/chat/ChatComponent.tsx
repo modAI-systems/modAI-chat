@@ -165,7 +165,7 @@ function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
 function ChatComponent() {
     const modules = useModules()
     const llmProviderService = useLLMProviderService()
-    const { chatApiService } = useChatApiService()
+    const chatApiService = useChatApiService()
     const [messages, setMessages] = useState<MessageData[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [selectedModel, setSelectedModel] = useState<SelectedModel>({
