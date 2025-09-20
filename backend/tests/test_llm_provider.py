@@ -274,7 +274,7 @@ class TestLLMProviderModule:
         data = response.json()
 
         assert data["id"] == "test-id-123"  # From mock return
-        
+
         # Verify that api_key is available as a direct field
         assert "api_key" in data
         # Verify that api_key is not in properties

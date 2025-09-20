@@ -11,7 +11,7 @@ dependencies = [
     "openai",
     "pyjwt",
     "python-dotenv",
-    "sqlmodel",
+    "sqlalchemy",
 ]
 
 [dependency-groups]

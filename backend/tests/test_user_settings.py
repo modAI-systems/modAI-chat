@@ -44,15 +44,15 @@ class MockSessionModule(SessionModule):
         """Set the session to be returned by validate_session"""
         self.mock_session = session
 
-    async def validate_session(self, request: Request) -> MockSession:
+    def validate_session(self, request: Request) -> MockSession:
         if self.mock_session is None:
             raise HTTPException(status_code=401, detail="Not authenticated")
         return self.mock_session
 
-    async def start_new_session(self, request, response, user_id: str, **kwargs):
+    def start_new_session(self, request, response, user_id: str, **kwargs):
         pass
 
-    async def end_session(self, request, response):
+    def end_session(self, request, response):
         pass
 
 
@@ -70,7 +70,9 @@ class TestSimpleUserSettingsModule:
         return InMemoryUserSettingsStore(ModuleDependencies(modules={}), {})
 
     @pytest.fixture
-    def dependencies(self, mock_session_module, mock_user_settings_store):
+    def dependencies(
+        self, mock_session_module: UserSettingsModule, mock_user_settings_store
+    ):
         """Create module dependencies with mocked modules"""
         return ModuleDependencies(
             modules={
@@ -120,7 +122,9 @@ class TestSimpleUserSettingsModule:
             SimpleUserSettingsModule(dependencies, config)
 
     @pytest.mark.asyncio
-    async def test_get_user_settings_empty(self, module, mock_request):
+    async def test_get_user_settings_empty(
+        self, module: UserSettingsModule, mock_request
+    ):
         """Test getting settings for user with no existing settings"""
         user_id = "test-user-123"
         session = MockSession(user_id)
@@ -132,7 +136,9 @@ class TestSimpleUserSettingsModule:
         assert result.settings == {}
 
     @pytest.mark.asyncio
-    async def test_get_user_settings_unauthorized_access(self, module, mock_request):
+    async def test_get_user_settings_unauthorized_access(
+        self, module: UserSettingsModule, mock_request
+    ):
         """Test user cannot access another user's settings"""
         user_id = "other-user-456"
         session = MockSession("current-user-123")
@@ -145,7 +151,9 @@ class TestSimpleUserSettingsModule:
         assert "only access your own data" in exc_info.value.detail
 
     @pytest.mark.asyncio
-    async def test_get_user_settings_no_session(self, module, mock_request):
+    async def test_get_user_settings_no_session(
+        self, module: UserSettingsModule, mock_request
+    ):
         """Test getting settings without valid session raises 401"""
         user_id = "test-user-123"
         # Don't set mock session, should raise 401
@@ -156,7 +164,9 @@ class TestSimpleUserSettingsModule:
         assert exc_info.value.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_update_user_settings_new_user(self, module, mock_request):
+    async def test_update_user_settings_new_user(
+        self, module: UserSettingsModule, mock_request
+    ):
         """Test updating settings for user with no existing settings"""
         user_id = "test-user-123"
         session = MockSession(user_id)
@@ -179,7 +189,9 @@ class TestSimpleUserSettingsModule:
         assert result.settings["notifications"]["email_enabled"] == True
 
     @pytest.mark.asyncio
-    async def test_update_user_settings_existing_user(self, module, mock_request):
+    async def test_update_user_settings_existing_user(
+        self, module: UserSettingsModule, mock_request
+    ):
         """Test updating settings for user with existing settings (merge behavior)"""
         user_id = "test-user-123"
         session = MockSession(user_id)
@@ -212,7 +224,7 @@ class TestSimpleUserSettingsModule:
 
     @pytest.mark.asyncio
     async def test_update_user_settings_unauthorized_modification(
-        self, module, mock_request
+        self, module: UserSettingsModule, mock_request
     ):
         """Test user cannot modify another user's settings"""
         user_id = "other-user-456"
@@ -230,7 +242,9 @@ class TestSimpleUserSettingsModule:
         assert "only access your own data" in exc_info.value.detail
 
     @pytest.mark.asyncio
-    async def test_update_user_settings_no_session(self, module, mock_request):
+    async def test_update_user_settings_no_session(
+        self, module: UserSettingsModule, mock_request
+    ):
         """Test updating settings without valid session raises 401"""
         user_id = "test-user-123"
         settings_update = UserSettingsUpdateRequest(
@@ -244,7 +258,9 @@ class TestSimpleUserSettingsModule:
         assert exc_info.value.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_get_settings_after_update(self, module, mock_request):
+    async def test_get_settings_after_update(
+        self, module: UserSettingsModule, mock_request
+    ):
         """Test full flow: update settings then retrieve them"""
         user_id = "test-user-123"
         session = MockSession(user_id)
@@ -269,7 +285,9 @@ class TestSimpleUserSettingsModule:
         assert result.settings["language"]["timezone"] == "UTC"
 
     @pytest.mark.asyncio
-    async def test_get_user_setting_type_empty(self, module, mock_request):
+    async def test_get_user_setting_type_empty(
+        self, module: UserSettingsModule, mock_request
+    ):
         """Test getting a specific setting type for user with no existing settings"""
         user_id = "test-user-123"
         module_name = "theme"
@@ -282,7 +300,9 @@ class TestSimpleUserSettingsModule:
         assert result.settings == {}
 
     @pytest.mark.asyncio
-    async def test_get_user_setting_type_existing(self, module, mock_request):
+    async def test_get_user_setting_type_existing(
+        self, module: UserSettingsModule, mock_request
+    ):
         """Test getting a specific setting type for user with existing settings"""
         user_id = "test-user-123"
         module_name = "theme"
@@ -306,7 +326,9 @@ class TestSimpleUserSettingsModule:
         assert result.settings["primary_color"] == "#1976d2"
 
     @pytest.mark.asyncio
-    async def test_get_user_setting_type_nonexistent(self, module, mock_request):
+    async def test_get_user_setting_type_nonexistent(
+        self, module: UserSettingsModule, mock_request
+    ):
         """Test getting a non-existent setting type returns empty settings"""
         user_id = "test-user-123"
         module_name = "nonexistent"
@@ -327,7 +349,7 @@ class TestSimpleUserSettingsModule:
 
     @pytest.mark.asyncio
     async def test_get_user_setting_type_unauthorized_access(
-        self, module, mock_request
+        self, module: UserSettingsModule, mock_request
     ):
         """Test user cannot access another user's specific setting type"""
         user_id = "other-user-456"
@@ -342,7 +364,9 @@ class TestSimpleUserSettingsModule:
         assert "only access your own data" in exc_info.value.detail
 
     @pytest.mark.asyncio
-    async def test_update_user_setting_type_new_user(self, module, mock_request):
+    async def test_update_user_setting_type_new_user(
+        self, module: UserSettingsModule, mock_request
+    ):
         """Test updating a specific setting type for user with no existing settings"""
         user_id = "test-user-123"
         module_name = "theme"
@@ -362,7 +386,9 @@ class TestSimpleUserSettingsModule:
         assert result.settings["primary_color"] == "#1976d2"
 
     @pytest.mark.asyncio
-    async def test_update_user_setting_type_existing_user(self, module, mock_request):
+    async def test_update_user_setting_type_existing_user(
+        self, module: UserSettingsModule, mock_request
+    ):
         """Test updating a specific setting type for user with existing settings"""
         user_id = "test-user-123"
         module_name = "theme"
@@ -397,7 +423,7 @@ class TestSimpleUserSettingsModule:
 
     @pytest.mark.asyncio
     async def test_update_user_setting_type_unauthorized_modification(
-        self, module, mock_request
+        self, module: UserSettingsModule, mock_request
     ):
         """Test user cannot modify another user's specific setting type"""
         user_id = "other-user-456"
@@ -416,7 +442,9 @@ class TestSimpleUserSettingsModule:
         assert "only access your own data" in exc_info.value.detail
 
     @pytest.mark.asyncio
-    async def test_setting_type_flow_integration(self, module, mock_request):
+    async def test_setting_type_flow_integration(
+        self, module: UserSettingsModule, mock_request
+    ):
         """Test full flow: update specific setting type then retrieve it"""
         user_id = "test-user-123"
         module_name = "notifications"

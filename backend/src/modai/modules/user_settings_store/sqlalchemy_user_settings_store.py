@@ -1,35 +1,34 @@
 """
-SQLModel-based UserSettingsStore implementation for production usage.
-This implementation uses SQLModel/SQLAlchemy for database persistence.
+SQLAlchemy-based UserSettingsStore implementation for production usage.
+This implementation uses pure SQLAlchemy for database persistence with isolated metadata.
 """
 
 from typing import Any, Dict
 from datetime import datetime
 
-from sqlmodel import SQLModel, Field, Session, create_engine, select, delete
-from sqlalchemy import String, JSON
+from sqlalchemy import (
+    create_engine,
+    MetaData,
+    Table,
+    Column,
+    String,
+    JSON,
+    DateTime,
+    select,
+    delete,
+)
+from sqlalchemy.orm import Session, sessionmaker
 
 from modai.module import ModuleDependencies, PersistenceModule
 from modai.modules.user_settings_store.module import UserSettingsStore
 
 
-class UserSettingsTable(SQLModel, table=True):
-    """SQLModel table for user settings with separate rows for each module name"""
-
-    __tablename__ = "user_settings"
-
-    user_id: str = Field(primary_key=True, sa_type=String(255))
-    module_name: str = Field(primary_key=True, sa_type=String(255))
-    setting_data: Dict[str, Any] = Field(sa_type=JSON)
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
-
-
-class SQLModelUserSettingsStore(UserSettingsStore, PersistenceModule):
+class SQLAlchemyUserSettingsStore(UserSettingsStore, PersistenceModule):
     """
-    SQLModel-based implementation of the UserSettingsStore module.
+    Pure SQLAlchemy implementation of the UserSettingsStore module.
 
-    This implementation uses SQLModel/SQLAlchemy for database persistence.
+    This implementation uses pure SQLAlchemy for database persistence with isolated metadata
+    to ensure only this module's tables are created and managed.
     Each instance is completely self-contained with its own database connection,
     tables, and session management.
     """
@@ -41,18 +40,35 @@ class SQLModelUserSettingsStore(UserSettingsStore, PersistenceModule):
         database_url = config.get("database_url")
         if not database_url:
             raise ValueError(
-                "SQLModelUserStore requires 'database_url' to be specified in config"
+                "SQLAlchemyUserSettingsStore requires 'database_url' to be specified in config"
             )
+
+        # Create isolated metadata for this module only
+        self.metadata = MetaData()
+
+        # Define the user_settings table with isolated metadata
+        self.user_settings_table = Table(
+            "user_settings",
+            self.metadata,
+            Column("user_id", String(255), primary_key=True),
+            Column("module_name", String(255), primary_key=True),
+            Column("setting_data", JSON),
+            Column("created_at", DateTime, default=datetime.now),
+            Column("updated_at", DateTime, default=datetime.now),
+        )
 
         # Create engine - completely self-contained
         self.engine = create_engine(database_url, echo=config.get("echo", False))
 
-        # Create all tables
-        SQLModel.metadata.create_all(self.engine)
+        # Create only this module's tables using isolated metadata
+        self.metadata.create_all(self.engine)
+
+        # Create session factory
+        self.SessionLocal = sessionmaker(bind=self.engine)
 
     def _get_session(self) -> Session:
         """Get a new database session"""
-        return Session(self.engine)
+        return self.SessionLocal()
 
     async def get_user_settings(self, user_id: str) -> Dict[str, Dict[str, Any]]:
         """
@@ -68,13 +84,14 @@ class SQLModelUserSettingsStore(UserSettingsStore, PersistenceModule):
         session: Session,
         user_id: str,
     ) -> Dict[str, Dict[str, Any]]:
-        statement = select(UserSettingsTable).where(
-            UserSettingsTable.user_id == user_id
+        statement = select(self.user_settings_table).where(
+            self.user_settings_table.c.user_id == user_id
         )
-        settings_records = session.exec(statement).all()
+        result = session.execute(statement)
+        settings_records = result.fetchall()
 
         if settings_records:
-            return self._table_to_user_settings(settings_records)
+            return self._rows_to_user_settings(settings_records)
         else:
             return {}
 
@@ -88,7 +105,12 @@ class SQLModelUserSettingsStore(UserSettingsStore, PersistenceModule):
         self._validate_module_name(module_name)
 
         with self._get_session() as session:
-            settings_record = session.get(UserSettingsTable, (user_id, module_name))
+            statement = select(self.user_settings_table).where(
+                self.user_settings_table.c.user_id == user_id,
+                self.user_settings_table.c.module_name == module_name,
+            )
+            result = session.execute(statement)
+            settings_record = result.fetchone()
 
             if settings_record and settings_record.setting_data:
                 return settings_record.setting_data
@@ -146,23 +168,34 @@ class SQLModelUserSettingsStore(UserSettingsStore, PersistenceModule):
         now = datetime.now()
 
         # Check if setting by module already exists
-        existing_record = session.get(UserSettingsTable, (user_id, module_name))
+        statement = select(self.user_settings_table).where(
+            self.user_settings_table.c.user_id == user_id,
+            self.user_settings_table.c.module_name == module_name,
+        )
+        result = session.execute(statement)
+        existing_record = result.fetchone()
 
         if existing_record:
             # Update existing setting by module
-            existing_record.setting_data = setting_data
-            existing_record.updated_at = now
-            session.add(existing_record)
+            update_stmt = (
+                self.user_settings_table.update()
+                .where(
+                    self.user_settings_table.c.user_id == user_id,
+                    self.user_settings_table.c.module_name == module_name,
+                )
+                .values(setting_data=setting_data, updated_at=now)
+            )
+            session.execute(update_stmt)
         else:
             # Create new setting by module record
-            new_record = UserSettingsTable(
+            insert_stmt = self.user_settings_table.insert().values(
                 user_id=user_id,
                 module_name=module_name,
                 setting_data=setting_data,
                 created_at=now,
                 updated_at=now,
             )
-            session.add(new_record)
+            session.execute(insert_stmt)
 
     async def delete_user_settings(self, user_id: str) -> None:
         """
@@ -175,10 +208,10 @@ class SQLModelUserSettingsStore(UserSettingsStore, PersistenceModule):
 
         with self._get_session() as session:
             # Use bulk delete operation - more efficient than select + iterate + delete
-            statement = delete(UserSettingsTable).where(
-                UserSettingsTable.user_id == user_id
+            statement = delete(self.user_settings_table).where(
+                self.user_settings_table.c.user_id == user_id
             )
-            session.exec(statement)
+            session.execute(statement)
             session.commit()
 
     async def delete_user_setting_by_module(
@@ -192,11 +225,11 @@ class SQLModelUserSettingsStore(UserSettingsStore, PersistenceModule):
 
         with self._get_session() as session:
             # Use bulk delete operation - more efficient than get + delete
-            statement = delete(UserSettingsTable).where(
-                UserSettingsTable.user_id == user_id,
-                UserSettingsTable.module_name == module_name,
+            statement = delete(self.user_settings_table).where(
+                self.user_settings_table.c.user_id == user_id,
+                self.user_settings_table.c.module_name == module_name,
             )
-            session.exec(statement)
+            session.execute(statement)
             session.commit()
 
     async def user_has_settings(self, user_id: str) -> bool:
@@ -206,11 +239,12 @@ class SQLModelUserSettingsStore(UserSettingsStore, PersistenceModule):
         self._validate_user_id(user_id)
 
         with self._get_session() as session:
-            statement = select(UserSettingsTable).where(
-                UserSettingsTable.user_id == user_id
+            statement = select(self.user_settings_table).where(
+                self.user_settings_table.c.user_id == user_id
             )
-            settings_records = session.exec(statement).first()
-            return settings_records is not None
+            result = session.execute(statement)
+            settings_record = result.fetchone()
+            return settings_record is not None
 
     # Persistence Module implementation
     def migrate_data(self, software_version: str, previous_version: str | None) -> None:
@@ -220,17 +254,15 @@ class SQLModelUserSettingsStore(UserSettingsStore, PersistenceModule):
         # TODO: Implement actual migration logic when needed
         pass
 
-    def _table_to_user_settings(
-        self, tables: list[UserSettingsTable]
-    ) -> Dict[str, Dict[str, Any]]:
-        """Convert list of UserSettingsTable rows to settings dictionary"""
-        if not tables:
-            raise ValueError("Cannot convert empty table list to UserSettings")
+    def _rows_to_user_settings(self, rows) -> Dict[str, Dict[str, Any]]:
+        """Convert list of database rows to settings dictionary"""
+        if not rows:
+            raise ValueError("Cannot convert empty row list to UserSettings")
 
         settings = {}
 
-        for table in tables:
-            settings[table.module_name] = table.setting_data or {}
+        for row in rows:
+            settings[row.module_name] = row.setting_data or {}
 
         return settings
 

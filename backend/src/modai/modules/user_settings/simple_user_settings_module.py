@@ -109,7 +109,7 @@ class SimpleUserSettingsModule(UserSettingsModule):
             HTTPException: If session is invalid or user tries to access other user's data
         """
         # Validate session
-        session = await self.session_module.validate_session_for_http(request)
+        session = self.session_module.validate_session_for_http(request)
 
         # TODO this is actually authorization logic and should not be done here
         #      but via the authorization module. To be refactored later.

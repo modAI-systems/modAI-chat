@@ -7,7 +7,7 @@ modules:
       openai_client:
         api_key: ${OPENAI_API_KEY}
   llm_provider_store:
-    class: modai.modules.llm_provider_store.sql_model_llm_provider_store.SQLModelLLMProviderStore
+    class: modai.modules.llm_provider_store.sql_model_llm_provider_store.SQLAlchemyLLMProviderStore
     config:
       database_url: "sqlite:///./llm.db"
       echo: false
@@ -16,12 +16,12 @@ modules:
     module_dependencies:
       llm_provider_store: "llm_provider_store"
   user_store:
-    class: modai.modules.user_store.sql_model_user_store.SQLModelUserStore
+    class: modai.modules.user_store.sql_model_user_store.SQLAlchemyUserStore
     config:
       database_url: "sqlite:///./user_store.db"
       echo: false
   user_settings_store:
-    class: modai.modules.user_settings_store.sqlmodel_user_settings_store.SQLModelUserSettingsStore
+    class: modai.modules.user_settings_store.sqlalchemy_user_settings_store.SQLAlchemyUserSettingsStore
     config:
       database_url: "sqlite:///./user_settings.db"
       echo: false

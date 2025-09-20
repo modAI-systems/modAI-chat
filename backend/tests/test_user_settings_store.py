@@ -1,6 +1,7 @@
 """
 Unit tests for the User Settings Store module.
-Tests both the abstract module interface and the SQLModel implementation.
+
+Tests both the abstract module interface and the SQLAlchemy implementation.
 """
 
 from abc import ABC, abstractmethod
@@ -11,13 +12,13 @@ from modai.modules.user_settings_store.inmemory_user_settings_store import (
     InMemoryUserSettingsStore,
 )
 from modai.modules.user_settings_store.module import UserSettingsStore
-from modai.modules.user_settings_store.sqlmodel_user_settings_store import (
-    SQLModelUserSettingsStore,
+from modai.modules.user_settings_store.sqlalchemy_user_settings_store import (
+    SQLAlchemyUserSettingsStore,
 )
 
 
-class TestSQLModelUserSettingsStore(ABC):
-    """Test the SQLModel UserSettingsStore implementation"""
+class TestSQLAlchemyUserSettingsStore(ABC):
+    """Test the SQLAlchemy UserSettingsStore implementation"""
 
     @pytest.fixture
     def dependencies(self):
@@ -308,26 +309,26 @@ class TestSQLModelUserSettingsStore(ABC):
         store.migrate_data("1.1.0", "1.0.0")
 
 
-class TestInmemoryUserSettingsStore(TestSQLModelUserSettingsStore):
+class TestInmemoryUserSettingsStore(TestSQLAlchemyUserSettingsStore):
     @pytest.fixture
     def store(self, dependencies):
         """Create a test store instance with patched _table_to_user_settings method"""
         return InMemoryUserSettingsStore(dependencies, {})
 
 
-class TestSQLModelUserSettingsStore(TestSQLModelUserSettingsStore):
+class TestSQLAlchemyUserSettingsStore(TestSQLAlchemyUserSettingsStore):
 
     @pytest.fixture
     def store(self, dependencies):
         """Create a test store instance with patched _table_to_user_settings method"""
         config = {"database_url": "sqlite:///:memory:", "echo": True}
-        return SQLModelUserSettingsStore(dependencies, config)
+        return SQLAlchemyUserSettingsStore(dependencies, config)
 
     def test_store_initialization_default_database_url(self, dependencies):
         """Test store fails when database URL is not specified"""
         config = {}
         with pytest.raises(
             ValueError,
-            match="SQLModelUserStore requires 'database_url' to be specified in config",
+            match="SQLAlchemyUserSettingsStore requires 'database_url' to be specified in config",
         ):
-            SQLModelUserSettingsStore(dependencies, config)
+            SQLAlchemyUserSettingsStore(dependencies, config)

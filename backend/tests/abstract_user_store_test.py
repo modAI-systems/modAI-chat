@@ -1,7 +1,7 @@
 """
 Abstract test base for UserStore implementations.
 This base class provides common test scenarios that can be reused
-for both InMemoryUserStore and SQLModelUserStore.
+for both InMemoryUserStore and SQLAlchemyUserStore.
 """
 
 import pytest

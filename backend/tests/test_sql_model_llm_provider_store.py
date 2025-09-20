@@ -6,7 +6,7 @@ import json
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from modai.module import ModuleDependencies
 from modai.modules.llm_provider_store.sql_model_llm_provider_store import (
-    SQLModelLLMProviderStore,
+    SQLAlchemyLLMProviderStore,
 )
 from tests.abstract_llm_provider_store_test import AbstractLLMProviderStoreTestBase
 
@@ -14,43 +14,43 @@ from tests.abstract_llm_provider_store_test import AbstractLLMProviderStoreTestB
 anyio_backend = pytest.fixture(scope="session")(lambda: "asyncio")
 
 
-class TestSQLModelLLMProviderStore(AbstractLLMProviderStoreTestBase):
-    """Test class for SQLModelLLMProviderStore using the abstract test base"""
+class TestSQLAlchemyLLMProviderStore(AbstractLLMProviderStoreTestBase):
+    """Test class for SQLAlchemyLLMProviderStore using the abstract test base"""
 
     def create_llm_provider_store(self):
-        """Create and return a SQLModelLLMProviderStore instance for testing"""
+        """Create and return a SQLAlchemyLLMProviderStore instance for testing"""
         # Use in-memory SQLite database for testing
-        return SQLModelLLMProviderStore(
+        return SQLAlchemyLLMProviderStore(
             ModuleDependencies(),
             {"database_url": "sqlite:///:memory:", "echo": False},
         )
 
-    def test_sqlmodel_requires_database_url(self):
-        """Test that SQLModelLLMProviderStore requires database_url in config"""
+    def test_sqlalchemy_requires_database_url(self):
+        """Test that SQLAlchemyLLMProviderStore requires database_url in config"""
 
         # Test with missing database_url
         with pytest.raises(
             ValueError,
-            match="SQLModelLLMProviderStore requires 'database_url' to be specified in config",
+            match="SQLAlchemyLLMProviderStore requires 'database_url' to be specified in config",
         ):
-            SQLModelLLMProviderStore(ModuleDependencies(), {})
+            SQLAlchemyLLMProviderStore(ModuleDependencies(), {})
 
         # Test with None database_url
         with pytest.raises(
             ValueError,
-            match="SQLModelLLMProviderStore requires 'database_url' to be specified in config",
+            match="SQLAlchemyLLMProviderStore requires 'database_url' to be specified in config",
         ):
-            SQLModelLLMProviderStore(ModuleDependencies(), {"database_url": None})
+            SQLAlchemyLLMProviderStore(ModuleDependencies(), {"database_url": None})
 
         # Test with empty string database_url
         with pytest.raises(
             ValueError,
-            match="SQLModelLLMProviderStore requires 'database_url' to be specified in config",
+            match="SQLAlchemyLLMProviderStore requires 'database_url' to be specified in config",
         ):
-            SQLModelLLMProviderStore(ModuleDependencies(), {"database_url": ""})
+            SQLAlchemyLLMProviderStore(ModuleDependencies(), {"database_url": ""})
 
         # Test that valid database_url works
-        provider_store = SQLModelLLMProviderStore(
+        provider_store = SQLAlchemyLLMProviderStore(
             ModuleDependencies(), {"database_url": "sqlite:///:memory:"}
         )
         assert provider_store is not None

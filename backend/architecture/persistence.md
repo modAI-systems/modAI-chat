@@ -1,7 +1,7 @@
 # Persistence Architecture
 
 ## 1. Overview
-- **Architecture Style**: Modular SQL persistence with SQLModel/SQLAlchemy integration following modAI module patterns
+- **Architecture Style**: Modular SQL persistence with pure SQLAlchemy integration following modAI module patterns
 - **Design Principles**:
   - KISS (Keep It Simple, Stupid) - minimal complexity in persistence layer
   - Module independence - each module manages its own data models
@@ -85,7 +85,7 @@ class PersistenceModule(ModaiModule, ABC):
 - Session management (own sessions)
 - Table creation and schema management (own tables/database)
 - Data migration (own migration logic)
-- SQLModel class definitions (own data models)
+- SQLAlchemy Table definitions with isolated MetaData (own data models)
 
 ## 4. Module Types Extension
 
@@ -162,7 +162,7 @@ Each persistence module is independent and can use its own database.
 ### 8.1 Database Security
 - Connection string security via environment variables
 - Connection pooling limits to prevent resource exhaustion
-- SQL injection prevention through SQLModel/SQLAlchemy parameterized queries
+- SQL injection prevention through pure SQLAlchemy parameterized queries
 - Database user permissions (least privilege principle)
 
 ### 8.2 Migration Security
