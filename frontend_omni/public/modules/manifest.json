@@ -65,6 +65,16 @@
             "id": "session",
             "path": "../modules/session/Metadata.ts",
             "enabled": true
+        },
+        {
+            "id": "theme",
+            "path": "../modules/theme/MetadataCore.ts",
+            "enabled": true
+        },
+        {
+            "id": "theme-config",
+            "path": "../modules/theme/MetadataThemeConfig.ts",
+            "enabled": true
         }
     ]
 }

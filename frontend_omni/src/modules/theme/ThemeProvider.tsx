@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { ThemeContext } from './theme';
-import type { Theme } from './theme';
+import { ThemeContext } from '@/moduleif/theme';
+import type { ThemeContextType } from '@/moduleif/theme';
+
+const availableThemes: string[] = ["light", "dark"];
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setTheme] = useState<Theme>(() => {
-        const stored = localStorage.getItem('theme') as Theme;
+    const [theme, setTheme] = useState<string>(() => {
+        const stored = localStorage.getItem('theme');
         if (stored) return stored;
 
         return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -23,13 +25,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('theme', theme);
     }, [theme]);
 
-    const toggleTheme = () => {
-        setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    const contextValue: ThemeContextType = {
+        theme,
+        setTheme,
+        availableThemes,
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+        <ThemeContext value={contextValue}>
             {children}
-        </ThemeContext.Provider>
+        </ThemeContext>
     );
 }

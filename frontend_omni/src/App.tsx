@@ -1,6 +1,6 @@
 import { Routes } from 'react-router-dom'
 import { BrowserRouter as Router } from 'react-router-dom'
-import { ThemeProvider } from './contexts/ThemeContext'
+import { ThemeProvider } from './modules/theme/ThemeProvider'
 import { SidebarProvider } from './components/ui/sidebar'
 import { AppSidebar } from './components/AppSidebar'
 import { ModuleManagerProvider, useModules } from './contexts/ModuleManagerContext'
@@ -25,6 +25,19 @@ function ModuleContextProviders({ children }: ModuleContextProviderProps) {
   return contextProviders.reduce(
     (wrappedChildren, Component) => <Component>{wrappedChildren}</Component>,
     children
+  )
+}
+
+function BackgroundComponents() {
+  const modules = useModules()
+  const backgroundComponents = modules.getComponentsByName("BackgroundComponent")
+
+  return (
+    <>
+      {backgroundComponents.map((Component, index) => (
+        <Component key={index} />
+      ))}
+    </>
   )
 }
 
@@ -55,6 +68,7 @@ function App() {
         <Suspense fallback={<PageLoadingScreen />}>
           <ModuleManagerProvider>
             <ModuleContextProviders>
+              <BackgroundComponents />
               <RoutedSidebarLayout />
             </ModuleContextProviders>
           </ModuleManagerProvider>
