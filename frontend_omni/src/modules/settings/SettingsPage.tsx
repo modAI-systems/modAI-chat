@@ -1,4 +1,4 @@
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/shadcn/components/ui/resizable'
 import { useModules } from "@/contexts/ModuleManagerContext";
 import { Outlet } from "react-router-dom";
 import type { ReactNode } from "react";
@@ -37,7 +37,7 @@ function SettingsPage({ children }: SettingsPageProps) {
     return (
         <ResizablePanelGroup direction="horizontal">
             <ResizablePanel defaultSize={20} minSize={10} maxSize={30}>
-                <div className="h-full bg-card border-r border-border p-4">
+                <div className="h-full bg-card border-r p-4">
                     <div className="flex items-center justify-between mb-4">
                         {children}
                     </div>

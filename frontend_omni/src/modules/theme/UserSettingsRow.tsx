@@ -1,5 +1,5 @@
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/shadcn/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shadcn/components/ui/select";
 import { useTheme } from "@/moduleif/theme";
 import { useUserSettings } from "@/moduleif/userSettingsService";
 

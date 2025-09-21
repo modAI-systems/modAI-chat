@@ -1,6 +1,6 @@
 import type { ProviderListItemProps } from '@/moduleif/llmProviderManagement'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction } from '@/shadcn/components/ui/card'
+import { Button } from '@/shadcn/components/ui/button'
 
 export function ProviderListItem({ provider, onEdit, onDelete, isLoading = false }: ProviderListItemProps) {
     const handleEdit = () => {

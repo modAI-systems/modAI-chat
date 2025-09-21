@@ -1,14 +1,14 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/shadcn/lib/utils"
+import { Button } from "@/shadcn/components/ui/button"
 import {
     Card,
     CardContent,
     CardDescription,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/shadcn/components/ui/card"
+import { Input } from "@/shadcn/components/ui/input"
+import { Label } from "@/shadcn/components/ui/label"
 import { useState, createContext, useContext } from "react"
 import { Link } from "react-router-dom"
 

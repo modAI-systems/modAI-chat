@@ -1,4 +1,4 @@
-import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { SidebarMenuButton, SidebarMenuItem } from "@/shadcn/components/ui/sidebar";
 import { Settings } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Metadata, globalSettingsPath } from "./MetaGlobalSettings";

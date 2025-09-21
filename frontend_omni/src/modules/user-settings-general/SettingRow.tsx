@@ -1,4 +1,4 @@
-import { Label } from "@/components/ui/label";
+import { Label } from "@/shadcn/components/ui/label";
 
 interface SettingRowProps {
     label: string;

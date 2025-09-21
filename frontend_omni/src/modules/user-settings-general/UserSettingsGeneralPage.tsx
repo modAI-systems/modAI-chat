@@ -1,5 +1,5 @@
 import { useSession } from "@/moduleif/sessionContext";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shadcn/components/ui/button";
 import { useModules } from "@/contexts/ModuleManagerContext";
 
 export function UserSettingsGeneralPage() {

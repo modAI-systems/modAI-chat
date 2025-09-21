@@ -1,10 +1,10 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/shadcn/components/ui/avatar"
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { useSidebar } from "@/components/ui/sidebar"
+} from "@/shadcn/components/ui/tooltip"
+import { useSidebar } from "@/shadcn/components/ui/sidebar"
 import type { UserDisplayProps } from "@/moduleif/userProfileItem"
 
 export function UserDisplay({ username, userEmail }: UserDisplayProps) {

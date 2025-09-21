@@ -3,7 +3,7 @@ import { ProviderSection } from './ProviderSection'
 import { ProviderListItem } from './ProviderListItem'
 import { ProviderForm } from './ProviderForm'
 import { type LLMProvider, type CreateLegacyProviderRequest, type UpdateLegacyProviderRequest, useLLMProviderService } from '@/moduleif/llmProviderService'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/shadcn/components/ui/button'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -13,7 +13,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+} from '@/shadcn/components/ui/alert-dialog'
 
 // Extracted Components
 function PageHeader() {

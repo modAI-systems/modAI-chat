@@ -1,4 +1,4 @@
-import { Separator } from '@/components/ui/separator'
+import { Separator } from '@/shadcn/components/ui/separator'
 
 interface ProviderSectionProps {
     title: string

@@ -1,15 +1,15 @@
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Button } from '@/shadcn/components/ui/button'
+import { Card, CardContent } from '@/shadcn/components/ui/card'
+import { Label } from '@/shadcn/components/ui/label'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shadcn/components/ui/tabs'
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/components/ui/select'
+} from '@/shadcn/components/ui/select'
 import { Settings } from 'lucide-react'
 import type { ModelSelectorProps, SelectedModel } from '@/moduleif/llmPicker'
 import type { ProviderTypeGroup } from '@/moduleif/llmProviderService'

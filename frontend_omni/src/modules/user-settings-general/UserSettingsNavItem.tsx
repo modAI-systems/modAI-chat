@@ -1,4 +1,4 @@
-import { SidebarMenuButton } from "@/components/ui/sidebar";
+import { SidebarMenuButton } from "@/shadcn/components/ui/sidebar";
 import { Link, useLocation } from "react-router-dom";
 
 export function UserSettingsNavItem() {

@@ -6,7 +6,7 @@ import {
     SidebarHeader,
     SidebarMenu,
     SidebarRail,
-} from "./ui/sidebar"
+} from "@/shadcn/components/ui/sidebar"
 
 export function AppSidebar() {
     const modules = useModules()

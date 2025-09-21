@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChatMessage } from '@/moduleif/chatApiService'
 import { useChatApiService } from '@/moduleif/chatApiService'
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
-import { Button } from '@/components/ui/button'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/shadcn/components/ui/resizable'
+import { Button } from '@/shadcn/components/ui/button'
 import { useEventBus } from '@/hooks/useEventBus'
 import type { ToggleSidebar } from './Events'
 import type { SelectedModel } from '@/moduleif/llmPicker'
@@ -43,7 +43,7 @@ function Message({ message }: MessageProps) {
                 <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
                     <div className={`px-4 py-3 rounded-lg break-words ${isUser
                         ? 'bg-primary text-primary-foreground rounded-br-sm'
-                        : 'bg-card border border-border rounded-bl-sm'
+                        : 'bg-card border rounded-bl-sm'
                         }`}>
                         <p className="whitespace-pre-wrap">{message.content}</p>
                     </div>
@@ -126,9 +126,9 @@ function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
     }
 
     return (
-        <div className="bg-background border-t border-border h-full flex flex-col">
+        <div className="bg-background border-t h-full flex flex-col">
             {/* Section 1: Tools and Meta */}
-            <div className="p-2 flex items-center justify-between border-b border-border/50 flex-shrink-0">
+            <div className="p-2 flex items-center justify-between border-b/50 flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <div className="text-sm text-muted-foreground">
                         X
@@ -325,7 +325,7 @@ function ChatComponent() {
     return (
         <ResizablePanelGroup direction="horizontal">
             <ResizablePanel defaultSize={30} hidden={!sidebarOpen}>
-                <div className="h-full bg-card border-r border-border p-4">
+                <div className="h-full bg-card border-r p-4">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold">Details</h3>
                         <Button
@@ -350,7 +350,7 @@ function ChatComponent() {
                 <div className="flex flex-col h-full max-h-screen">
                     {/* Configuration Header */}
 
-                    <div className="flex justify-between items-center p-4 border-b border-border flex-shrink-0">
+                    <div className="flex justify-between items-center p-4 border-b flex-shrink-0">
                         {ModelPicker && (
                             <ModelPicker
                                 initialModel={selectedModel}

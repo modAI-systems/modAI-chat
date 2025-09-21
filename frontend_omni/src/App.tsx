@@ -1,7 +1,7 @@
 import { Routes } from 'react-router-dom'
 import { BrowserRouter as Router } from 'react-router-dom'
 import { ThemeProvider } from './modules/theme/ThemeProvider'
-import { SidebarProvider } from './components/ui/sidebar'
+import { SidebarProvider } from '@/shadcn/components/ui/sidebar'
 import { AppSidebar } from './components/AppSidebar'
 import { ModuleManagerProvider, useModules } from './contexts/ModuleManagerContext'
 import { Suspense } from 'react'

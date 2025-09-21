@@ -1,7 +1,23 @@
+# Run these commands to install shadcn/ui from scratch again
+#
+# > rm -rf ./src/shadcn
+# > mkdir ./src/shadcn
+# > touch ./src/shadcn/shadcn.css
+#
+# goto https://ui.shadcn.com/docs/installation/manual  and copy the content of the globals.css to shadcn.css
+# goto https://ui.shadcn.com/docs/theming#base-colors  and copy the wanted base colors to the shadcn.css
+#
+# > npx shadcn@latest add $(grep -v "#" shadcs-packages.txt)
+
+utils
 button
 collapsible
 sidebar
 resizable
 select
 alert-dialog
+card
+label
 tabs
+avatar
+tooltip

@@ -1,4 +1,4 @@
-import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { SidebarMenuButton, SidebarMenuItem } from "@/shadcn/components/ui/sidebar";
 import { User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useSession } from "@/moduleif/sessionContext";

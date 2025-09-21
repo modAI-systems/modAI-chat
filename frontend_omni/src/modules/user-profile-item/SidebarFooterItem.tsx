@@ -1,4 +1,4 @@
-import { SidebarMenuItem } from "@/components/ui/sidebar";
+import { SidebarMenuItem } from "@/shadcn/components/ui/sidebar";
 import { UserDisplay } from "./UserDisplay";
 import { useSession } from "@/moduleif/sessionContext";
 
