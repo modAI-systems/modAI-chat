@@ -20,7 +20,7 @@
  *
  */
 
-import type { User } from "@/services/userService"
+import type { User } from "@/moduleif/userService"
 import { createContext, useContext } from "react"
 
 

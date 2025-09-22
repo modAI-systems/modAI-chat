@@ -40,7 +40,10 @@ function RoutedSidebarLayout() {
         <ErrorBoundary>
           <Routes>
             {routerEntryFunctions.map((createRoute) => (
-              createRoute()
+              // Usually elements of the `modules.getComponentsByName(...)` are react components
+              // and should be used as <Component />. However, this doesn't work her for the router
+              // because it needs to return a <Route> element. Therefore we call the function directly.
+              (createRoute as Function)()
             ))}
           </Routes>
         </ErrorBoundary>
