@@ -1,7 +1,8 @@
-import type { ModuleMetadata } from '@/types/module'
-import { type ModuleManifest, type ModuleManifestEntry } from './manifestLoader'
+import type { ModuleMetadata, ModuleManager as IModuleManager } from '@/moduleif/moduleSystem'
+import type { ModuleManifest, ModuleManifestEntry } from './moduleManifstLoader'
 
-export class ModuleManager {
+
+export class ModuleManager implements IModuleManager {
     private registeredModules: Map<string, ModuleMetadata> = new Map()
 
     /**
@@ -50,7 +51,7 @@ export class ModuleManager {
      */
     private async importModule(path: string): Promise<any> {
         try {
-            const importPath = path.startsWith('../') ? path : `../${path}`
+            const importPath = path.startsWith('@/') ? path.replace('@/', '../../') : path
             return await import(/* @vite-ignore */ importPath)
         } catch (error) {
             console.warn(`Failed to import module from ${path}: ${error}`)

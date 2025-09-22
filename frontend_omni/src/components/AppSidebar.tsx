@@ -1,4 +1,4 @@
-import { useModules } from "@/contexts/ModuleManagerContext"
+import { useModules } from "@/moduleif/moduleSystem"
 import {
     Sidebar,
     SidebarContent,

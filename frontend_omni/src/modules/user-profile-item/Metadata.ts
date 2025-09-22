@@ -1,4 +1,4 @@
-import type { ModuleMetadata } from "@/types/module";
+import type { ModuleMetadata } from "@/moduleif/moduleSystem";
 import { SidebarFooterItem } from "./SidebarFooterItem";
 
 export const Metadata: ModuleMetadata = {

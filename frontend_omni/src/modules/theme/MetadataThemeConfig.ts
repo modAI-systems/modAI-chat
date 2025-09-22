@@ -1,5 +1,4 @@
-import type { ModuleMetadata } from "@/types/module";
-import { BackgroundComponent } from "./ThemeByConfigUpdater";
+import type { ModuleMetadata } from "@/moduleif/moduleSystem";
 
 export const Metadata: ModuleMetadata = {
     id: 'theme-config',
@@ -7,5 +6,5 @@ export const Metadata: ModuleMetadata = {
     description: 'Allows to receive the current theme configuration',
     author: 'ModAI Team',
     dependentModules: ["user-settings-service"],
-    components: [BackgroundComponent]
+    components: []
 }

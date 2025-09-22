@@ -3,7 +3,8 @@ import { BrowserRouter as Router } from 'react-router-dom'
 import { ThemeProvider } from './modules/theme/ThemeProvider'
 import { SidebarProvider } from '@/shadcn/components/ui/sidebar'
 import { AppSidebar } from './components/AppSidebar'
-import { ModuleManagerProvider, useModules } from './contexts/ModuleManagerContext'
+import { useModules } from '@/moduleif/moduleSystem'
+import { ModuleManagerProvider } from './modules/module-system/ModuleManagerContext'
 import { Suspense } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PageLoadingScreen } from './components/PageLoadingScreen'
@@ -25,19 +26,6 @@ function ModuleContextProviders({ children }: ModuleContextProviderProps) {
   return contextProviders.reduce(
     (wrappedChildren, Component) => <Component>{wrappedChildren}</Component>,
     children
-  )
-}
-
-function BackgroundComponents() {
-  const modules = useModules()
-  const backgroundComponents = modules.getComponentsByName("BackgroundComponent")
-
-  return (
-    <>
-      {backgroundComponents.map((Component, index) => (
-        <Component key={index} />
-      ))}
-    </>
   )
 }
 
@@ -68,7 +56,6 @@ function App() {
         <Suspense fallback={<PageLoadingScreen />}>
           <ModuleManagerProvider>
             <ModuleContextProviders>
-              <BackgroundComponents />
               <RoutedSidebarLayout />
             </ModuleContextProviders>
           </ModuleManagerProvider>

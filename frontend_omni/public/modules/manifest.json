@@ -3,77 +3,72 @@
     "modules": [
         {
             "id": "authentication-service",
-            "path": "../modules/authentication-service/Metadata.ts",
+            "path": "@/modules/authentication-service/Metadata.ts",
             "enabled": true
         },
         {
             "id": "llm-provider-service",
-            "path": "../modules/llm-provider-service/Metadata.ts",
+            "path": "@/modules/llm-provider-service/Metadata.ts",
             "enabled": true
         },
         {
             "id": "user-settings",
-            "path": "../modules/settings/MetaUserSettings.ts",
+            "path": "@/modules/settings/MetaUserSettings.ts",
             "enabled": true
         },
         {
             "id": "global-settings",
-            "path": "../modules/settings/MetaGlobalSettings.ts",
+            "path": "@/modules/settings/MetaGlobalSettings.ts",
             "enabled": true
         },
         {
             "id": "authentication",
-            "path": "../modules/authentication/Metadata.ts",
+            "path": "@/modules/authentication/Metadata.ts",
             "enabled": true
         },
         {
             "id": "llm-picker",
-            "path": "../modules/llm-picker/Metadata.ts",
+            "path": "@/modules/llm-picker/Metadata.ts",
             "enabled": true
         },
         {
             "id": "llm-provider-management",
-            "path": "../modules/llm-provider-management/Metadata.ts",
+            "path": "@/modules/llm-provider-management/Metadata.ts",
             "enabled": true
         },
         {
             "id": "chat-api-service",
-            "path": "../modules/chat-api-service/Metadata.ts",
+            "path": "@/modules/chat-api-service/Metadata.ts",
             "enabled": true
         },
         {
             "id": "chat",
-            "path": "../modules/chat/Metadata.ts",
+            "path": "@/modules/chat/Metadata.ts",
             "enabled": true
         },
         {
             "id": "userprofileitem",
-            "path": "../modules/user-profile-item/Metadata.ts",
+            "path": "@/modules/user-profile-item/Metadata.ts",
             "enabled": true
         },
         {
             "id": "user-settings-general",
-            "path": "../modules/user-settings-general/Metadata.ts",
+            "path": "@/modules/user-settings-general/Metadata.ts",
             "enabled": true
         },
         {
             "id": "user-settings-service",
-            "path": "../modules/user-settings-service/Metadata.ts",
+            "path": "@/modules/user-settings-service/Metadata.ts",
             "enabled": true
         },
         {
             "id": "session",
-            "path": "../modules/session/Metadata.ts",
+            "path": "@/modules/session/Metadata.ts",
             "enabled": true
         },
         {
             "id": "theme",
-            "path": "../modules/theme/MetadataCore.ts",
-            "enabled": true
-        },
-        {
-            "id": "theme-config",
-            "path": "../modules/theme/MetadataThemeConfig.ts",
+            "path": "@/modules/theme/MetadataCore.ts",
             "enabled": true
         }
     ]

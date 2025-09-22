@@ -1,4 +1,4 @@
-import type { ModuleMetadata } from "@/types/module";
+import type { ModuleMetadata } from "@/moduleif/moduleSystem";
 import { ContextProvider } from "./ContextProvider";
 
 export const Metadata: ModuleMetadata = {

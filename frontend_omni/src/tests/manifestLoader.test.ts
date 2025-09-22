@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { type ModuleManifest } from '../services/manifestLoader'
+import { type ModuleManifest } from '@/moduleif/moduleSystem'
 
 // Mock fetch
 const mockFetch = vi.fn()

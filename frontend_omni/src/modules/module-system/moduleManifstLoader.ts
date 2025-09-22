@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 
+// Module Manifest Types
 export interface ModuleManifestEntry {
     id: string
     name: string
@@ -12,19 +13,11 @@ export interface ModuleManifest {
     modules: ModuleManifestEntry[]
 }
 
-// Fetch function that can be used independently
-async function fetchManifest(): Promise<ModuleManifest> {
-    const response = await fetch('/modules/manifest.json')
-    if (!response.ok) {
-        throw new Error(`Failed to fetch manifest: ${response.statusText}`)
-    }
-    return await response.json()
-}
 
-export function useModuleManifest(): ModuleManifest {
+export function fetchManifest(): ModuleManifest {
     const { data, error } = useSuspenseQuery({
         queryKey: ['modulesManifest'],
-        queryFn: fetchManifest,
+        queryFn: fetchManifestAsync,
     })
 
     if (error) {
@@ -36,4 +29,13 @@ export function useModuleManifest(): ModuleManifest {
     }
 
     return data
+}
+
+// Fetch function that can be used independently
+async function fetchManifestAsync(): Promise<ModuleManifest> {
+    const response = await fetch('/modules/manifest.json')
+    if (!response.ok) {
+        throw new Error(`Failed to fetch manifest: ${response.statusText}`)
+    }
+    return await response.json()
 }

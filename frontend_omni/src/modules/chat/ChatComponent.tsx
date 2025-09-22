@@ -8,7 +8,7 @@ import type { ToggleSidebar } from './Events'
 import type { SelectedModel } from '@/moduleif/llmPicker'
 import type { ProviderTypeGroup } from '@/moduleif/llmProviderService'
 import { useLLMProviderService } from '@/moduleif/llmProviderService'
-import { useModules } from '@/contexts/ModuleManagerContext'
+import { useModules } from '@/moduleif/moduleSystem'
 
 export interface MessageData {
     id: string

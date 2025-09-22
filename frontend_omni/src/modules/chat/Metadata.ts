@@ -1,4 +1,4 @@
-import type { ModuleMetadata } from "@/types/module";
+import type { ModuleMetadata } from "@/moduleif/moduleSystem";
 import { SidebarItem } from "./ModuleMenuItems";
 import { RouterEntry } from "./ModuleRouting";
 

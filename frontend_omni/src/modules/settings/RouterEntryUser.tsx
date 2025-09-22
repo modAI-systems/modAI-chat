@@ -1,6 +1,6 @@
 import { Navigate, Route } from "react-router-dom";
 import { Metadata } from "./MetaGlobalSettings";
-import { useModules } from "@/contexts/ModuleManagerContext";
+import { useModules } from "@/moduleif/moduleSystem";
 import { UserSettingsPage } from "./SettingsPage";
 import { userSettingsPath } from "./MetaUserSettings";
 

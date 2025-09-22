@@ -1,6 +1,6 @@
 import { Navigate, Route } from "react-router-dom";
 import { Metadata, globalSettingsPath } from "./MetaGlobalSettings";
-import { useModules } from "@/contexts/ModuleManagerContext";
+import { useModules } from "@/moduleif/moduleSystem";
 import { GlobalSettingsPage } from "./SettingsPage";
 
 export function RouterEntry() {

@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { ModuleManager } from '../services/moduleManager'
-import type { ModuleMetadata } from '../types/module'
+import type { ModuleMetadata } from '@/moduleif/moduleSystem'
+import { ModuleManager } from '@/modules/module-system/moduleManager'
 
 // Mock the ModuleManager service
-vi.mock('../services/moduleManager')
+vi.mock('@/modules/module-system/moduleManager')
 
 const MockedModuleManager = vi.mocked(ModuleManager)
 

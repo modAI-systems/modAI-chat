@@ -1,5 +1,5 @@
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/shadcn/components/ui/resizable'
-import { useModules } from "@/contexts/ModuleManagerContext";
+import { useModules } from "@/moduleif/moduleSystem";
 import { Outlet } from "react-router-dom";
 import type { ReactNode } from "react";
 
