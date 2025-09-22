@@ -3,10 +3,10 @@
 ## Getting started
 
 ```bash
-nvm use # If you use nvm
+pnpm env use -g 24
 
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 The frontend is now available under http://localhost:5173

@@ -43,8 +43,8 @@ uv run uvicorn modai.main:app --reload
 ### Frontend Setup
 ```bash
 cd frontend_omni
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Browse to http://localhost:5173/
