@@ -4,7 +4,7 @@ import { ThemeProvider } from './modules/theme/ThemeProvider'
 import { SidebarProvider } from '@/shadcn/components/ui/sidebar'
 import { AppSidebar } from './components/AppSidebar'
 import { useModules } from '@/moduleif/moduleSystem'
-import { ModuleManagerProvider } from './modules/module-system/ModuleManagerContext'
+import { ModuleContextProviders, ModuleManagerProvider } from './modules/module-system/ModuleManagerContext'
 import { Suspense } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PageLoadingScreen } from './components/PageLoadingScreen'
@@ -12,22 +12,6 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 
 
 const queryClient = new QueryClient();
-
-interface ModuleContextProviderProps {
-  children: React.ReactNode
-}
-
-function ModuleContextProviders({ children }: ModuleContextProviderProps) {
-  const modules = useModules()
-
-  const contextProviders = modules.getComponentsByName("ContextProvider")
-
-  // Wrap children with all context provider modules
-  return contextProviders.reduce(
-    (wrappedChildren, Component) => <Component>{wrappedChildren}</Component>,
-    children
-  )
-}
 
 function RoutedSidebarLayout() {
   const modules = useModules()
@@ -58,7 +42,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <Suspense fallback={<PageLoadingScreen />}>
           <ModuleManagerProvider>
-            <ModuleContextProviders>
+            <ModuleContextProviders name="GlobalContextProvider">
               <RoutedSidebarLayout />
             </ModuleContextProviders>
           </ModuleManagerProvider>

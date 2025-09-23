@@ -14,7 +14,7 @@ import { UserSettingsService } from './UserSettingsService';
  * Context provider that makes the user settings service available
  * throughout the application component tree
  */
-export function ContextProvider({ children }: { children: React.ReactNode }) {
+export function GlobalContextProvider({ children }: { children: React.ReactNode }) {
     const { session } = useSession();
     const [userSettingsService] = useState(() => new UserSettingsService());
     const [isLoading, setIsLoading] = useState(false);

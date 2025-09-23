@@ -1,5 +1,5 @@
 import type { ModuleMetadata } from "@/moduleif/moduleSystem";
-import { ContextProvider } from "./ContextProvider";
+import { GlobalContextProvider } from "./GlobalContextProvider";
 
 export const Metadata: ModuleMetadata = {
     id: 'user-settings-service',
@@ -7,5 +7,5 @@ export const Metadata: ModuleMetadata = {
     description: 'Pure service module for user settings management via backend REST API (no UI)',
     author: 'ModAI Team',
     dependentModules: ["session"],
-    components: [ContextProvider]
+    components: [GlobalContextProvider]
 }

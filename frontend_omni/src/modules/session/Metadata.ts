@@ -1,5 +1,5 @@
 import type { ModuleMetadata } from "@/moduleif/moduleSystem";
-import { ContextProvider } from "./ContextProvider";
+import { GlobalContextProvider } from "./GlobalContextProvider";
 
 export const Metadata: ModuleMetadata = {
     id: 'session',
@@ -7,5 +7,5 @@ export const Metadata: ModuleMetadata = {
     description: 'Session management module that maintains user session state in the browser',
     author: 'ModAI Team',
     dependentModules: [],
-    components: [ContextProvider]
+    components: [GlobalContextProvider]
 }

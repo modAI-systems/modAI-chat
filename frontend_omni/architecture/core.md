@@ -44,7 +44,7 @@ flowchart TD
 
     P --> Q[RouterEntry]
     P --> R[SidebarItem]
-    P --> S[ContextProvider]
+    P --> S[GlobalGlobalContextProvider]
     P --> T[GlobalSettingsNavItem]
 ```
 
@@ -190,7 +190,7 @@ export const Metadata: ModuleMetadata = {
     description: 'Example module with multiple integration points',
     author: 'ModAI Team',
     dependentModules: [],
-    components: [RouterEntry, SidebarItem, SidebarFooterItem, ContextProvider]
+    components: [RouterEntry, SidebarItem, SidebarFooterItem, GlobalGlobalContextProvider]
 }
 ```
 
@@ -257,10 +257,10 @@ export function SidebarFooterItem() {
 ```
 
 ### 6.4 Context Provider Chain
-- **Component Name**: `ContextProvider`
+- **Component Name**: `GlobalContextProvider`
 - **Purpose**: Modules can provide application-wide state/context
 - **Usage**: Components wrap children with their context providers
-- **Integration**: Core app chains all `ContextProvider` components around the main app
+- **Integration**: Core app chains all `GlobalContextProvider` components around the main app
 - **When to create**: Create this component and register it in the Metadata if the module needs to make state or services available throughout the entire application. This is essential for modules that provide shared services like authentication, session management, or global configuration that other modules depend on.
 
 #### 6.4.1 Service Provider Pattern
@@ -307,14 +307,14 @@ export class AuthenticationService implements AuthService {
 }
 ```
 
-**3. Context Provider**: Create a React context provider in `src/modules/[service-module]/ContextProvider.tsx`
+**3. Context Provider**: Create a React context provider in `src/modules/[service-module]/GlobalContextProvider.tsx`
 ```typescript
-// Example: src/modules/authentication-service/ContextProvider.tsx
+// Example: src/modules/authentication-service/GlobalContextProvider.tsx
 import React from 'react';
 import { AuthServiceContext } from "@/moduleif/authenticationService";
 import { AuthenticationService } from './AuthenticationService';
 
-export function ContextProvider({ children }: { children: React.ReactNode }) {
+export function GlobalContextProvider({ children }: { children: React.ReactNode }) {
     const authServiceInstance = new AuthenticationService();
     return (
         <AuthServiceContext value={authServiceInstance}>
@@ -324,13 +324,13 @@ export function ContextProvider({ children }: { children: React.ReactNode }) {
 }
 ```
 
-**4. Module Registration**: Register the `ContextProvider` in the module's `Metadata.ts`
+**4. Module Registration**: Register the `GlobalContextProvider` in the module's `Metadata.ts`
 ```typescript
 // Example: src/modules/authentication-service/Metadata.ts
 export const Metadata: ModuleMetadata = {
     id: 'authentication-service',
     // ...
-    components: [ContextProvider]
+    components: [GlobalContextProvider]
 }
 ```
 
@@ -361,11 +361,11 @@ export function useSession(): SessionContextType {
 ```
 
 ```typescript
-// Example: src/modules/session/ContextProvider.tsx - Implementation only provides the provider
+// Example: src/modules/session/GlobalContextProvider.tsx - Implementation only provides the provider
 import React, { useState } from 'react';
 import { SessionContext, SessionContextType } from "@/moduleif/sessionContext";
 
-export function ContextProvider({ children }: { children: React.ReactNode }) {
+export function GlobalContextProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = useState<Session | null>(null)
     // ... other state and logic
 
@@ -455,7 +455,7 @@ export function GlobalSettingsRouterEntry() {
 ### 7.2 Hierarchical Component Naming
 
 The naming convention supports hierarchical relationships:
-- **Core Integration**: `RouterEntry`, `SidebarItem`, `ContextProvider`
+- **Core Integration**: `RouterEntry`, `SidebarItem`, `GlobalContextProvider`
 - **Module Extension**: `[ModuleName][ComponentType]` (e.g., `GlobalSettingsNavItem`)
 - **Discovery**: Parent modules query for their specific extension pattern
 
@@ -467,7 +467,7 @@ The naming convention supports hierarchical relationships:
 3. **Module Discovery**: Load enabled modules from manifest
 4. **Metadata Import**: Dynamic import of each module's `Metadata.ts`
 5. **Component Registration**: Register all module components in ModuleManager
-6. **Context Composition**: Chain all `ContextProvider` components
+6. **Context Composition**: Chain all `GlobalContextProvider` components
 7. **UI Composition**: Render all integration point components
 
 ### 8.2 Module Dependencies
@@ -593,14 +593,14 @@ export const Metadata: ModuleMetadata = {
     description: 'Session management service',
     author: 'ModAI Team',
     dependentModules: [],
-    components: [ContextProvider]
+    components: [GlobalContextProvider]
 }
 
-// src/modules/session/ContextProvider.tsx
+// src/modules/session/GlobalContextProvider.tsx
 import React, { useState } from 'react';
 import { SessionContext, SessionContextType } from "@/moduleif/sessionContext";
 
-export function ContextProvider({ children }: { children: React.ReactNode }) {
+export function GlobalContextProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = useState<SessionData | null>(null);
     // Implementation details...
 
@@ -648,12 +648,12 @@ export class AuthenticationService implements AuthService {
     // ... other methods
 }
 
-// src/modules/authentication-service/ContextProvider.tsx - Context provider
+// src/modules/authentication-service/GlobalContextProvider.tsx - Context provider
 import React from 'react';
 import { AuthServiceContext } from "@/moduleif/authenticationService";
 import { AuthenticationService } from './AuthenticationService';
 
-export function ContextProvider({ children }: { children: React.ReactNode }) {
+export function GlobalContextProvider({ children }: { children: React.ReactNode }) {
     const authServiceInstance = new AuthenticationService();
     return (
         <AuthServiceContext value={authServiceInstance}>
@@ -669,7 +669,7 @@ export const Metadata: ModuleMetadata = {
     description: 'Authentication service providing login, signup, and logout functionality',
     author: 'ModAI Team',
     dependentModules: [],
-    components: [ContextProvider]  // Register the context provider
+    components: [GlobalContextProvider]  // Register the context provider
 }
 ```
 

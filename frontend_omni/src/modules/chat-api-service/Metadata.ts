@@ -1,5 +1,5 @@
 import type { ModuleMetadata } from "@/moduleif/moduleSystem";
-import { ContextProvider } from "./ContextProvider";
+import { GlobalContextProvider } from "./GlobalContextProvider";
 
 export const Metadata: ModuleMetadata = {
     id: 'chat-api-service',
@@ -7,5 +7,5 @@ export const Metadata: ModuleMetadata = {
     description: 'Chat API service providing communication with backend chat endpoints',
     author: 'ModAI Team',
     dependentModules: [],
-    components: [ContextProvider]
+    components: [GlobalContextProvider]
 }

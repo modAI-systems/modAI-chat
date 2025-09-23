@@ -2,7 +2,7 @@ import React from 'react';
 import { ChatApiServiceContext } from "@/moduleif/chatApiService";
 import { ChatApiService } from "./ChatApiService";
 
-export function ContextProvider({ children }: { children: React.ReactNode }) {
+export function GlobalContextProvider({ children }: { children: React.ReactNode }) {
     const chatApiServiceInstance = new ChatApiService();
 
     return (

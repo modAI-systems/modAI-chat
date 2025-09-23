@@ -13,7 +13,7 @@ import { AuthenticationService } from './AuthenticationService';
  * Context provider that makes the authentication service available
  * throughout the application component tree
  */
-export function ContextProvider({ children }: { children: React.ReactNode }) {
+export function GlobalContextProvider({ children }: { children: React.ReactNode }) {
     const authServiceInstance = new AuthenticationService();
 
     return (
