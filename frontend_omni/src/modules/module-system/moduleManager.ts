@@ -1,5 +1,30 @@
 import type { ModuleMetadata, ModuleManager as IModuleManager } from '@/moduleif/moduleSystem'
 import type { ModuleManifest, ModuleManifestEntry } from './moduleManifstLoader'
+import { useSuspenseQuery } from '@tanstack/react-query'
+
+
+export function newModuleManagerFromManifest(manifest: ModuleManifest): ModuleManager {
+    async function newModuleManagerAsync(): Promise<ModuleManager> {
+        const moduleManager = new ModuleManager()
+        await moduleManager.loadModulesFromManifestAsync(manifest)
+        return moduleManager
+    }
+
+    const { data: manager, error } = useSuspenseQuery({
+        queryKey: ['moduleManager'],
+        queryFn: newModuleManagerAsync,
+    })
+
+    if (error) {
+        throw new Error('Error loading module manager:', error as Error)
+    }
+
+    if (!manager) {
+        throw new Error('Module manager is undefined')
+    }
+
+    return manager
+}
 
 
 export class ModuleManager implements IModuleManager {
@@ -8,7 +33,7 @@ export class ModuleManager implements IModuleManager {
     /**
      * Load modules from manifest and metadata files
      */
-    async loadModulesFromManifest(manifest: ModuleManifest) {
+    async loadModulesFromManifestAsync(manifest: ModuleManifest) {
         for (const manifestEntry of manifest.modules) {
             const metadata = await this.loadModule(manifestEntry)
 

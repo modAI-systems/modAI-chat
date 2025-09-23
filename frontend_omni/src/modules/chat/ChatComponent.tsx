@@ -6,9 +6,9 @@ import { Button } from '@/shadcn/components/ui/button'
 import { useEventBus } from '@/hooks/useEventBus'
 import type { ToggleSidebar } from './Events'
 import type { SelectedModel } from '@/moduleif/llmPicker'
-import type { ProviderTypeGroup } from '@/moduleif/llmProviderService'
 import { useLLMProviderService } from '@/moduleif/llmProviderService'
 import { useModules } from '@/moduleif/moduleSystem'
+import { useSuspenseQuery } from '@tanstack/react-query'
 
 export interface MessageData {
     id: string
@@ -177,35 +177,24 @@ function ChatComponent() {
     const modelPickers = modules.getComponentsByName("ModelPicker")
     const ModelPicker = modelPickers.length > 0 ? modelPickers[0] : null;
 
-    // Provider data state
-    const [providerTypes, setProviderTypes] = useState<ProviderTypeGroup[]>([])
-    // Note: Loading and error states for providers could be used in UI for better UX
-    // const [providersLoading, setProvidersLoading] = useState(true)
-    // const [providersError, setProvidersError] = useState<string | null>(null)
-
     // Sidebar state management
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [activeSidebarId, setActiveSidebarId] = useState<string | null>(null)
     const [ActiveSidebarComponent, setActiveSidebarComponent] = useState<React.ComponentType<unknown> | null>(null)
 
-    // Load providers on component mount
-    useEffect(() => {
-        loadProviders()
-    }, [])
+    const { data: providerTypes, error } = useSuspenseQuery({
+        queryKey: ['llmProviders'],
+        queryFn: async () => await llmProviderService.getAllProvidersWithModels(),
+    })
 
-    const loadProviders = async () => {
-        try {
-            // setProvidersLoading(true)
-            // setProvidersError(null)
-            const data = await llmProviderService.getAllProvidersWithModels()
-            setProviderTypes(data)
-        } catch (err) {
-            console.error('Failed to load providers:', err)
-            // setProvidersError('Failed to load providers. Please try again.')
-        } finally {
-            // setProvidersLoading(false)
-        }
+    if (error) {
+        throw new Error('Error loading provider types:', error as Error)
     }
+
+    if (!providerTypes) {
+        throw new Error('Provider types are undefined')
+    }
+
 
     useEventBus<ToggleSidebar>('toggleSidebar', (notification) => {
         // If the sidebar is not open, open it with the provided component
