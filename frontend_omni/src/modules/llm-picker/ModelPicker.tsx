@@ -12,13 +12,13 @@ import {
 } from '@/shadcn/components/ui/select'
 import { Settings } from 'lucide-react'
 import type { ModelSelectorProps, SelectedModel } from '@/moduleif/llmPicker'
-import type { ProviderTypeGroup } from '@/moduleif/llmProviderService'
+import type { Model, ProviderTypeGroup, ProviderWithModels } from '@/moduleif/llmProviderService'
 
 // Display logic functions
 const useDisplayText = (
     getCurrentProviderType: () => ProviderTypeGroup | undefined,
-    getCurrentProvider: () => any,
-    getCurrentModel: () => any
+    getCurrentProvider: () => ProviderWithModels | undefined,
+    getCurrentModel: () => Model | undefined
 ) => {
     const getDisplayText = () => {
         const providerType = getCurrentProviderType()

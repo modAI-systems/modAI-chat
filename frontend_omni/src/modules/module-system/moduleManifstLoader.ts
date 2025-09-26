@@ -14,7 +14,7 @@ export interface ModuleManifest {
 }
 
 
-export function fetchManifest(): ModuleManifest {
+export function useManifest(): ModuleManifest {
     const { data, error } = useSuspenseQuery({
         queryKey: ['modulesManifest'],
         queryFn: fetchManifestAsync,

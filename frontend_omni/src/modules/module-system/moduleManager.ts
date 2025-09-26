@@ -3,7 +3,7 @@ import type { ModuleManifest, ModuleManifestEntry } from './moduleManifstLoader'
 import { useSuspenseQuery } from '@tanstack/react-query'
 
 
-export function newModuleManagerFromManifest(manifest: ModuleManifest): ModuleManager {
+export function useModuleManagerFromManifest(manifest: ModuleManifest): ModuleManager {
     async function newModuleManagerAsync(): Promise<ModuleManager> {
         const moduleManager = new ModuleManager()
         await moduleManager.loadModulesFromManifestAsync(manifest)

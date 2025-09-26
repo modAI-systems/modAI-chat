@@ -34,9 +34,13 @@
 
 import { createContext, useContext } from "react";
 
+// More specific type for settings values to avoid 'any'
+export type SettingsValue = string | number | boolean | null | SettingsValue[] | { [key: string]: SettingsValue };
+export type ModuleSettings = { [key: string]: SettingsValue };
+
 // User Settings Types
 export interface UserSettings {
-    [moduleName: string]: { [key: string]: any };
+    [moduleName: string]: ModuleSettings;
 }
 
 export interface UserSettingsContextType {
@@ -51,7 +55,7 @@ export interface UserSettingsContextType {
      * @param moduleName The name of the module to get settings for
      * @returns Settings object for the specified module, or empty object if not found
      */
-    getModuleSettings(moduleName: string): { [key: string]: any };
+    getModuleSettings(moduleName: string): ModuleSettings;
 
     /**
      * Update settings for a specific module
@@ -60,7 +64,7 @@ export interface UserSettingsContextType {
      * @param settings The settings object to update
      * @returns Promise that resolves when settings are updated
      */
-    updateModuleSettings(moduleName: string, settings: { [key: string]: any }): Promise<void>;
+    updateModuleSettings(moduleName: string, settings: ModuleSettings): Promise<void>;
 
     /**
      * Refresh user settings from the backend

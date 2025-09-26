@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { type UserSettingsContextType, type UserSettings, UserSettingsContext } from "@/moduleif/userSettingsService";
+import { type UserSettingsContextType, type UserSettings, UserSettingsContext, type ModuleSettings } from "@/moduleif/userSettingsService";
 import { useSession } from "@/moduleif/sessionContext";
 import { UserSettingsService } from './UserSettingsService';
 
@@ -19,18 +19,6 @@ export function GlobalContextProvider({ children }: { children: React.ReactNode 
     const [userSettingsService] = useState(() => new UserSettingsService());
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    // Initialize service when session changes
-    useEffect(() => {
-        if (session) {
-            const user = session.getUser();
-            userSettingsService.setUserId(user.id);
-            refreshSettings();
-        } else {
-            // Clear settings when user logs out
-            setError(null);
-        }
-    }, [session, userSettingsService]);
 
     const refreshSettings = useCallback(async () => {
         setIsLoading(true);
@@ -48,17 +36,29 @@ export function GlobalContextProvider({ children }: { children: React.ReactNode 
         }
     }, [userSettingsService]);
 
+    // Initialize service when session changes
+    useEffect(() => {
+        if (session) {
+            const user = session.getUser();
+            userSettingsService.setUserId(user.id);
+            refreshSettings();
+        } else {
+            // Clear settings when user logs out
+            setError(null);
+        }
+    }, [session, userSettingsService, refreshSettings]);
+
     const getAllSettings = useCallback((): UserSettings => {
         return userSettingsService.getAllSettings();
     }, [userSettingsService]);
 
-    const getModuleSettings = useCallback((moduleName: string): { [key: string]: any } => {
+    const getModuleSettings = useCallback((moduleName: string): ModuleSettings => {
         return userSettingsService.getModuleSettings(moduleName);
     }, [userSettingsService]);
 
     const updateModuleSettings = useCallback(async (
         moduleName: string,
-        moduleSettings: { [key: string]: any }
+        moduleSettings: ModuleSettings
     ): Promise<void> => {
         setError(null);
 

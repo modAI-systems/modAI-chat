@@ -5,7 +5,7 @@
  * and manages local state for user settings.
  */
 
-import type { UserSettings } from "@/moduleif/userSettingsService";
+import type { UserSettings, ModuleSettings } from "@/moduleif/userSettingsService";
 
 export class UserSettingsService {
     private settings: UserSettings = {};
@@ -62,7 +62,7 @@ export class UserSettingsService {
     /**
      * Get settings for a specific module
      */
-    public getModuleSettings(moduleName: string): { [key: string]: any } {
+    public getModuleSettings(moduleName: string): ModuleSettings {
         return this.settings[moduleName] || {};
     }
 
@@ -78,7 +78,7 @@ export class UserSettingsService {
      */
     public async updateModuleSettings(
         moduleName: string,
-        moduleSettings: { [key: string]: any }
+        moduleSettings: ModuleSettings
     ): Promise<void> {
         if (!this.currentUserId) {
             throw new Error('User ID not set. Cannot update settings.');

@@ -180,10 +180,6 @@ export function LLMProviderManagementPage() {
     const [editingProvider, setEditingProvider] = useState<EditingProvider | null>(null)
     const [showDeleteDialog, setShowDeleteDialog] = useState<LLMProvider | null>(null)
 
-    useEffect(() => {
-        loadProviders()
-    }, [])
-
     const loadProviders = async () => {
         try {
             setLoading(true)
@@ -196,6 +192,11 @@ export function LLMProviderManagementPage() {
             setLoading(false)
         }
     }
+
+    useEffect(() => {
+        loadProviders()
+    })
+
 
     const handleCreateProvider = () => {
         setFormMode('create')

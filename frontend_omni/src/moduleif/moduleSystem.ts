@@ -32,7 +32,7 @@ export interface ModuleMetadata {
     description?: string
     author?: string
     dependentModules: string[]
-    components: any[]
+    components: React.ComponentType<any>[]
 }
 
 // Module Manager Service Interface
