@@ -1,3 +1,4 @@
+import { GLOBAL_MODULE_CONTEXT_PROVIDER_CLASS_NAME } from "@/moduleif/moduleContextProvider";
 import { useModules } from "@/moduleif/moduleSystemService";
 import type { ComponentType, ReactNode } from "react";
 
@@ -18,5 +19,19 @@ export function ModuleContextProviders({
             <Component>{wrappedChildren}</Component>
         ),
         children
+    );
+}
+
+export function GlobalModuleContextProviders({
+    children,
+}: {
+    children: ReactNode;
+}) {
+    return (
+        <ModuleContextProviders
+            name={GLOBAL_MODULE_CONTEXT_PROVIDER_CLASS_NAME}
+        >
+            {children}
+        </ModuleContextProviders>
     );
 }
