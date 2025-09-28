@@ -15,7 +15,6 @@
  *     component composition throughout the application.
  */
 
-import type React from "react";
 import { createContext, useContext } from "react";
 
 // Module Metadata Types
@@ -25,8 +24,7 @@ export interface ModuleMetadata {
     description?: string;
     author?: string;
     dependentModules: string[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type
-    components: (React.ComponentType<any> | Function)[];
+    exports: Record<string, unknown>;
 }
 
 // Module Manager Service Interface

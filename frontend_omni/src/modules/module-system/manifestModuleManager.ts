@@ -39,6 +39,7 @@ export function useModuleManagerFromManifest(
 
 export class ManifestModuleManager implements ModuleManager {
     private registeredModules: Map<string, ModuleMetadata> = new Map();
+    private activeModules: Map<string, ModuleMetadata> = new Map();
 
     /**
      * Load modules from manifest and metadata files
@@ -49,6 +50,7 @@ export class ManifestModuleManager implements ModuleManager {
 
             if (metadata) {
                 this.registeredModules.set(metadata.id, metadata);
+                this.activeModules.set(metadata.id, metadata);
             }
         }
     }
@@ -78,7 +80,7 @@ export class ManifestModuleManager implements ModuleManager {
         // Add path to metadata
         const metadata: ModuleMetadata = metadataFile.Metadata;
 
-        if (metadata.components.length === 0) {
+        if (Object.keys(metadata.exports).length === 0) {
             console.warn(
                 `Module ${manifestEntry.id} has no components defined in metadata. skipping.`
             );
@@ -120,15 +122,12 @@ export class ManifestModuleManager implements ModuleManager {
         return elements.length === 1 ? elements[0] : null;
     }
 
-    /**
-     * Get all elements of a specific name across all modules
-     */
     getAll<T>(name: string): T[] {
         const elements: T[] = [];
-        this.registeredModules.forEach((metadata) => {
-            metadata.components
-                .filter((c) => c.name === name)
-                .forEach((c) => elements.push(c as T));
+        this.activeModules.forEach((metadata) => {
+            if (metadata.exports[name]) {
+                elements.push(metadata.exports[name] as T);
+            }
         });
         return elements;
     }
