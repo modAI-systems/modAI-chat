@@ -1,11 +1,13 @@
 # Core Frontend Architecture
 
 ## 1. Principles
+
 - **Architecture Style**: Modular component-based frontend with dynamic module composition
 - **Design Principles**: KISS (Keep It Simple, Stupid), clear separation of concerns, dynamic component discovery
 - **Quality Attributes**: Modularity for independent development, extensibility through well-defined component contracts, maintainability through standardized module structure
 
 ## 2. Technology Stack
+
 - **Programming Language**: TypeScript
 - **UI Framework**: React 19+ with React Router
 - **UI Components**: Shadcn/ui component library
@@ -61,13 +63,15 @@ The frontend uses a hierarchical module system with clear separation between int
 
 ### 4.2 Module Architecture Pattern
 
-The system follows a strict interface-implementation separation:
+The system follows a strict interface-implementation separation with documentation:
 
 ```
 src/
 ├── moduleif/               # Module interfaces and contracts
-│   ├── [module-name].ts    # Single file containing all interfaces, types, and contracts
+│   ├── [module-name].ts    # Interface definitions: types, contracts, and hooks
+│   ├── [module-name].md    # Documentation for the module interface
 │   └── [another-module].ts
+│   └── [another-module].md
 └── modules/                # Module implementations
     └── [module-name]/
         ├── Metadata.ts     # Required: Module definition and component registry
@@ -82,30 +86,8 @@ src/
 - **Implementation Isolation**: Concrete implementations in `modules/` can be swapped without affecting dependent modules
 - **Multiple Implementations**: One interface can have multiple implementations (e.g., different chat providers)
 
-### 4.4 Module Structure
-
-Each module interface is defined in a single file:
-
-```
-src/moduleif/[module-name].ts    # Single file containing:
-                                 # - Data structures and interfaces
-                                 # - Service contracts and abstractions
-                                 # - Type definitions and enums
-                                 # - Hook declarations
-```
-
-Each module implementation must follow this standardized structure:
-
-```
-src/modules/[module-name]/
-├── Metadata.ts          # Required: Module definition and component registry
-├── [ComponentName].tsx  # Module components
-└── ...                 # Additional implementation files
-```
-
-### 4.5 Import Guidelines
-
 **Correct Import Patterns:**
+
 ```typescript
 // ✅ Import interfaces from moduleif
 import { SessionData, SessionService } from "@/moduleif/session";
@@ -116,6 +98,7 @@ import { useLocalState } from "./hooks";
 ```
 
 **Incorrect Import Patterns:**
+
 ```typescript
 // ❌ Never import directly from other modules
 import { SessionProvider } from "@/modules/session/SessionProvider";
@@ -125,38 +108,116 @@ import { ChatComponent } from "@/modules/chat/ChatComponent";
 import { SQLiteSessionStore } from "@/modules/session/stores/SQLiteSessionStore";
 ```
 
+### 4.4 Module Structure
+
+Each module interface consists of two files:
+
+```
+src/moduleif/[module-name].ts    # Interface definitions containing:
+                                 # - Data structures and interfaces
+                                 # - Service contracts and abstractions
+                                 # - Type definitions and enums
+                                 # - Hook declarations
+                                 # - Module class name constants
+
+src/moduleif/[module-name].md    # Documentation containing:
+                                 # - Module description and purpose
+                                 # - Usage examples and integration patterns
+                                 # - Implementation requirements
+```
+
+Each module implementation must follow this standardized structure:
+
+```
+src/modules/[module-name]/
+├── Metadata.ts          # Required: Module definition and component registry
+├── [ComponentName].tsx  # Module components
+└── ...                  # Additional implementation files
+```
+
+### 4.5 Import Guidelines
+
+Each module interface **must** be accompanied by a same-named `.md` documentation file that describes the module's purpose, usage, and integration requirements.
+
+#### 4.5.1 Documentation File Structure
+
+```
+src/moduleif/[module-name].ts    # TypeScript interface definitions
+src/moduleif/[module-name].md    # Documentation for the interface
+```
+
+#### 4.5.2 Documentation Template
+
+Every module interface documentation should follow this standardized structure:
+
+````markdown
+# [Module Name]
+
+Module Type: [Service | Hook | Service, Hook | Context Provider | Component | ... ]
+
+## Description
+
+[Brief description of what this module provides and its main purpose. For UI modules, also mockups can help]
+
+## Intended Usage
+
+[Describe how the module can be used by other modules]
+
+```jsx
+// Practical code example showing how other modules or components
+// should use this module's interfaces, hooks, or services
+const example = useModuleName();
+// ... usage example
+```
+
+## Intended Integration
+
+[Description of how this module integrates into the application, including context providers, component registration patterns, or service patterns that implementations should follow]
+
+```jsx
+// Example showing integration pattern, such as context providers
+<SomeContext value={contextValue}>...</SomeContext>
+```
+
+## Sub Module Implementation Detail
+
+[Description of how other modules can extend or integrate with this module, or "This module is not consuming any sub-modules." if not applicable.]
+````
+
 ### 4.6 Module Metadata Contract
 
 Every module must export a `Metadata` object conforming to the `ModuleMetadata` interface:
 
 ```typescript
 export interface ModuleMetadata {
-    id: string                    // Unique module identifier
-    version: string               // Semantic version
-    description?: string          // Human-readable description
-    author?: string              // Module author
-    dependentModules: string[]   // Array of required module IDs
-    components: any[]            // Array of component functions/classes
+  version: string; // Semantic version
+  description?: string; // Human-readable description
+  author?: string; // Module author
+  dependentClasses: string[]; // Array of required module class names
+  exports: Record<string, unknown>; // Named exports with class names as keys
 }
 ```
 
 ### 4.7 Component Registration
 
-Modules register components that can be discovered and used by other modules or the core application:
+Modules register components using named exports in their metadata, where the key represents the module class name the component is esported for:
 
 ```typescript
-// Example: global-settings/Metadata.ts
-import { SidebarFooterItem } from "./SidebarFooterItem";
-import { RouterEntry } from "./RouterEntry";
+// Example: user-service/Metadata.ts
+import { USER_SERVICE_MODULE_CLASS_NAME } from "@/moduleif/userService";
+import { GLOBAL_MODULE_CONTEXT_PROVIDER_CLASS_NAME } from "@/moduleif/moduleContextProvider";
+import { UserServiceContextProvider } from "./UserServiceContextProvider";
 
 export const Metadata: ModuleMetadata = {
-    id: 'global-settings',
-    version: '1.0.0',
-    description: 'Global settings management module',
-    author: 'ModAI Team',
-    dependentModules: ["session"],
-    components: [SidebarFooterItem, RouterEntry]
-}
+  version: "1.0.0",
+  description:
+    "User management module providing user data and related services",
+  author: "ModAI Team",
+  dependentClasses: [],
+  exports: {
+    [GLOBAL_MODULE_CONTEXT_PROVIDER_CLASS_NAME]: UserServiceContextProvider,
+  },
+};
 ```
 
 ## 5. Component Discovery and Usage
@@ -166,35 +227,37 @@ export const Metadata: ModuleMetadata = {
 Modules and the core application access components from other modules using the `useModules()` hook:
 
 ```typescript
-const modules = useModules()
-const routerEntryFunctions = modules.getComponentsByName("RouterEntry")
+const modules = useModules();
+const components = modules.getAll<React.ComponentType>("SidebarItem");
+const singleComponent = modules.getOne<React.ComponentType>("MainContainer");
 ```
 
 ### 5.2 Component Naming Convention
 
-Component names are critical as they serve as the discovery mechanism. Components with identical names from different modules are collected together:
+Module class names are critical as they serve as the discovery mechanism. Components with identical class names from different modules are collected together:
 
-- **Exact Match**: Component name must match exactly
+- **Exact Match**: Class name must match exactly
 - **Cross-Module**: Same-named components from all modules are returned as an array
 - **Dynamic Discovery**: New modules can add components without core application changes
+- **Class Name Constants**: Module interfaces define class name constants for consistency
 
 ## 6. Core Integration Points
 
-The core application defines specific component contracts that modules can implement to integrate with the main UI. **Important**: All integration components must be registered in the module's `Metadata.ts` file to be discoverable by the core application.
+The core application defines specific component class names that modules can implement to integrate with the main UI. **Important**: All integration components must be registered in the module's `Metadata.ts` exports using the appropriate class name constant.
 
 ```typescript
 // Example: Registering integration components in Metadata.ts
 export const Metadata: ModuleMetadata = {
-    id: 'example-module',
-    version: '1.0.0',
-    description: 'Example module with multiple integration points',
-    author: 'ModAI Team',
-    dependentModules: [],
-    components: [RouterEntry, SidebarItem, SidebarFooterItem, GlobalGlobalContextProvider]
-}
+  ...
+  exports: {
+    [SIDEBAR_ITEM_CLASS_NAME]: SidebarItem,
+    [SIDEBAR_FOOTER_ITEM_CLASS_NAME]: SidebarFooterItem,
+  },
+};
 ```
 
 ### 6.1 Router Integration
+
 - **Component Name**: `RouterEntry`
 - **Purpose**: Modules can extend the application routing
 - **Usage**: Each `RouterEntry` component returns React Router `<Route>` elements
@@ -204,13 +267,12 @@ export const Metadata: ModuleMetadata = {
 ```typescript
 // Example: Module router entry
 export function RouterEntry() {
-    return (
-        <Route path="/module-path" element={<ModulePage />} />
-    );
+  return <Route path="/module-path" element={<ModulePage />} />;
 }
 ```
 
 ### 6.2 Sidebar Integration
+
 - **Component Name**: `SidebarItem`
 - **Purpose**: Modules can add items to the main navigation sidebar
 - **Usage**: Components return `<SidebarMenuItem>` elements
@@ -220,20 +282,21 @@ export function RouterEntry() {
 ```typescript
 // Example: Module sidebar item
 export function SidebarItem() {
-    return (
-        <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-                <Link to="/module-path">
-                    <Icon />
-                    <span>Module Name</span>
-                </Link>
-            </SidebarMenuButton>
-        </SidebarMenuItem>
-    );
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild>
+        <Link to="/module-path">
+          <Icon />
+          <span>Module Name</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
 }
 ```
 
 ### 6.3 Sidebar Footer Integration
+
 - **Component Name**: `SidebarFooterItem`
 - **Purpose**: Modules can add items to the sidebar footer (typically settings/profile)
 - **Usage**: Components return footer-appropriate UI elements
@@ -243,95 +306,119 @@ export function SidebarItem() {
 ```typescript
 // Example: Module sidebar footer item
 export function SidebarFooterItem() {
-    return (
-        <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-                <Link to="/settings">
-                    <Settings />
-                    <span>Settings</span>
-                </Link>
-            </SidebarMenuButton>
-        </SidebarMenuItem>
-    );
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild>
+        <Link to="/settings">
+          <Settings />
+          <span>Settings</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
 }
 ```
 
 ### 6.4 Context Provider Chain
-- **Component Name**: `GlobalContextProvider`
+
+- **Class Name**: `GlobalModuleContextProvider`
 - **Purpose**: Modules can provide application-wide state/context
 - **Usage**: Components wrap children with their context providers
-- **Integration**: Core app chains all `GlobalContextProvider` components around the main app
-- **When to create**: Create this component and register it in the Metadata if the module needs to make state or services available throughout the entire application. This is essential for modules that provide shared services like authentication, session management, or global configuration that other modules depend on.
+- **Integration**: Core app chains all `GlobalModuleContextProvider` components around the main app
+- **When to create**: Create this component and register it in the Metadata exports if the module needs to make state or services available throughout the entire application. This is essential for modules that provide shared services like authentication, session management, or global configuration that other modules depend on.
 
 #### 6.4.1 Service Provider Pattern
 
 For modules that provide services (like authentication, LLM provider management, etc.), follow this standardized pattern:
 
 **1. Interface Definition**: Define the service contract and context/hook in `src/moduleif/[service-name].ts`
+
 ```typescript
-// Example: src/moduleif/authenticationService.ts
+// Example: src/moduleif/userService.ts
 import { createContext, useContext } from "react";
 
-export interface AuthService {
-    login(credentials: LoginRequest): Promise<LoginResponse>;
-    signup(credentials: SignupRequest): Promise<SignupResponse>;
-    logout(): Promise<LoginResponse>;
+export const USER_SERVICE_MODULE_CLASS_NAME = "UserService";
+
+export interface UserService {
+  fetchCurrentUser(): Promise<User>;
+  // ... other methods
 }
 
-// Create context for the authentication service
-export const AuthServiceContext = createContext<AuthService | undefined>(undefined);
+// Create context for the user service
+export const UserServiceContext = createContext<UserService | undefined>(
+  undefined
+);
 
 /**
- * Hook to access the authentication service from any component
+ * Hook to access the user service from any component
  *
- * @returns AuthService instance
- * @throws Error if used outside of AuthServiceProvider
+ * @returns UserService instance
+ * @throws Error if used outside of UserServiceProvider
  */
-export function useAuthService(): AuthService {
-    const context = useContext(AuthServiceContext);
-    if (!context) {
-        throw new Error('useAuthService must be used within an AuthServiceProvider');
-    }
-    return context;
+export function useUserService(): UserService {
+  const context = useContext(UserServiceContext);
+  if (!context) {
+    throw new Error("useUserService must be used within a UserServiceProvider");
+  }
+  return context;
 }
 ```
 
 **2. Service Implementation**: Create the concrete service class in `src/modules/[service-module]/[ServiceName].ts`
+
 ```typescript
-// Example: src/modules/authentication-service/AuthenticationService.ts
-export class AuthenticationService implements AuthService {
-    async login(credentials: LoginRequest): Promise<LoginResponse> {
-        // Implementation
-    }
-    // ... other methods
+// Example: src/modules/user-service/UserService.ts
+import { User, UserService } from "@/moduleif/userService";
+
+export class UserServiceImpl implements UserService {
+  async fetchCurrentUser(): Promise<User> {
+    // HTTP API implementation
+    const response = await fetch("/api/users/me");
+    return response.json();
+  }
+  // ... other methods
 }
 ```
 
-**3. Context Provider**: Create a React context provider in `src/modules/[service-module]/GlobalContextProvider.tsx`
-```typescript
-// Example: src/modules/authentication-service/GlobalContextProvider.tsx
-import React from 'react';
-import { AuthServiceContext } from "@/moduleif/authenticationService";
-import { AuthenticationService } from './AuthenticationService';
+**3. Context Provider**: Create a React context provider in `src/modules/[service-module]/[ComponentName].tsx`
 
-export function GlobalContextProvider({ children }: { children: React.ReactNode }) {
-    const authServiceInstance = new AuthenticationService();
-    return (
-        <AuthServiceContext value={authServiceInstance}>
-            {children}
-        </AuthServiceContext>
-    );
+```typescript
+// Example: src/modules/user-service/UserServiceContextProvider.tsx
+import React from "react";
+import { UserServiceContext } from "@/moduleif/userService";
+import { UserServiceImpl } from "./UserService";
+
+export function UserServiceContextProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const userServiceInstance = new UserServiceImpl();
+  return (
+    <UserServiceContext value={userServiceInstance}>
+      {children}
+    </UserServiceContext>
+  );
 }
 ```
 
-**4. Module Registration**: Register the `GlobalContextProvider` in the module's `Metadata.ts`
+**4. Module Registration**: Register the context provider in the module's `Metadata.ts` exports
+
 ```typescript
-// Example: src/modules/authentication-service/Metadata.ts
+// Example: src/modules/user-service/Metadata.ts
+import { GLOBAL_MODULE_CONTEXT_PROVIDER_CLASS_NAME } from "@/moduleif/moduleContextProvider";
+import { UserServiceContextProvider } from "./UserServiceContextProvider";
+
 export const Metadata: ModuleMetadata = {
-    id: 'authentication-service',
-    // ...
-    components: [GlobalContextProvider]
-}
+  version: "1.0.0",
+  description:
+    "User management module providing user data and related services",
+  author: "ModAI Team",
+  dependentClasses: [],
+  exports: {
+    [GLOBAL_MODULE_CONTEXT_PROVIDER_CLASS_NAME]: UserServiceContextProvider,
+  },
+};
 ```
 
 #### 6.4.2 Provider Module
@@ -339,48 +426,50 @@ export const Metadata: ModuleMetadata = {
 The provider module wants to make some state available throughout the application. The context and hook are defined in the interface, and the implementation only provides the context provider:
 
 ```typescript
-// Example: src/moduleif/sessionContext.ts - Interface defines context and hook
+// Example: src/moduleif/themeService.ts - Interface defines context and hook
 import { createContext, useContext } from "react";
 
-export interface SessionContextType {
-    session: SessionData | null;
-    isLoading: boolean;
-    refreshSession: () => Promise<void>;
-    clearSession: () => void;
+export const THEME_SERVICE_MODULE_CLASS_NAME = "ThemeService";
+
+export interface ThemeContextType {
+  theme: string;
+  setTheme: (theme: string) => void;
+  availableThemes: string[];
 }
 
-export const SessionContext = createContext<SessionContextType | undefined>(undefined);
+export const ThemeContext = createContext<ThemeContextType | undefined>(
+  undefined
+);
 
-export function useSession(): SessionContextType {
-    const context = useContext(SessionContext);
-    if (!context) {
-        throw new Error('useSession must be used within a SessionProvider');
-    }
-    return context;
+export function useTheme(): ThemeContextType {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
+  return context;
 }
 ```
 
 ```typescript
-// Example: src/modules/session/GlobalContextProvider.tsx - Implementation only provides the provider
-import React, { useState } from 'react';
-import { SessionContext, SessionContextType } from "@/moduleif/sessionContext";
+// Example: src/modules/theme-provider/ThemeContextProvider.tsx - Implementation only provides the provider
+import React, { useState } from "react";
+import { ThemeContext, ThemeContextType } from "@/moduleif/themeService";
 
-export function GlobalContextProvider({ children }: { children: React.ReactNode }) {
-    const [session, setSession] = useState<Session | null>(null)
-    // ... other state and logic
+export function ThemeContextProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [theme, setTheme] = useState<string>("light");
+  const availableThemes = ["light", "dark", "system"];
 
-    const contextValue: SessionContextType = {
-        session,
-        isLoading,
-        refreshSession,
-        clearSession,
-    }
+  const contextValue: ThemeContextType = {
+    theme,
+    setTheme,
+    availableThemes,
+  };
 
-    return (
-        <SessionContext value={contextValue}>
-            {children}
-        </SessionContext>
-    );
+  return <ThemeContext value={contextValue}>{children}</ThemeContext>;
 }
 ```
 
@@ -390,16 +479,17 @@ Consumer modules import and use the interfaces and types from the provider modul
 
 ```typescript
 // Consuming module imports from moduleif
-import { SessionData, useSession } from "@/moduleif/session";
+import { useTheme } from "@/moduleif/themeService";
 
 export function SomeComponent() {
-    const { session } = useSession();
+  const { theme, setTheme } = useTheme();
 
-    if (!session) {
-        return <div>Please log in</div>;
-    }
-
-    return <div>Welcome, {session.user.name}!</div>;
+  return (
+    <div>
+      <p>Current theme: {theme}</p>
+      <button onClick={() => setTheme("dark")}>Switch to Dark</button>
+    </div>
+  );
 }
 ```
 
@@ -416,11 +506,14 @@ export declare function useSession(): SessionContextType;
 
 ```typescript
 export const Metadata: ModuleMetadata = {
-    id: 'consuming-module',
-    // ...
-    dependentModules: ["session"], // Must include provider module
-    components: [SidebarItem]
-}
+  version: "1.0.0",
+  description: "A module that consumes theme services",
+  author: "ModAI Team",
+  dependentClasses: [THEME_SERVICE_MODULE_CLASS_NAME], // Must include provider module class
+  exports: {
+    [SIDEBAR_ITEM_CLASS_NAME]: SidebarItem,
+  },
+};
 ```
 
 ## 7. Module Hierarchy and Extension Pattern
@@ -436,25 +529,24 @@ The system supports modules that extend other modules. For example, the global s
 ```typescript
 // Chat module extending global settings
 export function GlobalSettingsNavItem() {
-    return (
-        <SidebarMenuButton asChild>
-            <Link to="/settings/global/llmproviders">
-                <span>LLM Providers</span>
-            </Link>
-        </SidebarMenuButton>
-    )
+  return (
+    <SidebarMenuButton asChild>
+      <Link to="/settings/global/llmproviders">
+        <span>LLM Providers</span>
+      </Link>
+    </SidebarMenuButton>
+  );
 }
 
 export function GlobalSettingsRouterEntry() {
-    return (
-        <Route path="llmproviders" element={<LLMProviderManagementPage />} />
-    );
+  return <Route path="llmproviders" element={<LLMProviderManagementPage />} />;
 }
 ```
 
 ### 7.2 Hierarchical Component Naming
 
 The naming convention supports hierarchical relationships:
+
 - **Core Integration**: `RouterEntry`, `SidebarItem`, `GlobalContextProvider`
 - **Module Extension**: `[ModuleName][ComponentType]` (e.g., `GlobalSettingsNavItem`)
 - **Discovery**: Parent modules query for their specific extension pattern
@@ -462,6 +554,7 @@ The naming convention supports hierarchical relationships:
 ## 8. Module Loading and Lifecycle
 
 ### 8.1 Startup Flow
+
 1. **App Start**: React application initialization begins
 2. **Manifest Loading**: Fetch and parse `modules/manifest.json`
 3. **Module Discovery**: Load enabled modules from manifest
@@ -472,13 +565,16 @@ The naming convention supports hierarchical relationships:
 
 ### 8.2 Module Dependencies
 
-Modules can declare dependencies on other modules:
+Modules can declare dependencies on other module classes:
 
 ```typescript
-dependentModules: ["session", "auth"]
+dependentClasses: [
+  USER_SERVICE_MODULE_CLASS_NAME,
+  THEME_SERVICE_MODULE_CLASS_NAME,
+];
 ```
 
-**Note**: Current implementation loads all modules; dependency resolution is declarative for documentation purposes.
+**Note**: Current implementation loads all enabled modules; dependency resolution is declarative for documentation purposes.
 
 ## 9. Example Module Implementations
 
@@ -487,30 +583,30 @@ dependentModules: ["session", "auth"]
 ```typescript
 // src/moduleif/chat.ts - Single file containing all chat-related interfaces
 export interface ChatMessage {
-    id: string;
-    content: string;
-    timestamp: Date;
-    role: 'user' | 'assistant';
+  id: string;
+  content: string;
+  timestamp: Date;
+  role: "user" | "assistant";
 }
 
 export interface ChatSession {
-    id: string;
-    title: string;
-    messages: ChatMessage[];
-    createdAt: Date;
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  createdAt: Date;
 }
 
 export interface ChatProvider {
-    sendMessage(content: string, sessionId: string): Promise<ChatMessage>;
-    createSession(): Promise<ChatSession>;
-    getSession(id: string): Promise<ChatSession | null>;
+  sendMessage(content: string, sessionId: string): Promise<ChatMessage>;
+  createSession(): Promise<ChatSession>;
+  getSession(id: string): Promise<ChatSession | null>;
 }
 
 export interface ChatContextType {
-    currentSession: ChatSession | null;
-    sessions: ChatSession[];
-    sendMessage: (content: string) => Promise<void>;
-    createNewSession: () => Promise<void>;
+  currentSession: ChatSession | null;
+  sessions: ChatSession[];
+  sendMessage: (content: string) => Promise<void>;
+  createNewSession: () => Promise<void>;
 }
 
 export declare function useChat(): ChatContextType;
@@ -520,38 +616,36 @@ export declare function useChat(): ChatContextType;
 
 ```typescript
 // src/modules/chat/Metadata.ts
-import { SidebarItem, RouterEntry } from './components';
+import { SidebarItem, RouterEntry } from "./components";
 
 export const Metadata: ModuleMetadata = {
-    id: 'chat',
-    version: '1.0.0',
-    description: 'AI Chat interface',
-    author: 'ModAI Team',
-    dependentModules: ["session"],
-    components: [SidebarItem, RouterEntry]
-}
+  id: "chat",
+  version: "1.0.0",
+  description: "AI Chat interface",
+  author: "ModAI Team",
+  dependentModules: ["session"],
+  components: [SidebarItem, RouterEntry],
+};
 
 // src/modules/chat/components/SidebarItem.tsx
 import { ChatMessage } from "@/moduleif/chat"; // ✅ Import from interface
 
 export function SidebarItem() {
-    return (
-        <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-                <Link to="/chat">
-                    <Plus />
-                    <span>New Chat</span>
-                </Link>
-            </SidebarMenuButton>
-        </SidebarMenuItem>
-    );
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild>
+        <Link to="/chat">
+          <Plus />
+          <span>New Chat</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
 }
 
 // src/modules/chat/components/RouterEntry.tsx
 export function RouterEntry() {
-    return (
-        <Route path="/chat" element={<ChatComponent />} />
-    );
+  return <Route path="/chat" element={<ChatComponent />} />;
 }
 ```
 
@@ -560,55 +654,57 @@ export function RouterEntry() {
 ```typescript
 // src/moduleif/session.ts - Single interface file
 export interface SessionData {
-    user: {
-        id: string;
-        name: string;
-        email: string;
-    };
-    isAuthenticated: boolean;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  isAuthenticated: boolean;
 }
 
 export interface SessionContextType {
-    session: SessionData | null;
-    isLoading: boolean;
-    refreshSession: () => Promise<void>;
-    clearSession: () => void;
+  session: SessionData | null;
+  isLoading: boolean;
+  refreshSession: () => Promise<void>;
+  clearSession: () => void;
 }
 
 // Create context and hook in the interface file
-export const SessionContext = createContext<SessionContextType | undefined>(undefined);
+export const SessionContext = createContext<SessionContextType | undefined>(
+  undefined
+);
 
 export function useSession(): SessionContextType {
-    const context = useContext(SessionContext);
-    if (!context) {
-        throw new Error('useSession must be used within SessionProvider');
-    }
-    return context;
+  const context = useContext(SessionContext);
+  if (!context) {
+    throw new Error("useSession must be used within SessionProvider");
+  }
+  return context;
 }
 
 // src/modules/session/Metadata.ts
 export const Metadata: ModuleMetadata = {
-    id: 'session',
-    version: '1.0.0',
-    description: 'Session management service',
-    author: 'ModAI Team',
-    dependentModules: [],
-    components: [GlobalContextProvider]
-}
+  id: "session",
+  version: "1.0.0",
+  description: "Session management service",
+  author: "ModAI Team",
+  dependentModules: [],
+  components: [GlobalContextProvider],
+};
 
 // src/modules/session/GlobalContextProvider.tsx
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { SessionContext, SessionContextType } from "@/moduleif/sessionContext";
 
-export function GlobalContextProvider({ children }: { children: React.ReactNode }) {
-    const [session, setSession] = useState<SessionData | null>(null);
-    // Implementation details...
+export function GlobalContextProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [session, setSession] = useState<SessionData | null>(null);
+  // Implementation details...
 
-    return (
-        <SessionContext value={contextValue}>
-            {children}
-        </SessionContext>
-    );
+  return <SessionContext value={contextValue}>{children}</SessionContext>;
 }
 ```
 
@@ -621,56 +717,65 @@ For modules that primarily provide services (like authentication, LLM provider m
 import { createContext, useContext } from "react";
 
 export interface AuthService {
-    login(credentials: LoginRequest): Promise<LoginResponse>;
-    signup(credentials: SignupRequest): Promise<SignupResponse>;
-    logout(): Promise<LoginResponse>;
+  login(credentials: LoginRequest): Promise<LoginResponse>;
+  signup(credentials: SignupRequest): Promise<SignupResponse>;
+  logout(): Promise<LoginResponse>;
 }
 
 // Create context for the authentication service
-export const AuthServiceContext = createContext<AuthService | undefined>(undefined);
+export const AuthServiceContext = createContext<AuthService | undefined>(
+  undefined
+);
 
 /**
  * Hook to access the authentication service from any component
  */
 export function useAuthService(): AuthService {
-    const context = useContext(AuthServiceContext);
-    if (!context) {
-        throw new Error('useAuthService must be used within an AuthServiceProvider');
-    }
-    return context;
+  const context = useContext(AuthServiceContext);
+  if (!context) {
+    throw new Error(
+      "useAuthService must be used within an AuthServiceProvider"
+    );
+  }
+  return context;
 }
 
 // src/modules/authentication-service/AuthenticationService.ts - Service class
 export class AuthenticationService implements AuthService {
-    async login(credentials: LoginRequest): Promise<LoginResponse> {
-        // HTTP API implementation
-    }
-    // ... other methods
+  async login(credentials: LoginRequest): Promise<LoginResponse> {
+    // HTTP API implementation
+  }
+  // ... other methods
 }
 
 // src/modules/authentication-service/GlobalContextProvider.tsx - Context provider
-import React from 'react';
+import React from "react";
 import { AuthServiceContext } from "@/moduleif/authenticationService";
-import { AuthenticationService } from './AuthenticationService';
+import { AuthenticationService } from "./AuthenticationService";
 
-export function GlobalContextProvider({ children }: { children: React.ReactNode }) {
-    const authServiceInstance = new AuthenticationService();
-    return (
-        <AuthServiceContext value={authServiceInstance}>
-            {children}
-        </AuthServiceContext>
-    );
+export function GlobalContextProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const authServiceInstance = new AuthenticationService();
+  return (
+    <AuthServiceContext value={authServiceInstance}>
+      {children}
+    </AuthServiceContext>
+  );
 }
 
 // src/modules/authentication-service/Metadata.ts - Module registration
 export const Metadata: ModuleMetadata = {
-    id: 'authentication-service',
-    version: '1.0.0',
-    description: 'Authentication service providing login, signup, and logout functionality',
-    author: 'ModAI Team',
-    dependentModules: [],
-    components: [GlobalContextProvider]  // Register the context provider
-}
+  id: "authentication-service",
+  version: "1.0.0",
+  description:
+    "Authentication service providing login, signup, and logout functionality",
+  author: "ModAI Team",
+  dependentModules: [],
+  components: [GlobalContextProvider], // Register the context provider
+};
 ```
 
 ### 9.5 Multiple Implementation Example
@@ -678,26 +783,26 @@ export const Metadata: ModuleMetadata = {
 ```typescript
 // src/moduleif/chat.ts - Single interface
 export interface ChatProvider {
-    sendMessage(content: string): Promise<ChatMessage>;
-    // ... other methods
+  sendMessage(content: string): Promise<ChatMessage>;
+  // ... other methods
 }
 
 // src/modules/chat-openai/OpenAIChatProvider.ts - Implementation 1
 import { ChatProvider } from "@/moduleif/chat";
 
 export class OpenAIChatProvider implements ChatProvider {
-    async sendMessage(content: string): Promise<ChatMessage> {
-        // OpenAI implementation
-    }
+  async sendMessage(content: string): Promise<ChatMessage> {
+    // OpenAI implementation
+  }
 }
 
 // src/modules/chat-anthropic/AnthropicChatProvider.ts - Implementation 2
 import { ChatProvider } from "@/moduleif/chat";
 
 export class AnthropicChatProvider implements ChatProvider {
-    async sendMessage(content: string): Promise<ChatMessage> {
-        // Anthropic implementation
-    }
+  async sendMessage(content: string): Promise<ChatMessage> {
+    // Anthropic implementation
+  }
 }
 ```
 
@@ -715,19 +820,19 @@ The manifest follows a strict JSON schema:
 
 ```json
 {
-    "version": "1.0.0",
-    "modules": [
-        {
-            "id": "global-settings",
-            "path": "../modules/global-settings",
-            "enabled": true
-        },
-        {
-            "id": "session",
-            "path": "../modules/session",
-            "enabled": true
-        }
-    ]
+  "version": "1.0.0",
+  "modules": [
+    {
+      "id": "user-service",
+      "path": "@/modules/user-service/Metadata.ts",
+      "enabled": true
+    },
+    {
+      "id": "theme",
+      "path": "@/modules/theme/MetadataCore.ts",
+      "enabled": true
+    }
+  ]
 }
 ```
 
@@ -736,6 +841,7 @@ The manifest follows a strict JSON schema:
 #### 10.3.1 Root Level Properties
 
 - **`version`** (string, required): Semantic version of the manifest schema itself
+
   - Used for manifest compatibility checking and deployment management
   - Format: "MAJOR.MINOR.PATCH" (e.g., "1.0.0")
 
@@ -748,15 +854,17 @@ The manifest follows a strict JSON schema:
 Each module entry **must** contain the following properties:
 
 - **`id`** (string, required): Unique module identifier
+
   - Must match the `id` field in the module's `Metadata.ts` file
   - Used for dependency resolution and module references
   - Convention: kebab-case (e.g., "llm-provider-service")
   - Must be unique across all modules
 
-- **`path`** (string, required): Relative path to the module directory
-  - Path is relative to the `src/` directory
-  - Convention: "../modules/[module-directory-name]"
-  - Must point to a directory containing a valid `Metadata.ts` file
+- **`path`** (string, required): Import path to the module's metadata file
+
+  - Uses TypeScript module resolution with `@/` alias pointing to `src/`
+  - Convention: "@/modules/[module-directory-name]/Metadata.ts"
+  - Must point to a file containing a valid `ModuleMetadata` export
 
 - **`enabled`** (boolean, required): Whether the module should be loaded
   - `true`: Module will be loaded and its components registered
@@ -769,11 +877,11 @@ The manifest drives the entire module loading lifecycle:
 
 1. **Manifest Parsing**: Application fetches and parses `public/modules/manifest.json`
 2. **Filtering**: Only modules with `"enabled": true` are considered for loading
-3. **Path Resolution**: Each enabled module's path is resolved relative to `src/`
-4. **Metadata Import**: Dynamic import of `[module-path]/Metadata.ts`
-5. **Validation**: Verify module ID matches between manifest and metadata
-6. **Component Registration**: Register all components from module metadata
-7. **Dependency Resolution**: Process declared module dependencies (future feature)
+3. **Dynamic Import**: Each enabled module's metadata file is dynamically imported
+4. **Metadata Validation**: Verify module class matches expected structure
+5. **Component Registration**: Register all exports from module metadata using class names as keys
+6. **Context Composition**: Chain all `GlobalModuleContextProvider` components
+7. **UI Composition**: Render all integration point components
 
 ### 10.5 Manifest Management Best Practices
 
@@ -789,26 +897,26 @@ When creating a new module, you **MUST**:
 ```json
 // Example: Adding a new "notifications" module
 {
-    "id": "notifications",
-    "path": "../modules/notifications",
-    "enabled": true
+  "id": "notifications",
+  "path": "@/modules/notifications/Metadata.ts",
+  "enabled": true
 }
 ```
 
 #### 10.5.2 Module ID Consistency
 
 The module `id` must be consistent across:
+
 - Manifest entry (`manifest.json`)
-- Module metadata (`Metadata.ts`)
+- Module metadata (`Metadata.ts` class field)
 - Directory naming convention (recommended)
 
 ```typescript
 // src/modules/notifications/Metadata.ts
 export const Metadata: ModuleMetadata = {
-    id: 'notifications', // Must match manifest.json
-    version: '1.0.0',
-    // ...
-}
+  version: "1.0.0",
+  // ...
+};
 ```
 
 #### 10.5.3 Feature Toggling
@@ -817,9 +925,9 @@ Use the `enabled` flag for feature management:
 
 ```json
 {
-    "id": "experimental-feature",
-    "path": "../modules/experimental-feature",
-    "enabled": false // Disable for production
+  "id": "experimental-feature",
+  "path": "@/modules/experimental-feature/Metadata.ts",
+  "enabled": false // Disable for production
 }
 ```
 
@@ -828,8 +936,8 @@ Use the `enabled` flag for feature management:
 #### 10.6.1 Common Manifest Issues
 
 - **Module Not Loading**: Check if module is listed in manifest with `"enabled": true`
-- **Path Resolution Errors**: Verify the `path` points to correct module directory
-- **ID Mismatch**: Ensure manifest `id` matches the `id` in module's `Metadata.ts`
+- **Import Resolution Errors**: Verify the `path` points to correct metadata file with proper TypeScript import syntax
+- **Class Name Mismatch**: Ensure module class naming follows established patterns and constants
 - **Invalid JSON**: Use a JSON validator to check manifest syntax
 
 ### 10.7 Deployment Considerations
@@ -843,7 +951,7 @@ Different environments may require different module configurations:
 {
     "version": "1.0.0",
     "modules": [
-        {"id": "debug-tools", "path": "../modules/debug-tools", "enabled": true}
+        {"id": "debug-tools", "path": "@/modules/debug-tools/Metadata.ts", "enabled": true}
     ]
 }
 
@@ -851,7 +959,7 @@ Different environments may require different module configurations:
 {
     "version": "1.0.0",
     "modules": [
-        {"id": "debug-tools", "path": "../modules/debug-tools", "enabled": false}
+        {"id": "debug-tools", "path": "@/modules/debug-tools/Metadata.ts", "enabled": false}
     ]
 }
 ```
@@ -859,11 +967,13 @@ Different environments may require different module configurations:
 ## 11. Design Decisions and Trade-offs
 
 ### 11.1 Dynamic Component Discovery
+
 - **Decision**: Use string-based component naming for discovery rather than strong typing
 - **Trade-offs**: Flexibility and extensibility vs. compile-time type safety
 - **Mitigation**: Clear naming conventions and runtime validation
 
 ### 11.2 Manifest-Driven Loading
+
 - **Decision**: External JSON manifest controls module loading vs. code-based registration
 - **Trade-offs**: Runtime configuration flexibility vs. bundle optimization
 - **Benefits**: Enables/disables modules without code changes, supports A/B testing
@@ -873,11 +983,12 @@ Different environments may require different module configurations:
 ### 12.1 Creating New Modules
 
 1. **Define Module Interface**: Create `src/moduleif/[module-name].ts` with all types, contracts, and declarations
-2. **Create Module Directory**: `src/modules/[module-name]/`
-3. **Define Metadata**: Export `ModuleMetadata` object with unique ID and component registry
-4. **Implement Components**: Create components for desired integration points, importing only from `moduleif/`
-5. **Register in Manifest**: Add module entry to `public/modules/manifest.json`
-6. **Test Integration**: Verify components appear in appropriate UI locations
+2. **Create Module Documentation**: Create `src/moduleif/[module-name].md` following the documentation template
+3. **Create Module Directory**: `src/modules/[module-name]/`
+4. **Define Metadata**: Export `ModuleMetadata` object with unique class name and component registry
+5. **Implement Components**: Create components for desired integration points, importing only from `moduleif/`
+6. **Register in Manifest**: Add module entry to `public/modules/manifest.json`
+7. **Test Integration**: Verify components appear in appropriate UI locations
 
 ### 12.2 Extending Existing Modules
 

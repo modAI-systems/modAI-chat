@@ -21,7 +21,6 @@ export const MODULE_SYSTEM_SERVICE_MODULE_CLASS_NAME = "ModuleSystemService";
 
 // Module Metadata Types
 export interface ModuleMetadata {
-    class: string;
     version: string;
     description?: string;
     author?: string;
