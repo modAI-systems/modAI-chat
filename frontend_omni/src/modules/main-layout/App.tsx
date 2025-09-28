@@ -4,14 +4,12 @@ import { ThemeProvider } from "@/modules/theme-provider/ThemeProvider";
 import { SidebarProvider } from "@/shadcn/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { useModules } from "@/moduleif/moduleSystemService";
-import {
-    ModuleContextProviders,
-    ModuleManagerProvider,
-} from "@/modules/module-system/ModuleManagerContext";
+import { ModuleManagerProvider } from "@/modules/module-system/ModuleManagerContext";
 import React, { Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PageLoadingScreen } from "./PageLoadingScreen";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { ModuleContextProviders } from "../global-module-context-provider/GlobalModuleContextProvider";
 
 const queryClient = new QueryClient();
 

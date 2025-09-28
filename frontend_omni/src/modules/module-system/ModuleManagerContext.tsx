@@ -1,8 +1,5 @@
-import type { ReactNode, ComponentType } from "react";
-import {
-    ModuleManagerContext,
-    useModules,
-} from "@/moduleif/moduleSystemService";
+import type { ReactNode } from "react";
+import { ModuleManagerContext } from "@/moduleif/moduleSystemService";
 import { useModuleManagerFromManifest } from "./manifestModuleManager";
 import { useManifest } from "./moduleManifestLoader";
 
@@ -22,25 +19,5 @@ export function ModuleManagerProvider({
         <ModuleManagerContext value={moduleManager}>
             {children}
         </ModuleManagerContext>
-    );
-}
-
-export function ModuleContextProviders({
-    children,
-    name,
-}: {
-    children: React.ReactNode;
-    name: string;
-}) {
-    const modules = useModules();
-    const contextProviders =
-        modules.getAll<ComponentType<{ children: ReactNode }>>(name);
-
-    // Wrap children with all context provider modules
-    return contextProviders.reduce(
-        (wrappedChildren, Component) => (
-            <Component>{wrappedChildren}</Component>
-        ),
-        children
     );
 }
