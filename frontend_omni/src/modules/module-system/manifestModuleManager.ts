@@ -49,8 +49,8 @@ export class ManifestModuleManager implements ModuleManager {
             const metadata = await this.loadModule(manifestEntry);
 
             if (metadata) {
-                this.registeredModules.set(metadata.class, metadata);
-                this.activeModules.set(metadata.class, metadata);
+                this.registeredModules.set(manifestEntry.id, metadata);
+                this.activeModules.set(manifestEntry.id, metadata);
             }
         }
     }

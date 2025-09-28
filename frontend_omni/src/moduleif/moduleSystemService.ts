@@ -1,20 +1,3 @@
-/**
- * What this module offers to users:
- *    - Module metadata types and interfaces
- *    - Module manifest types for configuration
- *    - Module manager service for component discovery
- *    - React hooks for accessing loaded modules and components
- *
- * What this module demands when used: None
- *
- * What this module demands from other modules: None
- *
- * Implementation Notes: This module provides the foundational infrastructure
- *     for the dynamic module system. It loads modules from a manifest,
- *     registers their components, and provides discovery mechanisms for
- *     component composition throughout the application.
- */
-
 import { createContext, useContext } from "react";
 
 export const MODULE_SYSTEM_SERVICE_MODULE_CLASS_NAME = "ModuleSystemService";
