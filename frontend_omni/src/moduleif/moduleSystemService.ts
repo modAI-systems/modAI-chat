@@ -1,0 +1,62 @@
+/**
+ * What this module offers to users:
+ *    - Module metadata types and interfaces
+ *    - Module manifest types for configuration
+ *    - Module manager service for component discovery
+ *    - React hooks for accessing loaded modules and components
+ *
+ * What this module demands when used: None
+ *
+ * What this module demands from other modules: None
+ *
+ * Implementation Notes: This module provides the foundational infrastructure
+ *     for the dynamic module system. It loads modules from a manifest,
+ *     registers their components, and provides discovery mechanisms for
+ *     component composition throughout the application.
+ */
+
+import type React from "react";
+import { createContext, useContext } from "react";
+
+// Module Metadata Types
+export interface ModuleMetadata {
+    id: string;
+    version: string;
+    description?: string;
+    author?: string;
+    dependentModules: string[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type
+    components: (React.ComponentType<any> | Function)[];
+}
+
+// Module Manager Service Interface
+export interface ModuleManager {
+    /**
+     * Get a single component of a specific name across all modules.
+     * If more than one component with the same name exists, returns null.
+     */
+    getOne<T>(name: string): T | null;
+
+    /**
+     * Get all elements of a specific name across all modules
+     */
+    getAll<T>(name: string): T[];
+}
+
+// Create context for the module manager
+export const ModuleManagerContext = createContext<ModuleManager | null>(null);
+
+/**
+ * Hook to access modules and component discovery functionality
+ *
+ * @returns ModuleManager instance
+ */
+export function useModules(): ModuleManager {
+    const context = useContext(ModuleManagerContext);
+    if (!context) {
+        throw new Error(
+            "useModules must be used within a ModuleManagerProvider"
+        );
+    }
+    return context;
+}
