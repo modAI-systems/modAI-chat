@@ -9,7 +9,7 @@ import React, { Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PageLoadingScreen } from "./PageLoadingScreen";
 import { ErrorBoundary } from "./ErrorBoundary";
-import { GlobalModuleContextProviders } from "../module-context-provider/GlobalModuleContextProvider";
+import { GlobalModuleContextProvider } from "../module-context-provider/GlobalModuleContextProvider";
 
 const queryClient = new QueryClient();
 
@@ -45,9 +45,9 @@ function App() {
             <QueryClientProvider client={queryClient}>
                 <Suspense fallback={<PageLoadingScreen />}>
                     <ModuleManagerProvider>
-                        <GlobalModuleContextProviders>
+                        <GlobalModuleContextProvider>
                             <RoutedSidebarLayout />
-                        </GlobalModuleContextProviders>
+                        </GlobalModuleContextProvider>
                     </ModuleManagerProvider>
                 </Suspense>
             </QueryClientProvider>

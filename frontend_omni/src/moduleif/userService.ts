@@ -24,7 +24,7 @@ export interface UserService {
      * @returns Promise<User> The current user data
      * @throws Error if the request fails or user is not authenticated
      */
-    getCurrentUser(): Promise<User>;
+    fetchCurrentUser(): Promise<User>;
 }
 
 // Create context for the user service

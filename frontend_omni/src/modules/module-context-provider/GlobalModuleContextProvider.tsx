@@ -2,7 +2,7 @@ import { GLOBAL_MODULE_CONTEXT_PROVIDER_CLASS_NAME } from "@/moduleif/moduleCont
 import { useModules } from "@/moduleif/moduleSystemService";
 import type { ComponentType, ReactNode } from "react";
 
-export function ModuleContextProviders({
+export function ModuleContextProvider({
     children,
     name,
 }: {
@@ -22,16 +22,14 @@ export function ModuleContextProviders({
     );
 }
 
-export function GlobalModuleContextProviders({
+export function GlobalModuleContextProvider({
     children,
 }: {
     children: ReactNode;
 }) {
     return (
-        <ModuleContextProviders
-            name={GLOBAL_MODULE_CONTEXT_PROVIDER_CLASS_NAME}
-        >
+        <ModuleContextProvider name={GLOBAL_MODULE_CONTEXT_PROVIDER_CLASS_NAME}>
             {children}
-        </ModuleContextProviders>
+        </ModuleContextProvider>
     );
 }
