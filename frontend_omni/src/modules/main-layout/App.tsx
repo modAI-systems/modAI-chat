@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PageLoadingScreen } from "./PageLoadingScreen";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { GlobalModuleContextProvider } from "../module-context-provider/GlobalModuleContextProvider";
-import { MAIN_ROUTER_ENTRY_MODULE_CLASS_NAME } from "@/moduleif/main-layout";
+import { MAIN_ROUTER_ENTRY_MODULE_CLASS_NAME } from "@/moduleif/mainLayout";
 
 const queryClient = new QueryClient();
 

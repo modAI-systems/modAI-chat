@@ -1,7 +1,7 @@
 import {
     MAIN_SIDEBAR_FOOTER_ITEM_MODULE_CLASS_NAME,
     MAIN_SIDEBAR_ITEM_MODULE_CLASS_NAME,
-} from "@/moduleif/main-layout";
+} from "@/moduleif/mainLayout";
 import { useModules } from "@/moduleif/moduleSystemService";
 import {
     Sidebar,
