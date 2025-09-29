@@ -10,13 +10,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PageLoadingScreen } from "./PageLoadingScreen";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { GlobalModuleContextProvider } from "../module-context-provider/GlobalModuleContextProvider";
+import { MAIN_ROUTER_ENTRY_MODULE_CLASS_NAME } from "@/moduleif/main-layout";
 
 const queryClient = new QueryClient();
 
 function RoutedSidebarLayout() {
     const modules = useModules();
-    const routerEntryFunctions =
-        modules.getAll<() => React.ReactElement>("RouterEntry");
+    const routerEntryComponents = modules.getAll<() => React.ReactElement>(
+        MAIN_ROUTER_ENTRY_MODULE_CLASS_NAME
+    );
 
     return (
         <Router>
@@ -25,8 +27,8 @@ function RoutedSidebarLayout() {
                 <main className="min-h-screen h-screen flex-1 bg-background text-foreground">
                     <ErrorBoundary>
                         <Routes>
-                            {routerEntryFunctions.map((createRoute) =>
-                                // Usually elements of the `modules.getComponentsByName(...)` are react components
+                            {routerEntryComponents.map((createRoute) =>
+                                // Usually elements of the `modules.getAll(...)` are react components
                                 // and should be used as <Component />. However, this doesn't work her for the router
                                 // because it needs to return a <Route> element. Therefore we call the function directly.
                                 createRoute()

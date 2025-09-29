@@ -1,24 +1,3 @@
-/**
- * Module Name: Session Management
- *
- * Module Types: ContextProvider
- *
- * Description: This module provides session management functionality,
- *      maintaining user session state in the browser.
- *
- *
- * What this module offers to users: `useSession(): SessionContextType`
- *    A React hook to access session data and methods to refresh or clear the session.
- *
- * What this module demands when used: None
- *
- * What this module demands from other modules: None
- *
- * Implementation Nodes: The actual module implementation for this interface
- *     must create  a React Context Provider component that uses the
- *     Session class to manage session state.
- *
- */
 
 import type { User } from "@/moduleif/userService";
 import { createContext, useContext } from "react";
