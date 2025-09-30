@@ -1,7 +1,5 @@
 import { createContext, useContext } from "react";
 
-export const THEME_SERVICE_MODULE_CLASS_NAME = "ThemeService";
-
 export interface ThemeContextType {
     theme: string;
     setTheme: (theme: string) => void;

@@ -1,7 +1,5 @@
 import { createContext, useContext } from "react";
 
-export const USER_SERVICE_MODULE_CLASS_NAME = "UserService";
-
 export interface User {
     id: string;
     email: string;
