@@ -1,4 +1,3 @@
-
 import { createContext, useContext } from "react";
 
 // Authentication Request/Response Types
@@ -56,7 +55,9 @@ export interface AuthService {
 }
 
 // Create context for the authentication service
-export const AuthServiceContext = createContext<AuthService | undefined>(undefined);
+export const AuthServiceContext = createContext<AuthService | undefined>(
+    undefined
+);
 
 /**
  * Hook to access the authentication service from any component
@@ -67,7 +68,9 @@ export const AuthServiceContext = createContext<AuthService | undefined>(undefin
 export function useAuthService(): AuthService {
     const context = useContext(AuthServiceContext);
     if (!context) {
-        throw new Error('useAuthService must be used within an AuthServiceProvider');
+        throw new Error(
+            "useAuthService must be used within an AuthServiceProvider"
+        );
     }
     return context;
 }

@@ -19,7 +19,6 @@ function LoginComponent() {
   const handleLogin = async (email: string, password: string) => {
     try {
       const response = await authService.login({ email, password });
-      console.log("Login successful:", response.message);
     } catch (error) {
       console.error("Login failed:", error);
     }

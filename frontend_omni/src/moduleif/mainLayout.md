@@ -41,12 +41,6 @@ To integrate into the sidebar as top item, modules have to export a component wi
 ```jsx
 import { Plus } from "lucide-react";
 
-// No component directly, but a key-value entry with the suggested position
-// for the menu item + the actual compoment must be returned.
-export function MyAwesomeSidebarItemWithPosition() {
-  return { position: 100, component: MyAwesomeSidebarItem };
-}
-
 function MyAwesomeSidebarItem() {
   const location = useLocation();
 
@@ -59,6 +53,9 @@ function MyAwesomeSidebarItem() {
     </SidebarMenuButton>
   );
 }
+
+// Export in the metadata is special because it not only exports the component
+// but also the suggested position in the sidebar -- see next section
 ```
 
 This will create a new sidebar top item navigating to the `/myroute` when clicked.
@@ -76,8 +73,14 @@ export const Metadata: ModuleMetadata = {
   ...
   exports: {
     [MAIN_ROUTER_ENTRY_MODULE_CLASS_NAME]: MyAwesomeRoute,
-    [MAIN_SIDEBAR_ITEM_MODULE_CLASS_NAME]: MyAwesomeSidebarItemWithPosition,
-    [MAIN_SIDEBAR_FOOTER_ITEM_MODULE_CLASS_NAME]: MyAwesomeSidebarItemWithPosition,
+    [MAIN_SIDEBAR_ITEM_MODULE_CLASS_NAME]: {
+      position: 100,
+      component: MyAwesomeSidebarItem,
+    },
+    [MAIN_SIDEBAR_FOOTER_ITEM_MODULE_CLASS_NAME]: {
+      position: 30,
+      component: MyAwesomeSidebarItem,
+    },
   },
 };
 ```
