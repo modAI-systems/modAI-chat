@@ -1,6 +1,9 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ModuleManagerContext } from "@/moduleif/moduleSystemService";
-import { useModuleManagerFromManifest } from "./manifestModuleManager";
+import {
+    ModuleRegistry,
+    useModuleManagerFromManifest,
+} from "./manifestModuleManager";
 import { useManifest } from "./moduleManifestLoader";
 
 const manifestPath = "/modules/manifest.json";
@@ -15,8 +18,29 @@ export function ModuleManagerProvider({
     const manifest = useManifest(manifestPath);
     const moduleManager = useModuleManagerFromManifest(manifest);
 
+    const [registry, setRegistry] = useState(
+        () => new ModuleRegistry(moduleManager.getActiveModules())
+    );
+
     return (
-        <ModuleManagerContext value={moduleManager}>
+        <ModuleManagerContext
+            value={{
+                getOne: registry.getOne.bind(registry),
+                getAll: registry.getAll.bind(registry),
+                deactivate: (id: string) => {
+                    moduleManager.deactivate(id);
+                    setRegistry(
+                        new ModuleRegistry(moduleManager.getActiveModules())
+                    );
+                },
+                activate: (id: string) => {
+                    moduleManager.activate(id);
+                    setRegistry(
+                        new ModuleRegistry(moduleManager.getActiveModules())
+                    );
+                },
+            }}
+        >
             {children}
         </ModuleManagerContext>
     );

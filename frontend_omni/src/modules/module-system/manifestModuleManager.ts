@@ -1,7 +1,4 @@
-import type {
-    ModuleMetadata,
-    ModuleManager,
-} from "@/moduleif/moduleSystemService";
+import type { ModuleMetadata } from "@/moduleif/moduleSystemService";
 import type {
     ModuleManifest,
     ModuleManifestEntry,
@@ -37,7 +34,7 @@ export function useModuleManagerFromManifest(
     return manager;
 }
 
-export class ManifestModuleManager implements ModuleManager {
+export class ManifestModuleManager {
     private registeredModules: Map<string, ModuleMetadata> = new Map();
     private activeModules: Map<string, ModuleMetadata> = new Map();
 
@@ -53,6 +50,21 @@ export class ManifestModuleManager implements ModuleManager {
                 this.activeModules.set(manifestEntry.id, metadata);
             }
         }
+    }
+
+    activate(moduleId: string): void {
+        const metadata = this.registeredModules.get(moduleId);
+        if (metadata) {
+            this.activeModules.set(moduleId, metadata);
+        }
+    }
+
+    deactivate(moduleId: string): void {
+        this.activeModules.delete(moduleId);
+    }
+
+    getActiveModules(): Map<string, ModuleMetadata> {
+        return this.activeModules;
     }
 
     /**
@@ -103,6 +115,14 @@ export class ManifestModuleManager implements ModuleManager {
             console.warn(`Failed to import module from ${path}: ${error}`);
             return null;
         }
+    }
+}
+
+export class ModuleRegistry {
+    private activeModules: Map<string, ModuleMetadata>;
+
+    constructor(activeModules: Map<string, ModuleMetadata>) {
+        this.activeModules = activeModules;
     }
 
     /**
