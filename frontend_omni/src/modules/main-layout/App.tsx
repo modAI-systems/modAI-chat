@@ -1,4 +1,4 @@
-import { Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { BrowserRouter as Router } from "react-router-dom";
 import { ThemeProvider } from "@/modules/theme-provider/ThemeProvider";
 import { SidebarProvider } from "@/shadcn/components/ui/sidebar";
@@ -33,6 +33,10 @@ function RoutedSidebarLayout() {
                                 // because it needs to return a <Route> element. Therefore we call the function directly.
                                 createRoute()
                             )}
+                            <Route
+                                path="*"
+                                element={<Navigate to="/" replace />}
+                            />
                         </Routes>
                     </ErrorBoundary>
                 </main>
