@@ -1,8 +1,12 @@
-import React from 'react';
-import { UserServiceContext } from "@/moduleif/userService";
-import { HttpUserService } from './HttpUserService';
+import React from "react";
+import { UserServiceContext } from "@/modules/user-service";
+import { HttpUserService } from "./HttpUserService";
 
-export function UserServiceContextProvider({ children }: { children: React.ReactNode }) {
+export function UserServiceContextProvider({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
     const userServiceInstance = new HttpUserService();
     return (
         <UserServiceContext value={userServiceInstance}>
@@ -10,3 +14,5 @@ export function UserServiceContextProvider({ children }: { children: React.React
         </UserServiceContext>
     );
 }
+
+export default UserServiceContextProvider;

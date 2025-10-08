@@ -12,7 +12,7 @@ import type {
     SignupResponse,
     AuthError,
     AuthService,
-} from "../../moduleif/authenticationService";
+} from ".";
 
 export class AuthenticationService implements AuthService {
     /**

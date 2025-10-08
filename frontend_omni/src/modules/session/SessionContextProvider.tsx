@@ -4,8 +4,8 @@ import {
     type Session,
     SessionContext,
     type SessionContextType,
-} from "@/moduleif/sessionContext";
-import { useUserService } from "@/moduleif/userService";
+} from "@/modules/session";
+import { useUserService } from "@/modules/user-service";
 
 interface SessionProviderProps {
     children: React.ReactNode;
@@ -16,7 +16,7 @@ interface SessionProviderProps {
  */
 export function SessionContextProvider({
     children,
-}: SessionProviderProps): React.ReactElement {
+}: SessionProviderProps): React.JSX.Element {
     const userService = useUserService();
     const [session, setSession] = useState<Session | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -60,3 +60,5 @@ export function SessionContextProvider({
 
     return <SessionContext value={contextValue}>{children}</SessionContext>;
 }
+
+export default SessionContextProvider;

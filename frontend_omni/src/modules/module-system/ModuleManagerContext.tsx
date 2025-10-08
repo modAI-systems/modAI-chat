@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { ModuleManagerContext } from "@/moduleif/moduleSystemService";
+import { ModuleManagerContext } from "@/modules/module-system";
 import {
     ModuleRegistry,
     useModuleManagerFromManifest,

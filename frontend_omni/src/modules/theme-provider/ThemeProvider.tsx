@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ThemeContext } from '@/moduleif/themeService';
-import type { ThemeContextType } from '@/moduleif/themeService';
+import { ThemeContext } from '@/modules/theme-provider';
+import type { ThemeContextType } from '@/modules/theme-provider';
 
 const availableThemes: string[] = ["light", "dark"];
 

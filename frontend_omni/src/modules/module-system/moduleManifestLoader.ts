@@ -3,9 +3,9 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 // Module Manifest Types
 export interface ModuleManifestEntry {
     id: string;
-    name: string;
+    type: string;
     path: string;
-    enabled: boolean;
+    activeWhen?: string[];
 }
 
 export interface ModuleManifest {

@@ -1,8 +1,8 @@
 import {
     MAIN_SIDEBAR_FOOTER_ITEM_MODULE_CLASS_NAME,
     MAIN_SIDEBAR_ITEM_MODULE_CLASS_NAME,
-} from "@/moduleif/mainLayout";
-import { useModules } from "@/moduleif/moduleSystemService";
+} from "@/modules/main-layout";
+import { useModules } from "@/modules/module-system";
 import {
     Sidebar,
     SidebarContent,
@@ -14,19 +14,13 @@ import {
 
 export function AppSidebar() {
     const modules = useModules();
-    const sidebarItems = modules
-        .getAll<{ position: number; component: React.ComponentType }>(
-            MAIN_SIDEBAR_ITEM_MODULE_CLASS_NAME
-        )
-        .sort((a, b) => a.position - b.position)
-        .map((item) => item.component);
+    const sidebarItems = modules.getAll<React.ComponentType>(
+        MAIN_SIDEBAR_ITEM_MODULE_CLASS_NAME
+    );
 
-    const sidebarFooterItems = modules
-        .getAll<{ position: number; component: React.ComponentType }>(
-            MAIN_SIDEBAR_FOOTER_ITEM_MODULE_CLASS_NAME
-        )
-        .sort((a, b) => a.position - b.position)
-        .map((item) => item.component);
+    const sidebarFooterItems = modules.getAll<React.ComponentType>(
+        MAIN_SIDEBAR_FOOTER_ITEM_MODULE_CLASS_NAME
+    );
 
     return (
         <Sidebar collapsible="icon">

@@ -8,7 +8,7 @@ The main-layout module provides the core application structure and user interfac
 
 This module is automatically used as the root component of the application. Other modules integrate with it by registering sidebar items, router entries, and footer items that are dynamically discovered and rendered by the main layout.
 
-![Main Layout Structure](./resources/MainLayout.svg)
+![Main Layout Structure](../../../resources/MainLayout.svg)
 
 ## Intended Integration
 
@@ -18,7 +18,7 @@ This is the root module so it is not integrated to other modules.
 
 ### Router Integration
 
-A module can define new routes by exporting a component with class name `MainRouterEntry` and the following structure:
+A module can define new routes by exporting a component with class name `RouterEntry` and the following structure:
 
 ```jsx
 export function MyAwesomeRoute() {

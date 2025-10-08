@@ -18,3 +18,5 @@ export function AuthRouterEntry() {
         </>
     );
 }
+
+export default AuthRouterEntry;

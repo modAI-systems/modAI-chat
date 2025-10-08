@@ -1,13 +1,9 @@
-import type { ModuleMetadata } from "@/moduleif/moduleSystemService";
+import type { ModuleMetadata } from "@/modules/module-system";
 import type {
     ModuleManifest,
     ModuleManifestEntry,
 } from "./moduleManifestLoader";
 import { useSuspenseQuery } from "@tanstack/react-query";
-
-interface MetadataFile {
-    Metadata: ModuleMetadata | undefined;
-}
 
 export function useModuleManagerFromManifest(
     manifest: ModuleManifest
@@ -73,31 +69,42 @@ export class ManifestModuleManager {
     private async loadModule(
         manifestEntry: ModuleManifestEntry
     ): Promise<ModuleMetadata | null> {
-        if (!manifestEntry.enabled) {
-            console.log(`Module ${manifestEntry.id} is disabled, skipping.`);
-            return null;
+        // Check activeWhen conditions (simplified - in real implementation would check feature flags)
+        if (manifestEntry.activeWhen && manifestEntry.activeWhen.length > 0) {
+            // For now, assume modules are active if no conditions or if sessionActive is not required
+            // In a real implementation, this would check against current feature flags
+            const hasSessionActive =
+                manifestEntry.activeWhen.includes("sessionActive");
+            if (hasSessionActive) {
+                // Skip modules that require sessionActive for now
+                console.log(
+                    `Module ${manifestEntry.id} requires sessionActive, skipping.`
+                );
+                return null;
+            }
         }
 
-        // Load the metadata file directly from the path provided in manifest
-        const metadataFile = await this.importModule(manifestEntry.path);
+        // Load the component directly from the path provided in manifest
+        const componentModule = await this.importModule(manifestEntry.path);
 
-        if (!metadataFile || !metadataFile.Metadata) {
+        if (!componentModule || !componentModule.default) {
             console.warn(
-                `Module ${manifestEntry.id} does not have valid metadata`,
-                metadataFile
+                `Module ${manifestEntry.id} does not have a default export`,
+                componentModule
             );
             return null;
         }
 
-        // Add path to metadata
-        const metadata: ModuleMetadata = metadataFile.Metadata;
-
-        if (Object.keys(metadata.exports).length === 0) {
-            console.warn(
-                `Module ${manifestEntry.id} has no components defined in metadata. skipping.`
-            );
-            return null;
-        }
+        // Create metadata with the component exported under the type as class name
+        const metadata: ModuleMetadata = {
+            version: "1.0.0",
+            description: `Module ${manifestEntry.id} of type ${manifestEntry.type}`,
+            author: "ModAI Team",
+            dependentClasses: [],
+            exports: {
+                [manifestEntry.type]: componentModule.default,
+            },
+        };
 
         return metadata;
     }
@@ -105,7 +112,7 @@ export class ManifestModuleManager {
     /**
      * Dynamic import of a module
      */
-    private async importModule(path: string): Promise<MetadataFile | null> {
+    private async importModule(path: string): Promise<any> {
         try {
             const importPath = path.startsWith("@/")
                 ? path.replace("@/", "../../")

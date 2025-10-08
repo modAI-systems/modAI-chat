@@ -1,5 +1,5 @@
-import type { Session } from "@/moduleif/sessionContext";
-import type { UserService } from "@/moduleif/userService";
+import type { Session } from "@/modules/session";
+import type { UserService } from "@/modules/user-service";
 
 /**
  * Service for session-related operations

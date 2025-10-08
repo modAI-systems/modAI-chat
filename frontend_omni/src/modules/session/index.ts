@@ -1,5 +1,4 @@
-
-import type { User } from "@/moduleif/userService";
+import type { User } from "@/modules/user-service";
 import { createContext, useContext } from "react";
 
 /**

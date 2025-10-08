@@ -3,78 +3,33 @@
     "modules": [
         {
             "id": "authentication-service",
-            "path": "@/modules/authentication-service/Metadata.ts",
-            "enabled": true
+            "type": "GlobalContextProvider",
+            "path": "@/modules/authentication-service/AuthContextProvider.tsx",
+            "activeWhen": []
         },
         {
-            "id": "llm-provider-service",
-            "path": "@/modules/llm-provider-service/Metadata.ts",
-            "enabled": true
+            "id": "authentication-router",
+            "type": "RouterEntry",
+            "path": "@/modules/authentication/AuthRouterEntry.tsx",
+            "activeWhen": []
         },
         {
-            "id": "user-settings",
-            "path": "@/modules/settings/MetaUserSettings.ts",
-            "enabled": true
-        },
-        {
-            "id": "global-settings",
-            "path": "@/modules/settings/MetaGlobalSettings.ts",
-            "enabled": true
-        },
-        {
-            "id": "authentication",
-            "path": "@/modules/authentication/Metadata.ts",
-            "enabled": true
-        },
-        {
-            "id": "llm-picker",
-            "path": "@/modules/llm-picker/Metadata.ts",
-            "enabled": true
-        },
-        {
-            "id": "llm-provider-management",
-            "path": "@/modules/llm-provider-management/Metadata.ts",
-            "enabled": true
-        },
-        {
-            "id": "chat-api-service",
-            "path": "@/modules/chat-api-service/Metadata.ts",
-            "enabled": true
-        },
-        {
-            "id": "chat",
-            "path": "@/modules/chat/Metadata.ts",
-            "enabled": true
-        },
-        {
-            "id": "userprofileitem",
-            "path": "@/modules/user-profile-item/Metadata.ts",
-            "enabled": true
-        },
-        {
-            "id": "user-settings-general",
-            "path": "@/modules/user-settings-general/Metadata.ts",
-            "enabled": true
-        },
-        {
-            "id": "user-settings-service",
-            "path": "@/modules/user-settings-service/Metadata.ts",
-            "enabled": true
+            "id": "authentication-sidebar-footer",
+            "type": "MainSidebarFooterItem",
+            "path": "@/modules/authentication/AuthSidebarFooterItem.tsx",
+            "activeWhen": []
         },
         {
             "id": "session",
-            "path": "@/modules/session/Metadata.ts",
-            "enabled": true
-        },
-        {
-            "id": "theme",
-            "path": "@/modules/theme/MetadataCore.ts",
-            "enabled": true
+            "type": "GlobalContextProvider",
+            "path": "@/modules/session/SessionContextProvider.tsx",
+            "activeWhen": []
         },
         {
             "id": "user-service",
-            "path": "@/modules/user-service/Metadata.ts",
-            "enabled": true
+            "type": "GlobalContextProvider",
+            "path": "@/modules/user-service/UserServiceContextProvider.tsx",
+            "activeWhen": []
         }
     ]
 }

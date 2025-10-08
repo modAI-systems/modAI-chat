@@ -2,8 +2,8 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/shadcn/components/ui/sidebar";
-import { useSession } from "@/moduleif/sessionContext";
-import { useAuthService } from "../../moduleif/authenticationService";
+import { useSession } from "@/modules/session";
+import { useAuthService } from "../authentication-service";
 import { LogOut, LogIn, UserPlus } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
@@ -75,3 +75,5 @@ export function AuthSidebarFooterItem({ className }: LogoutButtonProps) {
         </>
     );
 }
+
+export default AuthSidebarFooterItem;

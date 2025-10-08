@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthService } from "../../moduleif/authenticationService";
-import { useSession } from "@/moduleif/sessionContext";
+import { useAuthService } from "../authentication-service";
+import { useSession } from "@/modules/session";
 import LoginRegisterForm from "./LoginRegisterForm";
 
 interface LoginProps {

@@ -1,4 +1,4 @@
-import type { User, UserService } from "@/moduleif/userService";
+import type { User, UserService } from "@/modules/user-service";
 
 /**
  * Implementation of UserService for HTTP API communication

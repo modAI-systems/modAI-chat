@@ -24,15 +24,15 @@ export interface ModuleManager {
     deactivate(moduleId: string): void;
 
     /**
-     * Get a single component of a specific name across all modules.
-     * If more than one component with the same name exists, returns null.
+     * Get a single component of a specific type across all modules.
+     * If more than one component with the same type exists, returns null.
      */
-    getOne<T>(name: string): T | null;
+    getOne<T>(type: string): T | null;
 
     /**
-     * Get all elements of a specific name across all modules
+     * Get all elements of a specific type across all modules
      */
-    getAll<T>(name: string): T[];
+    getAll<T>(type: string): T[];
 }
 
 // Create context for the module manager

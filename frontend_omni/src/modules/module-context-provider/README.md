@@ -10,7 +10,7 @@ Example: Modules exporting a context provider with name `GlobalModuleContextProv
 
 Well known module classes
 
-- `GlobalModuleContextProvider`: exported providers with of this module class will be loaded very early
+- `GlobalModuleContextProvider`: exported providers with of this module class will be loaded very early. Also available via constant `GLOBAL_MODULE_CONTEXT_PROVIDER_CLASS_NAME`
 
 ## Intended Usage
 
