@@ -12,7 +12,7 @@ class TestableManifestModuleManager extends ManifestModuleManager {
             id: manifestEntry.id,
             type: manifestEntry.type,
             component: {},
-            neededModules: manifestEntry.neededModules || [],
+            dependencies: manifestEntry.dependencies || [],
         };
     }
 }
@@ -32,19 +32,19 @@ describe("ManifestModuleManager - Two-Phase Loading", () => {
                     id: "base",
                     type: "Base",
                     path: "@/modules/base",
-                    neededModules: [],
+                    dependencies: [],
                 },
                 {
                     id: "level1",
                     type: "Level1",
                     path: "@/modules/level1",
-                    neededModules: ["base"],
+                    dependencies: ["module:base"],
                 },
                 {
                     id: "level2",
                     type: "Level2",
                     path: "@/modules/level2",
-                    neededModules: ["level1"],
+                    dependencies: ["module:level1"],
                 },
             ],
         };
@@ -73,13 +73,13 @@ describe("ManifestModuleManager - Two-Phase Loading", () => {
                     id: "module-a",
                     type: "TypeA",
                     path: "@/modules/a",
-                    neededModules: ["module-b"],
+                    dependencies: ["module:module-b"],
                 },
                 {
                     id: "module-b",
                     type: "TypeB",
                     path: "@/modules/b",
-                    neededModules: ["module-a"],
+                    dependencies: ["module:module-a"],
                 },
             ],
         };
@@ -118,13 +118,13 @@ describe("ManifestModuleManager - Two-Phase Loading", () => {
                     id: "independent",
                     type: "Independent",
                     path: "@/modules/independent",
-                    neededModules: [],
+                    dependencies: [],
                 },
                 {
                     id: "dependent",
                     type: "Dependent",
                     path: "@/modules/dependent",
-                    neededModules: ["missing"],
+                    dependencies: ["module:missing"],
                 },
             ],
         };

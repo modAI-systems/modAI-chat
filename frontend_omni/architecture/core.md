@@ -109,11 +109,8 @@ The registration of modules in the ModuleManager is not defined by the `ModuleMa
             "id": "aiChat",
             "type": "AiChat",
             "path": "@/modules/chat/RouterEntry.tsx",
-            "neededModules": [
-                "session"
-            ],
-            "activeWhen": [
-              "sessionActive"
+            "dependencies": [
+                "module:session"
             ]
         },
         ...
@@ -123,8 +120,7 @@ The registration of modules in the ModuleManager is not defined by the `ModuleMa
 
 - **id** and **type**: see section _Module ID vs Module Type_
 - **path**: the component include path. The component to be used must then be the default component of that file.
-- **neededModules**: a list of module ids which are required in order to operate. If one of the required modules is not available, all dependent modules will not be loaded.
-- **activeWhen**: a list of necessary feature flags to allow the module to get active by the module system.
+- **dependencies**: a list of dependencies required for the module to operate. Dependencies starting with "module:" indicate module dependencies. If a module dependency is not available, the dependent module will not be loaded.
 
 ## 5. Root Application
 

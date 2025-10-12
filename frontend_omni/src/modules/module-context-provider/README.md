@@ -40,7 +40,7 @@ The provider must be defined in the `manifest.json` with the correct type like `
   "id": "awesomeContextProvider",
   "type": "GlobalContextProvider",
   "path": "@/modules/awesome-service/AwesomeContextProvider.tsx",
-  "activeWhen": []
+  "dependencies": ["module:session"]
 }
 ```
 

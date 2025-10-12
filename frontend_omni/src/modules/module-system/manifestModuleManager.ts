@@ -8,18 +8,18 @@ export class LoadedModule {
     id: string;
     type: string;
     component: unknown;
-    neededModules: string[];
+    dependencies: string[];
 
     constructor(
         id: string,
         type: string,
         component: unknown,
-        neededModules: string[] = []
+        dependencies: string[] = []
     ) {
         this.id = id;
         this.type = type;
         this.component = component;
-        this.neededModules = neededModules;
+        this.dependencies = dependencies;
     }
 }
 
@@ -92,10 +92,12 @@ export class ManifestModuleManager {
         const stillRemaining: LoadedModule[] = [];
 
         for (const module of remainingModules) {
-            const neededModules = module.neededModules;
+            const moduleDeps = module.dependencies
+                .filter((dep) => dep.startsWith("module:"))
+                .map((dep) => dep.substring("module:".length));
 
-            // Check if all dependencies are already active
-            const allDepsMet = neededModules.every((depId) =>
+            // Check if all module dependencies are already active
+            const allDepsMet = moduleDeps.every((depId) =>
                 this.activeModules.has(depId)
             );
 
@@ -114,10 +116,11 @@ export class ManifestModuleManager {
                 "The following modules could not be activated due to unmet dependencies:",
                 stillRemaining.map((m) => ({
                     id: m.id,
-                    neededModules: m.neededModules,
-                    unmetDeps: m.neededModules.filter(
-                        (depId) => !this.activeModules.has(depId)
-                    ),
+                    dependencies: m.dependencies,
+                    unmetDeps: m.dependencies
+                        .filter((dep) => dep.startsWith("module:"))
+                        .map((dep) => dep.substring("module:".length))
+                        .filter((depId) => !this.activeModules.has(depId)),
                 }))
             );
         } else {
@@ -158,7 +161,7 @@ export class ManifestModuleManager {
             manifestEntry.id,
             manifestEntry.type,
             componentModule.default,
-            manifestEntry.neededModules || []
+            manifestEntry.dependencies || []
         );
     }
 
