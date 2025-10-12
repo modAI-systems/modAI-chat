@@ -116,7 +116,6 @@ Details are available in the architecture `core.md` documentation.
 
 ### Module Development
 
-- Each module requires a `Metadata.ts` file with exports
 - Modules can export sidebar items, router entries, services and more.
 - Update `manifest.json` when adding new modules
 

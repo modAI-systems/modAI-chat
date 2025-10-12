@@ -5,6 +5,7 @@ export interface ModuleManifestEntry {
     id: string;
     type: string;
     path: string;
+    neededModules?: string[];
     activeWhen?: string[];
 }
 

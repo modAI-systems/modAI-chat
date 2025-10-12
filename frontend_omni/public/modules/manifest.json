@@ -11,13 +11,15 @@
             "id": "authentication-router",
             "type": "RouterEntry",
             "path": "@/modules/authentication/AuthRouterEntry.tsx",
-            "activeWhen": []
+            "activeWhen": [],
+            "neededModules": ["authentication-service"]
         },
         {
             "id": "authentication-sidebar-footer",
             "type": "SidebarFooterItem",
             "path": "@/modules/authentication/AuthSidebarFooterItem.tsx",
-            "activeWhen": []
+            "activeWhen": [],
+            "neededModules": ["authentication-service"]
         },
         {
             "id": "session",
@@ -29,7 +31,8 @@
             "id": "user-service",
             "type": "GlobalContextProvider",
             "path": "@/modules/user-service/UserServiceContextProvider.tsx",
-            "activeWhen": []
+            "activeWhen": [],
+            "neededModules": ["session"]
         }
     ]
 }

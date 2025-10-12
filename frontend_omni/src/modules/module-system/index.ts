@@ -1,28 +1,7 @@
 import { createContext, useContext } from "react";
 
-// Module Metadata Types
-export interface ModuleMetadata {
-    version: string;
-    description?: string;
-    author?: string;
-    dependentClasses: string[];
-    exports: Record<string, unknown>;
-}
-
 // Module Manager Service Interface
 export interface ModuleManager {
-    /**
-     * Activates a module by its ID. A module can only be activated if it
-     * is already loaded.
-     */
-    activate(moduleId: string): void;
-
-    /**
-     * Deactivates a module by its ID. It can be activated again at a
-     * later time if needed.
-     */
-    deactivate(moduleId: string): void;
-
     /**
      * Get a single component of a specific type across all modules.
      * If more than one component with the same type exists, returns null.

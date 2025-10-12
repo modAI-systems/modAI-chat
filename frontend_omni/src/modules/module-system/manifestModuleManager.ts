@@ -1,9 +1,27 @@
-import type { ModuleMetadata } from "@/modules/module-system";
 import type {
     ModuleManifest,
     ModuleManifestEntry,
 } from "./moduleManifestLoader";
 import { useSuspenseQuery } from "@tanstack/react-query";
+
+export class LoadedModule {
+    id: string;
+    type: string;
+    component: unknown;
+    neededModules: string[];
+
+    constructor(
+        id: string,
+        type: string,
+        component: unknown,
+        neededModules: string[] = []
+    ) {
+        this.id = id;
+        this.type = type;
+        this.component = component;
+        this.neededModules = neededModules;
+    }
+}
 
 export function useModuleManagerFromManifest(
     manifest: ModuleManifest
@@ -31,89 +49,124 @@ export function useModuleManagerFromManifest(
 }
 
 export class ManifestModuleManager {
-    private registeredModules: Map<string, ModuleMetadata> = new Map();
-    private activeModules: Map<string, ModuleMetadata> = new Map();
+    private registeredModules: Map<string, LoadedModule> = new Map();
+    private activeModules: Map<string, LoadedModule> = new Map();
 
     /**
-     * Load modules from manifest and metadata files
+     * Load modules from manifest
      */
     async loadModulesFromManifestAsync(manifest: ModuleManifest) {
-        for (const manifestEntry of manifest.modules) {
-            const metadata = await this.loadModule(manifestEntry);
+        const allModules = manifest.modules;
 
-            if (metadata) {
-                this.registeredModules.set(manifestEntry.id, metadata);
-                this.activeModules.set(manifestEntry.id, metadata);
+        // Phase 1: Register all modules regardless of dependencies
+        await this.registerAllModules(allModules);
+
+        // Phase 2: Activate modules considering dependencies
+        await this.activateModules(Array.from(this.registeredModules.values()));
+    }
+
+    /**
+     * Register all modules regardless of dependencies
+     */
+    private async registerAllModules(
+        modules: ModuleManifestEntry[]
+    ): Promise<void> {
+        for (const manifestEntry of modules) {
+            const loadedModule = await this.loadModule(manifestEntry);
+            if (loadedModule) {
+                this.registeredModules.set(manifestEntry.id, loadedModule);
             }
         }
     }
 
-    activate(moduleId: string): void {
-        const metadata = this.registeredModules.get(moduleId);
-        if (metadata) {
-            this.activeModules.set(moduleId, metadata);
+    /**
+     * Recursively activate modules based on their dependencies
+     */
+    private async activateModules(
+        remainingModules: LoadedModule[]
+    ): Promise<void> {
+        if (remainingModules.length === 0) {
+            return;
+        }
+
+        const stillRemaining: LoadedModule[] = [];
+
+        for (const module of remainingModules) {
+            const neededModules = module.neededModules;
+
+            // Check if all dependencies are already active
+            const allDepsMet = neededModules.every((depId) =>
+                this.activeModules.has(depId)
+            );
+
+            if (allDepsMet) {
+                // Activate this module
+                this.activeModules.set(module.id, module);
+            } else {
+                // Dependencies not met, keep for next iteration
+                stillRemaining.push(module);
+            }
+        }
+
+        // If no progress was made, log problematic modules and stop
+        if (stillRemaining.length === remainingModules.length) {
+            console.warn(
+                "The following modules could not be activated due to unmet dependencies:",
+                stillRemaining.map((m) => ({
+                    id: m.id,
+                    neededModules: m.neededModules,
+                    unmetDeps: m.neededModules.filter(
+                        (depId) => !this.activeModules.has(depId)
+                    ),
+                }))
+            );
+        } else {
+            // Continue with remaining modules
+            await this.activateModules(stillRemaining);
         }
     }
 
-    deactivate(moduleId: string): void {
-        this.activeModules.delete(moduleId);
+    getActiveModules(): Map<string, LoadedModule> {
+        return this.activeModules;
     }
 
-    getActiveModules(): Map<string, ModuleMetadata> {
-        return this.activeModules;
+    getRegisteredModules(): Map<string, LoadedModule> {
+        return this.registeredModules;
     }
 
     /**
      * Load a single module from manifest entry
      */
-    private async loadModule(
+    protected async loadModule(
         manifestEntry: ModuleManifestEntry
-    ): Promise<ModuleMetadata | null> {
-        // Check activeWhen conditions (simplified - in real implementation would check feature flags)
-        if (manifestEntry.activeWhen && manifestEntry.activeWhen.length > 0) {
-            // For now, assume modules are active if no conditions or if sessionActive is not required
-            // In a real implementation, this would check against current feature flags
-            const hasSessionActive =
-                manifestEntry.activeWhen.includes("sessionActive");
-            if (hasSessionActive) {
-                // Skip modules that require sessionActive for now
-                console.log(
-                    `Module ${manifestEntry.id} requires sessionActive, skipping.`
-                );
-                return null;
-            }
-        }
-
-        // Load the component directly from the path provided in manifest
+    ): Promise<LoadedModule | null> {
         const componentModule = await this.importModule(manifestEntry.path);
 
-        if (!componentModule || !componentModule.default) {
+        if (!componentModule) {
+            return null;
+        }
+
+        if (!componentModule.default) {
             console.warn(
                 `Module ${manifestEntry.id} does not have a default export`,
-                componentModule
+                manifestEntry
             );
             return null;
         }
 
-        // Create metadata with the component exported under the type as class name
-        const metadata: ModuleMetadata = {
-            version: "1.0.0",
-            description: `Module ${manifestEntry.id} of type ${manifestEntry.type}`,
-            author: "ModAI Team",
-            dependentClasses: [],
-            exports: {
-                [manifestEntry.type]: componentModule.default,
-            },
-        };
-
-        return metadata;
+        return new LoadedModule(
+            manifestEntry.id,
+            manifestEntry.type,
+            componentModule.default,
+            manifestEntry.neededModules || []
+        );
     }
 
     /**
      * Dynamic import of a module
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private async importModule(path: string): Promise<any> {
+    protected async importModule(path: string): Promise<any> {
         try {
             const importPath = path.startsWith("@/")
                 ? path.replace("@/", "../../")
@@ -127,9 +180,9 @@ export class ManifestModuleManager {
 }
 
 export class ModuleRegistry {
-    private activeModules: Map<string, ModuleMetadata>;
+    private activeModules: Map<string, LoadedModule>;
 
-    constructor(activeModules: Map<string, ModuleMetadata>) {
+    constructor(activeModules: Map<string, LoadedModule>) {
         this.activeModules = activeModules;
     }
 
@@ -152,9 +205,9 @@ export class ModuleRegistry {
 
     getAll<T>(name: string): T[] {
         const elements: T[] = [];
-        this.activeModules.forEach((metadata) => {
-            if (metadata.exports[name]) {
-                elements.push(metadata.exports[name] as T);
+        this.activeModules.forEach((module) => {
+            if (module.type === name) {
+                elements.push(module.component as T);
             }
         });
         return elements;
