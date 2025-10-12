@@ -6,14 +6,14 @@
  */
 
 import React from "react";
-import { AuthServiceContext } from ".";
 import { AuthenticationService } from "./AuthenticationService";
+import { AuthServiceContext } from ".";
 
 /**
  * Context provider that makes the authentication service available
  * throughout the application component tree
  */
-export function AuthContextProvider({
+export default function AuthContextProvider({
     children,
 }: {
     children: React.ReactNode;
@@ -26,5 +26,3 @@ export function AuthContextProvider({
         </AuthServiceContext>
     );
 }
-
-export default AuthContextProvider;

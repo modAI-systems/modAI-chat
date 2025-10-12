@@ -112,6 +112,7 @@ export class ManifestModuleManager {
     /**
      * Dynamic import of a module
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async importModule(path: string): Promise<any> {
         try {
             const importPath = path.startsWith("@/")

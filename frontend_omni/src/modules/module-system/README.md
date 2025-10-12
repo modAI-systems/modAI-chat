@@ -1,10 +1,6 @@
 # Module System
 
-Module Type: Service, Hook
-
-## Description
-
-This module provides the core module management functionality, including module loading, component discovery, and dynamic module composition.
+The core module management functionality, including module loading, component discovery, and dynamic module composition.
 
 ## Intended Usage
 

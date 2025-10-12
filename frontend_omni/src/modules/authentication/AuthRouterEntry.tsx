@@ -1,8 +1,8 @@
 import { Route } from "react-router-dom";
 import RegisterPage from "./RegisterPage";
-import LoginPage from "./LoginPage";
+import { LoginPage } from "./LoginPage";
 
-export function AuthRouterEntry() {
+export default function AuthRouterEntry() {
     return (
         <>
             <Route
@@ -18,5 +18,3 @@ export function AuthRouterEntry() {
         </>
     );
 }
-
-export default AuthRouterEntry;

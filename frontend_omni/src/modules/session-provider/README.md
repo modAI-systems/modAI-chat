@@ -1,10 +1,6 @@
 # Session Context
 
-Module Type: Context Provider
-
-## Description
-
-The Session Context module provides session management functionality, maintaining user session state throughout the frontend application. It offers a centralized way to track the current authenticated user and session state, including loading states and session manipulation methods.
+Provides session management backend communication functionality, maintaining user session state throughout the frontend application. It offers a centralized way to track the current authenticated user and session state, including loading states and session manipulation methods.
 
 ## Intended Usage
 
@@ -42,11 +38,3 @@ function UserProfile() {
   );
 }
 ```
-
-## Intended Integration
-
-This module is inteded to be a context provider, so no further information needed here.
-
-## Sub Module Implementation Detail
-
-This module does not consume any sub-modules.

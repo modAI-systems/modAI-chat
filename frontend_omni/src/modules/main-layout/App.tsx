@@ -3,22 +3,36 @@ import { BrowserRouter as Router } from "react-router-dom";
 import { ThemeProvider } from "@/modules/theme-provider/ThemeProvider";
 import { SidebarProvider } from "@/shadcn/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
-import { useModules } from "@/modules/module-system";
 import React, { Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PageLoadingScreen } from "./PageLoadingScreen";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { ModuleContextProvider } from "../module-context-provider/ModuleContextProvider";
-import { MAIN_ROUTER_ENTRY_MODULE_CLASS_NAME } from "@/modules/main-layout";
-import { ModuleManagerProvider } from "../module-system/ModuleManagerContext";
+import { ModuleManagerProvider } from "@/modules/module-system/ModuleManagerContext";
+import { useModules } from "@/modules/module-system";
 
 const queryClient = new QueryClient();
 
+export default function App() {
+    return (
+        <ThemeProvider>
+            <QueryClientProvider client={queryClient}>
+                <Suspense fallback={<PageLoadingScreen />}>
+                    <ModuleManagerProvider>
+                        <ModuleContextProvider name="GlobalContextProvider">
+                            <RoutedSidebarLayout />
+                        </ModuleContextProvider>
+                    </ModuleManagerProvider>
+                </Suspense>
+            </QueryClientProvider>
+        </ThemeProvider>
+    );
+}
+
 function RoutedSidebarLayout() {
     const modules = useModules();
-    const routerEntryComponents = modules.getAll<() => React.JSX.Element>(
-        MAIN_ROUTER_ENTRY_MODULE_CLASS_NAME
-    );
+    const routerEntryComponents =
+        modules.getAll<() => React.JSX.Element>("RouterEntry");
 
     return (
         <Router>
@@ -44,21 +58,3 @@ function RoutedSidebarLayout() {
         </Router>
     );
 }
-
-function App() {
-    return (
-        <ThemeProvider>
-            <QueryClientProvider client={queryClient}>
-                <Suspense fallback={<PageLoadingScreen />}>
-                    <ModuleManagerProvider>
-                        <ModuleContextProvider name="GlobalContextProvider">
-                            <RoutedSidebarLayout />
-                        </ModuleContextProvider>
-                    </ModuleManagerProvider>
-                </Suspense>
-            </QueryClientProvider>
-        </ThemeProvider>
-    );
-}
-
-export default App;

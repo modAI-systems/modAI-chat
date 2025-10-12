@@ -15,14 +15,14 @@
         },
         {
             "id": "authentication-sidebar-footer",
-            "type": "MainSidebarFooterItem",
+            "type": "SidebarFooterItem",
             "path": "@/modules/authentication/AuthSidebarFooterItem.tsx",
             "activeWhen": []
         },
         {
             "id": "session",
             "type": "GlobalContextProvider",
-            "path": "@/modules/session/SessionContextProvider.tsx",
+            "path": "@/modules/session-provider/SessionContextProvider.tsx",
             "activeWhen": []
         },
         {

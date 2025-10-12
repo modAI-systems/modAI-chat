@@ -19,6 +19,8 @@
 
 All major components of the user interface are treated as modules. The main idea about modules is that a module can be replaced without touching its parent or child components.
 
+The term "module" in modAI can be a regular React component, but it not limited to it. Modules can be anything including functions, regular components, classes, primitive types, ...
+
 Atomic components like buttons, text input, etc. are not treated as modules and therefore cannot be exchanged at will.
 
 ```mermaid
@@ -131,3 +133,97 @@ No actual components like Login, Chat, Authentication or the like are used in th
 - **Routing**: Define module specific routes. Routed components automatically are displayed in the `RouterEntry`
 - **Sidebar**: Integrate into the main application sidebar
 - **Context**: Allow other modules to register context providers which will be installed at a global level and therefore making state available throughout the whole application
+
+## 6. Best Practices and Patterns
+
+### 6.1 Module Organization
+
+As "modules" in modAI can be anything including regular compoments, it often happens that several modules belong together, like a sidebar module usually comes together with a router module. In such cases, it is a good practice to group related modules inside a `src/[GROUP]/`.
+
+Module groups should stay lean and should not grow to big. Splitting a module group is up to the author and should be reasonable.
+
+Also sub-groups like `src/[GROUP]/[GROUP]` can be done if needed.
+
+### 6.2 Services
+
+As module group should stay lean (see previous section), it is a good practice to put services into an own module group named after its purpose + `-service` like `src/authenticatoin-service`.
+
+### 6.3 Separete Interface from Implementation (aka `index.ts`)
+
+Some modules are ment to be used by others via a defined interface, like services. In such cases, it is a good practice to put the interface inside the module group in the `index.ts` file. This easens the import handling for dependent modules.
+
+Additionally, the interface should have a good api documentation to make the usage for others easier to understand.
+
+### 6.4 Module Group Documentation
+
+Each module group should have a `README.md` file describing what the module group is about.
+
+Template for the documentation
+
+````markdown
+# Authentication Service
+
+Provides authentication backend communication for user management, including login, signup, and logout operations.
+No UI components availabe in this module group.
+
+## Intended Usage
+
+[Describes how this module group should be used by other modules. Skip this section if not applicable to the module group]
+
+Example:
+
+Other modules can access authentication functionality through the `useAuthService` hook to perform user authentication operations.
+
+```jsx
+import { useAuthService } from "@/modules/authentication-service/AuthContextProvider";
+
+function LoginComponent() {
+  const authService = useAuthService();
+  ...
+  const response = await authService.login({ email, password })
+  ...
+}
+```
+
+## Intended Integration
+
+[Describes how this module is instantiated. Skip this section if not applicable to the module group or if the instantiation is not special and completely done by the module sytem]
+
+Example:
+
+```tsx
+<ModuleContextProvider name="GlobalContextProvider">
+  // All context providers with type "GlobalContextProvider" are now accessible
+</ModuleContextProvider>
+```
+
+## Sub-Module Integration
+
+[Describes how other modules can integrate into this module group. This is usually the case if a module loads sub modules via the module system and require them to have a certain structure. Skip this section if not applicable to the module group]]
+
+Example:
+
+### Sidebar Integration
+
+To integrate into the sidebar as top item, modules have to export a component with class name `SidebarItem` of the following structure
+
+```jsx
+import { Plus } from "lucide-react";
+
+function MyAwesomeSidebarItem() {
+  const location = useLocation();
+
+  return (
+    <SidebarMenuButton asChild isActive={location.pathname === "/myroute"}>
+      <Link to="/myroute">
+        <Plus />
+        <span>Awesome</span>
+      </Link>
+    </SidebarMenuButton>
+  );
+}
+```
+
+This will create a new sidebar top item navigating to the `/myroute` when clicked.
+It is important to always have a icon + text in the sidebar item because when the sidebar is collapsed, only the icon will be displayed.
+````

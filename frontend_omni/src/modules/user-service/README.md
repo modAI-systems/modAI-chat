@@ -1,9 +1,5 @@
 # User Service
 
-Module Type: Service, Hook
-
-## Description
-
 This module provides user management functionality, including user data retrieval, user profile operations, and making user information available throughout the application. It serves as the central service for all user-related operations and state management.
 
 ## Intended Usage
@@ -49,7 +45,3 @@ return (
   <UserServiceContext value={userServiceInstance}>...</UserServiceContext>
 );
 ```
-
-## Sub Module Implementation Detail
-
-This module is not consuming any sub-modules.

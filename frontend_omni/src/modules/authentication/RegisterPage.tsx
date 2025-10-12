@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthService } from "../authentication-service";
-import LoginRegisterForm from "./LoginRegisterForm";
+import { useAuthService } from "@/modules/authentication-service";
+import { LoginRegisterForm } from "./LoginRegisterForm";
 
 export default function RegisterPage() {
     return (

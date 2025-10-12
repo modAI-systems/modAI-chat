@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthService } from "../authentication-service";
-import { useSession } from "@/modules/session";
-import LoginRegisterForm from "./LoginRegisterForm";
+import { useSession } from "@/modules/session-provider";
+import { LoginRegisterForm } from "./LoginRegisterForm";
+import { useAuthService } from "@/modules/authentication-service";
 
 interface LoginProps {
     enableForgetPassword?: boolean;
 }
 
-export default function LoginPage() {
+export function LoginPage() {
     return (
         <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
             <div className="w-full max-w-sm">

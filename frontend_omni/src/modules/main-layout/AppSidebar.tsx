@@ -1,7 +1,3 @@
-import {
-    MAIN_SIDEBAR_FOOTER_ITEM_MODULE_CLASS_NAME,
-    MAIN_SIDEBAR_ITEM_MODULE_CLASS_NAME,
-} from "@/modules/main-layout";
 import { useModules } from "@/modules/module-system";
 import {
     Sidebar,
@@ -14,13 +10,10 @@ import {
 
 export function AppSidebar() {
     const modules = useModules();
-    const sidebarItems = modules.getAll<React.ComponentType>(
-        MAIN_SIDEBAR_ITEM_MODULE_CLASS_NAME
-    );
+    const sidebarItems = modules.getAll<React.ComponentType>("SidebarItem");
 
-    const sidebarFooterItems = modules.getAll<React.ComponentType>(
-        MAIN_SIDEBAR_FOOTER_ITEM_MODULE_CLASS_NAME
-    );
+    const sidebarFooterItems =
+        modules.getAll<React.ComponentType>("SidebarFooterItem");
 
     return (
         <Sidebar collapsible="icon">

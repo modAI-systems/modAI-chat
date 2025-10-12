@@ -1,10 +1,10 @@
 import { useState, type ReactNode } from "react";
-import { ModuleManagerContext } from "@/modules/module-system";
 import {
     ModuleRegistry,
     useModuleManagerFromManifest,
 } from "./manifestModuleManager";
 import { useManifest } from "./moduleManifestLoader";
+import { ModuleManagerContext } from ".";
 
 const manifestPath = "/modules/manifest.json";
 

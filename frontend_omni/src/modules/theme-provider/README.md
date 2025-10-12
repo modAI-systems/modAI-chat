@@ -1,10 +1,6 @@
 # Theme System
 
-Module Type: Service, Hook
-
-## Description
-
-This module provides theme management functionality, including theme switching, theme persistence, and making theme state available throughout the application. It enables dynamic theming with support for multiple theme variants (e.g., light, dark, system preference).
+Provides theme management functionality, including theme switching, theme persistence, and making theme state available throughout the application. It enables dynamic theming with support for multiple theme variants (e.g., light, dark, system preference).
 
 ## Intended Usage
 
@@ -29,7 +25,3 @@ return (
   <ThemeContext value={themeContextValue}>...</ThemeContext>
 );
 ```
-
-## Sub Module Implementation Detail
-
-This module is not consuming any sub-modules.

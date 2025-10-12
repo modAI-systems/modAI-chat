@@ -1,20 +1,12 @@
 # Main Layout
 
-Module Type: Component
+Provides the core application structure and user interface framework. It includes the main application component, sidebar navigation, error handling, and loading screens. This module gruoop serves as the foundation for the entire frontend application, orchestrating the layout and integrating components from other modules.
 
-## Description
-
-The main-layout module provides the core application structure and user interface framework. It includes the main application component, sidebar navigation, error handling, and loading screens. This module serves as the foundation for the entire frontend application, orchestrating the layout and integrating components from other modules.
-
-This module is automatically used as the root component of the application. Other modules integrate with it by registering sidebar items, router entries, and footer items that are dynamically discovered and rendered by the main layout.
+This module group is automatically used as the root component of the application. Other modules integrate with it by registering sidebar items, router entries, and footer items that are dynamically discovered and rendered by the main layout.
 
 ![Main Layout Structure](../../../resources/MainLayout.svg)
 
-## Intended Integration
-
-This is the root module so it is not integrated to other modules.
-
-## Sub Module Implementation Detail
+## Sub-Module Integration
 
 ### Router Integration
 
@@ -36,7 +28,7 @@ What this component will do is, it creates a new root route `/myroute` and when 
 
 ### Sidebar Integration
 
-To integrate into the sidebar as top item, modules have to export a component with class name `MainSidebarItem` of the following structure
+To integrate into the sidebar as top item, modules have to export a component with class name `SidebarItem` of the following structure
 
 ```jsx
 import { Plus } from "lucide-react";
@@ -53,34 +45,10 @@ function MyAwesomeSidebarItem() {
     </SidebarMenuButton>
   );
 }
-
-// Export in the metadata is special because it not only exports the component
-// but also the suggested position in the sidebar -- see next section
 ```
 
 This will create a new sidebar top item navigating to the `/myroute` when clicked.
 
-To integrate as a sidebar footer item, the component structure is the same but the exported class name must be `MainSidebarFooterItem`.
+To integrate as a sidebar footer item, the component structure is the same but the exported class name must be `SidebarFooterItem`.
 
 It is important to always have a icon + text in the sidebar item because when the sidebar is collapsed, only the icon will be displayed.
-
-### Metadata
-
-All those three possible integrations must be exported via the appropriate name, else they are unused:
-
-```typescript
-export const Metadata: ModuleMetadata = {
-  ...
-  exports: {
-    [MAIN_ROUTER_ENTRY_MODULE_CLASS_NAME]: MyAwesomeRoute,
-    [MAIN_SIDEBAR_ITEM_MODULE_CLASS_NAME]: {
-      position: 100,
-      component: MyAwesomeSidebarItem,
-    },
-    [MAIN_SIDEBAR_FOOTER_ITEM_MODULE_CLASS_NAME]: {
-      position: 30,
-      component: MyAwesomeSidebarItem,
-    },
-  },
-};
-```

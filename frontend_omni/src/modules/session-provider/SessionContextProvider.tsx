@@ -1,10 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { SessionService } from "./sessionService";
-import {
-    type Session,
-    SessionContext,
-    type SessionContextType,
-} from "@/modules/session";
+import { SessionContext, type Session, type SessionContextType } from ".";
 import { useUserService } from "@/modules/user-service";
 
 interface SessionProviderProps {
@@ -14,7 +10,7 @@ interface SessionProviderProps {
 /**
  * SessionProvider component that manages session state using the Session class
  */
-export function SessionContextProvider({
+export default function SessionContextProvider({
     children,
 }: SessionProviderProps): React.JSX.Element {
     const userService = useUserService();
@@ -60,5 +56,3 @@ export function SessionContextProvider({
 
     return <SessionContext value={contextValue}>{children}</SessionContext>;
 }
-
-export default SessionContextProvider;

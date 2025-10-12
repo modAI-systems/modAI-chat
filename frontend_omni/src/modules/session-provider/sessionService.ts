@@ -1,4 +1,4 @@
-import type { Session } from "@/modules/session";
+import type { Session } from "@/modules/session-provider";
 import type { UserService } from "@/modules/user-service";
 
 /**

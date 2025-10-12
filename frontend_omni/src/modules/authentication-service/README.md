@@ -1,17 +1,14 @@
 # Authentication Service
 
-Module Type: Service, Hook
-
-## Description
-
-Provides authentication functionality for user management, including login, signup, and logout operations. This service handles user authentication against the backend API and manages authentication state.
+Provides authentication backend communication for user management, including login, signup, and logout operations.
+No UI components availabe in this module group.
 
 ## Intended Usage
 
 Other modules can access authentication functionality through the `useAuthService` hook to perform user authentication operations.
 
 ```jsx
-import { useAuthService } from "@/moduleif/authenticationService";
+import { useAuthService } from "@/modules/authentication-service/AuthContextProvider";
 
 function LoginComponent() {
   const authService = useAuthService();
@@ -27,32 +24,3 @@ function LoginComponent() {
   // Component implementation...
 }
 ```
-
-## Intended Integration
-
-This module provides a context provider that makes the `AuthService` instance available throughout the application. Implementations should register a `GlobalModuleContextProvider` component that wraps the app with `AuthServiceContext`.
-
-```jsx
-// In the module's GlobalContextProvider component
-export function AuthServiceContextProvider({
-  children,
-}: {
-  children: React.ReactNode,
-}) {
-  ...
-  return (
-    <AuthServiceContext value={authService}>{children}</AuthServiceContext>
-  );
-}
-
-// In the module metadata usually it should be exported to the global context
-export const Metadata: ModuleMetadata = {
-    exports: {
-        [GLOBAL_MODULE_CONTEXT_PROVIDER_CLASS_NAME]: AuthServiceContextProvider,
-    },
-}
-```
-
-## Sub Module Implementation Detail
-
-This module is not consuming any sub-modules.

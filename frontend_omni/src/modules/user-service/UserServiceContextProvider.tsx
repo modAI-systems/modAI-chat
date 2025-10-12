@@ -2,7 +2,7 @@ import React from "react";
 import { UserServiceContext } from "@/modules/user-service";
 import { HttpUserService } from "./HttpUserService";
 
-export function UserServiceContextProvider({
+export default function UserServiceContextProvider({
     children,
 }: {
     children: React.ReactNode;
@@ -14,5 +14,3 @@ export function UserServiceContextProvider({
         </UserServiceContext>
     );
 }
-
-export default UserServiceContextProvider;
