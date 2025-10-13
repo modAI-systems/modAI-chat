@@ -83,21 +83,7 @@ The ID of a module is usually defined in the `manifest.json` (see next chapter).
 
 The type of a module is also set in the `manifest.json` but is usually defined somewhere else: TBD
 
-### 4.4 Module Feature Flags
-
-Each module can define dependencies in the form of feature flags. Only if all dependent feature flags are set, a module gets activated by the module system. When feature flags change during runtime in the module manager, this also affects the activation state of the dependent modules (by removing flags, modules can get deactivated, and by adding flags, modules can get activated).
-
-This is how feature flags are set/unset:
-
-```typescript
-const featureFlags = useFeatureFlags();
-featureFlags.remove("sessionActive");
-featureFlags.add("sessionInactive");
-```
-
-Changing feature flags is a very heavy operation because it can change the activation state of modules which usually leads to a full re-render of the whole application. Use feature flags only in rare situations and don't control very detailed parts of the software with it.
-
-### 4.5 Registering Modules
+### 4.4 Registering Modules
 
 The registration of modules in the ModuleManager is not defined by the `ModuleManager` interface. The default implementation handles module registration with a `manifest.json` file loaded at startup of the application. The manifest has the following structure:
 
