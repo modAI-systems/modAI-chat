@@ -1,6 +1,7 @@
 import { Route } from "react-router-dom";
 import RegisterPage from "./RegisterPage";
 import { LoginPage } from "./LoginPage";
+import { SessionGuardRoute } from "@/modules/session-provider";
 
 export default function AuthRouterEntry() {
     return (
@@ -8,12 +9,20 @@ export default function AuthRouterEntry() {
             <Route
                 key={`authentication-login`}
                 path="/login"
-                element={<LoginPage />}
+                element={
+                    <SessionGuardRoute requireSession={false}>
+                        <LoginPage />
+                    </SessionGuardRoute>
+                }
             />
             <Route
                 key={`authentication-register`}
                 path="/register"
-                element={<RegisterPage />}
+                element={
+                    <SessionGuardRoute requireSession={false}>
+                        <RegisterPage />
+                    </SessionGuardRoute>
+                }
             />
         </>
     );
