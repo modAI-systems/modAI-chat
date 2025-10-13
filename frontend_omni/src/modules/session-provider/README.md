@@ -16,11 +16,7 @@ Other modules can access session data and session management functions through t
 import { useSession } from "@/moduleif/sessionContext";
 
 function UserProfile() {
-  const { session, isLoading, refreshSession, clearSession } = useSession();
-
-  if (isLoading) {
-    return <div>Loading session...</div>;
-  }
+  const { session, refreshSession, clearSession } = useSession();
 
   if (!session) {
     return <div>No active session</div>;

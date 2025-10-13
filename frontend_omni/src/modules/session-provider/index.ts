@@ -10,8 +10,7 @@ export interface Session {
 
 export interface SessionContextType {
     session: Session | null;
-    isLoading: boolean;
-    refreshSession: () => Promise<void>;
+    refreshSession: () => void;
     clearSession: () => void;
 }
 
