@@ -1,8 +1,12 @@
+import { useTranslation } from "react-i18next";
+
 interface DefaultErrorPageProps {
     error?: Error;
 }
 
 export function DefaultErrorPage({ error }: DefaultErrorPageProps) {
+    const { t } = useTranslation("main-layout");
+
     const handleReload = () => {
         window.location.reload();
     };
@@ -31,18 +35,25 @@ export function DefaultErrorPage({ error }: DefaultErrorPageProps) {
                         </svg>
                     </div>
                     <h1 className="text-2xl font-bold text-foreground mb-2">
-                        Something went wrong
+                        {t("errorTitle", {
+                            defaultValue: "Something went wrong",
+                        })}
                     </h1>
                     <p className="text-muted-foreground mb-6">
-                        We're sorry, but something unexpected happened. Please
-                        try refreshing the page or go back to the home page.
+                        {t("errorDescription", {
+                            defaultValue:
+                                "We're sorry, but something unexpected happened. Please try refreshing the page or go back to the home page.",
+                        })}
                     </p>
                 </div>
 
                 {process.env.NODE_ENV === "development" && error && (
                     <div className="mb-6 p-4 bg-destructive/5 border border-destructive/20 rounded-lg text-left">
                         <h3 className="text-sm font-semibold text-destructive mb-2">
-                            Error Details (Development Mode)
+                            {t("errorDetails", {
+                                defaultValue:
+                                    "Error Details (Development Mode)",
+                            })}
                         </h3>
                         <pre className="text-xs text-destructive whitespace-pre-wrap break-words">
                             {error.message}
@@ -61,13 +72,13 @@ export function DefaultErrorPage({ error }: DefaultErrorPageProps) {
                         onClick={handleReload}
                         className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
                     >
-                        Refresh Page
+                        {t("refreshPage", { defaultValue: "Refresh Page" })}
                     </button>
                     <button
                         onClick={handleGoHome}
                         className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
                     >
-                        Go to Home
+                        {t("goToHome", { defaultValue: "Go to Home" })}
                     </button>
                 </div>
             </div>

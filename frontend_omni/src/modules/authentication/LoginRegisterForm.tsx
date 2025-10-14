@@ -11,6 +11,7 @@ import { Input } from "@/shadcn/components/ui/input";
 import { Label } from "@/shadcn/components/ui/label";
 import { useState, createContext, useContext } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 // Context for shared form state and handlers
 interface FormContextType {
@@ -96,22 +97,35 @@ function Provider({
 
 // Header components
 function LoginHeader() {
+    const { t } = useTranslation("authentication");
+
     return (
         <CardHeader>
-            <CardTitle className="text-2xl">Login</CardTitle>
+            <CardTitle className="text-2xl">
+                {t("loginTitle", { defaultValue: "Login" })}
+            </CardTitle>
             <CardDescription>
-                Enter your email below to login to your account
+                {t("loginDescription", {
+                    defaultValue:
+                        "Enter your email below to login to your account",
+                })}
             </CardDescription>
         </CardHeader>
     );
 }
 
 function RegisterHeader() {
+    const { t } = useTranslation("authentication");
+
     return (
         <CardHeader>
-            <CardTitle className="text-2xl">Sign Up</CardTitle>
+            <CardTitle className="text-2xl">
+                {t("registerTitle", { defaultValue: "Sign Up" })}
+            </CardTitle>
             <CardDescription>
-                Create a new account to get started
+                {t("registerDescription", {
+                    defaultValue: "Create a new account to get started",
+                })}
             </CardDescription>
         </CardHeader>
     );
@@ -120,15 +134,20 @@ function RegisterHeader() {
 // Input components
 function Email() {
     const { email, setEmail, isLoading } = useFormContext();
+    const { t } = useTranslation("authentication");
 
     return (
         <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">
+                {t("emailLabel", { defaultValue: "Email" })}
+            </Label>
             <Input
                 id="email"
                 type="email"
                 autoComplete="email"
-                placeholder="m@example.com"
+                placeholder={t("emailPlaceholder", {
+                    defaultValue: "m@example.com",
+                })}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
@@ -140,10 +159,13 @@ function Email() {
 
 function Password({ variant = "login" }: { variant?: "login" | "register" }) {
     const { password, setPassword, isLoading } = useFormContext();
+    const { t } = useTranslation("authentication");
 
     return (
         <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">
+                {t("passwordLabel", { defaultValue: "Password" })}
+            </Label>
             <Input
                 id="password"
                 type="password"
@@ -161,15 +183,20 @@ function Password({ variant = "login" }: { variant?: "login" | "register" }) {
 
 function FullName() {
     const { fullName, setFullName, isLoading } = useFormContext();
+    const { t } = useTranslation("authentication");
 
     return (
         <div className="grid gap-2">
-            <Label htmlFor="fullName">Full Name (Optional)</Label>
+            <Label htmlFor="fullName">
+                {t("fullNameLabel", { defaultValue: "Full Name (Optional)" })}
+            </Label>
             <Input
                 id="fullName"
                 type="text"
                 autoComplete="name"
-                placeholder="John Doe"
+                placeholder={t("fullNamePlaceholder", {
+                    defaultValue: "John Doe",
+                })}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 disabled={isLoading}
@@ -181,20 +208,26 @@ function FullName() {
 // Button components
 function LoginButton() {
     const { isLoading } = useFormContext();
+    const { t } = useTranslation("authentication");
 
     return (
         <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading
+                ? t("loggingIn", { defaultValue: "Logging in..." })
+                : t("login", { defaultValue: "Login" })}
         </Button>
     );
 }
 
 function CreateAccountButton() {
     const { isLoading } = useFormContext();
+    const { t } = useTranslation("authentication");
 
     return (
         <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Creating account..." : "Create Account"}
+            {isLoading
+                ? t("creatingAccount", { defaultValue: "Creating account..." })
+                : t("createAccount", { defaultValue: "Create Account" })}
         </Button>
     );
 }
@@ -213,33 +246,39 @@ function ErrorMessage() {
 }
 
 function ForgotPasswordLink() {
+    const { t } = useTranslation("authentication");
+
     return (
         <a
             href="#"
             className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
         >
-            Forgot your password?
+            {t("forgotPasswordLink", { defaultValue: "Forgot your password?" })}
         </a>
     );
 }
 
 function LoginHint() {
+    const { t } = useTranslation("authentication");
+
     return (
         <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
+            {t("noAccount", { defaultValue: "Don't have an account?" })}{" "}
             <Link to="/register" className="underline underline-offset-4">
-                Sign up
+                {t("signUpLink", { defaultValue: "Sign up" })}
             </Link>
         </div>
     );
 }
 
 function RegisterHint() {
+    const { t } = useTranslation("authentication");
+
     return (
         <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
+            {t("hasAccount", { defaultValue: "Already have an account?" })}{" "}
             <Link to="/login" className="underline underline-offset-4">
-                Sign in
+                {t("signInLink", { defaultValue: "Sign in" })}
             </Link>
         </div>
     );

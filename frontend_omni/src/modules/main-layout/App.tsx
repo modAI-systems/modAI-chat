@@ -10,6 +10,7 @@ import { ErrorBoundary } from "./ErrorBoundary";
 import { ModuleContextProvider } from "../module-context-provider/ModuleContextProvider";
 import { ModuleManagerProvider } from "@/modules/module-system/ModuleManagerContext";
 import { useModules } from "@/modules/module-system";
+import "@/modules/i18n/i18n";
 
 const queryClient = new QueryClient();
 

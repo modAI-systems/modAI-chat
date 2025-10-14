@@ -11,6 +11,7 @@
 - **Programming Language**: TypeScript
 - **UI Framework**: React 19+ with React Router
 - **UI Components**: Shadcn/ui component library
+- **i18n**: react-i18next
 - **Build Tool**: Vite
 - **State Management**: React Context API
 - **Module Loading**: Dynamic ESM imports with manifest-driven discovery
@@ -107,6 +108,18 @@ The registration of modules in the ModuleManager is not defined by the `ModuleMa
 - **id** and **type**: see section _Module ID vs Module Type_
 - **path**: the component include path. The component to be used must then be the default component of that file.
 - **dependencies**: a list of dependencies required for the module to operate. Dependencies starting with "module:" indicate module dependencies. If a module dependency is not available, the dependent module will not be loaded.
+
+### 4.5 Exporting a Module
+
+```tsx
+export default function AuthSidebarFooterItem({
+    className,
+}: LogoutButtonProps) {
+  ...
+}
+```
+
+Modules always have to be the default component of a file to be usable for the module system.
 
 ## 5. Root Application
 
@@ -213,3 +226,18 @@ function MyAwesomeSidebarItem() {
 This will create a new sidebar top item navigating to the `/myroute` when clicked.
 It is important to always have a icon + text in the sidebar item because when the sidebar is collapsed, only the icon will be displayed.
 ````
+
+### 6.5 Translations
+
+All user-facing text must be internationalized using the i18n system.
+
+**Hook**: `useTranslation("module group name")`
+
+**Usage**: `t("key", { defaultValue: "English Fallback Translation" })`
+
+Example:
+
+```tsx
+const { t } = useTranslation("authentication");
+return <span>{t("login", { defaultValue: "Login" })}</span>;
+```

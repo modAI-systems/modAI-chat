@@ -6,6 +6,7 @@ import { useSession } from "@/modules/session-provider";
 import { LogOut, LogIn, UserPlus } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuthService } from "@/modules/authentication-service";
+import { useTranslation } from "react-i18next";
 
 const LOGIN_PATH = "/login";
 const REGISTER_PATH = "/register";
@@ -21,6 +22,7 @@ export default function AuthSidebarFooterItem({
     const location = useLocation();
     const { clearSession, session } = useSession();
     const authService = useAuthService();
+    const { t } = useTranslation("authentication");
 
     const handleLogout = async () => {
         try {
@@ -41,24 +43,26 @@ export default function AuthSidebarFooterItem({
             <SidebarMenuItem className={className} hidden={session !== null}>
                 <SidebarMenuButton
                     asChild
-                    tooltip="Log in"
+                    tooltip={t("login", { defaultValue: "Login" })}
                     isActive={location.pathname === LOGIN_PATH}
                 >
                     <Link to={LOGIN_PATH}>
                         <LogIn />
-                        <span>Log in</span>
+                        <span>{t("login", { defaultValue: "Login" })}</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem className={className} hidden={session !== null}>
                 <SidebarMenuButton
                     asChild
-                    tooltip="Register"
+                    tooltip={t("register", { defaultValue: "Register" })}
                     isActive={location.pathname === REGISTER_PATH}
                 >
                     <Link to={REGISTER_PATH}>
                         <UserPlus />
-                        <span>Register</span>
+                        <span>
+                            {t("register", { defaultValue: "Register" })}
+                        </span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
@@ -66,11 +70,11 @@ export default function AuthSidebarFooterItem({
                 <SidebarMenuButton
                     asChild
                     onClick={handleLogout}
-                    tooltip="Log out"
+                    tooltip={t("logout", { defaultValue: "Logout" })}
                 >
                     <div className="cursor-pointer">
                         <LogOut />
-                        <span>Log out</span>
+                        <span>{t("logout", { defaultValue: "Logout" })}</span>
                     </div>
                 </SidebarMenuButton>
             </SidebarMenuItem>
