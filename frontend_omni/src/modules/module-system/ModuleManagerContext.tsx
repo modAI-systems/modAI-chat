@@ -1,31 +1,29 @@
-import type { ReactNode } from 'react'
-import { ModuleManagerContext, useModules } from '@/moduleif/moduleSystem'
-import { useModuleManagerFromManifest } from './moduleManager'
-import { useManifest } from './moduleManifstLoader';
+import { useMemo, type ReactNode } from "react";
+import {
+    ModuleRegistry,
+    useModuleManagerFromManifest,
+} from "./manifestModuleManager";
+import { useManifest } from "./moduleManifestLoader";
+import { ModuleManagerContext } from ".";
+
+const manifestPath = "/modules/manifest.json";
 
 interface ModuleManagerProviderProps {
-    children: ReactNode
+    children: ReactNode;
 }
 
-export function ModuleManagerProvider({ children }: ModuleManagerProviderProps) {
-    const manifest = useManifest()
-    const moduleManager = useModuleManagerFromManifest(manifest)
+export function ModuleManagerProvider({
+    children,
+}: ModuleManagerProviderProps) {
+    const manifest = useManifest(manifestPath);
+    const moduleManager = useModuleManagerFromManifest(manifest);
+
+    const registry = useMemo(
+        () => new ModuleRegistry(moduleManager.getActiveModules()),
+        [moduleManager]
+    );
 
     return (
-        <ModuleManagerContext value={moduleManager}>
-            {children}
-        </ModuleManagerContext>
-    )
-}
-
-export function ModuleContextProviders({ children, name }: { children: React.ReactNode; name: string }) {
-    const modules = useModules()
-
-    const contextProviders = modules.getComponentsByName(name)
-
-    // Wrap children with all context provider modules
-    return contextProviders.reduce(
-        (wrappedChildren, Component) => <Component>{wrappedChildren}</Component>,
-        children
-    )
+        <ModuleManagerContext value={registry}>{children}</ModuleManagerContext>
+    );
 }

@@ -1,2 +1,3 @@
 # Exclude generated shadcn UI components from language statistics
 frontend_omni/src/shadcn/** linguist-generated=true
+frontend_omni/src/modules/chat-layout/shadcn/** linguist-generated=true

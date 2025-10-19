@@ -1,15 +1,21 @@
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/shadcn/components/ui/resizable'
-import { useModules } from "@/moduleif/moduleSystem";
+import {
+    ResizablePanelGroup,
+    ResizablePanel,
+    ResizableHandle,
+} from "@/shadcn/components/ui/resizable";
 import { Outlet } from "react-router-dom";
 import type { ReactNode } from "react";
+import { useModules } from "@/modules/module-system";
 
 interface SettingsPageProps {
     children: ReactNode;
 }
 
 export function GlobalSettingsPage() {
-    const modules = useModules()
-    const globalSettingsNavItems = modules.getComponentsByName("GlobalSettingsNavItem")
+    const modules = useModules();
+    const globalSettingsNavItems = modules.getAll<React.ComponentType>(
+        "GlobalSettingsNavItem"
+    );
 
     return (
         <SettingsPage>
@@ -21,8 +27,10 @@ export function GlobalSettingsPage() {
 }
 
 export function UserSettingsPage() {
-    const modules = useModules()
-    const userSettingsNavItems = modules.getComponentsByName("UserSettingsNavItem")
+    const modules = useModules();
+    const userSettingsNavItems = modules.getAll<React.ComponentType>(
+        "UserSettingsNavItem"
+    );
 
     return (
         <SettingsPage>
@@ -49,6 +57,6 @@ function SettingsPage({ children }: SettingsPageProps) {
                     <Outlet />
                 </div>
             </ResizablePanel>
-        </ResizablePanelGroup >
+        </ResizablePanelGroup>
     );
 }

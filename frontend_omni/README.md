@@ -10,3 +10,10 @@ pnpm dev
 ```
 
 The frontend is now available under http://localhost:5173
+
+
+## Naming Conventions
+
+**React Compionents**: PascalCase
+**React Services/Hooks**: camalCase
+**Folders**: kebab-case

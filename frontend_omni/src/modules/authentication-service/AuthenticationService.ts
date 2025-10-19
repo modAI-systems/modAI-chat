@@ -11,11 +11,10 @@ import type {
     LoginResponse,
     SignupResponse,
     AuthError,
-    AuthService
-} from "@/moduleif/authenticationService";
+    AuthService,
+} from ".";
 
 export class AuthenticationService implements AuthService {
-
     /**
      * Authenticates a user with email and password
      *
@@ -24,17 +23,17 @@ export class AuthenticationService implements AuthService {
      * @throws Error if login fails
      */
     async login(credentials: LoginRequest): Promise<LoginResponse> {
-        const response = await fetch('/api/v1/auth/login', {
-            method: 'POST',
-            credentials: 'include', // Include cookies for session authentication
+        const response = await fetch("/api/v1/auth/login", {
+            method: "POST",
+            credentials: "include", // Include cookies for session authentication
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
             body: JSON.stringify(credentials),
         });
 
         if (!response.ok) {
-            await this.handleApiError(response, 'Login failed');
+            await this.handleApiError(response, "Login failed");
         }
 
         const result: LoginResponse = await response.json();
@@ -49,17 +48,17 @@ export class AuthenticationService implements AuthService {
      * @throws Error if signup fails
      */
     async signup(credentials: SignupRequest): Promise<SignupResponse> {
-        const response = await fetch('/api/v1/auth/signup', {
-            method: 'POST',
-            credentials: 'include', // Include cookies for session authentication
+        const response = await fetch("/api/v1/auth/signup", {
+            method: "POST",
+            credentials: "include", // Include cookies for session authentication
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
             body: JSON.stringify(credentials),
         });
 
         if (!response.ok) {
-            await this.handleApiError(response, 'Signup failed');
+            await this.handleApiError(response, "Signup failed");
         }
 
         const result: SignupResponse = await response.json();
@@ -73,16 +72,16 @@ export class AuthenticationService implements AuthService {
      * @throws Error if logout fails
      */
     async logout(): Promise<LoginResponse> {
-        const response = await fetch('/api/v1/auth/logout', {
-            method: 'POST',
-            credentials: 'include', // Include cookies for session authentication
+        const response = await fetch("/api/v1/auth/logout", {
+            method: "POST",
+            credentials: "include", // Include cookies for session authentication
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
         });
 
         if (!response.ok) {
-            await this.handleApiError(response, 'Logout failed');
+            await this.handleApiError(response, "Logout failed");
         }
 
         const result: LoginResponse = await response.json();
@@ -92,7 +91,10 @@ export class AuthenticationService implements AuthService {
     /**
      * Handles errors from authentication API responses
      */
-    private async handleApiError(response: Response, defaultMessage: string): Promise<never> {
+    private async handleApiError(
+        response: Response,
+        defaultMessage: string
+    ): Promise<never> {
         let errorMessage = defaultMessage;
 
         try {
@@ -105,5 +107,4 @@ export class AuthenticationService implements AuthService {
 
         throw new Error(errorMessage);
     }
-
 }

@@ -2,79 +2,79 @@
     "version": "1.0.0",
     "modules": [
         {
-            "id": "authentication-service",
-            "path": "@/modules/authentication-service/Metadata.ts",
-            "enabled": true
+            "id": "chat-layout-sidebar",
+            "type": "SidebarItem",
+            "path": "@/modules/chat-layout/ChatSidebarItem",
+            "dependencies": []
+        },
+        {
+            "id": "chat-layout-router",
+            "type": "RouterEntry",
+            "path": "@/modules/chat-layout/ChatRouterEntry",
+            "dependencies": []
+        },
+        {
+            "id": "chat-layout-fallback-router",
+            "type": "FallbackRouterEntry",
+            "path": "@/modules/chat-layout/FallbackRouterEntry",
+            "dependencies": []
+        },
+        {
+            "id": "chat-messages-area-pane",
+            "type": "ChatMiddlePane",
+            "path": "@/modules/chat-layout/ChatArea"
+        },
+        {
+            "id": "llm-context",
+            "type": "GlobalContextProvider",
+            "path": "@/modules/llm-picker/LLMContextProvider",
+            "activeWhen": []
+        },
+        {
+            "id": "llm-chat-top-pane",
+            "type": "ChatTopPane",
+            "path": "@/modules/llm-picker/ChatTopPane"
         },
         {
             "id": "llm-provider-service",
-            "path": "@/modules/llm-provider-service/Metadata.ts",
-            "enabled": true
+            "type": "GlobalContextProvider",
+            "path": "@/modules/llm-provider-service/LLMNoBackendProviderService",
+            "activeWhen": []
         },
         {
-            "id": "user-settings",
-            "path": "@/modules/settings/MetaUserSettings.ts",
-            "enabled": true
+            "id": "chat-side-panels-provider",
+            "type": "GlobalContextProvider",
+            "path": "@/modules/chat-layout/ChatSidePanelProvider",
+            "activeWhen": []
         },
         {
-            "id": "global-settings",
-            "path": "@/modules/settings/MetaGlobalSettings.ts",
-            "enabled": true
+            "id": "global-settings-sidebar-footer",
+            "type": "SidebarFooterItem",
+            "path": "@/modules/settings/SidebarFooterItemGlobal"
         },
         {
-            "id": "authentication",
-            "path": "@/modules/authentication/Metadata.ts",
-            "enabled": true
+            "id": "global-settings-router",
+            "type": "RouterEntry",
+            "path": "@/modules/settings/RouterEntryGlobal"
         },
         {
-            "id": "llm-picker",
-            "path": "@/modules/llm-picker/Metadata.ts",
-            "enabled": true
+            "id": "llm-provider-management-router-entry",
+            "type": "GlobalSettingsRouterEntry",
+            "path": "@/modules/llm-provider-management/GlobalSettingsRouterEntry",
+            "dependencies": [
+                "module:llm-provider-service"
+            ]
         },
         {
-            "id": "llm-provider-management",
-            "path": "@/modules/llm-provider-management/Metadata.ts",
-            "enabled": true
+            "id": "llm-provider-management-nav-item",
+            "type": "GlobalSettingsNavItem",
+            "path": "@/modules/llm-provider-management/GlobalSettingsNavItem",
+            "dependencies": []
         },
         {
-            "id": "chat-api-service",
-            "path": "@/modules/chat-api-service/Metadata.ts",
-            "enabled": true
-        },
-        {
-            "id": "chat",
-            "path": "@/modules/chat/Metadata.ts",
-            "enabled": true
-        },
-        {
-            "id": "userprofileitem",
-            "path": "@/modules/user-profile-item/Metadata.ts",
-            "enabled": true
-        },
-        {
-            "id": "user-settings-general",
-            "path": "@/modules/user-settings-general/Metadata.ts",
-            "enabled": true
-        },
-        {
-            "id": "user-settings-service",
-            "path": "@/modules/user-settings-service/Metadata.ts",
-            "enabled": true
-        },
-        {
-            "id": "session",
-            "path": "@/modules/session/Metadata.ts",
-            "enabled": true
-        },
-        {
-            "id": "theme",
-            "path": "@/modules/theme/MetadataCore.ts",
-            "enabled": true
-        },
-        {
-            "id": "user-service",
-            "path": "@/modules/user-service/Metadata.ts",
-            "enabled": true
+            "id": "no-backend-welcome-message",
+            "type": "ChatWelcomeMessagePane",
+            "path": "@/modules/welcome-message/NoBackendWelcomeMessage"
         }
     ]
 }

@@ -1,9 +1,19 @@
-import { useState, useEffect } from 'react'
-import { ProviderSection } from './ProviderSection'
-import { ProviderListItem } from './ProviderListItem'
-import { ProviderForm } from './ProviderForm'
-import { type LLMProvider, type CreateLegacyProviderRequest, type UpdateLegacyProviderRequest, useLLMProviderService } from '@/moduleif/llmProviderService'
-import { Button } from '@/shadcn/components/ui/button'
+import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/shadcn/components/ui/button";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/shadcn/components/ui/card";
+import { Input } from "@/shadcn/components/ui/input";
+import { Label } from "@/shadcn/components/ui/label";
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/shadcn/components/ui/alert";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -13,324 +23,599 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from '@/shadcn/components/ui/alert-dialog'
+    AlertDialogTrigger,
+} from "@/shadcn/components/ui/alert-dialog";
+import { AlertTriangle, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { useLLMProviderService } from "@/modules/llm-provider-service";
+import type {
+    Provider,
+    CreateProviderRequest,
+    UpdateProviderRequest,
+} from "@/modules/llm-provider-service";
 
-// Extracted Components
-function PageHeader() {
-    return (
-        <div className="bg-card border-b px-6 py-4">
-            <h1 className="text-2xl font-semibold">LLM Provider Management</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-                Configure and manage your AI model providers
-            </p>
-        </div>
-    )
-}
+type ProviderFormData = {
+    name: string;
+    base_url: string;
+    api_key: string;
+    properties: Record<string, unknown>;
+};
 
-interface ErrorDisplayProps {
-    error: string
-}
+const PROVIDER_TYPE = "openai";
 
-function ErrorDisplay({ error }: ErrorDisplayProps) {
-    return (
-        <div className="mx-6 mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-md">
-            <div className="flex">
-                <div className="ml-3">
-                    <h3 className="text-sm font-medium text-destructive">Error</h3>
-                    <div className="mt-2 text-sm text-destructive/80">
-                        {error}
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
-}
+export default function LLMProviderManagementPage() {
+    const { t } = useTranslation("llm-provider-management");
+    const providerService = useLLMProviderService();
 
-function LoadingSpinner() {
-    return (
-        <div className="flex justify-center items-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-    )
-}
+    const [providers, setProviders] = useState<Provider[]>([]);
+    const [editingProviderId, setEditingProviderId] = useState<string | null>(
+        null
+    );
+    const [isAddingNew, setIsAddingNew] = useState(false);
+    const [formData, setFormData] = useState<ProviderFormData>({
+        name: "",
+        base_url: "",
+        api_key: "",
+        properties: {},
+    });
+    const [loading, setLoading] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
-function EmptyState() {
-    return (
-        <div className="text-center py-8 text-muted-foreground">
-            <p>No providers configured yet.</p>
-            <p className="text-sm mt-1">Create your first provider to get started.</p>
-        </div>
-    )
-}
-
-interface ActionBarProps {
-    isFormActive: boolean
-    loading: boolean
-    saving: boolean
-    onCreateProvider: () => void
-    onCancelForm: () => void
-    onSaveForm: () => void
-}
-
-function ActionBar({
-    isFormActive,
-    loading,
-    saving,
-    onCreateProvider,
-    onCancelForm,
-    onSaveForm
-}: ActionBarProps) {
-    return (
-        <div className="bg-background border-t px-6 py-3 flex justify-between items-center">
-            <div className="flex space-x-2">
-                {!isFormActive && (
-                    <Button
-                        onClick={onCreateProvider}
-                        disabled={loading || saving}
-                    >
-                        Add New Provider
-                    </Button>
-                )}
-            </div>
-
-            <div className="flex space-x-2">
-                {isFormActive && (
-                    <>
-                        <Button
-                            onClick={onCancelForm}
-                            disabled={saving}
-                            variant="outline"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={onSaveForm}
-                            disabled={saving}
-                            className="flex items-center"
-                        >
-                            {saving && (
-                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v1a7 7 0 00-7 7h1z"></path>
-                                </svg>
-                            )}
-                            {saving ? 'Saving...' : 'Save Provider'}
-                        </Button>
-                    </>
-                )}
-            </div>
-        </div>
-    )
-}
-
-type FormMode = 'create' | 'edit' | null
-
-interface EditingProvider {
-    provider: LLMProvider
-    index: number
-}
-
-interface DeleteConfirmDialogProps {
-    provider: LLMProvider | null
-    saving: boolean
-    onConfirmDelete: () => Promise<void>
-    onCancel: () => void
-}
-
-function DeleteConfirmDialog({ provider, saving, onConfirmDelete, onCancel }: DeleteConfirmDialogProps) {
-    return (
-        <AlertDialog open={!!provider} onOpenChange={(open) => !open && onCancel()}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Provider</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Are you sure you want to delete "{provider?.name}"? This action cannot be undone.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel disabled={saving}>
-                        Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                        onClick={onConfirmDelete}
-                        disabled={saving}
-                        className="flex items-center bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                        {saving && (
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v1a7 7 0 00-7 7h1z"></path>
-                            </svg>
-                        )}
-                        {saving ? 'Deleting...' : 'Delete'}
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-    )
-}
-
-export function LLMProviderManagementPage() {
-    const llmProviderService = useLLMProviderService()
-    const [providers, setProviders] = useState<LLMProvider[]>([])
-    const [loading, setLoading] = useState(true)
-    const [saving, setSaving] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-    const [formMode, setFormMode] = useState<FormMode>(null)
-    const [editingProvider, setEditingProvider] = useState<EditingProvider | null>(null)
-    const [showDeleteDialog, setShowDeleteDialog] = useState<LLMProvider | null>(null)
-
-    const loadProviders = async () => {
+    const loadProviders = useCallback(async () => {
         try {
-            setLoading(true)
-            setError(null)
-            const providersData = await llmProviderService.getLegacyProviders()
-            setProviders(providersData)
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load providers')
-        } finally {
-            setLoading(false)
+            setLoadError(null);
+            const data = await providerService.getProviders(PROVIDER_TYPE);
+            setProviders(data);
+        } catch (error) {
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to load providers";
+            setLoadError(errorMessage);
+            console.error("Failed to load providers:", error);
         }
-    }
+    }, [providerService]);
 
     useEffect(() => {
-        loadProviders()
-    })
+        loadProviders();
+    }, [loadProviders]);
 
+    const handleEditProvider = (provider: Provider) => {
+        setEditingProviderId(provider.id);
+        setIsAddingNew(false);
+        setSaveError(null);
+        setFormData({
+            name: provider.name,
+            base_url: provider.url,
+            api_key: provider.api_key,
+            properties: provider.properties,
+        });
+    };
 
-    const handleCreateProvider = () => {
-        setFormMode('create')
-        setEditingProvider(null)
-    }
+    const handleAddProvider = () => {
+        setIsAddingNew(true);
+        setEditingProviderId(null);
+        setSaveError(null);
+        setFormData({
+            name: "",
+            base_url: "",
+            api_key: "",
+            properties: {},
+        });
+    };
 
-    const handleEditProvider = (provider: LLMProvider) => {
-        const index = providers.findIndex(p => p.id === provider.id)
-        setFormMode('edit')
-        setEditingProvider({ provider, index })
-    }
+    const handleCancel = () => {
+        setEditingProviderId(null);
+        setIsAddingNew(false);
+        setSaveError(null);
+        setFormData({
+            name: "",
+            base_url: "",
+            api_key: "",
+            properties: {},
+        });
+    };
 
-    const handleDeleteProvider = (provider: LLMProvider) => {
-        setShowDeleteDialog(provider)
-    }
+    const handleSave = async () => {
+        if (!formData.name || !formData.api_key) return;
 
-    const confirmDeleteProvider = async () => {
-        if (!showDeleteDialog) return
-
+        setLoading(true);
+        setSaveError(null);
         try {
-            setSaving(true)
-            setError(null)
-
-            await llmProviderService.deleteLegacyProvider(showDeleteDialog.id)
-
-            // Remove from local state
-            setProviders(prev => prev.filter(p => p.id !== showDeleteDialog.id))
-            setShowDeleteDialog(null)
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to delete provider')
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    const handleFormSubmit = async (data: CreateLegacyProviderRequest | UpdateLegacyProviderRequest) => {
-        try {
-            setSaving(true)
-            setError(null)
-
-            if (formMode === 'create') {
-                const newProviderData = await llmProviderService.createLegacyProvider(data)
-                setProviders(prev => [...prev, newProviderData])
-            } else if (formMode === 'edit' && editingProvider) {
-                const updatedProvider = await llmProviderService.updateLegacyProvider(
-                    editingProvider.provider.id,
-                    data
-                )
-                setProviders(prev =>
-                    prev.map(p => p.id === editingProvider.provider.id ? updatedProvider : p)
-                )
+            if (isAddingNew) {
+                const createRequest: CreateProviderRequest = {
+                    name: formData.name,
+                    base_url: formData.base_url,
+                    api_key: formData.api_key,
+                    properties: formData.properties,
+                };
+                await providerService.createProvider(
+                    PROVIDER_TYPE,
+                    createRequest
+                );
+                toast.success(
+                    t("provider-created", {
+                        defaultValue: "Provider created successfully",
+                    })
+                );
+            } else if (editingProviderId) {
+                const updateRequest: UpdateProviderRequest = {
+                    name: formData.name,
+                    base_url: formData.base_url,
+                    api_key: formData.api_key,
+                    properties: formData.properties,
+                };
+                await providerService.updateProvider(
+                    PROVIDER_TYPE,
+                    editingProviderId,
+                    updateRequest
+                );
+                toast.success(
+                    t("provider-updated", {
+                        defaultValue: "Provider updated successfully",
+                    })
+                );
             }
-
-            // Reset form
-            setFormMode(null)
-            setEditingProvider(null)
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save provider')
+            await loadProviders();
+            handleCancel();
+        } catch (error) {
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to save provider";
+            setSaveError(errorMessage);
+            toast.error(
+                t("save-failed", { defaultValue: "Failed to save provider" })
+            );
+            console.error("Failed to save provider:", error);
         } finally {
-            setSaving(false)
+            setLoading(false);
         }
-    }
+    };
 
-    const handleCancelForm = () => {
-        setFormMode(null)
-        setEditingProvider(null)
-    }
-
-    const isFormActive = formMode !== null
+    const handleDeleteProvider = async (provider: Provider) => {
+        setLoading(true);
+        try {
+            await providerService.deleteProvider(PROVIDER_TYPE, provider.id);
+            toast.success(
+                t("provider-deleted", {
+                    defaultValue: "Provider deleted successfully",
+                })
+            );
+            await loadProviders();
+        } catch (error) {
+            toast.error(
+                t("delete-failed", {
+                    defaultValue: "Failed to delete provider",
+                })
+            );
+            console.error("Failed to delete provider:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
-        <div className="h-full flex flex-col bg-background">
-            <PageHeader />
+        <div className="p-6 space-y-6">
+            <h1 className="text-2xl font-bold">
+                {t("title", { defaultValue: "LLM Provider Management" })}
+            </h1>
 
-            {error && <ErrorDisplay error={error} />}
+            <Card>
+                <CardHeader>
+                    <CardTitle>OpenAI</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {loadError && (
+                        <Alert variant="destructive" className="mb-4">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>
+                                {t("error-loading-providers", {
+                                    defaultValue: "Error Loading Providers",
+                                })}
+                            </AlertTitle>
+                            <AlertDescription>
+                                {loadError}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="ml-2"
+                                    onClick={loadProviders}
+                                >
+                                    {t("retry", { defaultValue: "Retry" })}
+                                </Button>
+                            </AlertDescription>
+                        </Alert>
+                    )}
 
-            {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-auto px-6 py-4">
-                {loading ? (
-                    <LoadingSpinner />
-                ) : (
-                    <ProviderSection title="OpenAI Providers">
-                        {providers.length === 0 ? (
-                            <EmptyState />
-                        ) : (
-                            providers.map((provider) => (
-                                <ProviderListItem
+                    {saveError && (
+                        <Alert variant="destructive" className="mb-4">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>
+                                {t("error-saving-provider", {
+                                    defaultValue: "Error Saving Provider",
+                                })}
+                            </AlertTitle>
+                            <AlertDescription>{saveError}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    {providers.length === 0 && !isAddingNew && !loadError ? (
+                        <p className="text-muted-foreground mb-4">
+                            {t("no-providers", {
+                                defaultValue: "No providers configured yet.",
+                            })}
+                        </p>
+                    ) : (
+                        <div className="space-y-2 mb-4">
+                            {providers.map((provider) => (
+                                <ProviderItem
                                     key={provider.id}
                                     provider={provider}
+                                    isEditing={
+                                        editingProviderId === provider.id
+                                    }
+                                    formData={formData}
                                     onEdit={handleEditProvider}
                                     onDelete={handleDeleteProvider}
-                                    isLoading={saving}
+                                    onFormChange={setFormData}
+                                    onSave={handleSave}
+                                    onCancel={handleCancel}
+                                    loading={loading}
+                                    t={t}
                                 />
-                            ))
-                        )}
+                            ))}
+                        </div>
+                    )}
 
-                        {/* Provider Form */}
-                        {isFormActive && (
-                            <div className="mt-6 p-6 bg-card border rounded-lg shadow-sm">
-                                <h3 className="text-lg font-medium mb-4">
-                                    {formMode === 'create' ? 'Create New Provider' : 'Edit Provider'}
-                                </h3>
-                                <ProviderForm
-                                    provider={editingProvider?.provider}
-                                    onSubmit={handleFormSubmit}
-                                    isLoading={saving}
-                                />
-                            </div>
-                        )}
-                    </ProviderSection>
-                )}
-            </div>
+                    {isAddingNew && (
+                        <NewProviderForm
+                            isAddingNew={isAddingNew}
+                            formData={formData}
+                            onFormChange={setFormData}
+                            onSave={handleSave}
+                            onCancel={handleCancel}
+                            loading={loading}
+                            t={t}
+                        />
+                    )}
 
-            <ActionBar
-                isFormActive={isFormActive}
-                loading={loading}
-                saving={saving}
-                onCreateProvider={handleCreateProvider}
-                onCancelForm={handleCancelForm}
-                onSaveForm={() => {
-                    const form = document.querySelector('form')
-                    if (form) {
-                        const submitEvent = new Event('submit', { cancelable: true, bubbles: true })
-                        form.dispatchEvent(submitEvent)
-                    }
-                }}
-            />
-
-            <DeleteConfirmDialog
-                provider={showDeleteDialog}
-                saving={saving}
-                onConfirmDelete={confirmDeleteProvider}
-                onCancel={() => setShowDeleteDialog(null)}
-            />
+                    {!isAddingNew && (
+                        <Button onClick={handleAddProvider}>
+                            {t("add-provider", {
+                                defaultValue: "Add Provider",
+                            })}
+                        </Button>
+                    )}
+                </CardContent>
+            </Card>
         </div>
-    )
+    );
+}
+
+function ProviderItem({
+    provider,
+    isEditing,
+    formData,
+    onEdit,
+    onDelete,
+    onFormChange,
+    onSave,
+    onCancel,
+    loading,
+    t,
+}: {
+    provider: Provider;
+    isEditing: boolean;
+    formData: ProviderFormData;
+    onEdit: (provider: Provider) => void;
+    onDelete: (provider: Provider) => Promise<void>;
+    onFormChange: (data: ProviderFormData) => void;
+    onSave: () => void;
+    onCancel: () => void;
+    loading: boolean;
+    t: (key: string, options?: { defaultValue: string }) => string;
+}) {
+    return (
+        <Card key={provider.id}>
+            <CardContent>
+                {!isEditing ? (
+                    <div className="flex items-center justify-between p-2 -m-4 rounded transition-colors duration-200 hover:bg-muted/50">
+                        <span
+                            className="font-medium cursor-pointer flex-1"
+                            onClick={() => onEdit(provider)}
+                        >
+                            {provider.name}
+                        </span>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    disabled={loading}
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                        {t("delete-provider-title", {
+                                            defaultValue: "Delete Provider",
+                                        })}
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        {t("delete-provider-description", {
+                                            defaultValue: `Are you sure you want to delete "${provider.name}"? This action cannot be undone.`,
+                                        }).replace(
+                                            "{{providerName}}",
+                                            provider.name
+                                        )}
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                        {t("cancel", {
+                                            defaultValue: "Cancel",
+                                        })}
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={() => onDelete(provider)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                        {t("delete", {
+                                            defaultValue: "Delete",
+                                        })}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
+                ) : (
+                    <div className="p-2 -m-4 space-y-4">
+                        <div>
+                            <Label
+                                htmlFor={`name-${provider.id}`}
+                                className="mb-1"
+                            >
+                                {t("provider-name", {
+                                    defaultValue: "Provider Name",
+                                })}
+                            </Label>
+                            <Input
+                                id={`name-${provider.id}`}
+                                value={formData.name}
+                                onChange={(e) =>
+                                    onFormChange({
+                                        ...formData,
+                                        name: e.target.value,
+                                    })
+                                }
+                                placeholder={t("enter-name", {
+                                    defaultValue: "Enter provider name",
+                                })}
+                            />
+                        </div>
+                        <div>
+                            <Label
+                                htmlFor={`base_url-${provider.id}`}
+                                className="mb-1"
+                            >
+                                {t("base-url", {
+                                    defaultValue: "Base URL",
+                                })}
+                            </Label>
+                            <Input
+                                id={`base_url-${provider.id}`}
+                                value={formData.base_url}
+                                onChange={(e) =>
+                                    onFormChange({
+                                        ...formData,
+                                        base_url: e.target.value,
+                                    })
+                                }
+                                placeholder={t("enter-url", {
+                                    defaultValue: "Enter base URL",
+                                })}
+                            />
+                        </div>
+                        <div>
+                            <Label
+                                htmlFor={`api_key-${provider.id}`}
+                                className="mb-1"
+                            >
+                                {t("api-key", { defaultValue: "API Key" })}
+                            </Label>
+                            <Input
+                                id={`api_key-${provider.id}`}
+                                type="password"
+                                value={formData.api_key}
+                                onChange={(e) =>
+                                    onFormChange({
+                                        ...formData,
+                                        api_key: e.target.value,
+                                    })
+                                }
+                                placeholder={t("enter-api-key", {
+                                    defaultValue: "Enter API key",
+                                })}
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                onClick={onSave}
+                                disabled={
+                                    loading ||
+                                    !formData.name ||
+                                    !formData.api_key
+                                }
+                            >
+                                {loading
+                                    ? t("saving", {
+                                          defaultValue: "Saving...",
+                                      })
+                                    : t("save", { defaultValue: "Save" })}
+                            </Button>
+                            <Button variant="outline" onClick={onCancel}>
+                                {t("cancel", { defaultValue: "Cancel" })}
+                            </Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button
+                                        variant="destructive"
+                                        size="default"
+                                        disabled={loading}
+                                    >
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        {t("delete", {
+                                            defaultValue: "Delete",
+                                        })}
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                            {t("delete-provider-title", {
+                                                defaultValue: "Delete Provider",
+                                            })}
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            {t("delete-provider-description", {
+                                                defaultValue: `Are you sure you want to delete "${provider.name}"? This action cannot be undone.`,
+                                            }).replace(
+                                                "{{providerName}}",
+                                                provider.name
+                                            )}
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>
+                                            {t("cancel", {
+                                                defaultValue: "Cancel",
+                                            })}
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={() => onDelete(provider)}
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                            {t("delete", {
+                                                defaultValue: "Delete",
+                                            })}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function NewProviderForm({
+    isAddingNew,
+    formData,
+    onFormChange,
+    onSave,
+    onCancel,
+    loading,
+    t,
+}: {
+    isAddingNew: boolean;
+    formData: ProviderFormData;
+    onFormChange: (data: ProviderFormData) => void;
+    onSave: () => void;
+    onCancel: () => void;
+    loading: boolean;
+    t: (key: string, options?: { defaultValue: string }) => string;
+}) {
+    if (!isAddingNew) return null;
+
+    return (
+        <Card className="mb-2 transition-all duration-300 ease-in-out">
+            <CardContent className="pt-4">
+                <div className="space-y-4 opacity-100 transform translate-y-0 transition-all duration-300 ease-in-out">
+                    <div>
+                        <Label htmlFor="new-name">
+                            {t("provider-name", {
+                                defaultValue: "Provider Name",
+                            })}
+                        </Label>
+                        <Input
+                            id="new-name"
+                            value={formData.name}
+                            onChange={(e) =>
+                                onFormChange({
+                                    ...formData,
+                                    name: e.target.value,
+                                })
+                            }
+                            placeholder={t("enter-name", {
+                                defaultValue: "Enter provider name",
+                            })}
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="new-base_url">
+                            {t("base-url", { defaultValue: "Base URL" })}
+                        </Label>
+                        <Input
+                            id="new-base_url"
+                            value={formData.base_url}
+                            onChange={(e) =>
+                                onFormChange({
+                                    ...formData,
+                                    base_url: e.target.value,
+                                })
+                            }
+                            placeholder={t("enter-url", {
+                                defaultValue: "Enter base URL",
+                            })}
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="new-api_key">
+                            {t("api-key", { defaultValue: "API Key" })}
+                        </Label>
+                        <Input
+                            id="new-api_key"
+                            type="password"
+                            value={formData.api_key}
+                            onChange={(e) =>
+                                onFormChange({
+                                    ...formData,
+                                    api_key: e.target.value,
+                                })
+                            }
+                            placeholder={t("enter-api-key", {
+                                defaultValue: "Enter API key",
+                            })}
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={onSave}
+                            disabled={
+                                loading || !formData.name || !formData.api_key
+                            }
+                        >
+                            {loading
+                                ? t("creating", {
+                                      defaultValue: "Creating...",
+                                  })
+                                : t("create-provider", {
+                                      defaultValue: "Create Provider",
+                                  })}
+                        </Button>
+                        <Button variant="outline" onClick={onCancel}>
+                            {t("cancel", { defaultValue: "Cancel" })}
+                        </Button>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
 }

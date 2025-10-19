@@ -1,0 +1,10 @@
+{
+    "chat": "Chat",
+    "helloWorld": "Hallo Welt vom Chat Layout",
+    "leftPanelPlaceholder": "Unterhaltungen, Kontakte, etc.",
+    "button1": "Schaltfläche 1",
+    "button2": "Schaltfläche 2",
+    "button3": "Schaltfläche 3",
+    "middlePanelPlaceholder": "Haupt-Chat-Inhaltsbereich",
+    "bottomPanelPlaceholder": "Eingabebereich, Status, etc."
+}

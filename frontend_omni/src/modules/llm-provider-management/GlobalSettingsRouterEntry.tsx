@@ -1,11 +1,12 @@
 import { Route } from "react-router-dom";
-import { LLMProviderManagementPage } from "./LLMProviderManagementPage";
-import { Metadata } from "./Metadata";
+import LLMProviderManagementPage from "./LLMProviderManagementPage";
 
-export function GlobalSettingsRouterEntry() {
-    return <Route
-        key={Metadata.id}
-        path="llmproviders"
-        element={<LLMProviderManagementPage />}
-    />;
+export default function GlobalSettingsRouterEntry() {
+    return (
+        <Route
+            key="llm-provider-management"
+            path="llm-providers"
+            element={<LLMProviderManagementPage />}
+        />
+    );
 }

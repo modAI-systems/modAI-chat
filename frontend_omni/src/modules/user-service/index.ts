@@ -1,24 +1,41 @@
-import { HttpUserService } from "./HttpUserService";
-import type { User } from "@/moduleif/userService";
+import { createContext, useContext } from "react";
 
-// Create a default instance of the service
-const userService = new HttpUserService();
-
-/**
- * Fetches the current authenticated user from the backend
- *
- * This is a convenience function that uses the default HttpUserService instance.
- * For more advanced usage, consider using the UserService interface directly.
- *
- * @returns Promise<User> The current user data
- * @throws Error if the request fails or user is not authenticated
- */
-export async function getCurrentUser(): Promise<User> {
-    return userService.getCurrentUser();
+export interface User {
+    id: string;
+    email: string;
+    full_name?: string;
 }
 
-// Export the service class and interface for advanced usage
-export { HttpUserService } from "./HttpUserService";
+/**
+ * Service contract for user-related operations
+ */
+export interface UserService {
+    /**
+     * Fetches the current authenticated user from the backend
+     *
+     * @returns Promise<User> The current user data
+     * @throws Error if the request fails or user is not authenticated
+     */
+    fetchCurrentUser(): Promise<User>;
+}
 
-// Export the hook for components that need access to the user service
-export { useUserService } from "@/moduleif/userService";
+// Create context for the user service
+export const UserServiceContext = createContext<UserService | undefined>(
+    undefined
+);
+
+/**
+ * Hook to access the user service from any component
+ *
+ * @returns UserService instance
+ * @throws Error if used outside of UserServiceProvider
+ */
+export function useUserService(): UserService {
+    const context = useContext(UserServiceContext);
+    if (!context) {
+        throw new Error(
+            "useUserService must be used within a UserServiceProvider"
+        );
+    }
+    return context;
+}

@@ -9,15 +9,19 @@
 #
 # > npx shadcn@latest add $(grep -v "#" shadcs-packages.txt)
 
+alert
 utils
 button
 collapsible
 sidebar
 resizable
 select
+sonner
 alert-dialog
 card
 label
 tabs
 avatar
 tooltip
+
+# pnpm dlx shadcn@latest add @ai-elements/all

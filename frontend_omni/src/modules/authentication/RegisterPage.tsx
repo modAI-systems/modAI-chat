@@ -1,7 +1,7 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { useAuthService } from "@/moduleif/authenticationService"
-import LoginRegisterForm from "./LoginRegisterForm"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuthService } from "@/modules/authentication-service";
+import { LoginRegisterForm } from "./LoginRegisterForm";
 
 export default function RegisterPage() {
     return (
@@ -10,35 +10,49 @@ export default function RegisterPage() {
                 <Register />
             </div>
         </div>
-    )
+    );
 }
 
 export function Register() {
-    const [isLoading, setIsLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-    const navigate = useNavigate()
-    const authService = useAuthService()
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
+    const authService = useAuthService();
 
-    const handleSubmit = async ({ email, password, fullName }: { email: string; password: string; fullName: string }) => {
-        setIsLoading(true)
-        setError(null)
+    const handleSubmit = async ({
+        email,
+        password,
+        fullName,
+    }: {
+        email: string;
+        password: string;
+        fullName: string;
+    }) => {
+        setIsLoading(true);
+        setError(null);
 
         try {
             await authService.signup({
                 email,
                 password,
-                full_name: fullName.trim() || undefined
-            })
-            navigate("/login")
+                full_name: fullName.trim() || undefined,
+            });
+            navigate("/login");
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Registration failed")
+            setError(
+                err instanceof Error ? err.message : "Registration failed"
+            );
         } finally {
-            setIsLoading(false)
+            setIsLoading(false);
         }
-    }
+    };
 
     return (
-        <LoginRegisterForm.Provider onSubmit={handleSubmit} isLoading={isLoading} error={error}>
+        <LoginRegisterForm.Provider
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+            error={error}
+        >
             <LoginRegisterForm>
                 <LoginRegisterForm.RegisterHeader />
                 <LoginRegisterForm.Content>
@@ -51,5 +65,5 @@ export function Register() {
                 <LoginRegisterForm.RegisterHint />
             </LoginRegisterForm>
         </LoginRegisterForm.Provider>
-    )
+    );
 }
