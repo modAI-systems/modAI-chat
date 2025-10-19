@@ -1,10 +1,10 @@
-name: Format Check
+name: Tests
 
 on:
   push:
 
 jobs:
-  backend-format:
+  backend-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,11 +17,11 @@ jobs:
       - name: Sync dependencies
         working-directory: backend
         run: uv sync
-      - name: Check formatting
+      - name: Run tests
         working-directory: backend
-        run: uv run ruff format --check .
+        run: uv run pytest
 
-  frontend-format:
+  frontend-vitest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +34,26 @@ jobs:
       - name: Install dependencies
         working-directory: frontend_omni
         run: pnpm install
-      - name: Check formatting
+      - name: Run vitest tests
         working-directory: frontend_omni
-        run: pnpm check
+        run: pnpm test
+
+  frontend-cucumber:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install pnpm
+        run: npm install -g pnpm
+      - name: Install dependencies
+        working-directory: frontend_omni
+        run: pnpm install
+      - name: Install Playwright browsers
+        working-directory: frontend_omni
+        run: pnpm playwright install --with-deps
+      - name: Run cucumber tests
+        working-directory: frontend_omni
+        run: pnpm test:cucumber
