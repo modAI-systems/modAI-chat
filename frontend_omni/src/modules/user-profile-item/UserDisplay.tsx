@@ -5,13 +5,17 @@ import {
     TooltipTrigger,
 } from "@/shadcn/components/ui/tooltip";
 import { useSidebar } from "@/shadcn/components/ui/sidebar";
-import type { UserDisplayProps } from "@/moduleif/userProfileItem";
+
+interface UserDisplayProps {
+    username: string;
+    userEmail: string;
+}
 
 export function UserDisplay({ username, userEmail }: UserDisplayProps) {
     const { isMobile, state } = useSidebar();
     const userInitials = username
         .split(" ")
-        .map((name) => name[0])
+        .map((name: string) => name[0])
         .join("")
         .toUpperCase()
         .slice(0, 2);

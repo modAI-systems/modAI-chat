@@ -1,4 +1,3 @@
-import { ConversationEmptyState } from "@/modules/chat-layout/shadcn/components/ai-elements/conversation";
 import { Alert, AlertDescription } from "@/shadcn/components/ui/alert";
 import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";

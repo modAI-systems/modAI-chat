@@ -1,23 +1,15 @@
 import { SidebarMenuItem } from "@/shadcn/components/ui/sidebar";
 import { UserDisplay } from "./UserDisplay";
-import { useSession } from "@/moduleif/sessionContext";
+import { useSession } from "@/modules/session-provider";
 
 export function SidebarFooterItem() {
-    const { session, isLoading } = useSession();
-
-    if (isLoading) {
-        return (
-            <SidebarMenuItem>
-                <UserDisplay username="Loading..." userEmail="" />
-            </SidebarMenuItem>
-        );
-    }
+    const { session } = useSession();
 
     if (!session) {
         return null;
     }
 
-    const user = session.getUser();
+    const user = session.user;
 
     return (
         <SidebarMenuItem>
