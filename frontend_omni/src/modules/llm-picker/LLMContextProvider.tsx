@@ -24,7 +24,10 @@ export default function LLMContextProvider({
                 setSelectedModelState(parsed);
             }
         } catch (error) {
-            console.warn("Failed to load selected LLM model from localStorage:", error);
+            console.warn(
+                "Failed to load selected LLM model from localStorage:",
+                error
+            );
         }
     }, []);
 
@@ -37,7 +40,10 @@ export default function LLMContextProvider({
                 localStorage.removeItem(STORAGE_KEY);
             }
         } catch (error) {
-            console.warn("Failed to save selected LLM model to localStorage:", error);
+            console.warn(
+                "Failed to save selected LLM model to localStorage:",
+                error
+            );
         }
     };
 
