@@ -1,13 +1,46 @@
-import { Given, When, Then, After } from "@cucumber/cucumber";
+import {
+    When,
+    Then,
+    BeforeAll,
+    AfterAll,
+    Before,
+    After,
+} from "@cucumber/cucumber";
 import { CustomWorld, TEST_PORT } from "./world.ts";
+import {
+    buildApp,
+    startContainer as startWebserver,
+    stopContainer,
+} from "./webserver.ts";
 
-Given("the app is running", async function (this: CustomWorld) {
+// https://github.com/cucumber/cucumber-js/blob/main/docs/support_files/timeouts.md
+BeforeAll({ timeout: 30_000 }, async () => {
+    await buildApp();
+    await startWebserver();
+});
+
+AfterAll(async () => {
+    await stopContainer();
+});
+
+Before(async function (this: CustomWorld) {
     await this.init();
+});
+
+After(async function (this: CustomWorld) {
+    await this.close();
 });
 
 When("I visit the homepage", async function (this: CustomWorld) {
     await this.page.goto(`http://localhost:${TEST_PORT}`);
 });
+
+When(
+    "I visit the url path {string}",
+    async function (this: CustomWorld, path: string) {
+        await this.page.goto(`http://localhost:${TEST_PORT}${path}`);
+    },
+);
 
 Then(
     "I should see the page title contains {string}",
@@ -21,6 +54,10 @@ Then(
     },
 );
 
-After(async function (this: CustomWorld) {
-    await this.close();
-});
+Then(
+    "the url path should be {string}",
+    async function (this: CustomWorld, expectedPath: string) {
+        const expectedUrl = `http://localhost:${TEST_PORT}${expectedPath}`;
+        await this.page.waitForURL(expectedUrl);
+    },
+);
