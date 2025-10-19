@@ -13,6 +13,7 @@ import type { ChatStatus } from "ai";
 
 interface ChatInputProps {
     input: string;
+    active: boolean;
     onInputChange: (value: string) => void;
     onSubmit: (message: PromptInputMessage) => void;
     status: ChatStatus;
@@ -21,6 +22,7 @@ interface ChatInputProps {
 
 export default function ChatInput({
     input,
+    active,
     onInputChange,
     onSubmit,
     status,
@@ -44,6 +46,7 @@ export default function ChatInput({
                 <PromptInputTextarea
                     onChange={(e) => onInputChange(e.target.value)}
                     value={input}
+                    disabled={!active}
                 />
             </PromptInputBody>
             <PromptInputFooter>
@@ -63,7 +66,7 @@ export default function ChatInput({
                     </PromptInputButton> */}
                 </PromptInputTools>
                 <PromptInputSubmit
-                    disabled={inputEmpty && status == "ready"}
+                    disabled={(inputEmpty && status == "ready") || !active}
                     status={status}
                 />
             </PromptInputFooter>

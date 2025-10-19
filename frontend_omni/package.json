@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "format:check": "prettier --check .",
+    "check": "pnpm build && pnpm lint && pnpm format:check",
     "preview": "vite preview",
     "test": "vitest run"
   },

@@ -144,6 +144,7 @@ export default function ChatArea() {
             setInputMessage(null);
         }
     };
+
     return (
         <div className="size-full flex flex-col">
             {ChatTopPane && <ChatTopPane />}
@@ -155,6 +156,7 @@ export default function ChatArea() {
             <ChatInput
                 className="max-w-5xl mx-auto pl-6 pr-6 pb-6"
                 input={input}
+                active={selectedModel != null}
                 onInputChange={setInput}
                 onSubmit={handleSubmit}
                 status={status}

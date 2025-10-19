@@ -98,7 +98,7 @@ class LLMNoBackendProviderService implements ProviderService {
     ): Promise<Model[]> {
         const provider = await this.getProvider(providerType, providerId);
         if (!provider) {
-            throw new Error(`Provider not found: ${providerId}`);
+            return [];
         }
 
         const response = await fetch(`${provider.url}/models`, {
@@ -215,7 +215,7 @@ class LLMNoBackendProviderService implements ProviderService {
         );
 
         if (providerIndex === -1) {
-            throw new Error(`Provider not found: ${providerId}`);
+            return;
         }
 
         this.providers.splice(providerIndex, 1);

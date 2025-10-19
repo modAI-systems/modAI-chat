@@ -1,6 +1,11 @@
-import { useState, useEffect, type ReactNode } from "react";
-import type { Provider, Model } from "@/modules/llm-provider-service";
+import { useState, type ReactNode } from "react";
+import {
+    type Provider,
+    type Model,
+    useLLMProviderService,
+} from "@/modules/llm-provider-service";
 import { LLMContext } from "./index";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 interface LLMContextProviderProps {
     children: ReactNode;
@@ -11,25 +16,53 @@ const STORAGE_KEY = "llm-selected-model";
 export default function LLMContextProvider({
     children,
 }: LLMContextProviderProps) {
+    const service = useLLMProviderService();
+
+    // Get the last session selected model from localStorage
+    const [lastSessionSelectedModel] = useState<[Provider, Model] | null>(
+        () => {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                return stored ? JSON.parse(stored) : null;
+            } catch (error) {
+                console.warn(
+                    "Failed to load selected LLM model from localStorage:",
+                    error,
+                );
+                localStorage.removeItem(STORAGE_KEY);
+                return null;
+            }
+        },
+    );
+
+    // Fetch models for the provider of the last session selected model
+    const { data: models } = useSuspenseQuery({
+        queryKey: ["llm-models", lastSessionSelectedModel?.[0]?.id],
+        queryFn: async () => {
+            if (!lastSessionSelectedModel) return [];
+            const [provider] = lastSessionSelectedModel;
+            try {
+                return await service.getModels(provider.type, provider.id);
+            } catch (error) {
+                console.error(
+                    "Failed to fetch models for provider:",
+                    provider,
+                    error,
+                );
+                return [];
+            }
+        },
+    });
+
+    // Initialize selectedModel based on whether the lastSessionSelectedModel still exists
     const [selectedModel, setSelectedModelState] = useState<
         [Provider, Model] | null
-    >(null);
-
-    // Load selected model from localStorage on mount
-    useEffect(() => {
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                const parsed = JSON.parse(stored) as [Provider, Model];
-                setSelectedModelState(parsed);
-            }
-        } catch (error) {
-            console.warn(
-                "Failed to load selected LLM model from localStorage:",
-                error,
-            );
-        }
-    }, []);
+    >(() => {
+        if (!lastSessionSelectedModel) return null;
+        const [, model] = lastSessionSelectedModel;
+        const modelExists = models.some((m) => m.id === model.id);
+        return modelExists ? lastSessionSelectedModel : null;
+    });
 
     const setSelectedModel = (model: [Provider, Model] | null) => {
         setSelectedModelState(model);
@@ -44,6 +77,7 @@ export default function LLMContextProvider({
                 "Failed to save selected LLM model to localStorage:",
                 error,
             );
+            localStorage.removeItem(STORAGE_KEY);
         }
     };
 
