@@ -8,7 +8,7 @@ export default function ChatSidePanelProvider({
 }) {
     const [LeftContent, setLeftContent] = useState<ComponentType | null>(null);
     const [RightContent, setRightContent] = useState<ComponentType | null>(
-        null
+        null,
     );
 
     return (

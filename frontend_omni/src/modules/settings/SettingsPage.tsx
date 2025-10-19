@@ -14,7 +14,7 @@ interface SettingsPageProps {
 export function GlobalSettingsPage() {
     const modules = useModules();
     const globalSettingsNavItems = modules.getAll<React.ComponentType>(
-        "GlobalSettingsNavItem"
+        "GlobalSettingsNavItem",
     );
 
     return (
@@ -29,7 +29,7 @@ export function GlobalSettingsPage() {
 export function UserSettingsPage() {
     const modules = useModules();
     const userSettingsNavItems = modules.getAll<React.ComponentType>(
-        "UserSettingsNavItem"
+        "UserSettingsNavItem",
     );
 
     return (

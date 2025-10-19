@@ -56,7 +56,7 @@ export interface AuthService {
 
 // Create context for the authentication service
 export const AuthServiceContext = createContext<AuthService | undefined>(
-    undefined
+    undefined,
 );
 
 /**
@@ -69,7 +69,7 @@ export function useAuthService(): AuthService {
     const context = useContext(AuthServiceContext);
     if (!context) {
         throw new Error(
-            "useAuthService must be used within an AuthServiceProvider"
+            "useAuthService must be used within an AuthServiceProvider",
         );
     }
     return context;

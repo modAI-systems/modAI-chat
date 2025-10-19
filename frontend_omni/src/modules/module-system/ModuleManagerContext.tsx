@@ -20,7 +20,7 @@ export function ModuleManagerProvider({
 
     const registry = useMemo(
         () => new ModuleRegistry(moduleManager.getActiveModules()),
-        [moduleManager]
+        [moduleManager],
     );
 
     return (

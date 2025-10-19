@@ -25,7 +25,7 @@ class TestableManifestModuleManager extends ManifestModuleManager {
             manifestEntry.id,
             manifestEntry.type,
             {},
-            manifestEntry.dependencies || []
+            manifestEntry.dependencies || [],
         );
     }
 }
@@ -117,7 +117,7 @@ describe("ManifestModuleManager - Two-Phase Loading", () => {
         // Verify that unmet dependencies were logged
         expect(consoleWarnSpy).toHaveBeenCalledWith(
             "The following modules could not be activated due to unmet dependencies:",
-            expect.any(Array)
+            expect.any(Array),
         );
 
         consoleWarnSpy.mockRestore();

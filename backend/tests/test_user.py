@@ -37,7 +37,6 @@ def client():
 
 
 class TestSimpleUserModule:
-
     def test_init_missing_session_dependency(self):
         """Test that initialization fails when session module is missing"""
         dependencies = ModuleDependencies(modules={})

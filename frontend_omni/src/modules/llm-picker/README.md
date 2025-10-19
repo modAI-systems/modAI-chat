@@ -10,14 +10,14 @@ Other modules can use the `LLMPicker` component to allow users to select an LLM 
 import { LLMPicker, useLLMContext } from "@/modules/llm-picker";
 
 function MyComponent() {
-    const { selectedModel } = useLLMContext();
+  const { selectedModel } = useLLMContext();
 
-    return (
-        <div>
-            <LLMPicker />
-            <p>Selected model: {selectedModel}</p>
-        </div>
-    );
+  return (
+    <div>
+      <LLMPicker />
+      <p>Selected model: {selectedModel}</p>
+    </div>
+  );
 }
 ```
 
@@ -27,7 +27,7 @@ The context provider is registered as a global context provider, making the LLM 
 
 ```tsx
 <ModuleContextProvider name="GlobalContextProvider">
-    // The LLM context is now available globally
+  // The LLM context is now available globally
 </ModuleContextProvider>
 ```
 

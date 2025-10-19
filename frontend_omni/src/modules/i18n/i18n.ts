@@ -11,7 +11,9 @@ const translationModules = import.meta.glob("/src/modules/*/locales/*.json", {
 const resources: Record<string, Record<string, Record<string, string>>> = {};
 
 for (const [path, module] of Object.entries(translationModules)) {
-    const match = path.match(new RegExp("/src/modules/([^/]+)/locales/([^/]+)\\.json$"));
+    const match = path.match(
+        new RegExp("/src/modules/([^/]+)/locales/([^/]+)\\.json$"),
+    );
     if (match) {
         const [, namespace, language] = match;
         if (!resources[language]) {
@@ -21,8 +23,7 @@ for (const [path, module] of Object.entries(translationModules)) {
     }
 }
 
-i18n
-    .use(LanguageDetector)
+i18n.use(LanguageDetector)
     .use(initReactI18next)
     .init({
         resources,

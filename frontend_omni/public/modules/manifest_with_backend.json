@@ -1,95 +1,85 @@
 {
-    "version": "1.0.0",
-    "modules": [
-        {
-            "id": "authentication-service",
-            "type": "GlobalContextProvider",
-            "path": "@/modules/authentication-service/AuthContextProvider",
-            "activeWhen": []
-        },
-        {
-            "id": "authentication-router",
-            "type": "RouterEntry",
-            "path": "@/modules/authentication/AuthRouterEntry",
-            "dependencies": [
-                "module:authentication-service"
-            ]
-        },
-        {
-            "id": "authentication-sidebar-footer",
-            "type": "SidebarFooterItem",
-            "path": "@/modules/authentication/AuthSidebarFooterItem",
-            "dependencies": [
-                "module:authentication-service"
-            ]
-        },
-        {
-            "id": "session",
-            "type": "GlobalContextProvider",
-            "path": "@/modules/session-provider/SessionContextProvider",
-            "activeWhen": []
-        },
-        {
-            "id": "user-service",
-            "type": "GlobalContextProvider",
-            "path": "@/modules/user-service/UserServiceContextProvider",
-            "dependencies": [
-                "module:session"
-            ]
-        },
-        {
-            "id": "chat-layout-sidebar",
-            "type": "SidebarItem",
-            "path": "@/modules/chat-layout/ChatSidebarItem",
-            "dependencies": [
-                "module:session"
-            ]
-        },
-        {
-            "id": "chat-layout-router",
-            "type": "RouterEntry",
-            "path": "@/modules/chat-layout/ChatRouterEntry",
-            "dependencies": [
-                "module:session"
-            ]
-        },
-        {
-            "id": "chat-messages-area-pane",
-            "type": "ChatMiddlePane",
-            "path": "@/modules/chat-layout/ChatArea"
-        },
-        {
-            "id": "llm-context",
-            "type": "GlobalContextProvider",
-            "path": "@/modules/llm-picker/LLMContextProvider",
-            "activeWhen": []
-        },
-        {
-            "id": "llm-chat-top-pane",
-            "type": "ChatTopPane",
-            "path": "@/modules/llm-picker/ChatTopPane"
-        },
-        {
-            "id": "llm-provider-service",
-            "type": "GlobalContextProvider",
-            "path": "@/modules/llm-provider-service/LLMNoBackendProviderService",
-            "activeWhen": []
-        },
-        {
-            "id": "chat-side-panels-provider",
-            "type": "GlobalContextProvider",
-            "path": "@/modules/chat-layout/ChatSidePanelProvider",
-            "activeWhen": []
-        },
-        {
-            "id": "global-settings-sidebar-footer",
-            "type": "SidebarFooterItem",
-            "path": "@/modules/settings/SidebarFooterItemGlobal"
-        },
-        {
-            "id": "global-settings-router",
-            "type": "RouterEntry",
-            "path": "@/modules/settings/RouterEntryGlobal"
-        }
-    ]
+  "version": "1.0.0",
+  "modules": [
+    {
+      "id": "authentication-service",
+      "type": "GlobalContextProvider",
+      "path": "@/modules/authentication-service/AuthContextProvider",
+      "activeWhen": []
+    },
+    {
+      "id": "authentication-router",
+      "type": "RouterEntry",
+      "path": "@/modules/authentication/AuthRouterEntry",
+      "dependencies": ["module:authentication-service"]
+    },
+    {
+      "id": "authentication-sidebar-footer",
+      "type": "SidebarFooterItem",
+      "path": "@/modules/authentication/AuthSidebarFooterItem",
+      "dependencies": ["module:authentication-service"]
+    },
+    {
+      "id": "session",
+      "type": "GlobalContextProvider",
+      "path": "@/modules/session-provider/SessionContextProvider",
+      "activeWhen": []
+    },
+    {
+      "id": "user-service",
+      "type": "GlobalContextProvider",
+      "path": "@/modules/user-service/UserServiceContextProvider",
+      "dependencies": ["module:session"]
+    },
+    {
+      "id": "chat-layout-sidebar",
+      "type": "SidebarItem",
+      "path": "@/modules/chat-layout/ChatSidebarItem",
+      "dependencies": ["module:session"]
+    },
+    {
+      "id": "chat-layout-router",
+      "type": "RouterEntry",
+      "path": "@/modules/chat-layout/ChatRouterEntry",
+      "dependencies": ["module:session"]
+    },
+    {
+      "id": "chat-messages-area-pane",
+      "type": "ChatMiddlePane",
+      "path": "@/modules/chat-layout/ChatArea"
+    },
+    {
+      "id": "llm-context",
+      "type": "GlobalContextProvider",
+      "path": "@/modules/llm-picker/LLMContextProvider",
+      "activeWhen": []
+    },
+    {
+      "id": "llm-chat-top-pane",
+      "type": "ChatTopPane",
+      "path": "@/modules/llm-picker/ChatTopPane"
+    },
+    {
+      "id": "llm-provider-service",
+      "type": "GlobalContextProvider",
+      "path": "@/modules/llm-provider-service/LLMNoBackendProviderService",
+      "activeWhen": []
+    },
+    {
+      "id": "chat-side-panels-provider",
+      "type": "GlobalContextProvider",
+      "path": "@/modules/chat-layout/ChatSidePanelProvider",
+      "activeWhen": []
+    },
+    {
+      "id": "global-settings-sidebar-footer",
+      "type": "SidebarFooterItem",
+      "path": "@/modules/settings/SidebarFooterItemGlobal"
+    },
+    {
+      "id": "global-settings-router",
+      "type": "RouterEntry",
+      "path": "@/modules/settings/RouterEntryGlobal"
+    }
+  ]
 }

@@ -14,7 +14,7 @@ export function SidebarFooterItem() {
     }
 
     if (!session) {
-        return null
+        return null;
     }
 
     const user = session.getUser();

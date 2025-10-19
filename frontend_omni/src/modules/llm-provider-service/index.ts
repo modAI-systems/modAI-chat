@@ -61,24 +61,24 @@ export interface ProviderService {
     getProviders(providerType: ProviderType | string): Promise<Provider[]>;
     getProvider(
         providerType: ProviderType | string,
-        providerId: string
+        providerId: string,
     ): Promise<Provider | null>;
     getModels(
         providerType: ProviderType | string,
-        providerId: string
+        providerId: string,
     ): Promise<Model[]>;
     createProvider(
         providerType: ProviderType | string,
-        data: CreateProviderRequest
+        data: CreateProviderRequest,
     ): Promise<Provider>;
     updateProvider(
         providerType: ProviderType | string,
         providerId: string,
-        data: UpdateProviderRequest
+        data: UpdateProviderRequest,
     ): Promise<Provider>;
     deleteProvider(
         providerType: ProviderType | string,
-        providerId: string
+        providerId: string,
     ): Promise<void>;
 }
 
@@ -97,7 +97,7 @@ export function useLLMProviderService(): ProviderService {
     const context = useContext(LLMProviderServiceContext);
     if (!context) {
         throw new Error(
-            "useLLMProviderService must be used within an LLMProviderServiceProvider"
+            "useLLMProviderService must be used within an LLMProviderServiceProvider",
         );
     }
     return context;

@@ -44,7 +44,7 @@ class LLMRestProviderService implements ProviderService {
      * Get all providers for a specific provider type
      */
     async getProviders(
-        providerType: ProviderType | string
+        providerType: ProviderType | string,
     ): Promise<Provider[]> {
         const typeValue =
             typeof providerType === "string"
@@ -54,7 +54,7 @@ class LLMRestProviderService implements ProviderService {
 
         if (!response.ok) {
             throw new Error(
-                `Failed to fetch providers: ${response.status} ${response.statusText}`
+                `Failed to fetch providers: ${response.status} ${response.statusText}`,
             );
         }
 
@@ -66,19 +66,19 @@ class LLMRestProviderService implements ProviderService {
      */
     async getProvider(
         providerType: ProviderType | string,
-        providerId: string
+        providerId: string,
     ): Promise<Provider> {
         const typeValue =
             typeof providerType === "string"
                 ? providerType
                 : providerType.value;
         const response = await fetch(
-            `/api/v1/llm-provider/${typeValue}/${providerId}`
+            `/api/v1/llm-provider/${typeValue}/${providerId}`,
         );
 
         if (!response.ok) {
             throw new Error(
-                `Failed to fetch provider: ${response.status} ${response.statusText}`
+                `Failed to fetch provider: ${response.status} ${response.statusText}`,
             );
         }
 
@@ -90,19 +90,19 @@ class LLMRestProviderService implements ProviderService {
      */
     async getModels(
         providerType: ProviderType | string,
-        providerId: string
+        providerId: string,
     ): Promise<Model[]> {
         const typeValue =
             typeof providerType === "string"
                 ? providerType
                 : providerType.value;
         const response = await fetch(
-            `/api/v1/llm-provider/${typeValue}/${providerId}/models`
+            `/api/v1/llm-provider/${typeValue}/${providerId}/models`,
         );
 
         if (!response.ok) {
             throw new Error(
-                `Failed to fetch models: ${response.status} ${response.statusText}`
+                `Failed to fetch models: ${response.status} ${response.statusText}`,
             );
         }
 
@@ -114,7 +114,7 @@ class LLMRestProviderService implements ProviderService {
      */
     async createProvider(
         providerType: ProviderType | string,
-        data: CreateProviderRequest
+        data: CreateProviderRequest,
     ): Promise<Provider> {
         const typeValue =
             typeof providerType === "string"
@@ -137,7 +137,7 @@ class LLMRestProviderService implements ProviderService {
     async updateProvider(
         providerType: ProviderType | string,
         providerId: string,
-        data: UpdateProviderRequest
+        data: UpdateProviderRequest,
     ): Promise<Provider> {
         const typeValue =
             typeof providerType === "string"
@@ -151,7 +151,7 @@ class LLMRestProviderService implements ProviderService {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(data),
-            }
+            },
         );
 
         return await handleResponse<Provider>(response);
@@ -162,7 +162,7 @@ class LLMRestProviderService implements ProviderService {
      */
     async deleteProvider(
         providerType: ProviderType | string,
-        providerId: string
+        providerId: string,
     ): Promise<void> {
         const typeValue =
             typeof providerType === "string"
@@ -172,7 +172,7 @@ class LLMRestProviderService implements ProviderService {
             `/api/v1/llm-provider/${typeValue}/${providerId}`,
             {
                 method: "DELETE",
-            }
+            },
         );
 
         await handleResponse<void>(response);

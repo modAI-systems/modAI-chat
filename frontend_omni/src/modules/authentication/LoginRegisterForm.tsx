@@ -32,7 +32,7 @@ function useFormContext() {
     const context = useContext(FormContext);
     if (!context) {
         throw new Error(
-            "LoginRegisterForm subcomponents must be used within LoginRegisterForm.Provider"
+            "LoginRegisterForm subcomponents must be used within LoginRegisterForm.Provider",
         );
     }
     return context;

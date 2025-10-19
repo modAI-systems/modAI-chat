@@ -236,7 +236,9 @@ def test_signup_password_creation_failure(client):
     user_store.get_user_by_email.return_value = None  # No existing user
     new_user = User(id="3", email="testuser@example.com", full_name="Test User")
     user_store.create_user.return_value = new_user
-    user_store.set_user_password.side_effect = ValueError("User not found")  # Password setting fails
+    user_store.set_user_password.side_effect = ValueError(
+        "User not found"
+    )  # Password setting fails
     user_store.delete_user.return_value = None
 
     payload = {

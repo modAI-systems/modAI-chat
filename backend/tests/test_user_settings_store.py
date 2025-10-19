@@ -317,7 +317,6 @@ class TestInmemoryUserSettingsStore(TestSQLAlchemyUserSettingsStore):
 
 
 class TestSQLAlchemyUserSettingsStore(TestSQLAlchemyUserSettingsStore):
-
     @pytest.fixture
     def store(self, dependencies):
         """Create a test store instance with patched _table_to_user_settings method"""

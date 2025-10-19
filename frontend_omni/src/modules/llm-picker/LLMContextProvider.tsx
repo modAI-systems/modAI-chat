@@ -26,7 +26,7 @@ export default function LLMContextProvider({
         } catch (error) {
             console.warn(
                 "Failed to load selected LLM model from localStorage:",
-                error
+                error,
             );
         }
     }, []);
@@ -42,7 +42,7 @@ export default function LLMContextProvider({
         } catch (error) {
             console.warn(
                 "Failed to save selected LLM model to localStorage:",
-                error
+                error,
             );
         }
     };

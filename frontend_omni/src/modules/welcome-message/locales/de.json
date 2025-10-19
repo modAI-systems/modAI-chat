@@ -1,7 +1,7 @@
 {
-    "welcome": {
-        "title": "Willkommen bei modAI Chat",
-        "description": "Konfigurieren Sie Ihren LLM-Anbieter, um mit dem Chatten zu beginnen",
-        "info": "Daten wie Anbieterinformationen werden nur in Ihrem Browser gespeichert."
-    }
+  "welcome": {
+    "title": "Willkommen bei modAI Chat",
+    "description": "Konfigurieren Sie Ihren LLM-Anbieter, um mit dem Chatten zu beginnen",
+    "info": "Daten wie Anbieterinformationen werden nur in Ihrem Browser gespeichert."
+  }
 }

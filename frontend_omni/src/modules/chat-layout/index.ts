@@ -3,7 +3,7 @@ import type { ChatService } from "@/modules/chat-service";
 
 // Create context for the chat service
 export const ChatServiceContext = createContext<ChatService | undefined>(
-    undefined
+    undefined,
 );
 
 export interface ChatSidePanelsState {
@@ -14,14 +14,14 @@ export interface ChatSidePanelsState {
 }
 
 export const PanelsContext = createContext<ChatSidePanelsState | undefined>(
-    undefined
+    undefined,
 );
 
 export function useChatSidePanels(): ChatSidePanelsState {
     const context = useContext(PanelsContext);
     if (!context) {
         throw new Error(
-            "useChatSidePanels must be used within a PanelsProvider"
+            "useChatSidePanels must be used within a PanelsProvider",
         );
     }
     return context;
@@ -37,7 +37,7 @@ export function useChatService(): ChatService {
     const context = useContext(ChatServiceContext);
     if (!context) {
         throw new Error(
-            "useChatService must be used within a ChatServiceProvider"
+            "useChatService must be used within a ChatServiceProvider",
         );
     }
     return context;

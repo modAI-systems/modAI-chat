@@ -49,7 +49,7 @@ export default function LLMProviderManagementPage() {
 
     const [providers, setProviders] = useState<Provider[]>([]);
     const [editingProviderId, setEditingProviderId] = useState<string | null>(
-        null
+        null,
     );
     const [isAddingNew, setIsAddingNew] = useState(false);
     const [formData, setFormData] = useState<ProviderFormData>({
@@ -132,12 +132,12 @@ export default function LLMProviderManagementPage() {
                 };
                 await providerService.createProvider(
                     PROVIDER_TYPE,
-                    createRequest
+                    createRequest,
                 );
                 toast.success(
                     t("provider-created", {
                         defaultValue: "Provider created successfully",
-                    })
+                    }),
                 );
             } else if (editingProviderId) {
                 const updateRequest: UpdateProviderRequest = {
@@ -149,12 +149,12 @@ export default function LLMProviderManagementPage() {
                 await providerService.updateProvider(
                     PROVIDER_TYPE,
                     editingProviderId,
-                    updateRequest
+                    updateRequest,
                 );
                 toast.success(
                     t("provider-updated", {
                         defaultValue: "Provider updated successfully",
-                    })
+                    }),
                 );
             }
             await loadProviders();
@@ -166,7 +166,7 @@ export default function LLMProviderManagementPage() {
                     : "Failed to save provider";
             setSaveError(errorMessage);
             toast.error(
-                t("save-failed", { defaultValue: "Failed to save provider" })
+                t("save-failed", { defaultValue: "Failed to save provider" }),
             );
             console.error("Failed to save provider:", error);
         } finally {
@@ -181,14 +181,14 @@ export default function LLMProviderManagementPage() {
             toast.success(
                 t("provider-deleted", {
                     defaultValue: "Provider deleted successfully",
-                })
+                }),
             );
             await loadProviders();
         } catch (error) {
             toast.error(
                 t("delete-failed", {
                     defaultValue: "Failed to delete provider",
-                })
+                }),
             );
             console.error("Failed to delete provider:", error);
         } finally {
@@ -351,7 +351,7 @@ function ProviderItem({
                                             defaultValue: `Are you sure you want to delete "${provider.name}"? This action cannot be undone.`,
                                         }).replace(
                                             "{{providerName}}",
-                                            provider.name
+                                            provider.name,
                                         )}
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
@@ -486,7 +486,7 @@ function ProviderItem({
                                                 defaultValue: `Are you sure you want to delete "${provider.name}"? This action cannot be undone.`,
                                             }).replace(
                                                 "{{providerName}}",
-                                                provider.name
+                                                provider.name,
                                             )}
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>

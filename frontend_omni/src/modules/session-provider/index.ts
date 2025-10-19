@@ -15,7 +15,7 @@ export interface SessionContextType {
 }
 
 export const SessionContext = createContext<SessionContextType | undefined>(
-    undefined
+    undefined,
 );
 
 /**

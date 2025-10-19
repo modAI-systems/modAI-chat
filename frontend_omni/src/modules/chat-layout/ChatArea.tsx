@@ -29,10 +29,10 @@ export default function ChatArea() {
     const [input, setInput] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
     const [status, setStatus] = useState<"ready" | "streaming" | "error">(
-        "ready"
+        "ready",
     );
     const [inputMessage, setInputMessage] = useState<MessagePart[] | null>(
-        null
+        null,
     );
 
     useEffect(() => {
@@ -52,7 +52,7 @@ export default function ChatArea() {
 
     const chatService = useOpenAI(
         selectedModel?.[0]?.api_key || "",
-        selectedModel?.[0]?.url || ""
+        selectedModel?.[0]?.url || "",
     );
 
     const handleSubmit = async (message: PromptInputMessage) => {
@@ -83,7 +83,7 @@ export default function ChatArea() {
             for await (const chunk of chatService.sendMessage(
                 message.text || "",
                 { model: selectedModel[1].name },
-                currentMessages
+                currentMessages,
             )) {
                 if (chunk.type === MessagePartType.TEXT && chunk.text) {
                     parts.push(chunk);
@@ -126,7 +126,7 @@ export default function ChatArea() {
             for await (const chunk of chatService.sendMessage(
                 userMessage.content,
                 { model: selectedModel[1].name },
-                previousMessages
+                previousMessages,
             )) {
                 if (chunk.type === MessagePartType.TEXT && chunk.text) {
                     parts.push(chunk);

@@ -48,7 +48,7 @@ class LLMNoBackendProviderService implements ProviderService {
         try {
             localStorage.setItem(
                 LOCAL_STORAGE_KEY,
-                JSON.stringify(this.providers)
+                JSON.stringify(this.providers),
             );
         } catch (error) {
             console.error("Failed to save providers to localStorage:", error);
@@ -59,7 +59,7 @@ class LLMNoBackendProviderService implements ProviderService {
      * Get all providers for a specific provider type
      */
     async getProviders(
-        providerType: ProviderType | string
+        providerType: ProviderType | string,
     ): Promise<Provider[]> {
         const typeValue =
             typeof providerType === "string"
@@ -74,7 +74,7 @@ class LLMNoBackendProviderService implements ProviderService {
      */
     async getProvider(
         providerType: ProviderType | string,
-        providerId: string
+        providerId: string,
     ): Promise<Provider | null> {
         const typeValue =
             typeof providerType === "string"
@@ -84,7 +84,7 @@ class LLMNoBackendProviderService implements ProviderService {
         return (
             this.providers.find(
                 (provider) =>
-                    provider.type === typeValue && provider.id === providerId
+                    provider.type === typeValue && provider.id === providerId,
             ) || null
         );
     }
@@ -94,7 +94,7 @@ class LLMNoBackendProviderService implements ProviderService {
      */
     async getModels(
         providerType: ProviderType | string,
-        providerId: string
+        providerId: string,
     ): Promise<Model[]> {
         const provider = await this.getProvider(providerType, providerId);
         if (!provider) {
@@ -109,7 +109,7 @@ class LLMNoBackendProviderService implements ProviderService {
 
         if (!response.ok) {
             throw new Error(
-                `Failed to fetch models: ${response.status} ${response.statusText}`
+                `Failed to fetch models: ${response.status} ${response.statusText}`,
             );
         }
 
@@ -132,7 +132,7 @@ class LLMNoBackendProviderService implements ProviderService {
      */
     async createProvider(
         providerType: ProviderType | string,
-        data: CreateProviderRequest
+        data: CreateProviderRequest,
     ): Promise<Provider> {
         const typeValue =
             typeof providerType === "string"
@@ -165,7 +165,7 @@ class LLMNoBackendProviderService implements ProviderService {
     async updateProvider(
         providerType: ProviderType | string,
         providerId: string,
-        data: UpdateProviderRequest
+        data: UpdateProviderRequest,
     ): Promise<Provider> {
         const typeValue =
             typeof providerType === "string"
@@ -174,7 +174,7 @@ class LLMNoBackendProviderService implements ProviderService {
 
         const providerIndex = this.providers.findIndex(
             (provider) =>
-                provider.type === typeValue && provider.id === providerId
+                provider.type === typeValue && provider.id === providerId,
         );
 
         if (providerIndex === -1) {
@@ -202,7 +202,7 @@ class LLMNoBackendProviderService implements ProviderService {
      */
     async deleteProvider(
         providerType: ProviderType | string,
-        providerId: string
+        providerId: string,
     ): Promise<void> {
         const typeValue =
             typeof providerType === "string"
@@ -211,7 +211,7 @@ class LLMNoBackendProviderService implements ProviderService {
 
         const providerIndex = this.providers.findIndex(
             (provider) =>
-                provider.type === typeValue && provider.id === providerId
+                provider.type === typeValue && provider.id === providerId,
         );
 
         if (providerIndex === -1) {

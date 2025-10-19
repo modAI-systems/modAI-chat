@@ -17,6 +17,6 @@ export function ModuleContextProvider({
         (wrappedChildren, Component) => (
             <Component>{wrappedChildren}</Component>
         ),
-        children
+        children,
     );
 }

@@ -8,7 +8,10 @@ export default function GlobalSettingsNavItem() {
     const { t } = useTranslation("llm-provider-management");
 
     return (
-        <SidebarMenuButton asChild isActive={location.pathname === "/settings/global/llm-providers"}>
+        <SidebarMenuButton
+            asChild
+            isActive={location.pathname === "/settings/global/llm-providers"}
+        >
             <Link to="/settings/global/llm-providers">
                 <Settings />
                 <span>{t("nav-item", { defaultValue: "LLM Providers" })}</span>

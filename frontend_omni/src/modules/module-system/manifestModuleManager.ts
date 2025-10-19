@@ -15,7 +15,7 @@ export class LoadedModule {
         id: string,
         type: string,
         component: unknown,
-        dependencies: string[] = []
+        dependencies: string[] = [],
     ) {
         this.id = id;
         this.type = type;
@@ -25,7 +25,7 @@ export class LoadedModule {
 }
 
 export function useModuleManagerFromManifest(
-    manifest: ModuleManifest
+    manifest: ModuleManifest,
 ): ManifestModuleManager {
     async function newModuleManagerAsync(): Promise<ManifestModuleManager> {
         const moduleManager = new ManifestModuleManager();
@@ -70,7 +70,7 @@ export class ManifestModuleManager {
      * Register all modules regardless of dependencies
      */
     private async registerAllModules(
-        modules: ModuleManifestEntry[]
+        modules: ModuleManifestEntry[],
     ): Promise<void> {
         for (const manifestEntry of modules) {
             const loadedModule = this.loadModule(manifestEntry);
@@ -84,7 +84,7 @@ export class ManifestModuleManager {
      * Recursively activate modules based on their dependencies
      */
     private async activateModules(
-        remainingModules: LoadedModule[]
+        remainingModules: LoadedModule[],
     ): Promise<void> {
         if (remainingModules.length === 0) {
             return;
@@ -99,7 +99,7 @@ export class ManifestModuleManager {
 
             // Check if all module dependencies are already active
             const allDepsMet = moduleDeps.every((depId) =>
-                this.activeModules.has(depId)
+                this.activeModules.has(depId),
             );
 
             if (allDepsMet) {
@@ -122,7 +122,7 @@ export class ManifestModuleManager {
                         .filter((dep) => dep.startsWith("module:"))
                         .map((dep) => dep.substring("module:".length))
                         .filter((depId) => !this.activeModules.has(depId)),
-                }))
+                })),
             );
         } else {
             // Continue with remaining modules
@@ -142,14 +142,14 @@ export class ManifestModuleManager {
      * Load a single module from manifest entry
      */
     protected loadModule(
-        manifestEntry: ModuleManifestEntry
+        manifestEntry: ModuleManifestEntry,
     ): LoadedModule | null {
         const component = moduleRegistry[manifestEntry.path];
 
         if (!component) {
             console.warn(
                 `Module ${manifestEntry.path} not found in registry`,
-                manifestEntry
+                manifestEntry,
             );
             return null;
         }
@@ -158,7 +158,7 @@ export class ManifestModuleManager {
             manifestEntry.id,
             manifestEntry.type,
             component,
-            manifestEntry.dependencies || []
+            manifestEntry.dependencies || [],
         );
     }
 }
@@ -179,7 +179,7 @@ export class ModuleRegistry {
 
         if (elements.length > 1) {
             console.warn(
-                `Multiple components found with name ${name}, returning null.`
+                `Multiple components found with name ${name}, returning null.`,
             );
             return null;
         }

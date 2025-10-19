@@ -5,5 +5,4 @@ venv/
 uv.lock
 .env
 .vscode/
-.github/
 .pytest_cache/

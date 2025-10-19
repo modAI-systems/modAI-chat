@@ -30,6 +30,6 @@ export interface ChatService {
     sendMessage: (
         message: string,
         options: { model: string },
-        previousMessages: Message[]
+        previousMessages: Message[],
     ) => AsyncIterable<MessagePart>;
 }

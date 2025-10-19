@@ -11,7 +11,7 @@ export class SessionService {
      * @returns Promise<Session | null> A new Session instance if successful, null if authentication fails
      */
     static async refreshSession(
-        userService: UserService
+        userService: UserService,
     ): Promise<Session | null> {
         try {
             const user = await userService.fetchCurrentUser();

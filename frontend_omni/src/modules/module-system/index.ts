@@ -26,7 +26,7 @@ export function useModules(): ModuleManager {
     const context = useContext(ModuleManagerContext);
     if (!context) {
         throw new Error(
-            "useModules must be used within a ModuleManagerProvider"
+            "useModules must be used within a ModuleManagerProvider",
         );
     }
     return context;

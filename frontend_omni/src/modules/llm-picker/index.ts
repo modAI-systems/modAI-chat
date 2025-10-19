@@ -19,7 +19,7 @@ export function useLLMPicker(): LLMContextType {
     const context = useContext(LLMContext);
     if (context === undefined) {
         throw new Error(
-            "useLLMContext must be used within a LLMContextProvider"
+            "useLLMContext must be used within a LLMContextProvider",
         );
     }
     return context;

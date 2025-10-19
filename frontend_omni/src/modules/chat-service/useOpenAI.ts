@@ -20,7 +20,7 @@ export function useOpenAI(apiKey: string, baseURL: string): ChatService | null {
         async function* (
             message: string,
             options: { model: string },
-            previousMessages: Message[]
+            previousMessages: Message[],
         ): AsyncIterable<MessagePart> {
             if (!message.trim()) return;
 
@@ -58,7 +58,7 @@ export function useOpenAI(apiKey: string, baseURL: string): ChatService | null {
                 throw error;
             }
         },
-        [openai]
+        [openai],
     );
 
     if (openai == null) {

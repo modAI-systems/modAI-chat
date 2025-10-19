@@ -93,7 +93,7 @@ export class AuthenticationService implements AuthService {
      */
     private async handleApiError(
         response: Response,
-        defaultMessage: string
+        defaultMessage: string,
     ): Promise<never> {
         let errorMessage = defaultMessage;
 

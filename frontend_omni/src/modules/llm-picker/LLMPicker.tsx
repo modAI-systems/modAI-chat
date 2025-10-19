@@ -38,7 +38,7 @@ export function LLMPicker() {
                 for (const provider of providers) {
                     const providerModels = await service.getModels(
                         type,
-                        provider.id
+                        provider.id,
                     );
                     allModels.push(
                         ...providerModels.map((model) => ({
@@ -46,7 +46,7 @@ export function LLMPicker() {
                             name: `${provider.name} - ${model.name}`,
                             provider,
                             model,
-                        }))
+                        })),
                     );
                 }
             }
@@ -69,7 +69,7 @@ export function LLMPicker() {
                         onValueChange={(value) => {
                             const option = models.find((m) => m.id === value);
                             setSelectedModel(
-                                option ? [option.provider, option.model] : null
+                                option ? [option.provider, option.model] : null,
                             );
                         }}
                     >

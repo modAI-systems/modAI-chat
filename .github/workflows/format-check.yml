@@ -1,0 +1,40 @@
+name: Format Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Sync dependencies
+        working-directory: backend
+        run: uv sync
+      - name: Check formatting
+        working-directory: backend
+        run: uv run ruff format --check .
+
+  frontend-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install pnpm
+        run: npm install -g pnpm
+      - name: Install dependencies
+        working-directory: frontend_omni
+        run: pnpm install
+      - name: Check formatting
+        working-directory: frontend_omni
+        run: pnpm run format:check

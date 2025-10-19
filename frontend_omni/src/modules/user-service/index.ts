@@ -21,7 +21,7 @@ export interface UserService {
 
 // Create context for the user service
 export const UserServiceContext = createContext<UserService | undefined>(
-    undefined
+    undefined,
 );
 
 /**
@@ -34,7 +34,7 @@ export function useUserService(): UserService {
     const context = useContext(UserServiceContext);
     if (!context) {
         throw new Error(
-            "useUserService must be used within a UserServiceProvider"
+            "useUserService must be used within a UserServiceProvider",
         );
     }
     return context;

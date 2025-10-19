@@ -1,20 +1,20 @@
-import { Avatar, AvatarFallback } from "@/shadcn/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/shadcn/components/ui/avatar";
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from "@/shadcn/components/ui/tooltip"
-import { useSidebar } from "@/shadcn/components/ui/sidebar"
-import type { UserDisplayProps } from "@/moduleif/userProfileItem"
+} from "@/shadcn/components/ui/tooltip";
+import { useSidebar } from "@/shadcn/components/ui/sidebar";
+import type { UserDisplayProps } from "@/moduleif/userProfileItem";
 
 export function UserDisplay({ username, userEmail }: UserDisplayProps) {
-    const { isMobile, state } = useSidebar()
+    const { isMobile, state } = useSidebar();
     const userInitials = username
         .split(" ")
         .map((name) => name[0])
         .join("")
         .toUpperCase()
-        .slice(0, 2)
+        .slice(0, 2);
 
     return (
         <Tooltip>
@@ -26,16 +26,23 @@ export function UserDisplay({ username, userEmail }: UserDisplayProps) {
                         </AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-semibold">{username}</span>
+                        <span className="truncate font-semibold">
+                            {username}
+                        </span>
                         {userEmail && (
-                            <span className="truncate text-xs text-muted-foreground">{userEmail}</span>
+                            <span className="truncate text-xs text-muted-foreground">
+                                {userEmail}
+                            </span>
                         )}
                     </div>
                 </div>
             </TooltipTrigger>
-            <TooltipContent side="right" hidden={state !== "collapsed" || isMobile}>
+            <TooltipContent
+                side="right"
+                hidden={state !== "collapsed" || isMobile}
+            >
                 <p>{username}</p>
             </TooltipContent>
         </Tooltip>
-    )
+    );
 }

@@ -34,7 +34,7 @@ export default function MessageList({
 }: MessageListProps) {
     const modules = useModules();
     const WelcomeComponent = modules.getOne<ComponentType>(
-        "ChatWelcomeMessagePane"
+        "ChatWelcomeMessagePane",
     );
 
     const hasMessages = pastMessages.length > 0 || inputMessage !== null;

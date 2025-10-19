@@ -32,7 +32,7 @@ export function useManifest(manifestPath: string): ModuleManifest {
 
 // Fetch function that can be used independently
 async function fetchManifestAsync(
-    manifestPath: string
+    manifestPath: string,
 ): Promise<ModuleManifest> {
     const response = await fetch(manifestPath);
     if (!response.ok) {

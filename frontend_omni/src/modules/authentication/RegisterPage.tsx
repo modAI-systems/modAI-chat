@@ -40,7 +40,7 @@ export function Register() {
             navigate("/login");
         } catch (err) {
             setError(
-                err instanceof Error ? err.message : "Registration failed"
+                err instanceof Error ? err.message : "Registration failed",
             );
         } finally {
             setIsLoading(false);

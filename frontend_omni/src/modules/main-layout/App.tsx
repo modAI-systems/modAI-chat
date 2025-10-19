@@ -37,7 +37,7 @@ function RoutedSidebarLayout() {
     const routerEntryComponents =
         modules.getAll<() => React.JSX.Element>("RouterEntry");
     const fallbackRouterEntry = modules.getOne<() => React.JSX.Element>(
-        "FallbackRouterEntry"
+        "FallbackRouterEntry",
     );
 
     return (
@@ -51,7 +51,7 @@ function RoutedSidebarLayout() {
                                 // Usually elements of the `modules.getAll(...)` are react components
                                 // and should be used as <Component />. However, this doesn't work her for the router
                                 // because it needs to return a <Route> element. Therefore we call the function directly.
-                                createRoute()
+                                createRoute(),
                             )}
                             {fallbackRouterEntry ? (
                                 fallbackRouterEntry()

@@ -105,7 +105,7 @@ describe("useManifest", () => {
                 <QueryClientProvider client={queryClient}>
                     <TestComponent manifestPath="/manifest.json" />
                 </QueryClientProvider>
-            </ErrorBoundary>
+            </ErrorBoundary>,
         );
 
         await waitFor(() => {
@@ -129,12 +129,12 @@ describe("useManifest", () => {
                 <QueryClientProvider client={queryClient}>
                     <TestComponent manifestPath="/manifest.json" />
                 </QueryClientProvider>
-            </ErrorBoundary>
+            </ErrorBoundary>,
         );
 
         await waitFor(() => {
             expect(container.textContent).toContain(
-                "Failed to fetch manifest: Not Found"
+                "Failed to fetch manifest: Not Found",
             );
         });
 
