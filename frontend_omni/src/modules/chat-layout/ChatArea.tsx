@@ -148,7 +148,6 @@ export default function ChatArea() {
         <div className="size-full flex flex-col">
             {ChatTopPane && <ChatTopPane />}
             <MessageList
-                className="max-w-5xl mx-auto p-6 h-full w-full overflow-y-auto"
                 pastMessages={messages}
                 inputMessage={inputMessage}
                 onRegenerate={handleRegenerate}

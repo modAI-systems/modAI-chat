@@ -30,7 +30,6 @@ export default function MessageList({
     pastMessages,
     inputMessage,
     onRegenerate,
-    className,
 }: MessageListProps) {
     const modules = useModules();
     const WelcomeComponent = modules.getOne<ComponentType>(
@@ -42,8 +41,8 @@ export default function MessageList({
     return (
         <>
             {!hasMessages && WelcomeComponent && <WelcomeComponent />}
-            <Conversation className={className}>
-                <ConversationContent>
+            <Conversation className="p-6">
+                <ConversationContent className="mx-auto max-w-5xl">
                     {pastMessages.map((message) => (
                         <CompletedMessage
                             key={message.id}
