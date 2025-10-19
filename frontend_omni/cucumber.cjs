@@ -6,6 +6,5 @@ module.exports = {
       snippetInterface: "async-await",
     },
     paths: ["tests/features/**/*.feature"],
-    publishQuiet: true,
   },
 };
