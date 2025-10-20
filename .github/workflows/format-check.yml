@@ -24,7 +24,7 @@ jobs:
   frontend-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -34,6 +34,6 @@ jobs:
       - name: Install dependencies
         working-directory: frontend_omni
         run: pnpm install
-      - name: Check formatting
+      - name: Check formatting and linting
         working-directory: frontend_omni
         run: pnpm check

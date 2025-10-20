@@ -1,10 +1,10 @@
 import { Avatar, AvatarFallback } from "@/shadcn/components/ui/avatar";
+import { useSidebar } from "@/shadcn/components/ui/sidebar";
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
 } from "@/shadcn/components/ui/tooltip";
-import { useSidebar } from "@/shadcn/components/ui/sidebar";
 
 interface UserDisplayProps {
     username: string;

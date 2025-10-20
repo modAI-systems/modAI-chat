@@ -1,14 +1,13 @@
-import { useEffect, useState, useCallback } from "react";
+import { AlertTriangle, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/shadcn/components/ui/button";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from "@/shadcn/components/ui/card";
-import { Input } from "@/shadcn/components/ui/input";
-import { Label } from "@/shadcn/components/ui/label";
+import { toast } from "sonner";
+import type {
+    CreateProviderRequest,
+    Provider,
+    UpdateProviderRequest,
+} from "@/modules/llm-provider-service";
+import { useLLMProviderService } from "@/modules/llm-provider-service";
 import {
     Alert,
     AlertDescription,
@@ -25,14 +24,15 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/shadcn/components/ui/alert-dialog";
-import { AlertTriangle, Trash2 } from "lucide-react";
-import { toast } from "sonner";
-import { useLLMProviderService } from "@/modules/llm-provider-service";
-import type {
-    Provider,
-    CreateProviderRequest,
-    UpdateProviderRequest,
-} from "@/modules/llm-provider-service";
+import { Button } from "@/shadcn/components/ui/button";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/shadcn/components/ui/card";
+import { Input } from "@/shadcn/components/ui/input";
+import { Label } from "@/shadcn/components/ui/label";
 
 type ProviderFormData = {
     name: string;
@@ -322,12 +322,19 @@ function ProviderItem({
             <CardContent>
                 {!isEditing ? (
                     <div className="flex items-center justify-between p-2 -m-4 rounded transition-colors duration-200 hover:bg-muted/50">
-                        <span
-                            className="font-medium cursor-pointer flex-1"
+                        <button
+                            type="button"
+                            className="font-medium cursor-pointer flex-1 text-left"
                             onClick={() => onEdit(provider)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    onEdit(provider);
+                                }
+                            }}
                         >
                             {provider.name}
-                        </span>
+                        </button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button
@@ -532,6 +539,9 @@ function NewProviderForm({
     loading: boolean;
     t: (key: string, options?: { defaultValue: string }) => string;
 }) {
+    const nameId = useId();
+    const apiKeyId = useId();
+
     if (!isAddingNew) return null;
 
     return (
@@ -539,13 +549,13 @@ function NewProviderForm({
             <CardContent className="pt-4">
                 <div className="space-y-4 opacity-100 transform translate-y-0 transition-all duration-300 ease-in-out">
                     <div>
-                        <Label htmlFor="new-name">
+                        <Label htmlFor={nameId}>
                             {t("provider-name", {
                                 defaultValue: "Provider Name",
                             })}
                         </Label>
                         <Input
-                            id="new-name"
+                            id={nameId}
                             value={formData.name}
                             onChange={(e) =>
                                 onFormChange({
@@ -563,7 +573,6 @@ function NewProviderForm({
                             {t("base-url", { defaultValue: "Base URL" })}
                         </Label>
                         <Input
-                            id="new-base_url"
                             value={formData.base_url}
                             onChange={(e) =>
                                 onFormChange({
@@ -577,11 +586,11 @@ function NewProviderForm({
                         />
                     </div>
                     <div>
-                        <Label htmlFor="new-api_key">
+                        <Label htmlFor={apiKeyId}>
                             {t("api-key", { defaultValue: "API Key" })}
                         </Label>
                         <Input
-                            id="new-api_key"
+                            id={apiKeyId}
                             type="password"
                             value={formData.api_key}
                             onChange={(e) =>

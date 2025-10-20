@@ -1,11 +1,11 @@
-import { useState, type ReactNode } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { type ReactNode, useState } from "react";
 import {
-    type Provider,
     type Model,
+    type Provider,
     useLLMProviderService,
 } from "@/modules/llm-provider-service";
 import { LLMContext } from "./index";
-import { useSuspenseQuery } from "@tanstack/react-query";
 
 interface LLMContextProviderProps {
     children: ReactNode;

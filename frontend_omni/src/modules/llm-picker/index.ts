@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { Provider, Model } from "@/modules/llm-provider-service";
+import type { Model, Provider } from "@/modules/llm-provider-service";
 
 export interface LLMContextType {
     selectedModel: [Provider, Model] | null;

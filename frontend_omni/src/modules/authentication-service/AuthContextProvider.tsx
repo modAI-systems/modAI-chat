@@ -5,9 +5,9 @@
  * via React Context.
  */
 
-import React from "react";
-import { AuthenticationService } from "./AuthenticationService";
+import type React from "react";
 import { AuthServiceContext } from ".";
+import { AuthenticationService } from "./AuthenticationService";
 
 /**
  * Context provider that makes the authentication service available

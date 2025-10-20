@@ -1,4 +1,4 @@
-import { useState, type ComponentType, type ReactNode } from "react";
+import { type ComponentType, type ReactNode, useState } from "react";
 import { PanelsContext } from ".";
 
 export default function ChatSidePanelProvider({

@@ -23,14 +23,18 @@ export function AppSidebar() {
             <SidebarContent>
                 <SidebarMenu>
                     {sidebarItems.map((Component, index) => (
-                        <Component key={index} />
+                        <Component
+                            key={`${Component.name || "Component"}-${index}`}
+                        />
                     ))}
                 </SidebarMenu>
             </SidebarContent>
             <SidebarFooter>
                 <SidebarMenu>
                     {sidebarFooterItems.map((Component, index) => (
-                        <Component key={index} />
+                        <Component
+                            key={`${Component.name || "FooterComponent"}-${index}`}
+                        />
                     ))}
                 </SidebarMenu>
             </SidebarFooter>

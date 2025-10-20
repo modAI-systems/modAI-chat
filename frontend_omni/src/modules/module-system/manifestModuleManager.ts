@@ -1,9 +1,9 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { moduleRegistry } from "@/modules/moduleRegistry";
 import type {
     ModuleManifest,
     ModuleManifestEntry,
 } from "./moduleManifestLoader";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { moduleRegistry } from "@/modules/moduleRegistry";
 
 export class LoadedModule {
     id: string;
@@ -189,11 +189,11 @@ export class ModuleRegistry {
 
     getAll<T>(name: string): T[] {
         const elements: T[] = [];
-        this.activeModules.forEach((module) => {
+        for (const [, module] of this.activeModules) {
             if (module.type === name) {
                 elements.push(module.component as T);
             }
-        });
+        }
         return elements;
     }
 }

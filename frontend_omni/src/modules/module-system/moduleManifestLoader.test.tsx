@@ -1,7 +1,8 @@
-import React, { Component, type ReactNode } from "react";
-import { renderHook, waitFor, render } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, renderHook, waitFor } from "@testing-library/react";
+import type React from "react";
+import { Component, type ReactNode } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useManifest } from "./moduleManifestLoader";
 
 // Mock fetch globally

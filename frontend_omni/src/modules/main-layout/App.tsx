@@ -1,16 +1,21 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-import { BrowserRouter as Router } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type React from "react";
+import { Suspense } from "react";
+import {
+    Navigate,
+    Route,
+    BrowserRouter as Router,
+    Routes,
+} from "react-router-dom";
+import { useModules } from "@/modules/module-system";
+import { ModuleManagerProvider } from "@/modules/module-system/ModuleManagerContext";
 import { ThemeProvider } from "@/modules/theme-provider/ThemeProvider";
 import { SidebarProvider } from "@/shadcn/components/ui/sidebar";
-import { AppSidebar } from "./AppSidebar";
-import React, { Suspense } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { PageLoadingScreen } from "./PageLoadingScreen";
-import { ErrorBoundary } from "./ErrorBoundary";
-import { ModuleContextProvider } from "../module-context-provider/ModuleContextProvider";
-import { ModuleManagerProvider } from "@/modules/module-system/ModuleManagerContext";
-import { useModules } from "@/modules/module-system";
 import { Toaster } from "@/shadcn/components/ui/sonner";
+import { ModuleContextProvider } from "../module-context-provider/ModuleContextProvider";
+import { AppSidebar } from "./AppSidebar";
+import { ErrorBoundary } from "./ErrorBoundary";
+import { PageLoadingScreen } from "./PageLoadingScreen";
 import "@/modules/i18n/i18n";
 
 const queryClient = new QueryClient();

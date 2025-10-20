@@ -25,6 +25,10 @@ export function DefaultErrorPage({ error }: DefaultErrorPageProps) {
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
+                            role="img"
+                            aria-label={t("errorIcon", {
+                                defaultValue: "Error icon",
+                            })}
                         >
                             <path
                                 strokeLinecap="round"
@@ -69,12 +73,14 @@ export function DefaultErrorPage({ error }: DefaultErrorPageProps) {
 
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <button
+                        type="button"
                         onClick={handleReload}
                         className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
                     >
                         {t("refreshPage", { defaultValue: "Refresh Page" })}
                     </button>
                     <button
+                        type="button"
                         onClick={handleGoHome}
                         className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
                     >

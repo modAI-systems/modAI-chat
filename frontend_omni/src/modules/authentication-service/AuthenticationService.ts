@@ -6,12 +6,12 @@
  */
 
 import type {
-    LoginRequest,
-    SignupRequest,
-    LoginResponse,
-    SignupResponse,
     AuthError,
     AuthService,
+    LoginRequest,
+    LoginResponse,
+    SignupRequest,
+    SignupResponse,
 } from ".";
 
 export class AuthenticationService implements AuthService {

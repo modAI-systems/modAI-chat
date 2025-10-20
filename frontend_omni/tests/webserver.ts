@@ -1,5 +1,5 @@
-import { execSync, spawn, ChildProcess } from "child_process";
-import * as net from "net";
+import { type ChildProcess, execSync, spawn } from "node:child_process";
+import * as net from "node:net";
 
 const TEST_PORT = 4173;
 
@@ -7,8 +7,8 @@ let previewProcess: ChildProcess | null = null;
 
 async function waitForPort(
     port: number,
-    host: string = "localhost",
-    timeout: number = 10000,
+    host = "localhost",
+    timeout = 10000,
 ): Promise<void> {
     console.log(`Waiting for port ${port} on ${host} to be available...`);
     const startTime = Date.now();
@@ -37,7 +37,7 @@ export async function buildApp() {
 }
 
 export async function startContainer() {
-    console.log(`Starting pnpm preview server...`);
+    console.log("Starting pnpm preview server...");
     previewProcess = spawn("pnpm", ["preview"], {
         stdio: ["ignore", "pipe", "pipe"],
         detached: true,
@@ -64,7 +64,9 @@ export async function stopContainer() {
     if (previewProcess) {
         try {
             console.log("Stopping webserver...");
-            process.kill(-previewProcess.pid!, "SIGTERM");
+            if (previewProcess.pid) {
+                process.kill(-previewProcess.pid, "SIGTERM");
+            }
             previewProcess = null;
         } catch (error) {
             console.warn("Failed to stop webserver:", error);

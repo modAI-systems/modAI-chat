@@ -1,10 +1,10 @@
+import type { ComponentType } from "react";
+import { useModules } from "@/modules/module-system";
 import {
     ResizableHandle,
     ResizablePanel,
     ResizablePanelGroup,
 } from "@/shadcn/components/ui/resizable";
-import { useModules } from "@/modules/module-system";
-import type { ComponentType } from "react";
 import { useChatSidePanels } from ".";
 
 export function ChatLayout() {

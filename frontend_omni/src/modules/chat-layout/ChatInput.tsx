@@ -1,15 +1,15 @@
+import type { ChatStatus } from "ai";
 import {
     PromptInput,
-    PromptInputAttachments,
     PromptInputAttachment,
+    PromptInputAttachments,
     PromptInputBody,
     PromptInputFooter,
+    type PromptInputMessage,
     PromptInputSubmit,
     PromptInputTextarea,
     PromptInputTools,
-    type PromptInputMessage,
 } from "@/modules/chat-layout/shadcn/components/ai-elements/prompt-input";
-import type { ChatStatus } from "ai";
 
 interface ChatInputProps {
     input: string;
@@ -66,7 +66,7 @@ export default function ChatInput({
                     </PromptInputButton> */}
                 </PromptInputTools>
                 <PromptInputSubmit
-                    disabled={(inputEmpty && status == "ready") || !active}
+                    disabled={(inputEmpty && status === "ready") || !active}
                     status={status}
                 />
             </PromptInputFooter>

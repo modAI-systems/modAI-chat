@@ -1,23 +1,23 @@
+import { CopyIcon, RefreshCcwIcon } from "lucide-react";
+import type { ComponentType } from "react";
+import {
+    Action,
+    Actions,
+} from "@/modules/chat-layout/shadcn/components/ai-elements/actions";
 import {
     Conversation,
     ConversationContent,
     ConversationScrollButton,
 } from "@/modules/chat-layout/shadcn/components/ai-elements/conversation";
+import { Loader } from "@/modules/chat-layout/shadcn/components/ai-elements/loader";
 import {
     Message,
     MessageContent,
 } from "@/modules/chat-layout/shadcn/components/ai-elements/message";
-import {
-    Action,
-    Actions,
-} from "@/modules/chat-layout/shadcn/components/ai-elements/actions";
 import { Response } from "@/modules/chat-layout/shadcn/components/ai-elements/response";
-import { CopyIcon, RefreshCcwIcon } from "lucide-react";
-import { Loader } from "@/modules/chat-layout/shadcn/components/ai-elements/loader";
+import { useModules } from "@/modules/module-system";
 import type { Message as ChatMessage, MessagePart } from "../chat-service";
 import { MessageRole } from "../chat-service";
-import { useModules } from "@/modules/module-system";
-import type { ComponentType } from "react";
 
 interface MessageListProps {
     pastMessages: ChatMessage[];
@@ -65,13 +65,11 @@ function StreamingMessage({ parts }: { parts: MessagePart[] }) {
         .map((part) => part.text || "")
         .join("");
     return (
-        <>
-            <Message from={MessageRole.ASSISTANT}>
-                <MessageContent>
-                    <Response>{content}</Response>
-                </MessageContent>
-            </Message>
-        </>
+        <Message from={MessageRole.ASSISTANT}>
+            <MessageContent>
+                <Response>{content}</Response>
+            </MessageContent>
+        </Message>
     );
 }
 

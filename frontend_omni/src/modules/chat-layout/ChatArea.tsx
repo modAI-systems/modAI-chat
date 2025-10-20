@@ -1,12 +1,12 @@
-import { useState, type ComponentType, useEffect } from "react";
-import { useOpenAI } from "@/modules/chat-service/useOpenAI";
-import { type PromptInputMessage } from "@/modules/chat-layout/shadcn/components/ai-elements/prompt-input";
-import MessageList from "./MessageList";
-import ChatInput from "./ChatInput";
+import { type ComponentType, useEffect, useState } from "react";
+import type { PromptInputMessage } from "@/modules/chat-layout/shadcn/components/ai-elements/prompt-input";
 import type { Message, MessagePart } from "@/modules/chat-service";
-import { MessageRole, MessagePartType } from "@/modules/chat-service";
-import { useModules } from "@/modules/module-system";
+import { MessagePartType, MessageRole } from "@/modules/chat-service";
+import { useOpenAI } from "@/modules/chat-service/useOpenAI";
 import { useLLMPicker } from "@/modules/llm-picker";
+import { useModules } from "@/modules/module-system";
+import ChatInput from "./ChatInput";
+import MessageList from "./MessageList";
 
 const createAssistantMessage = (parts: MessagePart[]) => {
     const finalContent = parts

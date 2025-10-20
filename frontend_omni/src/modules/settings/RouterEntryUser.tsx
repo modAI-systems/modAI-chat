@@ -1,6 +1,6 @@
 import { Navigate, Route } from "react-router-dom";
-import { UserSettingsPage } from "./SettingsPage";
 import { useModules } from "@/modules/module-system";
+import { UserSettingsPage } from "./SettingsPage";
 
 export function RouterEntry() {
     const modules = useModules();
@@ -11,8 +11,8 @@ export function RouterEntry() {
     return (
         <>
             <Route
-                key={`user-settings`}
-                path={`/settings/user`}
+                key={"user-settings"}
+                path={"/settings/user"}
                 element={<UserSettingsPage />}
             >
                 {userSettingsRouterEntryFunctions.map((createRoute) =>
@@ -23,7 +23,7 @@ export function RouterEntry() {
                 )}
             </Route>
             <Route
-                path={`/settings/user/*`}
+                path={"/settings/user/*"}
                 element={<Navigate to="/settings/user" replace />}
             />
         </>
