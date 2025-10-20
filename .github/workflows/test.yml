@@ -21,7 +21,7 @@ jobs:
         working-directory: backend
         run: uv run pytest
 
-  frontend-vitest:
+  frontend-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,11 +34,11 @@ jobs:
       - name: Install dependencies
         working-directory: frontend_omni
         run: pnpm install
-      - name: Run vitest tests
+      - name: Run unit tests
         working-directory: frontend_omni
-        run: pnpm test
+        run: pnpm test:unit
 
-  frontend-cucumber:
+  frontend-e2e:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,6 +54,6 @@ jobs:
       - name: Install Playwright browsers
         working-directory: frontend_omni
         run: pnpm playwright install --with-deps
-      - name: Run cucumber tests
+      - name: Run Playwright tests
         working-directory: frontend_omni
-        run: pnpm test:cucumber
+        run: pnpm test:e2e

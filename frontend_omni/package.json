@@ -9,9 +9,11 @@
     "check": "biome check",
     "check:write": "biome check --write",
     "preview": "vite preview",
-    "test": "vitest run",
-    "test:cucumber": "cucumber-js",
-    "test:cucumber:headed": "HEADED=true cucumber-js"
+    "test": "pnpm test:unit && pnpm test:e2e",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.52",
@@ -62,7 +64,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.6",
-    "@cucumber/cucumber": "^12.2.0",
     "@playwright/test": "^1.56.1",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
