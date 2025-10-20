@@ -1,6 +1,6 @@
-import { useCallback, useMemo } from "react";
 import OpenAI from "openai";
-import type { Message, MessagePart, ChatService } from "./index";
+import { useCallback, useMemo } from "react";
+import type { ChatService, Message, MessagePart } from "./index";
 import { MessagePartType } from "./index";
 
 export function useOpenAI(apiKey: string, baseURL: string): ChatService | null {
@@ -24,6 +24,10 @@ export function useOpenAI(apiKey: string, baseURL: string): ChatService | null {
         ): AsyncIterable<MessagePart> {
             if (!message.trim()) return;
 
+            if (openai == null) {
+                throw new Error("OpenAI client is not initialized.");
+            }
+
             try {
                 const openaiMessages = previousMessages.map((msg) => ({
                     role: msg.role,
@@ -38,7 +42,7 @@ export function useOpenAI(apiKey: string, baseURL: string): ChatService | null {
                     },
                 ];
 
-                const stream = await openai!.chat.completions.create({
+                const stream = await openai.chat.completions.create({
                     model: options.model,
                     messages: allMessages,
                     stream: true,

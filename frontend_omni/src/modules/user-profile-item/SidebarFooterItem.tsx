@@ -1,6 +1,6 @@
+import { useSession } from "@/modules/session-provider";
 import { SidebarMenuItem } from "@/shadcn/components/ui/sidebar";
 import { UserDisplay } from "./UserDisplay";
-import { useSession } from "@/modules/session-provider";
 
 export function SidebarFooterItem() {
     const { session } = useSession();

@@ -1,12 +1,12 @@
+import { LogIn, LogOut, UserPlus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuthService } from "@/modules/authentication-service";
+import { useSession } from "@/modules/session-provider";
 import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/shadcn/components/ui/sidebar";
-import { useSession } from "@/modules/session-provider";
-import { LogOut, LogIn, UserPlus } from "lucide-react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuthService } from "@/modules/authentication-service";
-import { useTranslation } from "react-i18next";
 
 const LOGIN_PATH = "/login";
 const REGISTER_PATH = "/register";

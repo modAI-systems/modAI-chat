@@ -1,5 +1,5 @@
-import type { User } from "@/modules/user-service";
 import { createContext, useContext } from "react";
+import type { User } from "@/modules/user-service";
 
 /**
  * Immutable Session class that maintains the current user session in the browser

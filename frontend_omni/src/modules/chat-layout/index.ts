@@ -1,4 +1,4 @@
-import { createContext, useContext, type ComponentType } from "react";
+import { type ComponentType, createContext, useContext } from "react";
 import type { ChatService } from "@/modules/chat-service";
 
 // Create context for the chat service

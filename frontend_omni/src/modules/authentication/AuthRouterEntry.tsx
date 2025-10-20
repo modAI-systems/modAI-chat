@@ -1,13 +1,13 @@
 import { Route } from "react-router-dom";
-import RegisterPage from "./RegisterPage";
-import { LoginPage } from "./LoginPage";
 import { SessionGuardRoute } from "@/modules/session-provider";
+import { LoginPage } from "./LoginPage";
+import RegisterPage from "./RegisterPage";
 
 export default function AuthRouterEntry() {
     return (
         <>
             <Route
-                key={`authentication-login`}
+                key={"authentication-login"}
                 path="/login"
                 element={
                     <SessionGuardRoute requireSession={false}>
@@ -16,7 +16,7 @@ export default function AuthRouterEntry() {
                 }
             />
             <Route
-                key={`authentication-register`}
+                key={"authentication-register"}
                 path="/register"
                 element={
                     <SessionGuardRoute requireSession={false}>

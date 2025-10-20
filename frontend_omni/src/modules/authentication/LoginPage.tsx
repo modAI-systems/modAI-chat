@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuthService } from "@/modules/authentication-service";
 import { useSession } from "@/modules/session-provider";
 import { LoginRegisterForm } from "./LoginRegisterForm";
-import { useAuthService } from "@/modules/authentication-service";
 
 interface LoginProps {
     enableForgetPassword?: boolean;

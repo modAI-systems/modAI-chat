@@ -1,10 +1,10 @@
+import { MessageSquare } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Link, useLocation } from "react-router-dom";
 import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/shadcn/components/ui/sidebar";
-import { MessageSquare } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 
 export default function ChatSidebarItem() {
     const { t } = useTranslation("chat-layout");

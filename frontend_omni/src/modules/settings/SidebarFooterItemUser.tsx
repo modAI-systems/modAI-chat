@@ -1,9 +1,9 @@
+import { User } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/shadcn/components/ui/sidebar";
-import { User } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
 
 export function UserSidebarFooterItem() {
     const location = useLocation();
@@ -14,7 +14,7 @@ export function UserSidebarFooterItem() {
     return (
         <SidebarMenuItem key="user-settings">
             <SidebarMenuButton asChild tooltip={title} isActive={isActive}>
-                <Link to={`/settings/user`}>
+                <Link to={"/settings/user"}>
                     <User />
                     <span>{title}</span>
                 </Link>

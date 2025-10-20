@@ -7,13 +7,13 @@
  */
 
 import {
+    type CreateProviderRequest,
+    LLMProviderServiceContext,
     type Model,
     type Provider,
-    type ProviderType,
-    type CreateProviderRequest,
-    type UpdateProviderRequest,
     type ProviderService,
-    LLMProviderServiceContext,
+    type ProviderType,
+    type UpdateProviderRequest,
 } from ".";
 
 interface OpenAIModel {
@@ -141,9 +141,7 @@ class LLMNoBackendProviderService implements ProviderService {
 
         const now = new Date().toISOString();
         const newProvider: Provider = {
-            id: `llm_${typeValue}_${Date.now()}_${Math.random()
-                .toString(36)
-                .substr(2, 9)}`,
+            id: `llm_${typeValue}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             type: typeValue,
             name: data.name,
             url: data.base_url,

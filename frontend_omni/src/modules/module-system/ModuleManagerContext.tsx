@@ -1,10 +1,10 @@
-import { useMemo, type ReactNode } from "react";
+import { type ReactNode, useMemo } from "react";
+import { ModuleManagerContext } from ".";
 import {
     ModuleRegistry,
     useModuleManagerFromManifest,
 } from "./manifestModuleManager";
 import { useManifest } from "./moduleManifestLoader";
-import { ModuleManagerContext } from ".";
 
 const manifestPath = "/modules/manifest.json";
 

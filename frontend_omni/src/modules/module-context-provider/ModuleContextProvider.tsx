@@ -1,5 +1,5 @@
-import { useModules } from "@/modules/module-system";
 import type { ComponentType, ReactNode } from "react";
+import { useModules } from "@/modules/module-system";
 
 export function ModuleContextProvider({
     children,
@@ -14,8 +14,10 @@ export function ModuleContextProvider({
 
     // Wrap children with all context provider modules
     return contextProviders.reduce(
-        (wrappedChildren, Component) => (
-            <Component>{wrappedChildren}</Component>
+        (wrappedChildren, Component, index) => (
+            <Component key={`${Component.name || "ContextProvider"}-${index}`}>
+                {wrappedChildren}
+            </Component>
         ),
         children,
     );

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ManifestModuleManager, LoadedModule } from "./manifestModuleManager";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { LoadedModule, ManifestModuleManager } from "./manifestModuleManager";
 import type {
     ModuleManifest,
     ModuleManifestEntry,

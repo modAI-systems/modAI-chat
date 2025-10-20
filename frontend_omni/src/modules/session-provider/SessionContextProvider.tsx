@@ -1,8 +1,9 @@
-import React, { useCallback, startTransition } from "react";
-import { SessionService } from "./sessionService";
-import { SessionContext, type SessionContextType } from ".";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import type React from "react";
+import { startTransition, useCallback } from "react";
 import { useUserService } from "@/modules/user-service";
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { SessionContext, type SessionContextType } from ".";
+import { refreshSession as refreshSessionService } from "./sessionService";
 
 interface SessionProviderProps {
     children: React.ReactNode;
@@ -19,7 +20,7 @@ export default function SessionContextProvider({
 
     const { data: session } = useSuspenseQuery({
         queryKey: ["userSession"],
-        queryFn: () => SessionService.refreshSession(userService!),
+        queryFn: async () => await refreshSessionService(userService),
     });
 
     const refreshSession = useCallback(() => {

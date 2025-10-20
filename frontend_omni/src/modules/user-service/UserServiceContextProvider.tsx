@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { UserServiceContext } from "@/modules/user-service";
 import { HttpUserService } from "./HttpUserService";
 

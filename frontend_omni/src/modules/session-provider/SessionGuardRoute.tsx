@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useSession } from ".";
 

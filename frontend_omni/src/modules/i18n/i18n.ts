@@ -1,6 +1,6 @@
 import i18n from "i18next";
-import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
+import { initReactI18next } from "react-i18next";
 
 // Load all translation files using Vite's glob import
 const translationModules = import.meta.glob("/src/modules/*/locales/*.json", {
@@ -12,7 +12,7 @@ const resources: Record<string, Record<string, Record<string, string>>> = {};
 
 for (const [path, module] of Object.entries(translationModules)) {
     const match = path.match(
-        new RegExp("/src/modules/([^/]+)/locales/([^/]+)\\.json$"),
+        /\/src\/modules\/([^/]+)\/locales\/([^/]+)\.json$/,
     );
     if (match) {
         const [, namespace, language] = match;

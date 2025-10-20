@@ -1,4 +1,6 @@
-import { cn } from "@/shadcn/lib/utils";
+import { createContext, useContext, useId, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { Button } from "@/shadcn/components/ui/button";
 import {
     Card,
@@ -9,9 +11,7 @@ import {
 } from "@/shadcn/components/ui/card";
 import { Input } from "@/shadcn/components/ui/input";
 import { Label } from "@/shadcn/components/ui/label";
-import { useState, createContext, useContext } from "react";
-import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { cn } from "@/shadcn/lib/utils";
 
 // Context for shared form state and handlers
 interface FormContextType {
@@ -135,14 +135,15 @@ function RegisterHeader() {
 function Email() {
     const { email, setEmail, isLoading } = useFormContext();
     const { t } = useTranslation("authentication");
+    const emailId = useId();
 
     return (
         <div className="grid gap-2">
-            <Label htmlFor="email">
+            <Label htmlFor={emailId}>
                 {t("emailLabel", { defaultValue: "Email" })}
             </Label>
             <Input
-                id="email"
+                id={emailId}
                 type="email"
                 autoComplete="email"
                 placeholder={t("emailPlaceholder", {
@@ -160,14 +161,15 @@ function Email() {
 function Password({ variant = "login" }: { variant?: "login" | "register" }) {
     const { password, setPassword, isLoading } = useFormContext();
     const { t } = useTranslation("authentication");
+    const passwordId = useId();
 
     return (
         <div className="grid gap-2">
-            <Label htmlFor="password">
+            <Label htmlFor={passwordId}>
                 {t("passwordLabel", { defaultValue: "Password" })}
             </Label>
             <Input
-                id="password"
+                id={passwordId}
                 type="password"
                 autoComplete={
                     variant === "login" ? "current-password" : "new-password"
@@ -184,14 +186,15 @@ function Password({ variant = "login" }: { variant?: "login" | "register" }) {
 function FullName() {
     const { fullName, setFullName, isLoading } = useFormContext();
     const { t } = useTranslation("authentication");
+    const fullNameId = useId();
 
     return (
         <div className="grid gap-2">
-            <Label htmlFor="fullName">
+            <Label htmlFor={fullNameId}>
                 {t("fullNameLabel", { defaultValue: "Full Name (Optional)" })}
             </Label>
             <Input
-                id="fullName"
+                id={fullNameId}
                 type="text"
                 autoComplete="name"
                 placeholder={t("fullNamePlaceholder", {
@@ -249,12 +252,12 @@ function ForgotPasswordLink() {
     const { t } = useTranslation("authentication");
 
     return (
-        <a
-            href="#"
+        <button
+            type="button"
             className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
         >
             {t("forgotPasswordLink", { defaultValue: "Forgot your password?" })}
-        </a>
+        </button>
     );
 }
 
@@ -300,15 +303,16 @@ function PasswordWithForgot({
     enableForgetPassword?: boolean;
 }) {
     const { password, setPassword, isLoading } = useFormContext();
+    const passwordId = useId();
 
     return (
         <div className="grid gap-2">
             <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor={passwordId}>Password</Label>
                 {enableForgetPassword && <ForgotPasswordLink />}
             </div>
             <Input
-                id="password"
+                id={passwordId}
                 type="password"
                 autoComplete="current-password"
                 value={password}

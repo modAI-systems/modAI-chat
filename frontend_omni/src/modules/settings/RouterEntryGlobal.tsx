@@ -1,6 +1,6 @@
 import { Navigate, Route } from "react-router-dom";
-import { GlobalSettingsPage } from "./SettingsPage";
 import { useModules } from "@/modules/module-system";
+import { GlobalSettingsPage } from "./SettingsPage";
 
 export default function RouterEntryGlobal() {
     const modules = useModules();
@@ -23,7 +23,7 @@ export default function RouterEntryGlobal() {
                 )}
             </Route>
             <Route
-                path={`/settings/global/*`}
+                path={"/settings/global/*"}
                 element={<Navigate to="/settings/global" replace />}
             />
         </>

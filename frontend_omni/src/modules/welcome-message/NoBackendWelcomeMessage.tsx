@@ -1,6 +1,6 @@
-import { Alert, AlertDescription } from "@/shadcn/components/ui/alert";
 import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Alert, AlertDescription } from "@/shadcn/components/ui/alert";
 
 export default function NoBackendWelcomeMessage() {
     const { t } = useTranslation("welcome-message");
@@ -9,7 +9,11 @@ export default function NoBackendWelcomeMessage() {
         <div className="flex flex-col items-center justify-center gap-4 h-full">
             <div className="text-center">
                 <div className="text-muted-foreground mb-2">
-                    <img src="/modai.svg" className="size-14 mx-auto" />
+                    <img
+                        src="/modai.svg"
+                        className="size-14 mx-auto"
+                        alt={t("logoAlt", { defaultValue: "modAI logo" })}
+                    />
                 </div>
                 <div className="space-y-1">
                     <h3 className="font-medium text-xl">

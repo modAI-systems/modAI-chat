@@ -1,4 +1,10 @@
-import { useTranslation, Trans } from "react-i18next";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { AlertTriangle } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import type { Model, Provider } from "@/modules/llm-provider-service";
+import { useLLMProviderService } from "@/modules/llm-provider-service";
+import { Alert, AlertDescription } from "@/shadcn/components/ui/alert";
 import {
     Select,
     SelectContent,
@@ -6,13 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/shadcn/components/ui/select";
-import { Alert, AlertDescription } from "@/shadcn/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useLLMPicker } from "./index";
-import { useLLMProviderService } from "@/modules/llm-provider-service";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import type { Provider, Model } from "@/modules/llm-provider-service";
 
 interface ModelOption {
     id: string;

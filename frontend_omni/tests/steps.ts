@@ -1,17 +1,17 @@
 import {
-    When,
-    Then,
-    BeforeAll,
+    After,
     AfterAll,
     Before,
-    After,
+    BeforeAll,
+    Then,
+    When,
 } from "@cucumber/cucumber";
-import { CustomWorld, TEST_PORT } from "./world.ts";
 import {
     buildApp,
     startContainer as startWebserver,
     stopContainer,
 } from "./webserver.ts";
+import { type CustomWorld, TEST_PORT } from "./world.ts";
 
 // https://github.com/cucumber/cucumber-js/blob/main/docs/support_files/timeouts.md
 BeforeAll({ timeout: 30_000 }, async () => {
