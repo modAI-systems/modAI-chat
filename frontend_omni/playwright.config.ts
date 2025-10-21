@@ -19,10 +19,18 @@ export default defineConfig({
         {
             name: "chromium",
             use: { ...devices["Desktop Chrome"] },
+            testIgnore: "**/mock-openai-server.spec.ts",
         },
         {
             name: "firefox",
             use: { ...devices["Desktop Firefox"] },
+            testIgnore: "**/mock-openai-server.spec.ts",
+        },
+        {
+            name: "mock-tests",
+            testMatch: "**/mock-openai-server.spec.ts",
+            use: { ...devices["Desktop Chrome"] },
+            workers: 1, // Run serially
         },
         // Support this later at some point
         // {
@@ -30,9 +38,16 @@ export default defineConfig({
         //     use: { ...devices["Desktop Safari"] },
         // },
     ],
-    webServer: {
-        command: "pnpm build && pnpm preview",
-        url: "http://localhost:4173",
-        reuseExistingServer: !process.env.CI,
-    },
+    webServer: [
+        {
+            command: "pnpm build && pnpm preview",
+            url: "http://localhost:4173",
+            reuseExistingServer: !process.env.CI,
+        },
+        {
+            command: "node mock-openai-server.js",
+            url: "http://localhost:3001",
+            reuseExistingServer: !process.env.CI,
+        },
+    ],
 });
