@@ -33,8 +33,12 @@ export function LLMPicker() {
     const { selectedModel, setSelectedModel } = useLLMPicker();
     const service = useLLMProviderService();
 
+    // refetchOnMount just a workaround for now.
+    // TODO: find a better way for the query handling to share it accross components
+    // and consider updating/adding/deleting providers to affect the cache then.
     const { data: models } = useSuspenseQuery({
         queryKey: ["llm-models"],
+        refetchOnMount: "always",
         queryFn: async () => fetchAllModels(service),
     });
 
