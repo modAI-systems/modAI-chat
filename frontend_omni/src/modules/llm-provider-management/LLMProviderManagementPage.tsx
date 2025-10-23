@@ -540,6 +540,7 @@ function NewProviderForm({
     t: (key: string, options?: { defaultValue: string }) => string;
 }) {
     const nameId = useId();
+    const baseUrl = useId();
     const apiKeyId = useId();
 
     if (!isAddingNew) return null;
@@ -569,10 +570,11 @@ function NewProviderForm({
                         />
                     </div>
                     <div>
-                        <Label htmlFor="new-base_url">
+                        <Label htmlFor={baseUrl}>
                             {t("base-url", { defaultValue: "Base URL" })}
                         </Label>
                         <Input
+                            id={baseUrl}
                             value={formData.base_url}
                             onChange={(e) =>
                                 onFormChange({
