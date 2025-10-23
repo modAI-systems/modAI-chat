@@ -2,7 +2,11 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import type { Model, Provider } from "@/modules/llm-provider-service";
+import type {
+    Model,
+    Provider,
+    ProviderService,
+} from "@/modules/llm-provider-service";
 import { useLLMProviderService } from "@/modules/llm-provider-service";
 import { Alert, AlertDescription } from "@/shadcn/components/ui/alert";
 import {
@@ -31,27 +35,7 @@ export function LLMPicker() {
 
     const { data: models } = useSuspenseQuery({
         queryKey: ["llm-models"],
-        queryFn: async () => {
-            const allModels: ModelOption[] = [];
-            for (const type of PROVIDER_TYPES) {
-                const providers = await service.getProviders(type);
-                for (const provider of providers) {
-                    const providerModels = await service.getModels(
-                        type,
-                        provider.id,
-                    );
-                    allModels.push(
-                        ...providerModels.map((model) => ({
-                            id: `${provider.id}/${model.id}`,
-                            name: `${provider.name} - ${model.name}`,
-                            provider,
-                            model,
-                        })),
-                    );
-                }
-            }
-            return allModels;
-        },
+        queryFn: async () => fetchAllModels(service),
     });
 
     return (
@@ -114,6 +98,48 @@ export function LLMPicker() {
             </div>
         </div>
     );
+}
+
+async function fetchAllModels(
+    service: ProviderService,
+): Promise<ModelOption[]> {
+    const allModels: ModelOption[] = [];
+    for (const type of PROVIDER_TYPES) {
+        const providers = await service.getProviders(type);
+        for (const provider of providers) {
+            const models = await fetchModelsForProvider(service, provider);
+            allModels.push(...models);
+        }
+    }
+    return allModels;
+}
+
+async function fetchModelsForProvider(
+    service: ProviderService,
+    provider: Provider,
+): Promise<ModelOption[]> {
+    const allModels: ModelOption[] = [];
+    try {
+        const providerModels = await service.getModels(
+            provider.type,
+            provider.id,
+        );
+        allModels.push(
+            ...providerModels.map((model) => ({
+                id: `${provider.id}/${model.id}`,
+                name: `${provider.name} - ${model.name}`,
+                provider,
+                model,
+            })),
+        );
+    } catch (error) {
+        console.error(
+            `Failed to fetch models for provider '${provider.name}':`,
+            error,
+        );
+        return allModels;
+    }
+    return allModels;
 }
 
 export default LLMPicker;
