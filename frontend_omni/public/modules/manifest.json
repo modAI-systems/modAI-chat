@@ -61,13 +61,20 @@
       "id": "llm-provider-management-router-entry",
       "type": "GlobalSettingsRouterEntry",
       "path": "@/modules/llm-provider-management/GlobalSettingsRouterEntry",
-      "dependencies": ["module:llm-provider-service"]
+      "dependencies": [
+        "module:llm-provider-service"
+      ]
     },
     {
       "id": "llm-provider-management-nav-item",
       "type": "GlobalSettingsNavItem",
       "path": "@/modules/llm-provider-management/GlobalSettingsNavItem",
       "dependencies": []
+    },
+    {
+      "id": "openai-chat-service",
+      "type": "openai",
+      "path": "@/modules/chat-service/OpenAIService"
     },
     {
       "id": "no-backend-welcome-message",
