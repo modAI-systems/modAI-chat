@@ -139,6 +139,11 @@ class LLMNoBackendProviderService implements ProviderService {
                 ? providerType
                 : providerType.value;
 
+        // Check if a provider with the same name already exists
+        if (this.providers.some((provider) => provider.name === data.name)) {
+            throw new Error(`Provider with name '${data.name}' already exists`);
+        }
+
         const now = new Date().toISOString();
         const newProvider: Provider = {
             id: `llm_${typeValue}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -177,6 +182,16 @@ class LLMNoBackendProviderService implements ProviderService {
 
         if (providerIndex === -1) {
             throw new Error(`Provider not found: ${providerId}`);
+        }
+
+        // Check if another provider with the same name already exists
+        if (
+            this.providers.some(
+                (provider) =>
+                    provider.name === data.name && provider.id !== providerId,
+            )
+        ) {
+            throw new Error(`Provider with name '${data.name}' already exists`);
         }
 
         const provider = this.providers[providerIndex];

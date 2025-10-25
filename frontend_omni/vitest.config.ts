@@ -20,7 +20,7 @@ export default defineConfig({
     test: {
         environment: "jsdom",
         // Include only unit/integration test files from src directory
-        include: ["src/**/*.{test,spec}.{ts,tsx}"],
+        include: ["src/**/*.test.{ts,tsx}"],
         // Explicitly exclude playwright test files
         exclude: ["tests/**", "playwright-report/**", "test-results/**"],
     },
