@@ -1,12 +1,13 @@
 import { type ComponentType, useEffect, useState } from "react";
 import type { PromptInputMessage } from "@/modules/chat-layout/shadcn/components/ai-elements/prompt-input";
-import type { Message, MessagePart } from "@/modules/chat-service";
+import type { ChatService, Message, MessagePart } from "@/modules/chat-service";
 import { MessagePartType, MessageRole } from "@/modules/chat-service";
-import { useOpenAI } from "@/modules/chat-service/useOpenAI";
 import { useLLMPicker } from "@/modules/llm-picker";
 import { useModules } from "@/modules/module-system";
 import ChatInput from "./ChatInput";
 import MessageList from "./MessageList";
+
+type ChatServiceConstructor = new () => ChatService;
 
 const createAssistantMessage = (parts: MessagePart[]) => {
     const finalContent = parts
@@ -50,10 +51,13 @@ export default function ChatArea() {
         };
     }, []);
 
-    const chatService = useOpenAI(
-        selectedModel?.[0]?.api_key || "",
-        selectedModel?.[0]?.url || "",
-    );
+    const providerType = selectedModel?.[0]?.type;
+    const ChatServiceClass = providerType
+        ? modules.getOne<ChatServiceConstructor>(providerType)
+        : null;
+    const chatService: ChatService | null = ChatServiceClass
+        ? new ChatServiceClass()
+        : null;
 
     const handleSubmit = async (message: PromptInputMessage) => {
         const hasAttachments = Boolean(message.files?.length);
@@ -81,8 +85,9 @@ export default function ChatArea() {
         try {
             const parts: MessagePart[] = [];
             for await (const chunk of chatService.sendMessage(
+                selectedModel[0],
+                selectedModel[1],
                 message.text || "",
-                { model: selectedModel[1].name },
                 currentMessages,
             )) {
                 if (chunk.type === MessagePartType.TEXT && chunk.text) {
@@ -124,8 +129,9 @@ export default function ChatArea() {
         try {
             const parts: MessagePart[] = [];
             for await (const chunk of chatService.sendMessage(
+                selectedModel[0],
+                selectedModel[1],
                 userMessage.content,
-                { model: selectedModel[1].name },
                 previousMessages,
             )) {
                 if (chunk.type === MessagePartType.TEXT && chunk.text) {

@@ -1,3 +1,5 @@
+import type { Model, Provider } from "@/modules/llm-provider-service";
+
 export const MessagePartType = {
     TEXT: "text",
     REASONING: "reasoning",
@@ -27,9 +29,10 @@ export interface Message {
 }
 
 export interface ChatService {
-    sendMessage: (
+    sendMessage(
+        provider: Provider,
+        model: Model,
         message: string,
-        options: { model: string },
         previousMessages: Message[],
-    ) => AsyncIterable<MessagePart>;
+    ): AsyncIterable<MessagePart>;
 }

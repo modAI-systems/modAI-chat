@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-    testDir: "./tests",
+    testDir: ".",
     testMatch: "**/*.spec.ts",
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
@@ -30,9 +30,16 @@ export default defineConfig({
         //     use: { ...devices["Desktop Safari"] },
         // },
     ],
-    webServer: {
-        command: "pnpm build && pnpm preview",
-        url: "http://localhost:4173",
-        reuseExistingServer: !process.env.CI,
-    },
+    webServer: [
+        {
+            command: "pnpm build && pnpm preview",
+            url: "http://localhost:4173",
+            reuseExistingServer: !process.env.CI,
+        },
+        {
+            command: "node mock-openai-server.js",
+            url: "http://localhost:3001",
+            reuseExistingServer: !process.env.CI,
+        },
+    ],
 });

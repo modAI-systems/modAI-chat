@@ -125,8 +125,8 @@ uv run pytest tests/test_*.py   # Run specific test file
 
 ```bash
 cd frontend_omni
-pnpm test:unit                  # Run unit tests (vitest)
-pnpm test:e2e                   # Run e2e tests (Playwright)
+pnpm test:unit                  # Run javascript unit tests (vitest)
+pnpm test:ui                    # Run full ui tests (Playwright)
 pnpm build                      # Build for production
 pnpm lint                       # Run linter
 ```
