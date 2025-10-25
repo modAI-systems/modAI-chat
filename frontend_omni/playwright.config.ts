@@ -19,18 +19,10 @@ export default defineConfig({
         {
             name: "chromium",
             use: { ...devices["Desktop Chrome"] },
-            testIgnore: "**/mock-openai-server.spec.ts",
         },
         {
             name: "firefox",
             use: { ...devices["Desktop Firefox"] },
-            testIgnore: "**/mock-openai-server.spec.ts",
-        },
-        {
-            name: "mock-tests",
-            testMatch: "**/mock-openai-server.spec.ts",
-            use: { ...devices["Desktop Chrome"] },
-            workers: 1, // Run serially
         },
         // Support this later at some point
         // {
