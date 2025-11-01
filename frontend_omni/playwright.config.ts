@@ -36,7 +36,7 @@ export default defineConfig({
             reuseExistingServer: !process.env.CI,
         },
         {
-            command: "node mock-openai-server.js",
+            command: "node tests/mock-openai-server.js",
             url: "http://localhost:3001",
             reuseExistingServer: !process.env.CI,
         },
