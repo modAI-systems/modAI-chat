@@ -6,7 +6,7 @@ import {
 } from "./manifestModuleManager";
 import { useManifest } from "./moduleManifestLoader";
 
-const manifestPath = "/modules/manifest.json";
+const manifestPath = "/modules.json";
 
 interface ModuleManagerProviderProps {
     children: ReactNode;

@@ -1,5 +1,10 @@
 # React + TypeScript + Tailwind + shadcn/ui + Vite
 
+Frontend OMNI supports two different kinds of frontends
+
+* Full fledged with a backend
+* Lite without a dedicated backend hosted in the browser only (also only a lmiited set of features available)
+
 ## Getting started
 
 ```bash
