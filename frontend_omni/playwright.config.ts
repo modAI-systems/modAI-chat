@@ -34,6 +34,9 @@ export default defineConfig({
             command: "pnpm build && pnpm preview",
             url: "http://localhost:4173",
             reuseExistingServer: !process.env.CI,
+            env: {
+                MODULES_JSON_NAME: "modules_browser_only.json"
+            }
         },
         {
             command: "node tests/mock-openai-server.js",

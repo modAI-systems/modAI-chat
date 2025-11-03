@@ -42,7 +42,7 @@ function SomeComponent() {
 
 ## Intended Integration
 
-This module is registered as a `GlobalContextProvider` in the manifest.json, so it is automatically loaded at app startup.
+This module is registered as a `GlobalContextProvider` in the `modules.json`, so it is automatically loaded at app startup.
 
 ## Sub-Module Integration
 

@@ -80,9 +80,9 @@ There are two ways to get a module:
 
 Each registered module has a unique ID and is also registered as a certain type. e.g. each component for the sidebar will have a different ID, but they all have the same type.
 
-The ID of a module is usually defined in the `manifest.json` (see next chapter).
+The ID of a module is usually defined in the `modules.json` (see next chapter).
 
-The type of a module is also set in the `manifest.json` but is usually defined somewhere else: TBD
+The type of a module is also set in the `modules.json` but is usually defined somewhere else: TBD
 
 ### 4.4 Registering Modules
 
@@ -90,7 +90,7 @@ Modules needs to be registered in the `src/modules/moduleRegistry.ts`.
 
 To also activate a module, it needs to be added to the manifest:
 
-The registration of modules in the ModuleManager is not defined by the `ModuleManager` interface. The default implementation handles module registration with a `manifest.json` file loaded at startup of the application. The manifest has the following structure:
+The registration of modules in the ModuleManager is not defined by the `ModuleManager` interface. The default implementation handles module registration with a `modules*.json` file (`modules_with_backend.json` and `modules_browser_only.json`; the two files are used to startup different versions a full and lite version) loaded at startup of the application. The manifest has the following structure:
 
 ```json
 {
