@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
     testDir: ".",
-    testMatch: "**/*.spec.ts",
+    testMatch: "tests_with_backend/*.spec.ts",
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
@@ -34,12 +34,14 @@ export default defineConfig({
             command: "pnpm build && pnpm preview",
             url: "http://localhost:4173",
             reuseExistingServer: !process.env.CI,
-            env: {
-                MODULES_JSON_NAME: "modules_browser_only.json"
-            }
         },
         {
-            command: "node tests/mock-openai-server.js",
+            command: "cd ../../backend && uv run uvicorn modai.main:app",
+            url: "http://localhost:8000/api/v1/health",
+            reuseExistingServer: !process.env.CI,
+        },
+        {
+            command: "node ../tests_with_backend/mock-openai-server.js",
             url: "http://localhost:3001",
             reuseExistingServer: !process.env.CI,
         },
