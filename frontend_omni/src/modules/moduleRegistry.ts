@@ -15,6 +15,11 @@ import LLMNoBackendProviderService from "@/modules/llm-provider-service/LLMNoBac
 import RouterEntryGlobal from "@/modules/settings/RouterEntryGlobal";
 import SidebarFooterItemGlobal from "@/modules/settings/SidebarFooterItemGlobal";
 import NoBackendWelcomeMessage from "@/modules/welcome-message/NoBackendWelcomeMessage";
+import AuthContextProvider from "@/modules/authentication-service/AuthContextProvider";
+import AuthRouterEntry from "@/modules/authentication/AuthRouterEntry";
+import AuthSidebarFooterItem from "@/modules/authentication/AuthSidebarFooterItem";
+import SessionContextProvider from "@/modules/session-provider/SessionContextProvider";
+import UserServiceContextProvider from "@/modules/user-service/UserServiceContextProvider";
 
 export const moduleRegistry: Record<string, unknown> = {
     "@/modules/chat-layout/ChatSidebarItem": ChatSidebarItem,
@@ -35,4 +40,9 @@ export const moduleRegistry: Record<string, unknown> = {
     "@/modules/welcome-message/NoBackendWelcomeMessage":
         NoBackendWelcomeMessage,
     "@/modules/chat-service/OpenAIService": OpenAIChatService,
+    "@/modules/authentication-service/AuthContextProvider": AuthContextProvider,
+    "@/modules/authentication/AuthRouterEntry": AuthRouterEntry,
+    "@/modules/authentication/AuthSidebarFooterItem": AuthSidebarFooterItem,
+    "@/modules/session-provider/SessionContextProvider": SessionContextProvider,
+    "@/modules/user-service/UserServiceContextProvider": UserServiceContextProvider,
 };
