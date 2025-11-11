@@ -23,6 +23,12 @@ jobs:
 
   frontend-format:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        working-dir:
+          - frontend_omni
+          - e2e_tests/tests_omni_full
+          - e2e_tests/tests_omni_light
     steps:
       - uses: actions/checkout@v5
       - name: Set up Node.js
@@ -32,42 +38,8 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
       - name: Install dependencies
-        working-directory: frontend_omni
+        working-directory: ${{ matrix.working-dir }}
         run: pnpm install
       - name: Check formatting and linting
-        working-directory: frontend_omni
-        run: pnpm check
-
-  e2e-full-format:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - name: Install pnpm
-        run: npm install -g pnpm
-      - name: Install dependencies
-        working-directory: e2e_tests/tests_omni_full
-        run: pnpm install
-      - name: Check formatting and linting
-        working-directory: e2e_tests/tests_omni_full
-        run: pnpm check
-
-  e2e-light-format:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - name: Install pnpm
-        run: npm install -g pnpm
-      - name: Install dependencies
-        working-directory: e2e_tests/tests_omni_light
-        run: pnpm install
-      - name: Check formatting and linting
-        working-directory: e2e_tests/tests_omni_light
+        working-directory: ${{ matrix.working-dir }}
         run: pnpm check
