@@ -6,9 +6,12 @@
   "scripts": {
     "test": "playwright test",
     "test:headed": "playwright test --headed",
-    "test:ui": "playwright test --ui"
+    "test:ui": "playwright test --ui",
+    "check": "biome check",
+    "check:write": "biome check --write"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.2.6",
     "@playwright/test": "^1.56.1",
     "@types/node": "^24.3.0",
     "cors": "^2.8.5",

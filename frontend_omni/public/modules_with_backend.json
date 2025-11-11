@@ -4,8 +4,7 @@
     {
       "id": "authentication-service",
       "type": "GlobalContextProvider",
-      "path": "@/modules/authentication-service/AuthContextProvider",
-      "activeWhen": []
+      "path": "@/modules/authentication-service/AuthContextProvider"
     },
     {
       "id": "authentication-router",
@@ -22,8 +21,7 @@
     {
       "id": "session",
       "type": "GlobalContextProvider",
-      "path": "@/modules/session-provider/SessionContextProvider",
-      "activeWhen": []
+      "path": "@/modules/session-provider/SessionContextProvider"
     },
     {
       "id": "user-service",
@@ -51,8 +49,7 @@
     {
       "id": "llm-context",
       "type": "GlobalContextProvider",
-      "path": "@/modules/llm-picker/LLMContextProvider",
-      "activeWhen": []
+      "path": "@/modules/llm-picker/LLMContextProvider"
     },
     {
       "id": "llm-chat-top-pane",
@@ -62,14 +59,12 @@
     {
       "id": "llm-provider-service",
       "type": "GlobalContextProvider",
-      "path": "@/modules/llm-provider-service/LLMNoBackendProviderService",
-      "activeWhen": []
+      "path": "@/modules/llm-provider-service/LLMNoBackendProviderService"
     },
     {
       "id": "chat-side-panels-provider",
       "type": "GlobalContextProvider",
-      "path": "@/modules/chat-layout/ChatSidePanelProvider",
-      "activeWhen": []
+      "path": "@/modules/chat-layout/ChatSidePanelProvider"
     },
     {
       "id": "global-settings-sidebar-footer",

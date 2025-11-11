@@ -1,6 +1,9 @@
 // Module registry for static imports of all frontend modules
 // This replaces the dynamic importModule function
 
+import AuthRouterEntry from "@/modules/authentication/AuthRouterEntry";
+import AuthSidebarFooterItem from "@/modules/authentication/AuthSidebarFooterItem";
+import AuthContextProvider from "@/modules/authentication-service/AuthContextProvider";
 import ChatArea from "@/modules/chat-layout/ChatArea";
 import ChatRouterEntry from "@/modules/chat-layout/ChatRouterEntry";
 import ChatSidebarItem from "@/modules/chat-layout/ChatSidebarItem";
@@ -12,14 +15,11 @@ import LLMContextProvider from "@/modules/llm-picker/LLMContextProvider";
 import GlobalSettingsNavItem from "@/modules/llm-provider-management/GlobalSettingsNavItem";
 import GlobalSettingsRouterEntry from "@/modules/llm-provider-management/GlobalSettingsRouterEntry";
 import LLMNoBackendProviderService from "@/modules/llm-provider-service/LLMNoBackendProviderService";
+import SessionContextProvider from "@/modules/session-provider/SessionContextProvider";
 import RouterEntryGlobal from "@/modules/settings/RouterEntryGlobal";
 import SidebarFooterItemGlobal from "@/modules/settings/SidebarFooterItemGlobal";
-import NoBackendWelcomeMessage from "@/modules/welcome-message/NoBackendWelcomeMessage";
-import AuthContextProvider from "@/modules/authentication-service/AuthContextProvider";
-import AuthRouterEntry from "@/modules/authentication/AuthRouterEntry";
-import AuthSidebarFooterItem from "@/modules/authentication/AuthSidebarFooterItem";
-import SessionContextProvider from "@/modules/session-provider/SessionContextProvider";
 import UserServiceContextProvider from "@/modules/user-service/UserServiceContextProvider";
+import NoBackendWelcomeMessage from "@/modules/welcome-message/NoBackendWelcomeMessage";
 
 export const moduleRegistry: Record<string, unknown> = {
     "@/modules/chat-layout/ChatSidebarItem": ChatSidebarItem,
@@ -44,5 +44,6 @@ export const moduleRegistry: Record<string, unknown> = {
     "@/modules/authentication/AuthRouterEntry": AuthRouterEntry,
     "@/modules/authentication/AuthSidebarFooterItem": AuthSidebarFooterItem,
     "@/modules/session-provider/SessionContextProvider": SessionContextProvider,
-    "@/modules/user-service/UserServiceContextProvider": UserServiceContextProvider,
+    "@/modules/user-service/UserServiceContextProvider":
+        UserServiceContextProvider,
 };
