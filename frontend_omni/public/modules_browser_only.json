@@ -27,8 +27,7 @@
     {
       "id": "llm-context",
       "type": "GlobalContextProvider",
-      "path": "@/modules/llm-picker/LLMContextProvider",
-      "activeWhen": []
+      "path": "@/modules/llm-picker/LLMContextProvider"
     },
     {
       "id": "llm-chat-top-pane",
@@ -38,14 +37,12 @@
     {
       "id": "llm-provider-service",
       "type": "GlobalContextProvider",
-      "path": "@/modules/llm-provider-service/LLMNoBackendProviderService",
-      "activeWhen": []
+      "path": "@/modules/llm-provider-service/LLMNoBackendProviderService"
     },
     {
       "id": "chat-side-panels-provider",
       "type": "GlobalContextProvider",
-      "path": "@/modules/chat-layout/ChatSidePanelProvider",
-      "activeWhen": []
+      "path": "@/modules/chat-layout/ChatSidePanelProvider"
     },
     {
       "id": "global-settings-sidebar-footer",
