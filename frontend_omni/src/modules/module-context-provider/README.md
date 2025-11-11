@@ -33,7 +33,7 @@ export function AwesomeContextProvider({ children }: { children: React.ReactNode
 }
 ```
 
-The provider must be defined in the `manifest.json` with the correct type like `GlobalContextProvider`:
+The provider must be defined in the `modules.json` with the correct type like `GlobalContextProvider`:
 
 ```json
 {

@@ -1,12 +1,9 @@
 import { type ReactNode, useMemo } from "react";
 import { ModuleManagerContext } from ".";
-import {
-    ModuleRegistry,
-    useModuleManagerFromManifest,
-} from "./manifestModuleManager";
-import { useManifest } from "./moduleManifestLoader";
+import { useModulesJson } from "./moduleJsonLoader";
+import { ModuleRegistry, useModuleManagerFromJson } from "./moduleManager";
 
-const manifestPath = "/modules.json";
+const modulesJsonPath = "/modules.json";
 
 interface ModuleManagerProviderProps {
     children: ReactNode;
@@ -15,8 +12,8 @@ interface ModuleManagerProviderProps {
 export function ModuleManagerProvider({
     children,
 }: ModuleManagerProviderProps) {
-    const manifest = useManifest(manifestPath);
-    const moduleManager = useModuleManagerFromManifest(manifest);
+    const modulesJson = useModulesJson(modulesJsonPath);
+    const moduleManager = useModuleManagerFromJson(modulesJson);
 
     const registry = useMemo(
         () => new ModuleRegistry(moduleManager.getActiveModules()),
