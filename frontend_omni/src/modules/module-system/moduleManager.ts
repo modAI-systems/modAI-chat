@@ -1,9 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { moduleRegistry } from "@/modules/moduleRegistry";
-import type {
-    ModuleManifest,
-    ModuleManifestEntry,
-} from "./moduleManifestLoader";
+import type { ModuleJsonEntry, ModulesJson } from "./moduleJsonLoader";
 
 export class LoadedModule {
     id: string;
@@ -24,12 +21,12 @@ export class LoadedModule {
     }
 }
 
-export function useModuleManagerFromManifest(
-    manifest: ModuleManifest,
-): ManifestModuleManager {
-    async function newModuleManagerAsync(): Promise<ManifestModuleManager> {
-        const moduleManager = new ManifestModuleManager();
-        await moduleManager.loadModulesFromManifestAsync(manifest);
+export function useModuleManagerFromJson(
+    modulesJson: ModulesJson,
+): ModuleManager {
+    async function newModuleManagerAsync(): Promise<ModuleManager> {
+        const moduleManager = new ModuleManager();
+        await moduleManager.loadModulesFromJsonAsync(modulesJson);
         return moduleManager;
     }
 
@@ -49,15 +46,12 @@ export function useModuleManagerFromManifest(
     return manager;
 }
 
-export class ManifestModuleManager {
+export class ModuleManager {
     private registeredModules: Map<string, LoadedModule> = new Map();
     private activeModules: Map<string, LoadedModule> = new Map();
 
-    /**
-     * Load modules from manifest
-     */
-    async loadModulesFromManifestAsync(manifest: ModuleManifest) {
-        const allModules = manifest.modules;
+    async loadModulesFromJsonAsync(modulesJson: ModulesJson) {
+        const allModules = modulesJson.modules;
 
         // Phase 1: Register all modules regardless of dependencies
         await this.registerAllModules(allModules);
@@ -70,12 +64,12 @@ export class ManifestModuleManager {
      * Register all modules regardless of dependencies
      */
     private async registerAllModules(
-        modules: ModuleManifestEntry[],
+        modules: ModuleJsonEntry[],
     ): Promise<void> {
-        for (const manifestEntry of modules) {
-            const loadedModule = this.loadModule(manifestEntry);
+        for (const entry of modules) {
+            const loadedModule = this.loadModule(entry);
             if (loadedModule) {
-                this.registeredModules.set(manifestEntry.id, loadedModule);
+                this.registeredModules.set(entry.id, loadedModule);
             }
         }
     }
@@ -138,27 +132,19 @@ export class ManifestModuleManager {
         return this.registeredModules;
     }
 
-    /**
-     * Load a single module from manifest entry
-     */
-    protected loadModule(
-        manifestEntry: ModuleManifestEntry,
-    ): LoadedModule | null {
-        const component = moduleRegistry[manifestEntry.path];
+    protected loadModule(entry: ModuleJsonEntry): LoadedModule | null {
+        const component = moduleRegistry[entry.path];
 
         if (!component) {
-            console.warn(
-                `Module ${manifestEntry.path} not found in registry`,
-                manifestEntry,
-            );
+            console.warn(`Module ${entry.path} not found in registry`, entry);
             return null;
         }
 
         return new LoadedModule(
-            manifestEntry.id,
-            manifestEntry.type,
+            entry.id,
+            entry.type,
             component,
-            manifestEntry.dependencies || [],
+            entry.dependencies || [],
         );
     }
 }

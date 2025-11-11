@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { LoadedModule, ManifestModuleManager } from "./manifestModuleManager";
-import type {
-    ModuleManifest,
-    ModuleManifestEntry,
-} from "./moduleManifestLoader";
+import type { ModuleJsonEntry, ModulesJson } from "./moduleJsonLoader";
+import { LoadedModule, ModuleManager } from "./moduleManager";
 
 // Mock the module registry to avoid importing actual modules with CSS dependencies
 vi.mock("../moduleRegistry", () => ({
@@ -19,26 +16,26 @@ vi.mock("../moduleRegistry", () => ({
 }));
 
 // Test subclass that allows us to control module loading
-class TestableManifestModuleManager extends ManifestModuleManager {
-    protected loadModule(manifestEntry: ModuleManifestEntry) {
+class TestableModuleManager extends ModuleManager {
+    protected loadModule(jsonEntry: ModuleJsonEntry) {
         return new LoadedModule(
-            manifestEntry.id,
-            manifestEntry.type,
+            jsonEntry.id,
+            jsonEntry.type,
             {},
-            manifestEntry.dependencies || [],
+            jsonEntry.dependencies || [],
         );
     }
 }
 
-describe("ManifestModuleManager - Two-Phase Loading", () => {
-    let manager: TestableManifestModuleManager;
+describe("ModuleManager - Two-Phase Loading", () => {
+    let manager: TestableModuleManager;
 
     beforeEach(() => {
-        manager = new TestableManifestModuleManager();
+        manager = new TestableModuleManager();
     });
 
     it("should register all modules and activate them recursively based on dependencies", async () => {
-        const manifest: ModuleManifest = {
+        const modulesJson: ModulesJson = {
             version: "1.0.0",
             modules: [
                 {
@@ -62,7 +59,7 @@ describe("ManifestModuleManager - Two-Phase Loading", () => {
             ],
         };
 
-        await manager.loadModulesFromManifestAsync(manifest);
+        await manager.loadModulesFromJsonAsync(modulesJson);
 
         const registeredModules = manager.getRegisteredModules();
         const activeModules = manager.getActiveModules();
@@ -79,7 +76,7 @@ describe("ManifestModuleManager - Two-Phase Loading", () => {
     });
 
     it("should register all modules but not activate circular dependencies", async () => {
-        const manifest: ModuleManifest = {
+        const modulesJson: ModulesJson = {
             version: "1.0.0",
             modules: [
                 {
@@ -101,7 +98,7 @@ describe("ManifestModuleManager - Two-Phase Loading", () => {
             .spyOn(console, "warn")
             .mockImplementation(() => {});
 
-        await manager.loadModulesFromManifestAsync(manifest);
+        await manager.loadModulesFromJsonAsync(modulesJson);
 
         const registeredModules = manager.getRegisteredModules();
         const activeModules = manager.getActiveModules();
@@ -124,7 +121,7 @@ describe("ManifestModuleManager - Two-Phase Loading", () => {
     });
 
     it("should register all modules and activate only independent ones", async () => {
-        const manifest: ModuleManifest = {
+        const modulesJson: ModulesJson = {
             version: "1.0.0",
             modules: [
                 {
@@ -142,7 +139,7 @@ describe("ManifestModuleManager - Two-Phase Loading", () => {
             ],
         };
 
-        await manager.loadModulesFromManifestAsync(manifest);
+        await manager.loadModulesFromJsonAsync(modulesJson);
 
         const registeredModules = manager.getRegisteredModules();
         const activeModules = manager.getActiveModules();

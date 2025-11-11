@@ -14,7 +14,6 @@
 - **i18n**: react-i18next
 - **Build Tool**: Vite
 - **State Management**: React Context API
-- **Module Loading**: Dynamic ESM imports with manifest-driven discovery
 
 ## 3. Architecture Overview
 
@@ -88,9 +87,9 @@ The type of a module is also set in the `modules.json` but is usually defined so
 
 Modules needs to be registered in the `src/modules/moduleRegistry.ts`.
 
-To also activate a module, it needs to be added to the manifest:
+To also activate a module, it needs to be added to the `modules*.json`:
 
-The registration of modules in the ModuleManager is not defined by the `ModuleManager` interface. The default implementation handles module registration with a `modules*.json` file (`modules_with_backend.json` and `modules_browser_only.json`; the two files are used to startup different versions a full and lite version) loaded at startup of the application. The manifest has the following structure:
+The registration of modules in the ModuleManager is not defined by the `ModuleManager` interface. The default implementation handles module registration with a `modules*.json` file (`modules_with_backend.json` and `modules_browser_only.json`; the two files are used to startup different versions a full and lite version) loaded at startup of the application. The json has the following structure:
 
 ```json
 {
