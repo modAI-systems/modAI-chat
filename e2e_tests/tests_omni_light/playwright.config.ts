@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
     testDir: ".",
-    testMatch: "tests_browser_only/*.spec.ts",
+    testMatch: "*.spec.ts",
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
@@ -31,7 +31,7 @@ export default defineConfig({
     ],
     webServer: [
         {
-            command: "pnpm build && pnpm preview",
+            command: "cd ../../frontend_omni && pnpm build && pnpm preview",
             url: "http://localhost:4173",
             reuseExistingServer: !process.env.CI,
             env: {
@@ -39,7 +39,7 @@ export default defineConfig({
             }
         },
         {
-            command: "node ../tests_with_backend/mock-openai-server.js",
+            command: "node mock-openai-server.js",
             url: "http://localhost:3001",
             reuseExistingServer: !process.env.CI,
         },
