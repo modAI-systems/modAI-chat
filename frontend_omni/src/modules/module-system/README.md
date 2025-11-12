@@ -37,17 +37,17 @@ return (
 The module system is provided to child components via hooks, therefore a provider must be used like this:
 
 ```jsx
-const moduleManager = ...
+const activeModules = ...
 ...
 return (
-  <ModuleManagerContext value={moduleManager}>...</ModuleManagerContext>
+  <ModulesContext value={activeModules}>...</ModulesContext>
 );
 ```
 
-The standard implementation `ModuleManagerProvider` makes this easier:
+The standard implementation `ModulesProvider` makes this easier:
 
 ```jsx
-<ModuleManagerProvider>...</ModuleManagerProvider>
+<ModulesProvider>...</ModulesProvider>
 ```
 
 ## Sub Module Implementation Detail
