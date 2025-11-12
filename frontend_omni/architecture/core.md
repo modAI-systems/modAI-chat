@@ -85,7 +85,24 @@ The type of a module is also set in the `modules.json` but is usually defined so
 
 ### 4.4 Registering Modules
 
-Modules needs to be registered in the `src/modules/moduleRegistry.ts`.
+To register and acitvate a module, it needs to be added to two places:
+* `src/modules/moduleRegistry.ts` to define it for typescript
+* `modules*.json` to define the module and its dependencies
+
+
+#### `src/modules/moduleRegistry.ts`**
+
+Modules needs to be registered in the `src/modules/moduleRegistry.ts` like this:
+
+```typescript
+export const moduleRegistry: Record<string, unknown> = {
+    "@/modules/chat-layout/ChatSidebarItem": ChatSidebarItem,
+    "@/modules/chat-layout/ChatRouterEntry": ChatRouterEntry,
+    ...
+}
+```
+
+#### `modules*.json`
 
 To also activate a module, it needs to be added to the `modules*.json`:
 
