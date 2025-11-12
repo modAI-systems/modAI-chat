@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
 
-// Module Manager Service Interface
-export interface ModuleManager {
+// Modules Service Interface
+export interface Modules {
     /**
      * Get a single component of a specific type across all modules.
      * If more than one component with the same type exists, returns null.
@@ -14,20 +14,18 @@ export interface ModuleManager {
     getAll<T>(type: string): T[];
 }
 
-// Create context for the module manager
-export const ModuleManagerContext = createContext<ModuleManager | null>(null);
+// Create context for the modules
+export const ModulesContext = createContext<Modules | null>(null);
 
 /**
  * Hook to access modules and component discovery functionality
  *
- * @returns ModuleManager instance
+ * @returns Modules instance
  */
-export function useModules(): ModuleManager {
-    const context = useContext(ModuleManagerContext);
+export function useModules(): Modules {
+    const context = useContext(ModulesContext);
     if (!context) {
-        throw new Error(
-            "useModules must be used within a ModuleManagerProvider",
-        );
+        throw new Error("useModules must be used within a ModulesProvider");
     }
     return context;
 }

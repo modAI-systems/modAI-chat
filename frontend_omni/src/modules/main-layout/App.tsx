@@ -8,7 +8,7 @@ import {
     Routes,
 } from "react-router-dom";
 import { useModules } from "@/modules/module-system";
-import { ModuleManagerProvider } from "@/modules/module-system/ModuleManagerContext";
+import { ModulesProvider } from "@/modules/module-system/ModulesContext";
 import { ThemeProvider } from "@/modules/theme-provider/ThemeProvider";
 import { SidebarProvider } from "@/shadcn/components/ui/sidebar";
 import { Toaster } from "@/shadcn/components/ui/sonner";
@@ -25,11 +25,11 @@ export default function App() {
         <ThemeProvider>
             <QueryClientProvider client={queryClient}>
                 <Suspense fallback={<PageLoadingScreen />}>
-                    <ModuleManagerProvider>
+                    <ModulesProvider>
                         <ModuleContextProvider name="GlobalContextProvider">
                             <RoutedSidebarLayout />
                         </ModuleContextProvider>
-                    </ModuleManagerProvider>
+                    </ModulesProvider>
                 </Suspense>
                 <Toaster />
             </QueryClientProvider>

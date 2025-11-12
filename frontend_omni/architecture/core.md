@@ -49,16 +49,16 @@ Without any modules, the frontend would be completely empty just containing an e
 
 ## 4. Module System
 
-The heart of the frontend is its modular system. It is defined in the `ModuleManager` interface as:
+The heart of the frontend is its modular system. It is defined in the `Modules` interface as:
 
 ```typescript
 getOne<T>(type: string): T | null;
 getAll<T>(type: string): T[];
 ```
 
-### 4.1 Getting the `ModuleManager`
+### 4.1 Getting the `Modules`
 
-In order to use the functions of the module manager, it must be somehow received first. This is done with hooks like this:
+In order to use the functions of the modules, it must be somehow received first. This is done with hooks like this:
 
 ```typescript
 const modules = useModules();
@@ -66,7 +66,7 @@ const modules = useModules();
 modules.getAll<SomeComponent>(...)
 ```
 
-### 4.2 Using the `ModuleManager`
+### 4.2 Using the `Modules`
 
 The most important functionality of the module system is to receive other modules by their type. This is needed if a parent module wants to receive its child modules for rendering or if a user component needs to get the user service for backend interaction.
 
@@ -89,7 +89,7 @@ Modules needs to be registered in the `src/modules/moduleRegistry.ts`.
 
 To also activate a module, it needs to be added to the `modules*.json`:
 
-The registration of modules in the ModuleManager is not defined by the `ModuleManager` interface. The default implementation handles module registration with a `modules*.json` file (`modules_with_backend.json` and `modules_browser_only.json`; the two files are used to startup different versions a full and lite version) loaded at startup of the application. The json has the following structure:
+The registration of modules in the Modules is not defined by the `Modules` interface. The default implementation handles module registration with a `modules*.json` file (`modules_with_backend.json` and `modules_browser_only.json`; the two files are used to startup different versions a full and lite version) loaded at startup of the application. The json has the following structure:
 
 ```json
 {
