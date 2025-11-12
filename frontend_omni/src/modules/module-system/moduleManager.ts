@@ -1,6 +1,5 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { moduleRegistry } from "@/modules/moduleRegistry";
-import type { ModuleJsonEntry, ModulesJson } from "./moduleJsonLoader";
+import type { ModuleJsonEntry, ModulesJson } from "./modulesJson";
 
 export class LoadedModule {
     id: string;
@@ -21,51 +20,24 @@ export class LoadedModule {
     }
 }
 
-export function useModuleManagerFromJson(
-    modulesJson: ModulesJson,
-): ModuleManager {
-    async function newModuleManagerAsync(): Promise<ModuleManager> {
-        const moduleManager = new ModuleManager();
-        await moduleManager.loadModulesFromJsonAsync(modulesJson);
-        return moduleManager;
-    }
-
-    const { data: manager, error } = useSuspenseQuery({
-        queryKey: ["moduleManager"],
-        queryFn: newModuleManagerAsync,
-    });
-
-    if (error) {
-        throw new Error("Error loading module manager:", error as Error);
-    }
-
-    if (!manager) {
-        throw new Error("Module manager is undefined");
-    }
-
-    return manager;
-}
-
 export class ModuleManager {
     private registeredModules: Map<string, LoadedModule> = new Map();
     private activeModules: Map<string, LoadedModule> = new Map();
 
-    async loadModulesFromJsonAsync(modulesJson: ModulesJson) {
+    constructor(modulesJson: ModulesJson) {
         const allModules = modulesJson.modules;
 
         // Phase 1: Register all modules regardless of dependencies
-        await this.registerAllModules(allModules);
+        this.registerAllModules(allModules);
 
         // Phase 2: Activate modules considering dependencies
-        await this.activateModules(Array.from(this.registeredModules.values()));
+        this.activateModules(Array.from(this.registeredModules.values()));
     }
 
     /**
      * Register all modules regardless of dependencies
      */
-    private async registerAllModules(
-        modules: ModuleJsonEntry[],
-    ): Promise<void> {
+    private registerAllModules(modules: ModuleJsonEntry[]): void {
         for (const entry of modules) {
             const loadedModule = this.loadModule(entry);
             if (loadedModule) {
@@ -77,9 +49,7 @@ export class ModuleManager {
     /**
      * Recursively activate modules based on their dependencies
      */
-    private async activateModules(
-        remainingModules: LoadedModule[],
-    ): Promise<void> {
+    private activateModules(remainingModules: LoadedModule[]): void {
         if (remainingModules.length === 0) {
             return;
         }
@@ -120,7 +90,7 @@ export class ModuleManager {
             );
         } else {
             // Continue with remaining modules
-            await this.activateModules(stillRemaining);
+            this.activateModules(stillRemaining);
         }
     }
 
