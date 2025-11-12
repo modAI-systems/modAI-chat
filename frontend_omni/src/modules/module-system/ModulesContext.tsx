@@ -1,17 +1,23 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { type ReactNode, useMemo } from "react";
-import { ModulesContext } from ".";
+import { type ReactNode, useMemo, useState } from "react";
+import { ModuleFlagsContext, ModulesContext } from ".";
 import { activateModules } from "./moduleActivator";
-import { LoadedModule, ModuleRegistry } from "./moduleRegistry";
+import { JsonModuleRegistry, type LoadedModule } from "./moduleRegistry";
 import { fetchModulesJsonAsync } from "./modulesJson";
 
 const modulesJsonPath = "/modules.json";
 
 interface ModulesProviderProps {
     children: ReactNode;
+    initialFlags?: string[];
 }
 
-export function ModulesProvider({ children }: ModulesProviderProps) {
+export function ModulesProvider({
+    children,
+    initialFlags = [],
+}: ModulesProviderProps) {
+    const [flags, setFlagsState] = useState<string[]>(initialFlags);
+
     const { data: modulesJson, error } = useSuspenseQuery({
         queryKey: ["modulesJson", modulesJsonPath],
         queryFn: () => fetchModulesJsonAsync(modulesJsonPath),
@@ -26,12 +32,35 @@ export function ModulesProvider({ children }: ModulesProviderProps) {
     }
 
     const activeModules = useMemo(() => {
-        const moduleRegistry = new ModuleRegistry(modulesJson.modules);
-        const activeModules = activateModules(moduleRegistry);
+        const moduleRegistry = new JsonModuleRegistry(modulesJson.modules);
+        const activeModules = activateModules(moduleRegistry, flags);
         return new ActiveModules(activeModules);
-    }, [modulesJson]);
+    }, [modulesJson, flags]);
 
-    return <ModulesContext value={activeModules}>{children}</ModulesContext>;
+    const set = (flag: string) => {
+        setFlagsState((prevFlags) => {
+            if (!prevFlags.includes(flag)) {
+                return [...prevFlags, flag];
+            }
+            return prevFlags;
+        });
+    };
+
+    const remove = (flag: string) => {
+        setFlagsState((prevFlags) => prevFlags.filter((f) => f !== flag));
+    };
+
+    const moduleFlags = {
+        set,
+        remove,
+        flags,
+    };
+
+    return (
+        <ModuleFlagsContext value={moduleFlags}>
+            <ModulesContext value={activeModules}>{children}</ModulesContext>
+        </ModuleFlagsContext>
+    );
 }
 
 class ActiveModules {

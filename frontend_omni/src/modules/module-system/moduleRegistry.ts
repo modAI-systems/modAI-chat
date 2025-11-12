@@ -21,11 +21,18 @@ export class LoadedModule {
 }
 
 /**
+ * Interface for module registries that provide access to loaded modules
+ */
+export interface ModuleRegistry {
+    getAll(): LoadedModule[];
+}
+
+/**
  * ModuleRegistry is responsible for registering all modules
  * without considering dependencies. It provides just a list of
  * all registered modules.
  */
-export class ModuleRegistry {
+export class JsonModuleRegistry implements ModuleRegistry {
     private registeredModules: Map<string, LoadedModule> = new Map();
 
     constructor(modules: ModuleJsonEntry[]) {
