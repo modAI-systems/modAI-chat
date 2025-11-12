@@ -2,6 +2,8 @@
 
 Highly extendable AI Web Chat UI from the community for the community.
 
+![modAI Browser Interface](resources/modai-browser-only.png)
+
 > ⚠️ **Early Development Stage**: This repository is in a very early stage of development. Features may be incomplete, APIs may change, and breaking changes are expected.
 
 **🤝 We are looking for co-maintainers!**
