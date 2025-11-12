@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ModuleJsonEntry, ModulesJson } from "./moduleJsonLoader";
+import { describe, expect, it, vi } from "vitest";
 import { LoadedModule, ModuleManager } from "./moduleManager";
+import type { ModuleJsonEntry, ModulesJson } from "./modulesJson";
 
 // Mock the module registry to avoid importing actual modules with CSS dependencies
 vi.mock("../moduleRegistry", () => ({
@@ -28,13 +28,7 @@ class TestableModuleManager extends ModuleManager {
 }
 
 describe("ModuleManager - Two-Phase Loading", () => {
-    let manager: TestableModuleManager;
-
-    beforeEach(() => {
-        manager = new TestableModuleManager();
-    });
-
-    it("should register all modules and activate them recursively based on dependencies", async () => {
+    it("should register all modules and activate them recursively based on dependencies", () => {
         const modulesJson: ModulesJson = {
             version: "1.0.0",
             modules: [
@@ -59,7 +53,7 @@ describe("ModuleManager - Two-Phase Loading", () => {
             ],
         };
 
-        await manager.loadModulesFromJsonAsync(modulesJson);
+        const manager = new TestableModuleManager(modulesJson);
 
         const registeredModules = manager.getRegisteredModules();
         const activeModules = manager.getActiveModules();
@@ -75,7 +69,7 @@ describe("ModuleManager - Two-Phase Loading", () => {
         expect(activeModules.has("level2")).toBe(true);
     });
 
-    it("should register all modules but not activate circular dependencies", async () => {
+    it("should register all modules but not activate circular dependencies", () => {
         const modulesJson: ModulesJson = {
             version: "1.0.0",
             modules: [
@@ -98,7 +92,7 @@ describe("ModuleManager - Two-Phase Loading", () => {
             .spyOn(console, "warn")
             .mockImplementation(() => {});
 
-        await manager.loadModulesFromJsonAsync(modulesJson);
+        const manager = new TestableModuleManager(modulesJson);
 
         const registeredModules = manager.getRegisteredModules();
         const activeModules = manager.getActiveModules();
@@ -120,7 +114,7 @@ describe("ModuleManager - Two-Phase Loading", () => {
         consoleWarnSpy.mockRestore();
     });
 
-    it("should register all modules and activate only independent ones", async () => {
+    it("should register all modules and activate only independent ones", () => {
         const modulesJson: ModulesJson = {
             version: "1.0.0",
             modules: [
@@ -139,7 +133,7 @@ describe("ModuleManager - Two-Phase Loading", () => {
             ],
         };
 
-        await manager.loadModulesFromJsonAsync(modulesJson);
+        const manager = new TestableModuleManager(modulesJson);
 
         const registeredModules = manager.getRegisteredModules();
         const activeModules = manager.getActiveModules();

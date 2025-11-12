@@ -1,7 +1,8 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { type ReactNode, useMemo } from "react";
 import { ModuleManagerContext } from ".";
-import { useModulesJson } from "./moduleJsonLoader";
-import { ModuleRegistry, useModuleManagerFromJson } from "./moduleManager";
+import { ModuleManager, ModuleRegistry } from "./moduleManager";
+import { fetchModulesJsonAsync } from "./modulesJson";
 
 const modulesJsonPath = "/modules.json";
 
@@ -12,13 +13,23 @@ interface ModuleManagerProviderProps {
 export function ModuleManagerProvider({
     children,
 }: ModuleManagerProviderProps) {
-    const modulesJson = useModulesJson(modulesJsonPath);
-    const moduleManager = useModuleManagerFromJson(modulesJson);
+    const { data: modulesJson, error } = useSuspenseQuery({
+        queryKey: ["modulesJson", modulesJsonPath],
+        queryFn: () => fetchModulesJsonAsync(modulesJsonPath),
+    });
 
-    const registry = useMemo(
-        () => new ModuleRegistry(moduleManager.getActiveModules()),
-        [moduleManager],
-    );
+    if (error) {
+        throw new Error(`Error loading module modules json: ${error.message}`);
+    }
+
+    if (!modulesJson) {
+        throw new Error("Module json data is undefined");
+    }
+
+    const registry = useMemo(() => {
+        const moduleManager = new ModuleManager(modulesJson);
+        return new ModuleRegistry(moduleManager.getActiveModules());
+    }, [modulesJson]);
 
     return (
         <ModuleManagerContext value={registry}>{children}</ModuleManagerContext>
