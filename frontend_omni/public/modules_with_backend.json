@@ -19,6 +19,12 @@
       "dependencies": ["module:authentication-service"]
     },
     {
+      "id": "authentication-fallback-router",
+      "type": "FallbackRouterEntry",
+      "path": "@/modules/authentication/FallbackRouterEntry",
+      "dependencies": ["flag:!sessionActive"]
+    },
+    {
       "id": "session",
       "type": "GlobalContextProvider",
       "path": "@/modules/session-provider/SessionContextProvider"
@@ -46,6 +52,12 @@
       "type": "ChatMiddlePane",
       "path": "@/modules/chat-layout/ChatArea",
       "dependencies": ["flag:sessionActive"]
+    },
+    {
+      "id": "chat-layout-fallback-router",
+      "type": "FallbackRouterEntry",
+      "path": "@/modules/chat-layout/FallbackRouterEntry",
+      "dependencies": ["module:chat-layout-router"]
     },
     {
       "id": "llm-context",
