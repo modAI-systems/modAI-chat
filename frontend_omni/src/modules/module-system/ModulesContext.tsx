@@ -47,7 +47,12 @@ export function ModulesProvider({
     };
 
     const remove = (flag: string) => {
-        setFlagsState((prevFlags) => prevFlags.filter((f) => f !== flag));
+        setFlagsState((prevFlags) => {
+            if (prevFlags.includes(flag)) {
+                return prevFlags.filter((f) => f !== flag);
+            }
+            return prevFlags;
+        });
     };
 
     const moduleFlags = {

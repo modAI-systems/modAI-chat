@@ -10,7 +10,7 @@
       "id": "authentication-router",
       "type": "RouterEntry",
       "path": "@/modules/authentication/AuthRouterEntry",
-      "dependencies": ["module:authentication-service"]
+      "dependencies": ["module:authentication-service", "flag:!sessionActive"]
     },
     {
       "id": "authentication-sidebar-footer",
@@ -33,18 +33,19 @@
       "id": "chat-layout-sidebar",
       "type": "SidebarItem",
       "path": "@/modules/chat-layout/ChatSidebarItem",
-      "dependencies": ["module:session"]
+      "dependencies": ["module:session", "flag:sessionActive"]
     },
     {
       "id": "chat-layout-router",
       "type": "RouterEntry",
       "path": "@/modules/chat-layout/ChatRouterEntry",
-      "dependencies": ["module:session"]
+      "dependencies": ["module:session", "flag:sessionActive"]
     },
     {
       "id": "chat-messages-area-pane",
       "type": "ChatMiddlePane",
-      "path": "@/modules/chat-layout/ChatArea"
+      "path": "@/modules/chat-layout/ChatArea",
+      "dependencies": ["flag:sessionActive"]
     },
     {
       "id": "llm-context",
