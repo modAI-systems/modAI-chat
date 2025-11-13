@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "ln -sf ${MODULES_JSON_NAME:-modules_with_backend.json} public/modules.json && tsc -b && vite build",
+    "build": "tsc -b && vite build",
     "check": "biome check",
     "check:write": "biome check --write",
     "preview": "vite preview",
