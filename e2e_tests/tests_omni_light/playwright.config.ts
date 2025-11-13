@@ -31,7 +31,7 @@ export default defineConfig({
     ],
     webServer: [
         {
-            command: "cd ../../frontend_omni && pnpm build && pnpm preview",
+            command: "cd ../../frontend_omni && ln -sf modules_browser_only.json public/modules.json && pnpm build && pnpm preview",
             url: "http://localhost:4173",
             reuseExistingServer: !process.env.CI,
             env: {
