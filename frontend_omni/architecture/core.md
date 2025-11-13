@@ -129,6 +129,17 @@ The registration of modules in the Modules is not defined by the `Modules` inter
 - **path**: the component include path. The component to be used must then be the default component of that file.
 - **dependencies**: a list of dependencies required for the module to operate. Dependencies starting with "module:" indicate module dependencies. If a module dependency is not available, the dependent module will not be loaded.
 
+#### Flag Dependencies
+
+Modules can also depend on runtime flags using the "flag:" prefix:
+
+- `"flag:foo"`: Module activates only if flag "foo" is present
+- `"flag:!foo"`: Module activates only if flag "foo" is absent
+- Multiple flags can be combined: `["flag:foo", "flag:bar"]` requires both flags
+- Mixed flags: `["flag:foo", "flag:!bar"]` requires foo present and bar absent
+
+This enables feature toggling and environment-specific module loading.
+
 ### 4.5 Exporting a Module
 
 ```tsx
