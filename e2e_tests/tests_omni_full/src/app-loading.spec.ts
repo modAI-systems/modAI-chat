@@ -8,15 +8,15 @@ test.describe("App loading", () => {
         await expect(page).toHaveTitle(/modAI/);
     });
 
-    test.describe("User gets redirected to /chat as fallback", () => {
-        const testPaths = ["/", "/chat", "/foo"];
+    test.describe("User gets redirected to /login as fallback if not logged in", () => {
+        const testPaths = ["/", "/login", "/foo"];
 
         for (const path of testPaths) {
-            test(`should redirect ${path} to /chat`, async ({ page }) => {
+            test(`should redirect ${path} to /login`, async ({ page }) => {
                 await page.goto(path);
 
                 // Wait for navigation to complete and check the URL
-                await expect(page).toHaveURL("/chat");
+                await expect(page).toHaveURL("/login");
             });
         }
     });
