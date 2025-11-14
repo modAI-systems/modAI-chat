@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+const exact = { exact: true };
+
 test.describe("LLM Provider Management", () => {
     test.beforeEach(async ({ page }) => {
         await page.goto("/");
@@ -8,11 +10,20 @@ test.describe("LLM Provider Management", () => {
         });
     });
 
-    test("should save llm provider", async ({ page }) => {
-        // Navigate to LLM Providers page
+    test("navigation to llm provider from root page", async ({ page }) => {
         await expect(page).toHaveTitle(/modAI/);
-        await page.getByText("Global Settings").click();
-        await page.getByText("LLM Providers").click();
+        await page.getByText("Global Settings", exact).click();
+        await page.getByText("LLM Providers", exact).click();
+        await expect(page.getByText("LLM Provider Management", exact)).toBeVisible();
+    });
+
+    test("navigation to llm provider by URL", async ({ page }) => {
+        await page.goto("/settings/global/llm-providers");
+        await expect(page.getByText("LLM Provider Management", exact)).toBeVisible();
+    });
+
+    test("should save llm provider", async ({ page }) => {
+        await page.goto("/settings/global/llm-providers");
         await page.getByText("Add Provider").click();
 
         // Fill in the provider form
@@ -42,9 +53,7 @@ test.describe("LLM Provider Management", () => {
     });
 
     test("should add two providers", async ({ page }) => {
-        await expect(page).toHaveTitle(/modAI/);
-        await page.getByText("Global Settings").click();
-        await page.getByText("LLM Providers").click();
+        await page.goto("/settings/global/llm-providers");
 
         // Add first provider
         await page.getByText("Add Provider").click();
@@ -70,9 +79,7 @@ test.describe("LLM Provider Management", () => {
     });
 
     test("should not add provider with duplicate name", async ({ page }) => {
-        await expect(page).toHaveTitle(/modAI/);
-        await page.getByText("Global Settings").click();
-        await page.getByText("LLM Providers").click();
+        await page.goto("/settings/global/llm-providers");
 
         // Add first provider
         await page.getByText("Add Provider").click();
@@ -99,9 +106,7 @@ test.describe("LLM Provider Management", () => {
     });
 
     test("should update a provider", async ({ page }) => {
-        await expect(page).toHaveTitle(/modAI/);
-        await page.getByText("Global Settings").click();
-        await page.getByText("LLM Providers").click();
+        await page.goto("/settings/global/llm-providers");
 
         // Add provider
         await page.getByText("Add Provider").click();
@@ -131,9 +136,7 @@ test.describe("LLM Provider Management", () => {
     });
 
     test("should delete a provider", async ({ page }) => {
-        await expect(page).toHaveTitle(/modAI/);
-        await page.getByText("Global Settings").click();
-        await page.getByText("LLM Providers").click();
+        await page.goto("/settings/global/llm-providers");
 
         // Add provider
         await page.getByText("Add Provider").click();
