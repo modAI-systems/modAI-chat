@@ -9,8 +9,7 @@
     "check": "biome check",
     "check:write": "biome check --write",
     "preview": "vite preview",
-    "test": "pnpm test:unit",
-    "test:unit": "vitest run"
+    "test": "vitest run"
   },
   "dependencies": {
     "@ai-sdk/react": "^2.0.76",

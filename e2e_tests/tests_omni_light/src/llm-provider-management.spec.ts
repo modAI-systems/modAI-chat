@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { ChatPage, LLMProvidersPage } from "./pages";
 
 const exact = { exact: true };
 
@@ -23,33 +24,18 @@ test.describe("LLM Provider Management", () => {
     });
 
     test("should save llm provider", async ({ page }) => {
-        await page.goto("/settings/global/llm-providers");
-        await page.getByText("Add Provider").click();
+        const llmProviderPage = new LLMProvidersPage(page);
+        const chatPage = new ChatPage(page);
 
-        // Fill in the provider form
-        await page.getByLabel("Provider Name").fill("Test Provider");
-        await page.getByLabel("Base URL").fill("http://localhost:3001");
-        await page.getByLabel("API Key").fill("test-api-key");
+        await llmProviderPage.goto();
+        await llmProviderPage.addProvider("Test Provider", "http://localhost:3001", "test-api-key");
+        await llmProviderPage.assertProviderAddedSuccessfully("Test Provider");
 
-        // Click "Create Provider" button
-        await page.getByText("Create Provider").click();
+        await chatPage.navigateTo();
+        await llmProviderPage.navigateTo();
 
-        // Wait for the provider to be created (toast or form reset)
-        await expect(page.getByText("Add Provider")).toBeVisible();
-
-        // Verify the provider was created by checking if it appears in the list
-        await expect(page.getByText("Test Provider")).toBeVisible();
-
-        await page.getByText("Chat").click();
-        await expect(page).toHaveURL("/chat");
-        await page.getByText("Global Settings").click();
-        await page.getByText("LLM Providers").click();
-
-        await expect(page.getByText("Test Provider")).toBeVisible();
-        await page.getByText("Test Provider").click();
-        await expect(
-            page.locator('input[value="http://localhost:3001"]'),
-        ).toBeVisible();
+        // Assertion
+        await llmProviderPage.assertProviderExists("Test Provider", "http://localhost:3001");
     });
 
     test("should add two providers", async ({ page }) => {
