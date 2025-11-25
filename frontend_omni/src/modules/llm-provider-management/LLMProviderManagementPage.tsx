@@ -364,16 +364,16 @@ function ProviderItem({
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel>
-                                        {t("cancel", {
-                                            defaultValue: "Cancel",
+                                        {t("no", {
+                                            defaultValue: "No",
                                         })}
                                     </AlertDialogCancel>
                                     <AlertDialogAction
                                         onClick={() => onDelete(provider)}
                                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                     >
-                                        {t("delete", {
-                                            defaultValue: "Delete",
+                                        {t("yes", {
+                                            defaultValue: "Yes",
                                         })}
                                     </AlertDialogAction>
                                 </AlertDialogFooter>
@@ -499,16 +499,16 @@ function ProviderItem({
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>
-                                            {t("cancel", {
-                                                defaultValue: "Cancel",
+                                            {t("no", {
+                                                defaultValue: "No",
                                             })}
                                         </AlertDialogCancel>
                                         <AlertDialogAction
                                             onClick={() => onDelete(provider)}
                                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                         >
-                                            {t("delete", {
-                                                defaultValue: "Delete",
+                                            {t("yes", {
+                                                defaultValue: "Yes",
                                             })}
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
