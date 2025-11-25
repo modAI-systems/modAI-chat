@@ -36,7 +36,7 @@ jobs:
         run: pnpm install
       - name: Run unit tests
         working-directory: frontend_omni
-        run: pnpm test:unit
+        run: pnpm test
 
   frontend-e2e:
     runs-on: ubuntu-latest
