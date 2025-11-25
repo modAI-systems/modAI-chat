@@ -28,5 +28,7 @@
   "delete": "Delete",
   "delete-provider-title": "Delete Provider",
   "delete-provider-description": "Are you sure you want to delete \"{{providerName}}\"? This action cannot be undone.",
-  "delete-failed": "Failed to delete provider"
+  "delete-failed": "Failed to delete provider",
+  "yes": "Yes",
+  "no": "No"
 }
