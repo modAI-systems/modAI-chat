@@ -8,6 +8,7 @@ modAI-chat is a full-stack application with separate backend and frontend compon
 
 - **Backend**: Python FastAPI REST API with SQLModel persistence
 - **Frontend**: React TypeScript SPA with modular architecture
+- **E2E Tests**: Tests covering all different frontends with the (if needed) backend
 
 ## General Guidelines
 
@@ -68,7 +69,7 @@ Before any backend work, read relevant architecture documents:
 ### Testing
 
 - **Framework**: pytest
-- **Command**: `uv run pytest`
+- **Command**: `uv run pytest` or `uv run pytest tests/test_*.py`
 - **Location**: `backend/tests/`
 - **Test Coverage**: Always add unit tests for new features or bug fixes
 - **Test Isolation**: Use mocking for external dependencies
@@ -78,6 +79,7 @@ Before any backend work, read relevant architecture documents:
 
 - **Dictionary Storage**: Use SQLAlchemy's `JSON` type for dictionary fields
 - **Timestamps**: All HTTP API timestamps in UTC ISO 8601 format
+
 
 ## modAI Frontend Development
 
@@ -111,25 +113,21 @@ Before any backend work, read relevant architecture documents:
 - **JSX Functions**: JSX should never have a render.. function, but always a proper component function. Compnent functions should never be nested in other functions but on top level
 - **pnpm dev**: You should never run `pnpm dev` because this is blocking. Use `pnpm build` instead always.
 
-## Testing Commands
-
-### Backend
+### Unit Testing
 
 ```bash
-cd backend
-uv run pytest                    # Run all tests
-uv run pytest tests/test_*.py   # Run specific test file
+cd frontend_omni
+pnpm test            # Run javascript unit tests (vitest)
+pnpm check           # Run linter
 ```
 
 ### Frontend
 
-```bash
-cd frontend_omni
-pnpm test:unit                  # Run javascript unit tests (vitest)
-pnpm test:ui                    # Run full ui tests (Playwright)
-pnpm build                      # Build for production
-pnpm lint                       # Run linter
-```
+## E2E Testing
+
+**Note**: Only read this section when working with e2e tests.
+
+For comprehensive e2e testing best practices and patterns, refer to `e2e_tests/BEST_PRACTICES.md`.
 
 ## Development Workflow
 
