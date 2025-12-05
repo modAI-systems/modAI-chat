@@ -58,7 +58,8 @@ class LLMRestProviderService implements ProviderService {
             );
         }
 
-        return response.json();
+        const data = await response.json();
+        return data.providers;
     }
 
     /**

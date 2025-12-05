@@ -14,15 +14,15 @@
       "dependencies": []
     },
     {
+      "id": "chat-messages-area-pane",
+      "type": "ChatMiddlePane",
+      "path": "@/modules/chat-layout/ChatArea"
+    },
+    {
       "id": "chat-layout-fallback-router",
       "type": "FallbackRouterEntry",
       "path": "@/modules/chat-layout/FallbackRouterEntry",
       "dependencies": []
-    },
-    {
-      "id": "chat-messages-area-pane",
-      "type": "ChatMiddlePane",
-      "path": "@/modules/chat-layout/ChatArea"
     },
     {
       "id": "llm-context",

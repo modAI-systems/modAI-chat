@@ -1,5 +1,5 @@
 // Module registry for static imports of all frontend modules
-// This replaces the dynamic importModule function
+// Mabye in the future something smarter then me find a way better and we get rid of this file...
 
 import AuthRouterEntry from "@/modules/authentication/AuthRouterEntry";
 import AuthSidebarFooterItem from "@/modules/authentication/AuthSidebarFooterItem";
@@ -16,6 +16,7 @@ import LLMContextProvider from "@/modules/llm-picker/LLMContextProvider";
 import GlobalSettingsNavItem from "@/modules/llm-provider-management/GlobalSettingsNavItem";
 import GlobalSettingsRouterEntry from "@/modules/llm-provider-management/GlobalSettingsRouterEntry";
 import LLMNoBackendProviderService from "@/modules/llm-provider-service/LLMNoBackendProviderService";
+import LLMRestProviderService from "@/modules/llm-provider-service/LLMRestProviderService";
 import SessionContextProvider from "@/modules/session-provider/SessionContextProvider";
 import RouterEntryGlobal from "@/modules/settings/RouterEntryGlobal";
 import SidebarFooterItemGlobal from "@/modules/settings/SidebarFooterItemGlobal";
@@ -31,6 +32,8 @@ export const moduleRegistry: Record<string, unknown> = {
     "@/modules/llm-picker/ChatTopPane": ChatTopPane,
     "@/modules/llm-provider-service/LLMNoBackendProviderService":
         LLMNoBackendProviderService,
+    "@/modules/llm-provider-service/LLMRestProviderService":
+        LLMRestProviderService,
     "@/modules/chat-layout/ChatSidePanelProvider": ChatSidePanelProvider,
     "@/modules/settings/SidebarFooterItemGlobal": SidebarFooterItemGlobal,
     "@/modules/settings/RouterEntryGlobal": RouterEntryGlobal,
