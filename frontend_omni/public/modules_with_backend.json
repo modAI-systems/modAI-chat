@@ -72,7 +72,7 @@
     {
       "id": "llm-provider-service",
       "type": "GlobalContextProvider",
-      "path": "@/modules/llm-provider-service/LLMNoBackendProviderService"
+      "path": "@/modules/llm-provider-service/LLMRestProviderService"
     },
     {
       "id": "chat-side-panels-provider",
@@ -88,6 +88,25 @@
       "id": "global-settings-router",
       "type": "RouterEntry",
       "path": "@/modules/settings/RouterEntryGlobal"
+    },
+    {
+      "id": "llm-provider-management-router-entry",
+      "type": "GlobalSettingsRouterEntry",
+      "path": "@/modules/llm-provider-management/GlobalSettingsRouterEntry",
+      "dependencies": [
+        "module:llm-provider-service"
+      ]
+    },
+    {
+      "id": "llm-provider-management-nav-item",
+      "type": "GlobalSettingsNavItem",
+      "path": "@/modules/llm-provider-management/GlobalSettingsNavItem",
+      "dependencies": []
+    },
+    {
+      "id": "openai-chat-service",
+      "type": "openai",
+      "path": "@/modules/chat-service/OpenAIService"
     }
   ]
 }

@@ -31,11 +31,14 @@ export function ModulesProvider({
         throw new Error("Module json data is undefined");
     }
 
+    const moduleRegistry = useMemo(() => {
+        return new JsonModuleRegistry(modulesJson.modules);
+    }, [modulesJson]);
+
     const activeModules = useMemo(() => {
-        const moduleRegistry = new JsonModuleRegistry(modulesJson.modules);
         const activeModules = activateModules(moduleRegistry, flags);
         return new ActiveModules(activeModules);
-    }, [modulesJson, flags]);
+    }, [moduleRegistry, flags]);
 
     const set = (flag: string) => {
         setFlagsState((prevFlags) => {

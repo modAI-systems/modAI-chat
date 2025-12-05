@@ -28,5 +28,3 @@ export function useSession(): SessionContextType {
     }
     return context;
 }
-
-export { default as SessionGuardRoute } from "./SessionGuardRoute";
