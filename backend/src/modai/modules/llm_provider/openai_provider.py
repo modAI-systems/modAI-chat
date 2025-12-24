@@ -18,12 +18,14 @@ from modai.modules.llm_provider.module import (
 )
 from modai.modules.llm_provider_store.module import LLMProviderStore, LLMProvider
 
+OPENAI_PROVIDER_TYPE = "openai"
+
 
 class OpenAIProviderModule(LLMProviderModule):
     """Default implementation of the LLM Provider module."""
 
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
-        super().__init__(dependencies, config, "openai")
+        super().__init__(dependencies, config, OPENAI_PROVIDER_TYPE)
 
         # Get the LLM provider store dependency
         provider_store_name = config.get(
@@ -232,6 +234,7 @@ class OpenAIProviderModule(LLMProviderModule):
 
         return LLMProviderResponse(
             id=provider.id,
+            type=OPENAI_PROVIDER_TYPE,
             name=provider.name,
             base_url=provider.url,
             api_key=api_key,

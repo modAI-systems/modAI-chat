@@ -96,6 +96,43 @@ app.post("/chat/completions", async (req, res) => {
     }
 });
 
+app.post("/responses", async (req, res) => {
+    const { stream = false } = req.body;
+
+    if (stream) {
+        // Handle streaming response for responses API
+        res.setHeader("Content-Type", "text/plain");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Connection", "keep-alive");
+
+        const words = MOCK_RESPONSE_TEXT.split(" ");
+        for (let i = 0; i < words.length; i++) {
+            const event = {
+                type: "response.output_text.delta",
+                delta: words[i] + (i < words.length - 1 ? " " : ""),
+            };
+            res.write(`data: ${JSON.stringify(event)}\n\n`);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        res.write("data: [DONE]\n\n");
+        res.end();
+    } else {
+        // Handle regular response for responses API
+        res.json({
+            id: "resp-mock",
+            object: "response",
+            created_at: Math.floor(Date.now() / 1000),
+            status: "completed",
+            output_text: MOCK_RESPONSE_TEXT,
+            usage: {
+                input_tokens: 10,
+                output_tokens: 20,
+                total_tokens: 30,
+            },
+        });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Mock OpenAI server running on port ${PORT}`);
 });

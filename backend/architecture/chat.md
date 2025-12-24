@@ -1,36 +1,42 @@
 # Chat Module Architecture Document
 
 ## 1. Overview
-- **Architecture Style**: Modular REST API with clean separation between web layer, business logic, and data persistence
+- **Architecture Style**: Proxy-based REST API that provides OpenAI-compatible endpoints while routing requests to various AI model providers
 - **Design Principles**:
-  - KISS (Keep It Simple, Stupid) - minimal complexity, direct implementations
-  - Raw JSON handling without over-engineered validation
-  - Clear separation of concerns between HTTP handling, chat logic, and storage
-- **Quality Attributes**: Simple, maintainable, extensible for different AI models
+  - KISS (Keep It Simple, Stupid) - minimal complexity, direct proxy implementations
+  - API Compatibility - Full compatibility with OpenAI's Responses and Conversations APIs
+  - Transparent Routing - Internal model routing is invisible to clients
+  - Clear separation of concerns between HTTP proxying, model routing, and provider communication
+- **Quality Attributes**: Simple, compatible, extensible for different AI providers (OpenAI, Anthropic, Ollama, etc.)
 
 ## 2. System Context
-- **System Boundary**: Chat modules operates within the modAI core framework as a loadable web modules
-- **External Systems**: AI model providers (OpenAI, Anthropic, local models)
-- **Users and Stakeholders**: End users making chat requests via REST API
-- **Data Flow**: HTTP requests → Chat processing → AI model calls → Response generation → Chat History → Storage
+- **System Boundary**: Chat module operates as an OpenAI-compatible API proxy within the modAI core framework
+- **External Systems**: Multiple AI model providers (OpenAI, Anthropic, Ollama, local models) via their respective APIs
+- **Users and Stakeholders**: Clients that expect OpenAI's Responses and Conversations API format
 
 ```mermaid
 flowchart TD
-    A[HTTP Client] --> B[Chat Module]
-    B --> C[OpeanAI Model Provider]
-    C --> F[Model Provider Store]
-    B --> D[Chat History Module]
-    D --> E[Chat Storage]
-    A --> D
+    A[HTTP Client]
+    A -->|Responses| C[Responses API]
+    A -->|Conversations| D[Conversations API]
+    C --> E[Real Provider]
+    D --> F[Conversation Store]
 ```
 
 ## 3. API Endpoints and Status Codes
 
-- **3.1 Chat Completions**
-  - `POST /api/v1/chat/completions` - Process chat completion requests
-- **3.2 Chat History**
-  - `GET /api/v1/chat/history/{conversation_id}` - Retrieve chat conversation history
-  - `GET /api/v1/chat/histories` - List all chat conversations for user
+- **3.1 Responses API (Chat Functionality)**
+  - `POST /responses` - Create a new response (chat completion)
+  - `GET /responses/{response_id}` - Retrieve a response
+  - `DELETE /responses/{response_id}` - Delete a response
+  - `POST /responses/{response_id}/cancel` - Cancel a response
+- **3.2 Conversations API (Chat Conversations)**
+  - `POST /conversations` - Create a new conversation
+  - `GET /conversations/{conversation_id}` - Retrieve a conversation
+  - `POST /conversations/{conversation_id}/items` - Create conversation items
+  - `GET /conversations/{conversation_id}/items` - List conversation items
+  - `GET /conversations/{conversation_id}/items/{item_id}` - Get a conversation item
+  - `DELETE /conversations/{conversation_id}/items/{item_id}` - Delete a conversation item
 - **3.3 LLM Providers**
   - `GET /api/v1/llm-provider/openai` - Retrieve configured OpenAI providers
   - `POST /api/v1/llm-provider/openai` - Create new OpenAI provider
@@ -39,291 +45,93 @@ flowchart TD
   - `GET /api/v1/llm-provider/openai/{provider_id}/models` - Retrieve available models from provider
   - `DELETE /api/v1/llm-provider/openai/{provider_id}` - Delete OpenAI provider
 
-### 3.1 Chat Completions
+### 3.1 Responses API (Chat Functionality)
 
-#### 3.1.1 Chat Completion Endpoint
+The Responses API provides OpenAI-compatible endpoints for chat completions. The backend acts as a proxy, accepting requests in OpenAI's format, determining the appropriate AI provider based on the requested model, translating the request to the provider's API format, and returning responses in OpenAI's format.
 
-**Endpoint**: `POST /api/v1/chat/completions`
+**Architecture Details**:
+- **Model Resolution**: Extract model ID from request, query model_provider_store to find the corresponding provider
+- **Request Translation**: Convert OpenAI Responses format to provider-specific API (e.g., chat/completions for OpenAI, or other formats for Anthropic/Ollama)
+- **Provider Communication**: Route request to the selected provider's API
+- **Response Translation**: Convert provider response back to OpenAI Responses format
+- **Error Handling**: Map provider errors to OpenAI-compatible error codes
 
-**Purpose**: Process chat completion requests using configured AI model providers
+**Module Dependencies**:
+- `model_provider_store`: For resolving models to providers
+- Provider-specific modules: For API communication and translation
+
+#### 3.1.1 Create Response Endpoint
+
+**Endpoint**: `POST /responses`
+
+**Purpose**: Create a new chat response (equivalent to chat completion)
+
+**Status Codes**:
+- `200 OK`: Response successfully created
+- `400 Bad Request`: Invalid request format
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: Model not found
+- `429 Too Many Requests`: Rate limiting exceeded
+- `500 Internal Server Error`: Internal system failure
+- `502 Bad Gateway`: Provider error
+- `503 Service Unavailable`: Provider temporarily unavailable
 
 **Request Format**:
 ```json
 {
-  "provider": "open-ai",
   "model": "gpt-4",
   "input": [
-    {"role": "user", "content": "Hello, world"}
-  ]
-}
-```
-
-**Content Type Handling**:
-To stream or not stream the response, this can be handled via the "Accept" HTTP Header. These two are supported:
-* `application/json` - Non-streaming response
-* `text/event-stream` - Streaming response via Server-Sent Events
-
-If both are set, the response is streamed.
-
-**Response Format (Non-streaming)**:
-```json
-{
-  "output": [
     {
-      "text": "Hi there!",
-      "type": "text"
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Hello, how are you?"
+        }
+      ],
+      "role": "user"
     }
   ],
-  "id": "1",
-  "model": "gpt-4",
-  "role": "assistant",
-  "usage": {
-    "input_tokens": 2095,
-    "output_tokens": 503
-  }
+  "instructions": "You are a helpful assistant.",
+  "max_output_tokens": 100
 }
 ```
-
-**Response Format (Streaming via SSE)**:
-```json
-{
-  "output": [
-    {
-      "text": "Hi ",
-      "type": "text_chunk"
-    }
-  ],
-  "id": "1",
-  "model": "gpt-4",
-  "role": "assistant"
-}
-
-{
-  "output": [
-    {
-      "text": "there!",
-      "type": "text_chunk"
-    }
-  ],
-  "id": "1",
-  "model": "gpt-4",
-  "role": "assistant",
-  "usage": {
-    "input_tokens": 2095,
-    "output_tokens": 503
-  }
-}
-```
-
-After the last chunk, the SSE connection is closed by the server.
-
-**Error Response Format**:
-
-```json
-{
-  "message": "Error description",
-  "error_code": "SPECIFIC_ERROR_CODE",
-  "details": {
-    "provider": "openai",
-    "model": "gpt-4"
-  }
-}
-```
-
-**Error Scenarios**:
-
-*400 Bad Request*:
-```json
-{
-  "message": "Missing required field: input",
-  "error_code": "MISSING_FIELD"
-}
-```
-
-*401 Unauthorized*:
-```json
-{
-  "message": "Authentication required",
-  "error_code": "AUTHENTICATION_REQUIRED"
-}
-```
-
-*403 Forbidden*:
-```json
-{
-  "message": "Insufficient permissions for chat access",
-  "error_code": "INSUFFICIENT_PERMISSIONS"
-}
-```
-
-*408 Request Timeout*:
-```json
-{
-  "message": "Chat completion request timed out",
-  "error_code": "REQUEST_TIMEOUT",
-  "details": {
-    "timeout_seconds": 120
-  }
-}
-```
-
-*413 Payload Too Large*:
-```json
-{
-  "message": "Input content exceeds maximum size limit",
-  "error_code": "PAYLOAD_TOO_LARGE",
-  "details": {
-    "max_tokens": 32000,
-    "received_tokens": 50000
-  }
-}
-```
-
-*415 Unsupported Media Type*:
-```json
-{
-  "message": "Content-Type must be application/json",
-  "error_code": "UNSUPPORTED_MEDIA_TYPE"
-}
-```
-
-*422 Unprocessable Entity*:
-```json
-{
-  "message": "Invalid provider or model",
-  "error_code": "INVALID_PROVIDER_MODEL",
-  "details": {
-    "provider": "invalid-provider",
-    "model": "gpt-4"
-  }
-}
-```
-
-*429 Too Many Requests*:
-```json
-{
-  "message": "Rate limit exceeded. Try again later",
-  "error_code": "RATE_LIMIT_EXCEEDED"
-}
-```
-
-*500 Internal Server Error*:
-```json
-{
-  "message": "AI provider returned an error",
-  "error_code": "PROVIDER_ERROR",
-  "details": {
-    "provider": "openai",
-    "provider_error": "Model overloaded"
-  }
-}
-```
-
-*502 Bad Gateway*:
-```json
-{
-  "message": "Invalid response from AI provider",
-  "error_code": "INVALID_PROVIDER_RESPONSE",
-  "details": {
-    "provider": "openai",
-    "model": "gpt-4"
-  }
-}
-```
-
-*503 Service Unavailable*:
-```json
-{
-  "message": "AI provider temporarily unavailable",
-  "error_code": "PROVIDER_UNAVAILABLE",
-  "details": {
-    "provider": "openai"
-  }
-}
-```
-
-*504 Gateway Timeout*:
-```json
-{
-  "message": "AI provider did not respond in time",
-  "error_code": "GATEWAY_TIMEOUT",
-  "details": {
-    "provider": "openai",
-    "timeout_seconds": 300
-  }
-}
-```
-
-### 3.2 Chat History
-
-#### 3.2.1 Chat History Endpoint
-
-**Endpoint**: `GET /api/v1/chat/history/{conversation_id}`
-
-**Purpose**: Retrieve chat conversation history for a specific conversation
-
-**Path Parameters**:
-- `conversation_id` (string): Unique identifier for the conversation
-
-**Query Parameters**:
-- `limit` (integer, optional): Maximum number of messages to return (default: 50, max: 100)
-- `offset` (integer, optional): Number of messages to skip for pagination (default: 0)
-- `order` (string, optional): Order of messages - "asc" or "desc" (default: "asc")
-
-**Status Codes**:
-- `200 OK`: Successfully retrieved chat history
-- `400 Bad Request`: Invalid query parameters
-- `401 Unauthorized`: Authentication required
-- `403 Forbidden`: Insufficient permissions to access conversation
-- `404 Not Found`: Conversation not found
-- `429 Too Many Requests`: Rate limiting exceeded
-- `500 Internal Server Error`: Internal system failure
-- `503 Service Unavailable`: Chat history store temporarily unavailable
 
 **Response Format (200 OK)**:
 ```json
 {
-  "conversation_id": "conv-123",
-  "messages": [
+  "id": "resp_1234567890",
+  "object": "response",
+  "created_at": 1677652288,
+  "status": "completed",
+  "model": "gpt-4",
+  "input": [
     {
-      "id": "msg-1",
-      "role": "user",
-      "content": "Hello, world",
-      "timestamp": "2024-01-15T10:30:00Z"
-    },
-    {
-      "id": "msg-2",
-      "role": "assistant",
-      "content": "Hi there! How can I help you today?",
-      "model": "gpt-4",
-      "timestamp": "2024-01-15T10:30:05Z",
-      "usage": {
-        "input_tokens": 2095,
-        "output_tokens": 503
-      }
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Hello, how are you?"
+        }
+      ],
+      "role": "user"
     }
   ],
-  "pagination": {
-    "total_messages": 25,
-    "limit": 50,
-    "offset": 0,
-    "has_more": false
-  },
-  "metadata": {
-    "created_at": "2024-01-15T10:29:00Z",
-    "updated_at": "2024-01-15T10:30:05Z",
-    "message_count": 25
-  }
-}
-```
-
-**Error Response Format**:
-```json
-{
-  "message": "Error description",
-  "error_code": "SPECIFIC_ERROR_CODE",
-  "details": {
-    "conversation_id": "conv-123"
+  "output": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Hello! I'm doing well, thank you for asking. How can I help you today?"
+        }
+      ],
+      "role": "assistant",
+      "type": "message"
+    }
+  ],
+  "usage": {
+    "input_tokens": 10,
+    "output_tokens": 20,
+    "total_tokens": 30
   }
 }
 ```
@@ -333,31 +141,10 @@ After the last chunk, the SSE connection is closed by the server.
 *400 Bad Request*:
 ```json
 {
-  "message": "Invalid limit parameter. Must be between 1 and 100",
-  "error_code": "INVALID_PARAMETER",
-  "details": {
-    "parameter": "limit",
-    "value": 150,
-    "max_allowed": 100
-  }
-}
-```
-
-*401 Unauthorized*:
-```json
-{
-  "message": "Authentication required",
-  "error_code": "AUTHENTICATION_REQUIRED"
-}
-```
-
-*403 Forbidden*:
-```json
-{
-  "message": "Insufficient permissions to access this conversation",
-  "error_code": "INSUFFICIENT_PERMISSIONS",
-  "details": {
-    "conversation_id": "conv-123"
+  "error": {
+    "message": "Invalid request: missing model parameter",
+    "type": "invalid_request_error",
+    "code": "missing_required_parameter"
   }
 }
 ```
@@ -365,195 +152,253 @@ After the last chunk, the SSE connection is closed by the server.
 *404 Not Found*:
 ```json
 {
-  "message": "Conversation not found",
-  "error_code": "CONVERSATION_NOT_FOUND",
-  "details": {
-    "conversation_id": "conv-invalid"
+  "error": {
+    "message": "Model 'unknown-model' not found",
+    "type": "invalid_request_error",
+    "code": "model_not_found"
   }
 }
 ```
 
-*429 Too Many Requests*:
-```json
-{
-  "message": "Rate limit exceeded. Try again later",
-  "error_code": "RATE_LIMIT_EXCEEDED"
-}
-```
+#### 3.1.2 Get Response Endpoint
 
-*500 Internal Server Error*:
-```json
-{
-  "message": "Internal server error while retrieving chat history",
-  "error_code": "INTERNAL_ERROR"
-}
-```
+**Endpoint**: `GET /responses/{response_id}`
 
-*503 Service Unavailable*:
-```json
-{
-  "message": "Chat history store temporarily unavailable",
-  "error_code": "STORE_UNAVAILABLE"
-}
-```
-
-#### Chat History Data Structure
-
-The chat history follows this data model for storage and retrieval:
-
-```json
-{
-  "conversation_id": "conv-123",
-  "user_id": "user-456",
-  "messages": [
-    {
-      "id": "msg-1",
-      "role": "user|assistant|system",
-      "content": "Message content",
-      "timestamp": "2024-01-15T10:30:00Z",
-      "model": "gpt-4",
-      "usage": {
-        "input_tokens": 2095,
-        "output_tokens": 503
-      }
-    }
-  ],
-  "metadata": {
-    "created_at": "2024-01-15T10:29:00Z",
-    "updated_at": "2024-01-15T10:30:05Z",
-    "title": "Conversation about...",
-    "tags": ["general", "help"]
-  }
-}
-```
-
-#### 3.2.2 List Chat Histories Endpoint
-
-**Endpoint**: `GET /api/v1/chat/histories`
-
-**Purpose**: Retrieve a list of all chat conversations for the authenticated user
-
-**Query Parameters**:
-- `limit` (integer, optional): Maximum number of conversations to return (default: 20, max: 100)
-- `offset` (integer, optional): Number of conversations to skip for pagination (default: 0)
-- `order` (string, optional): Order of conversations - "asc" or "desc" by updated_at (default: "desc")
-- `search` (string, optional): Search term to filter conversations by title or content
-- `tags` (string, optional): Comma-separated list of tags to filter by
+**Purpose**: Retrieve a previously created response
 
 **Status Codes**:
-- `200 OK`: Successfully retrieved conversation list
-- `400 Bad Request`: Invalid query parameters
+- `200 OK`: Response retrieved successfully
 - `401 Unauthorized`: Authentication required
 - `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: Response not found
 - `429 Too Many Requests`: Rate limiting exceeded
 - `500 Internal Server Error`: Internal system failure
-- `503 Service Unavailable`: Chat history store temporarily unavailable
 
 **Response Format (200 OK)**:
 ```json
 {
-  "conversations": [
+  "id": "resp_1234567890",
+  "object": "response",
+  "created_at": 1677652288,
+  "status": "completed",
+  "model": "gpt-4",
+  "input": [...],
+  "output": [...],
+  "usage": {...}
+}
+```
+
+#### 3.1.3 Delete Response Endpoint
+
+**Endpoint**: `DELETE /responses/{response_id}`
+
+**Purpose**: Delete a response
+
+**Status Codes**:
+- `204 No Content`: Response deleted successfully
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: Response not found
+- `429 Too Many Requests`: Rate limiting exceeded
+- `500 Internal Server Error`: Internal system failure
+
+#### 3.1.4 Cancel Response Endpoint
+
+**Endpoint**: `POST /responses/{response_id}/cancel`
+
+**Purpose**: Cancel an in-progress response
+
+**Status Codes**:
+- `200 OK`: Response cancelled successfully
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: Response not found
+- `409 Conflict`: Response already completed
+- `429 Too Many Requests`: Rate limiting exceeded
+- `500 Internal Server Error`: Internal system failure
+
+### 3.2 Conversations API (Chat Conversations)
+
+The Conversations API provides OpenAI-compatible endpoints for managing chat conversations. The backend stores conversation data locally while routing individual chat requests through the Responses API flow.
+
+**Architecture Details**:
+- **Storage**: Conversations and items are stored in the local database
+- **Integration**: Chat responses within conversations are created via the Responses API
+- **Model Consistency**: Conversation items reference models, which are resolved to providers as needed
+
+**Module Dependencies**:
+- `chat_storage`: For persisting conversations and conversation items
+- `responses_api`: For generating chat responses within conversations
+
+#### 3.2.1 Create Conversation Endpoint
+
+**Endpoint**: `POST /conversations`
+
+**Purpose**: Create a new conversation
+
+**Status Codes**:
+- `201 Created`: Conversation created successfully
+- `400 Bad Request`: Invalid request format
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Insufficient permissions
+- `429 Too Many Requests`: Rate limiting exceeded
+- `500 Internal Server Error`: Internal system failure
+
+**Request Format**:
+```json
+{
+  "model": "gpt-4",
+  "messages": [
     {
-      "conversation_id": "conv-123",
-      "title": "Discussion about AI models",
-      "preview": "Hello, world...",
-      "message_count": 25,
-      "created_at": "2024-01-15T10:29:00Z",
-      "updated_at": "2024-01-15T10:35:00Z",
-      "tags": ["ai", "general"],
-      "last_message": {
-        "role": "assistant",
-        "content": "I hope this helps! Let me know if you have any other questions.",
-        "timestamp": "2024-01-15T10:35:00Z"
-      }
-    },
+      "role": "user",
+      "content": "Hello!"
+    }
+  ]
+}
+```
+
+**Response Format (201 Created)**:
+```json
+{
+  "id": "conv_1234567890",
+  "object": "conversation",
+  "created_at": 1677652288,
+  "model": "gpt-4",
+  "messages": [
     {
-      "conversation_id": "conv-456",
-      "title": "Python programming help",
-      "preview": "Can you help me with...",
-      "message_count": 12,
-      "created_at": "2024-01-14T14:20:00Z",
-      "updated_at": "2024-01-14T15:10:00Z",
-      "tags": ["programming", "python"],
-      "last_message": {
-        "role": "user",
-        "content": "Thanks for the explanation!",
-        "timestamp": "2024-01-14T15:10:00Z"
-      }
+      "id": "msg_1234567890",
+      "role": "user",
+      "content": "Hello!",
+      "created_at": 1677652288
+    }
+  ]
+}
+```
+
+#### 3.2.2 Get Conversation Endpoint
+
+**Endpoint**: `GET /conversations/{conversation_id}`
+
+**Purpose**: Retrieve a conversation
+
+**Status Codes**:
+- `200 OK`: Conversation retrieved successfully
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: Conversation not found
+- `429 Too Many Requests`: Rate limiting exceeded
+- `500 Internal Server Error`: Internal system failure
+
+**Response Format (200 OK)**:
+```json
+{
+  "id": "conv_1234567890",
+  "object": "conversation",
+  "created_at": 1677652288,
+  "model": "gpt-4",
+  "messages": [...]
+}
+```
+
+#### 3.2.3 Create Conversation Item Endpoint
+
+**Endpoint**: `POST /conversations/{conversation_id}/items`
+
+**Purpose**: Add a new item (message) to a conversation, potentially generating a response
+
+**Status Codes**:
+- `201 Created`: Item created successfully
+- `400 Bad Request`: Invalid request format
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: Conversation not found
+- `429 Too Many Requests`: Rate limiting exceeded
+- `500 Internal Server Error`: Internal system failure
+
+**Request Format**:
+```json
+{
+  "type": "message",
+  "content": [
+    {
+      "type": "text",
+      "text": "Tell me a joke."
     }
   ],
-  "pagination": {
-    "total_conversations": 15,
-    "limit": 20,
-    "offset": 0,
-    "has_more": false
-  }
+  "role": "user"
 }
 ```
 
-**Error Response Format**:
+**Response Format (201 Created)**:
 ```json
 {
-  "message": "Error description",
-  "error_code": "SPECIFIC_ERROR_CODE",
-  "details": {}
+  "id": "item_1234567890",
+  "object": "conversation.item",
+  "created_at": 1677652288,
+  "type": "message",
+  "content": [...],
+  "role": "user"
 }
 ```
 
-**Error Scenarios**:
+#### 3.2.4 List Conversation Items Endpoint
 
-*400 Bad Request*:
+**Endpoint**: `GET /conversations/{conversation_id}/items`
+
+**Purpose**: List all items in a conversation
+
+**Status Codes**:
+- `200 OK`: Items retrieved successfully
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: Conversation not found
+- `429 Too Many Requests`: Rate limiting exceeded
+- `500 Internal Server Error`: Internal system failure
+
+**Response Format (200 OK)**:
 ```json
 {
-  "message": "Invalid limit parameter. Must be between 1 and 100",
-  "error_code": "INVALID_PARAMETER",
-  "details": {
-    "parameter": "limit",
-    "value": 150,
-    "max_allowed": 100
-  }
+  "object": "list",
+  "data": [
+    {
+      "id": "item_1234567890",
+      "object": "conversation.item",
+      "created_at": 1677652288,
+      "type": "message",
+      "content": [...],
+      "role": "user"
+    }
+  ]
 }
 ```
 
-*401 Unauthorized*:
-```json
-{
-  "message": "Authentication required",
-  "error_code": "AUTHENTICATION_REQUIRED"
-}
-```
+#### 3.2.5 Get Conversation Item Endpoint
 
-*403 Forbidden*:
-```json
-{
-  "message": "Insufficient permissions to access chat histories",
-  "error_code": "INSUFFICIENT_PERMISSIONS"
-}
-```
+**Endpoint**: `GET /conversations/{conversation_id}/items/{item_id}`
 
-*429 Too Many Requests*:
-```json
-{
-  "message": "Rate limit exceeded. Try again later",
-  "error_code": "RATE_LIMIT_EXCEEDED"
-}
-```
+**Purpose**: Retrieve a specific conversation item
 
-*500 Internal Server Error*:
-```json
-{
-  "message": "Internal server error while retrieving conversations",
-  "error_code": "INTERNAL_ERROR"
-}
-```
+**Status Codes**:
+- `200 OK`: Item retrieved successfully
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: Conversation or item not found
+- `429 Too Many Requests`: Rate limiting exceeded
+- `500 Internal Server Error`: Internal system failure
 
-*503 Service Unavailable*:
-```json
-{
-  "message": "Chat history store temporarily unavailable",
-  "error_code": "STORE_UNAVAILABLE"
-}
-```
+#### 3.2.6 Delete Conversation Item Endpoint
+
+**Endpoint**: `DELETE /conversations/{conversation_id}/items/{item_id}`
+
+**Purpose**: Delete a conversation item
+
+**Status Codes**:
+- `204 No Content`: Item deleted successfully
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: Conversation or item not found
+- `429 Too Many Requests`: Rate limiting exceeded
+- `500 Internal Server Error`: Internal system failure
 
 ### 3.3 LLM Providers
 
