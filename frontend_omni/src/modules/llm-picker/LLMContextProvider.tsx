@@ -13,9 +13,7 @@ interface LLMContextProviderProps {
 
 const STORAGE_KEY = "llm-selected-model";
 
-export default function LLMContextProvider({
-    children,
-}: LLMContextProviderProps) {
+export function LLMContextProvider({ children }: LLMContextProviderProps) {
     const service = useLLMProviderService();
 
     // Get the last session selected model from localStorage

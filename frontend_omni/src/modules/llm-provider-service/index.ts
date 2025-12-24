@@ -13,7 +13,7 @@ export interface Provider {
     id: string;
     type: string;
     name: string;
-    url: string;
+    base_url: string;
     api_key: string;
     properties: Record<string, unknown>;
     created_at: string | null;

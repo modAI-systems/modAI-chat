@@ -12,10 +12,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.6",
-    "@playwright/test": "^1.56.1",
-    "@types/node": "^24.3.0",
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^24.10.4",
     "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "playwright": "^1.56.1"
+    "express": "^5.2.1",
+    "playwright": "^1.57.0"
   }
 }

@@ -107,7 +107,8 @@ class LLMRestProviderService implements ProviderService {
             );
         }
 
-        return response.json();
+        const data = await response.json();
+        return data.models;
     }
 
     /**
@@ -184,7 +185,7 @@ class LLMRestProviderService implements ProviderService {
  * Context provider that makes the LLM provider service available
  * throughout the application component tree
  */
-export default function LLMRestProviderServiceContextProvider({
+export function LLMRestProviderServiceContextProvider({
     children,
 }: {
     children: React.ReactNode;

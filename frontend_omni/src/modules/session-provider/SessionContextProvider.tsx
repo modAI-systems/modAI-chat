@@ -15,7 +15,7 @@ const MODULE_FLAG_SESSION_ACTIVE = "sessionActive";
 /**
  * SessionProvider component that manages session state using the Session class
  */
-export default function SessionContextProvider({
+export function SessionContextProvider({
     children,
 }: SessionProviderProps): React.JSX.Element {
     const userService = useUserService();

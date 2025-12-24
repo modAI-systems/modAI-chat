@@ -1,24 +1,17 @@
-import { Route } from "react-router-dom";
+import type { RouteObject } from "react-router-dom";
+import type { Modules } from "@/modules/module-system";
 import { LoginPage } from "./LoginPage";
 import RegisterPage from "./RegisterPage";
 
-export default function AuthRouterEntry() {
-    return (
-        <>
-            <Route
-                key="authentication-login"
-                path="/login"
-                element={
-                    <LoginPage />
-                }
-            />
-            <Route
-                key="authentication-register"
-                path="/register"
-                element={
-                    <RegisterPage />
-                }
-            />
-        </>
-    );
+export function createAuthRouterEntry(_modules: Modules): RouteObject[] {
+    return [
+        {
+            path: "/login",
+            element: <LoginPage />,
+        },
+        {
+            path: "/register",
+            element: <RegisterPage />,
+        },
+    ];
 }
