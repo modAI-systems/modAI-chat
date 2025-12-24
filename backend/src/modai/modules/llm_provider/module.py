@@ -15,6 +15,7 @@ class LLMProviderResponse(BaseModel):
     """Response model for LLM Provider data"""
 
     id: str
+    type: str
     name: str
     base_url: str
     api_key: str

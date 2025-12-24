@@ -12,10 +12,16 @@ dependencies = [
     "pyjwt",
     "python-dotenv",
     "sqlalchemy",
+    "requests>=2.32.5",
 ]
 
 [dependency-groups]
-dev = ["pytest", "pytest-asyncio", "ruff"]
+dev = [
+    "datamodel-code-generator>=0.43.1",
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+]
 
 [tool.uv]
 package = true

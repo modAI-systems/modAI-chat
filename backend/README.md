@@ -35,6 +35,34 @@ Run tests with:
 uv run pytest
 ```
 
+### vscode
+
+When using vscode to run tests in the editor, make sure to configure the root dir for pytests
+properly in the `.vscode/settings.json`:
+
+```json
+{
+    "python.testing.pytestArgs": [],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.cwd": "${workspaceFolder}/backend"
+}
+```
+
+## Code Quality
+
+To check code formatting with ruff:
+
+```bash
+uv run ruff format --check .
+```
+
+To automatically format code with ruff:
+
+```bash
+uv run ruff format .
+```
+
 ## 👥 Shared Responsibility
 
 | Component | Responsibility |
