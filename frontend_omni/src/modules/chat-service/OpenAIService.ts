@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import type { ResponseInput } from "openai/resources/responses/responses.mjs";
 import type { Model, Provider } from "@/modules/llm-provider-service";
 import type { ChatService, Message, MessagePart } from "./index";
 import { MessagePartType } from "./index";
@@ -14,36 +15,37 @@ export class OpenAIChatService implements ChatService {
 
         const openai = new OpenAI({
             apiKey: provider.api_key,
-            baseURL: provider.url,
+            baseURL: provider.base_url,
             dangerouslyAllowBrowser: true,
         });
 
         try {
-            const openaiMessages = previousMessages.map((msg) => ({
+            const inputItems = previousMessages.map((msg) => ({
+                type: "message",
                 role: msg.role,
-                content: msg.content,
+                content: [{ type: "text", text: msg.content }],
             }));
 
-            const allMessages = [
-                ...openaiMessages,
-                {
-                    role: "user" as const,
-                    content: message.trim(),
-                },
-            ];
+            inputItems.push({
+                type: "message",
+                role: "user",
+                content: [{ type: "text", text: message.trim() }],
+            });
 
-            const stream = await openai.chat.completions.create({
+            const stream = await openai.responses.create({
                 model: model.name,
-                messages: allMessages,
+                input: inputItems as ResponseInput,
                 stream: true,
             });
 
-            for await (const chunk of stream) {
-                const delta = chunk.choices[0]?.delta?.content;
-                if (delta) {
+            for await (const event of stream) {
+                if (
+                    event.type === "response.output_text.delta" &&
+                    event.delta
+                ) {
                     yield {
                         type: MessagePartType.TEXT,
-                        text: delta,
+                        text: event.delta,
                     };
                 }
             }

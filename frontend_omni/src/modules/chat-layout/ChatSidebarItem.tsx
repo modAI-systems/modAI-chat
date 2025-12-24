@@ -6,7 +6,7 @@ import {
     SidebarMenuItem,
 } from "@/shadcn/components/ui/sidebar";
 
-export default function ChatSidebarItem() {
+export function ChatSidebarItem() {
     const { t } = useTranslation("chat-layout");
     const location = useLocation();
 

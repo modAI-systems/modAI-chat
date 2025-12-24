@@ -160,7 +160,7 @@ The root application itself only defines a main layout looking like this:
 
 No actual components like Login, Chat, Authentication or the like are used in the root application directly. This is all done by modules. Instead, the root application uses the module system to allow other modules very flexible integration within the main layout. The root app supports (via the module system):
 
-- **Routing**: Define module specific routes. Routed components automatically are displayed in the `RouterEntry`
+- **Routing**: Define module specific routes. Routed components are displayed in the main area.
 - **Sidebar**: Integrate into the main application sidebar
 - **Context**: Allow other modules to register context providers which will be installed at a global level and therefore making state available throughout the whole application
 

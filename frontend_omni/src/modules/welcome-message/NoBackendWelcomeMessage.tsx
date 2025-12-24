@@ -2,7 +2,7 @@ import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription } from "@/shadcn/components/ui/alert";
 
-export default function NoBackendWelcomeMessage() {
+export function NoBackendWelcomeMessage() {
     const { t } = useTranslation("welcome-message");
 
     return (

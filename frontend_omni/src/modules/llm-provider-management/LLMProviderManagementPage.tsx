@@ -87,7 +87,7 @@ export default function LLMProviderManagementPage() {
         setSaveError(null);
         setFormData({
             name: provider.name,
-            base_url: provider.url,
+            base_url: provider.base_url,
             api_key: provider.api_key,
             properties: provider.properties,
         });

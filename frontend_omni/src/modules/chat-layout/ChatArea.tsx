@@ -21,7 +21,7 @@ const createAssistantMessage = (parts: MessagePart[]) => {
     };
 };
 
-export default function ChatArea() {
+export function ChatArea() {
     const modules = useModules();
     const ChatTopPane = modules.getOne<ComponentType>("ChatTopPane");
 

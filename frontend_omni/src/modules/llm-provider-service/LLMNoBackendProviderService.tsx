@@ -101,7 +101,7 @@ class LLMNoBackendProviderService implements ProviderService {
             return [];
         }
 
-        const response = await fetch(`${provider.url}/models`, {
+        const response = await fetch(`${provider.base_url}/models`, {
             headers: {
                 Authorization: `Bearer ${provider.api_key}`,
             },
@@ -149,7 +149,7 @@ class LLMNoBackendProviderService implements ProviderService {
             id: `llm_${typeValue}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             type: typeValue,
             name: data.name,
-            url: data.base_url,
+            base_url: data.base_url,
             api_key: data.api_key,
             properties: data.properties || {},
             created_at: now,
@@ -198,7 +198,7 @@ class LLMNoBackendProviderService implements ProviderService {
         const updatedProvider: Provider = {
             ...provider,
             name: data.name,
-            url: data.base_url,
+            base_url: data.base_url,
             api_key: data.api_key,
             properties: data.properties,
             updated_at: new Date().toISOString(),
@@ -240,7 +240,7 @@ class LLMNoBackendProviderService implements ProviderService {
  * Context provider that makes the LLM provider service available
  * throughout the application component tree
  */
-export default function LLMNoBackendProviderServiceContextProvider({
+export function LLMNoBackendProviderServiceContextProvider({
     children,
 }: {
     children: React.ReactNode;

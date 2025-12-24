@@ -1,13 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type React from "react";
 import { Suspense } from "react";
 import {
+    createBrowserRouter,
     Navigate,
-    Route,
-    BrowserRouter as Router,
-    Routes,
+    Outlet,
+    type RouteObject,
+    RouterProvider,
 } from "react-router-dom";
-import { useModules } from "@/modules/module-system";
+import { type Modules, useModules } from "@/modules/module-system";
 import { ModulesProvider } from "@/modules/module-system/ModulesContext";
 import { ThemeProvider } from "@/modules/theme-provider/ThemeProvider";
 import { SidebarProvider } from "@/shadcn/components/ui/sidebar";
@@ -39,37 +39,43 @@ export default function App() {
 
 function RoutedSidebarLayout() {
     const modules = useModules();
-    const routerEntryComponents =
-        modules.getAll<() => React.JSX.Element>("RouterEntry");
-    const fallbackRouterEntry = modules.getOne<() => React.JSX.Element>(
+
+    const routerEntries = modules
+        .getAll<(modules: Modules) => RouteObject[]>("RouterEntry")
+        .flatMap((fn) => fn(modules));
+    const fallbackRoute = modules.getOne<(modules: Modules) => RouteObject>(
         "FallbackRouterEntry",
     );
 
-    return (
-        <Router>
-            <SidebarProvider>
-                <AppSidebar />
-                <main className="min-h-screen h-screen flex-1 bg-background text-foreground">
-                    <ErrorBoundary>
-                        <Routes>
-                            {routerEntryComponents.map((createRoute) =>
-                                // Usually elements of the `modules.getAll(...)` are react components
-                                // and should be used as <Component />. However, this doesn't work her for the router
-                                // because it needs to return a <Route> element. Therefore we call the function directly.
-                                createRoute(),
-                            )}
-                            {fallbackRouterEntry ? (
-                                fallbackRouterEntry()
-                            ) : (
-                                <Route
-                                    path="*"
-                                    element={<Navigate to="/" replace />}
-                                />
-                            )}
-                        </Routes>
-                    </ErrorBoundary>
-                </main>
-            </SidebarProvider>
-        </Router>
-    );
+    const routes: RouteObject[] = [
+        {
+            path: "/",
+            element: (
+                <SidebarProvider>
+                    <AppSidebar />
+                    <main className="min-h-screen h-screen flex-1 bg-background text-foreground">
+                        <ErrorBoundary>
+                            <Outlet />
+                        </ErrorBoundary>
+                    </main>
+                </SidebarProvider>
+            ),
+            children: routerEntries,
+        },
+    ];
+
+    if (fallbackRoute) {
+        const fallback = fallbackRoute(modules);
+        routes[0].children?.push({ index: true, element: fallback.element });
+        routes[0].children?.push(fallback);
+    } else {
+        routes[0].children?.push({
+            path: "*",
+            element: <Navigate to="/" replace />,
+        });
+    }
+
+    const router = createBrowserRouter(routes);
+
+    return <RouterProvider router={router} />;
 }

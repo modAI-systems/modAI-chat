@@ -9,7 +9,7 @@
     {
       "id": "authentication-router",
       "type": "RouterEntry",
-      "path": "@/modules/authentication/AuthRouterEntry",
+      "path": "@/modules/authentication/createAuthRouterEntry",
       "dependencies": ["module:authentication-service", "flag:!sessionActive"]
     },
     {
@@ -21,7 +21,7 @@
     {
       "id": "authentication-fallback-router",
       "type": "FallbackRouterEntry",
-      "path": "@/modules/authentication/FallbackRouterEntry",
+      "path": "@/modules/authentication/createAuthFallbackRouterEntry",
       "dependencies": ["flag:!sessionActive"]
     },
     {
@@ -44,7 +44,7 @@
     {
       "id": "chat-layout-router",
       "type": "RouterEntry",
-      "path": "@/modules/chat-layout/ChatRouterEntry",
+      "path": "@/modules/chat-layout/createChatRouterEntry",
       "dependencies": ["module:session", "flag:sessionActive"]
     },
     {
@@ -56,7 +56,7 @@
     {
       "id": "chat-layout-fallback-router",
       "type": "FallbackRouterEntry",
-      "path": "@/modules/chat-layout/FallbackRouterEntry",
+      "path": "@/modules/chat-layout/createChatFallbackRouterEntry",
       "dependencies": ["module:chat-layout-router"]
     },
     {
@@ -87,12 +87,12 @@
     {
       "id": "global-settings-router",
       "type": "RouterEntry",
-      "path": "@/modules/settings/RouterEntryGlobal"
+      "path": "@/modules/settings/createRouterEntryGlobal"
     },
     {
       "id": "llm-provider-management-router-entry",
       "type": "GlobalSettingsRouterEntry",
-      "path": "@/modules/llm-provider-management/GlobalSettingsRouterEntry",
+      "path": "@/modules/llm-provider-management/createGlobalSettingsRouterEntry",
       "dependencies": [
         "module:llm-provider-service"
       ]

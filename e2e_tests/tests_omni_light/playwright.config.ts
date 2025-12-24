@@ -39,7 +39,7 @@ export default defineConfig({
             }
         },
         {
-            command: "node src/mock-openai-server.js",
+            command: "node --preserve-symlinks-main src/mock-openai-server.js",
             url: "http://localhost:3001",
             reuseExistingServer: !process.env.CI,
         },

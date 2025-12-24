@@ -15,9 +15,7 @@ interface LogoutButtonProps {
     className?: string;
 }
 
-export default function AuthSidebarFooterItem({
-    className,
-}: LogoutButtonProps) {
+export function AuthSidebarFooterItem({ className }: LogoutButtonProps) {
     const navigate = useNavigate();
     const location = useLocation();
     const { clearSession, session } = useSession();

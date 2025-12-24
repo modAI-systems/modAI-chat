@@ -36,12 +36,12 @@ export default defineConfig({
             reuseExistingServer: !process.env.CI,
         },
         {
-            command: "cd ../../backend && rm *.db && uv run uvicorn modai.main:app",
+            command: "cd ../../backend && rm -f *.db && uv run uvicorn modai.main:app",
             url: "http://localhost:8000/api/v1/health",
             reuseExistingServer: !process.env.CI,
         },
         {
-            command: "node src/mock-openai-server.js",
+            command: "node --preserve-symlinks-main src/mock-openai-server.js",
             url: "http://localhost:3001",
             reuseExistingServer: !process.env.CI,
         },

@@ -5,7 +5,7 @@ import {
     SidebarMenuItem,
 } from "@/shadcn/components/ui/sidebar";
 
-export default function GlobalSidebarFooterItem() {
+export function SidebarFooterItemGlobal() {
     const location = useLocation();
     const isActive = location.pathname.startsWith("/settings/global");
 

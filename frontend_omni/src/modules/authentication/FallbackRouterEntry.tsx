@@ -1,5 +1,9 @@
-import { Navigate, Route } from "react-router-dom";
+import { Navigate, type RouteObject } from "react-router-dom";
+import type { Modules } from "@/modules/module-system";
 
-export default function FallbackRouterEntry() {
-    return <Route path="*" element={<Navigate to="/login" replace />} />;
+export function AuthFallbackRouterEntry(_modules: Modules): RouteObject {
+    return {
+        path: "*",
+        element: <Navigate to="/login" replace />,
+    };
 }

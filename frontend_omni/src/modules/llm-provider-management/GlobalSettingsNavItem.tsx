@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
 import { SidebarMenuButton } from "@/shadcn/components/ui/sidebar";
 
-export default function GlobalSettingsNavItem() {
+export function GlobalSettingsNavItem() {
     const location = useLocation();
     const { t } = useTranslation("llm-provider-management");
 
