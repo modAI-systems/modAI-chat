@@ -31,7 +31,7 @@ Why more than one frontend: because there are different use cases. e.g. one full
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.12+
+- Python 3.13+
 - Node.js 24+
 - UV package manager
 

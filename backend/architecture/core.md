@@ -6,7 +6,7 @@
 - **Quality Attributes**: Reliability through graceful failure handling, modularity for independent development, testability through clear interfaces
 
 ## 2. Technology Stack
-- **Programming Language**: Python 3.12+
+- **Programming Language**: Python 3.13+
 - **Dependency Management**: [UV](https://docs.astral.sh/uv/)
 - **Configuration**: YAML format with flexible parsing
 - **REST Framework**: [FastAPI](https://fastapi.tiangolo.com/)
