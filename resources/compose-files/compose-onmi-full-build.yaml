@@ -1,0 +1,18 @@
+---
+services:
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+
+  frontend:
+    build:
+      context: ../../frontend_omni
+      dockerfile: Dockerfile
+    environment:
+      - API_BACKEND_URL=http://backend:8080
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend

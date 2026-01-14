@@ -10,3 +10,6 @@ indent_style = space
 
 [{*.ts,*.tsx,*.js}]
 indent_size = 4
+
+[Caddyfile]
+indent_style = tab

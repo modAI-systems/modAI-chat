@@ -1,0 +1,11 @@
+localhost {
+	handle /api/* {
+		reverse_proxy {$API_BACKEND_URL}
+	}
+
+	handle {
+		root * /usr/share/caddy/html
+		try_files {path} {path}/ /index.html
+		file_server
+   }
+}
