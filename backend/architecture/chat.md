@@ -1,16 +1,16 @@
 # Chat Module Architecture Document
 
 ## 1. Overview
-- **Architecture Style**: Proxy-based REST API that provides OpenAI-compatible endpoints while routing requests to various AI model providers
+- **Architecture Style**: Layered proxy-based REST API with a routing layer that provides OpenAI-compatible endpoints while routing requests to various AI model providers based on model prefixes
 - **Design Principles**:
   - KISS (Keep It Simple, Stupid) - minimal complexity, direct proxy implementations
   - API Compatibility - Full compatibility with OpenAI's Responses and Conversations APIs
-  - Transparent Routing - Internal model routing is invisible to clients
-  - Clear separation of concerns between HTTP proxying, model routing, and provider communication
+  - Transparent Routing - Internal model routing based on prefixes (e.g., "openai/", "ollama/") is invisible to clients
+  - Clear separation of concerns between HTTP proxying, model routing, provider communication, and conversation management
 - **Quality Attributes**: Simple, compatible, extensible for different AI providers (OpenAI, Anthropic, Ollama, etc.)
 
 ## 2. System Context
-- **System Boundary**: Chat module operates as an OpenAI-compatible API proxy within the modAI core framework
+- **System Boundary**: Chat module operates as an OpenAI-compatible API proxy within the modAI core framework with an internal routing layer
 - **External Systems**: Multiple AI model providers (OpenAI, Anthropic, Ollama, local models) via their respective APIs
 - **Users and Stakeholders**: Clients that expect OpenAI's Responses and Conversations API format
 
@@ -19,7 +19,13 @@ flowchart TD
     A[HTTP Client]
     A -->|Responses| C[Responses API]
     A -->|Conversations| D[Conversations API]
-    C --> E[Real Provider]
+    C --> R[Chat Router]
+    R -->|openai/| O[OpenAI Module]
+    R -->|ollama/| L[Ollama Module]
+    R -->|anthropic/| P[Anthropic Module]
+    O --> E1[OpenAI API]
+    L --> E2[Ollama API]
+    P --> E3[Anthropic API]
     D --> F[Conversation Store]
 ```
 
@@ -47,18 +53,18 @@ flowchart TD
 
 ### 3.1 Responses API (Chat Functionality)
 
-The Responses API provides OpenAI-compatible endpoints for chat completions. The backend acts as a proxy, accepting requests in OpenAI's format, determining the appropriate AI provider based on the requested model, translating the request to the provider's API format, and returning responses in OpenAI's format.
+The Responses API provides OpenAI-compatible endpoints for chat completions. The backend acts as a proxy with an internal routing layer, accepting requests in OpenAI's format, determining the appropriate AI provider based on the model prefix (e.g., "openai/gpt-4"), routing to the corresponding LLM module, which then translates the request to the provider's API format, and returning responses in OpenAI's format.
 
 **Architecture Details**:
-- **Model Resolution**: Extract model ID from request, query model_provider_store to find the corresponding provider
-- **Request Translation**: Convert OpenAI Responses format to provider-specific API (e.g., chat/completions for OpenAI, or other formats for Anthropic/Ollama)
-- **Provider Communication**: Route request to the selected provider's API
+- **Model Routing**: Extract model prefix from request (e.g., "openai" from "openai/gpt-4"), route to configured LLM module for that prefix
+- **Request Translation**: Each LLM module converts OpenAI Responses format to provider-specific API (e.g., responses API for OpenAI, chat/completions for others)
+- **Provider Communication**: LLM modules route request to the selected provider's API
 - **Response Translation**: Convert provider response back to OpenAI Responses format
 - **Error Handling**: Map provider errors to OpenAI-compatible error codes
 
 **Module Dependencies**:
-- `model_provider_store`: For resolving models to providers
-- Provider-specific modules: For API communication and translation
+- `chat_router`: Main entry point that routes based on model prefix
+- LLM-specific modules (e.g., `openai_chat_module`, `ollama_chat_module`): For API communication and translation
 
 #### 3.1.1 Create Response Endpoint
 

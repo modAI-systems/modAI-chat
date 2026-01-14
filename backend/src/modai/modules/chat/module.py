@@ -1,51 +1,91 @@
 """
-Chat Module: Provides responses endpoint using OpenAI Responses API.
-- Based on OpenAI Responses API interface
-- Supports streaming and non-streaming
+Chat2 Web Module: Interface for the responses endpoint.
+Fully OpenAI /responses API compatible.
 """
 
 from abc import ABC, abstractmethod
-from fastapi import APIRouter
-from fastapi import Request, Body
-from typing import Any, List, Dict, Union, Optional
-from pydantic import BaseModel, Field
-from enum import Enum
+from fastapi import APIRouter, Request, Body
+from fastapi.responses import StreamingResponse
+from typing import Any, AsyncGenerator
 from modai.module import ModaiModule, ModuleDependencies
-from modai.openapi_models import (
-    Response1 as OpenAIResponse,
-    ResponseUsage as OpenAIUsage,
-)
+import openai
 
 
-class ChatRequest(BaseModel):
-    model: str
-    input: Union[str, List[Dict[str, Any]]] = Field(default_factory=list)
-    instructions: Optional[str] = None
-    temperature: Optional[float] = None
-    max_output_tokens: Optional[int] = None
-    stream: Optional[bool] = None
-
-
-# Use generated OpenAI types
-ChatUsage = OpenAIUsage
-ChatResponse = OpenAIResponse
-
-
-class ChatModule(ModaiModule, ABC):
+class ChatWebModule(ModaiModule, ABC):
     """
-    Module Declaration for: Responses (Web Module)
+    Module Declaration for: Chat Responses (Web Module)
+
+    Provides the /api/v1/responses endpoint for chat completions.
+    Fully OpenAI /responses API compatible.
     """
 
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
         super().__init__(dependencies, config)
         self.router = APIRouter()
         self.router.add_api_route(
-            "/api/v1/responses", self.chat_endpoint, methods=["POST"]
+            "/api/v1/responses", self.responses_endpoint, methods=["POST"]
         )
 
     @abstractmethod
-    async def chat_endpoint(self, request: Request, body_json: ChatRequest = Body(...)):
+    async def responses_endpoint(
+        self,
+        request: Request,
+        body_json: openai.types.responses.ResponseCreateParams = Body(...),
+    ) -> openai.types.responses.Response | StreamingResponse:
         """
-        Handles chat requests. Must be implemented by default implementation.
+        Handles responses requests. Must be implemented by concrete implementations.
+        Fully OpenAI /responses API compatible.
+
+        Returns either:
+        - OpenAIResponse (JSON) for non-streaming requests (stream=False or not set)
+        - StreamingResponse for streaming requests (stream=True), where individual
+          elements in the stream are ResponseStreamEvent objects serialized as
+          Server-Sent Events (SSE) in the format: "data: {json}\n\n"
+        """
+        pass
+
+
+class ChatLLMModule(ModaiModule, ABC):
+    """
+    Module Declaration for: Chat LLM Provider (Plain Module)
+
+    Interface for LLM provider implementations (OpenAI, Ollama, etc.).
+    Provides methods for generating chat responses with support for streaming.
+    """
+
+    def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
+        super().__init__(dependencies, config)
+
+    @abstractmethod
+    async def generate_response(
+        self, request: Request, body_json: openai.types.responses.ResponseCreateParams
+    ) -> (
+        openai.types.responses.Response
+        | AsyncGenerator[openai.types.responses.ResponseStreamEvent, None]
+    ):
+        """
+        Generate a streaming or non-streaming chat response.
+
+        Args:
+            request: The FastAPI request object.
+            body_json: The OpenAI-compatible create response request body.
+
+        Returns:
+            OpenAIResponse: For non-streaming responses, returns the complete response object.
+            AsyncGenerator[OpenAIResponseStreamEvent, None]: For streaming responses, returns an async generator yielding response stream events.
+
+        Callers can distinguish between the return types using isinstance:
+
+        Example:
+            ```python
+            result = await generate_response(request, body_json)
+            if isinstance(result, OpenAIResponse):
+                # Handle non-streaming response
+                handle_response(result)
+            else:
+                # Handle streaming response
+                async for event in result:
+                    handle_event(event)
+            ```
         """
         pass

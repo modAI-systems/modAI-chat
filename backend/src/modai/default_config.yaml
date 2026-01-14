@@ -1,8 +1,15 @@
 modules:
   health:
     class: modai.modules.health.simple_health_module.SimpleHealthModule
-  chat:
-    class: modai.modules.chat.opean_ai_chat_module.OpenAIChatModule
+  chat_router:
+    class: modai.modules.chat.web_chat_router.ChatWebModule
+    config:
+      clients:
+        openai: chat_openai
+    module_dependencies:
+      chat_openai: chat_openai
+  chat_openai:
+    class: modai.modules.chat.openai_llm_chat.OpenAILLMChatModule
     config:
       openai_client:
         api_key: ${OPENAI_API_KEY}

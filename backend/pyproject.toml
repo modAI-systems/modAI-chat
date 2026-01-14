@@ -16,7 +16,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "datamodel-code-generator>=0.43.1",
+    "datamodel-code-generator[ruff]",
     "pytest",
     "pytest-asyncio",
     "ruff",
