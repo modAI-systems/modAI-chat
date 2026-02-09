@@ -10,7 +10,10 @@ import { createChatRouterEntry } from "@/modules/chat-layout/ChatRouterEntry";
 import { ChatSidebarItem } from "@/modules/chat-layout/ChatSidebarItem";
 import { ChatSidePanelProvider } from "@/modules/chat-layout/ChatSidePanelProvider";
 import { ChatFallbackRouterEntry } from "@/modules/chat-layout/FallbackRouterEntry";
-import { OpenAIChatService } from "@/modules/chat-service/OpenAIService";
+import {
+    NoBackendOpenAIChatService,
+    WithBackendOpenAIChatService,
+} from "@/modules/chat-service/OpenAIService";
 import { ChatTopPane } from "@/modules/llm-picker/ChatTopPane";
 import { LLMContextProvider } from "@/modules/llm-picker/LLMContextProvider";
 import { GlobalSettingsNavItem } from "@/modules/llm-provider-management/GlobalSettingsNavItem";
@@ -44,7 +47,9 @@ export const moduleRegistry: Record<string, unknown> = {
         GlobalSettingsNavItem,
     "@/modules/welcome-message/NoBackendWelcomeMessage":
         NoBackendWelcomeMessage,
-    "@/modules/chat-service/OpenAIService": OpenAIChatService,
+    "@/modules/chat-service/WithBackendOpenAIService":
+        WithBackendOpenAIChatService,
+    "@/modules/chat-service/NoBackendOpenAIService": NoBackendOpenAIChatService,
     "@/modules/authentication-service/AuthContextProvider": AuthContextProvider,
     "@/modules/authentication/createAuthRouterEntry": createAuthRouterEntry,
     "@/modules/authentication/AuthSidebarFooterItem": AuthSidebarFooterItem,
