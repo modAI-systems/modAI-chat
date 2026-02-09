@@ -106,7 +106,7 @@
     {
       "id": "openai-chat-service",
       "type": "openai",
-      "path": "@/modules/chat-service/OpenAIService"
+      "path": "@/modules/chat-service/WithBackendOpenAIService"
     }
   ]
 }
