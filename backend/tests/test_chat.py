@@ -16,21 +16,20 @@ from modai.modules.chat.module import ChatLLMModule
 import openai
 
 
-class MockBody:
+class MockBody(dict):
     def __init__(self, model, stream=False):
-        self.model = model
-        self.stream = stream
+        super().__init__()
+        self["model"] = model
+        self["stream"] = stream
 
     def get(self, key, default=None):
-        return getattr(self, key, default)
+        return super().get(key, default)
 
 
 class DummyLLMModule(ChatLLMModule):
     """Dummy LLM module for testing purposes."""
 
-    async def generate_response(
-        self, request, body_json
-    ):
+    async def generate_response(self, request, body_json):
         if body_json.get("stream", False):
             # Return a simple async generator
             async def gen():
@@ -40,6 +39,7 @@ class DummyLLMModule(ChatLLMModule):
                 event.response_id = "test_response"
                 event.model_dump_json.return_value = '{"type": "response.output_text.delta", "delta": "Hello", "response_id": "test_response"}'
                 yield event
+
             return gen()
         else:
             # Return a mock response
@@ -70,11 +70,38 @@ async def openai_client(request):
 async def test_llm_generate_response():
     """Test LLM generate_response method directly."""
     from fastapi import Request
-    from unittest.mock import Mock
+    from unittest.mock import Mock, AsyncMock
+    from modai.modules.model_provider.module import (
+        ModelProvidersListResponse,
+        ModelProviderResponse,
+    )
+
+    # Mock provider module
+    mock_provider_module = Mock()
+    mock_provider = ModelProviderResponse(
+        id="test_provider",
+        type="openai",
+        name="myopenai",
+        base_url="https://api.openai.com/v1",
+        api_key=os.environ["OPENAI_API_KEY"],
+        properties={},
+        created_at=None,
+        updated_at=None,
+    )
+    mock_provider_module.get_providers = AsyncMock(
+        return_value=ModelProvidersListResponse(
+            providers=[mock_provider],
+            total=1,
+            limit=None,
+            offset=None,
+        )
+    )
+
+    dependencies = ModuleDependencies({"llm_provider_module": mock_provider_module})
 
     llm_module = OpenAILLMChatModule(
-        dependencies=ModuleDependencies(),
-        config={"openai_client": {"api_key": os.environ["OPENAI_API_KEY"]}},
+        dependencies=dependencies,
+        config={},
     )
 
     # Mock request
@@ -82,7 +109,7 @@ async def test_llm_generate_response():
 
     # Test non-streaming
     body_json = {
-        "model": "gpt-4o",
+        "model": "myopenai/gpt-4o",
         "input": [{"role": "user", "content": "Just echo the word 'Hello'"}],
     }
 
@@ -112,11 +139,38 @@ async def test_llm_generate_response():
 async def test_llm_generate_response_streaming():
     """Test LLM generate_response method directly for streaming."""
     from fastapi import Request
-    from unittest.mock import Mock
+    from unittest.mock import Mock, AsyncMock
+    from modai.modules.model_provider.module import (
+        ModelProvidersListResponse,
+        ModelProviderResponse,
+    )
+
+    # Mock provider module
+    mock_provider_module = Mock()
+    mock_provider = ModelProviderResponse(
+        id="test_provider",
+        type="openai",
+        name="myopenai",
+        base_url="https://api.openai.com/v1",
+        api_key=os.environ["OPENAI_API_KEY"],
+        properties={},
+        created_at=None,
+        updated_at=None,
+    )
+    mock_provider_module.get_providers = AsyncMock(
+        return_value=ModelProvidersListResponse(
+            providers=[mock_provider],
+            total=1,
+            limit=None,
+            offset=None,
+        )
+    )
+
+    dependencies = ModuleDependencies({"llm_provider_module": mock_provider_module})
 
     llm_module = OpenAILLMChatModule(
-        dependencies=ModuleDependencies(),
-        config={"openai_client": {"api_key": os.environ["OPENAI_API_KEY"]}},
+        dependencies=dependencies,
+        config={},
     )
 
     # Mock request
@@ -124,7 +178,7 @@ async def test_llm_generate_response_streaming():
 
     # Test streaming
     body_json = {
-        "model": "gpt-4o",
+        "model": "myopenai/gpt-4o",
         "input": [{"role": "user", "content": "Just echo the word 'Hello'"}],
         "stream": True,
     }
@@ -279,6 +333,7 @@ async def test_chat_web_module_routing_streaming():
 
     # Assertions
     from fastapi.responses import StreamingResponse
+
     assert isinstance(result, StreamingResponse)
     assert result.media_type == "text/event-stream"
 
@@ -293,29 +348,91 @@ async def test_chat_web_module_routing_streaming():
 
 
 @pytest.mark.asyncio
-async def test_chat_web_module_invalid_prefix():
-    """Test ChatWebModule with invalid model prefix."""
+async def test_openai_llm_invalid_model_format():
+    """Test OpenAILLMChatModule with invalid model format."""
     from fastapi import Request
+    from unittest.mock import Mock, AsyncMock
+    from modai.modules.model_provider.module import (
+        ModelProvidersListResponse,
+        ModelProviderResponse,
+    )
 
-    # Mock dependencies
-    mock_dependencies = Mock(spec=ModuleDependencies)
+    # Mock provider module
+    mock_provider_module = Mock()
+    mock_provider = ModelProviderResponse(
+        id="test_provider",
+        type="openai",
+        name="myopenai",
+        base_url="https://api.openai.com",
+        api_key="test_key",
+        properties={},
+        created_at=None,
+        updated_at=None,
+    )
+    mock_provider_module.get_providers = AsyncMock(
+        return_value=ModelProvidersListResponse(
+            providers=[mock_provider],
+            total=1,
+            limit=None,
+            offset=None,
+        )
+    )
 
-    # Create ChatWebModule with no clients
-    web_module = ChatWebModule(
-        dependencies=mock_dependencies,
-        config={"clients": {}},
+    dependencies = ModuleDependencies()
+    dependencies.get_module = Mock(return_value=mock_provider_module)
+
+    llm_module = OpenAILLMChatModule(
+        dependencies=dependencies,
+        config={"llm_provider_module": "openai_llm_provider"},
     )
 
     # Mock request
     request = Mock(spec=Request)
 
-    # Test with invalid prefix
-    body_json = MockBody(model="invalid/test_model")
+    # Test invalid model format (no slash)
+    body_json = {
+        "model": "invalidmodel",
+        "input": [{"role": "user", "content": "Hello"}],
+    }
 
-    result = await web_module.responses_endpoint(request, body_json)
+    with pytest.raises(ValueError, match="Invalid model format"):
+        await llm_module.generate_response(request, body_json)
 
-    # Should return JSONResponse with error
-    from fastapi.responses import JSONResponse
-    assert isinstance(result, JSONResponse)
-    assert result.status_code == 400
-    assert "No client configured" in result.body.decode()
+
+@pytest.mark.asyncio
+async def test_openai_llm_provider_not_found():
+    """Test OpenAILLMChatModule when provider is not found."""
+    from fastapi import Request
+    from unittest.mock import Mock, AsyncMock
+    from modai.modules.model_provider.module import ModelProvidersListResponse
+
+    # Mock provider module with no providers
+    mock_provider_module = Mock()
+    mock_provider_module.get_providers = AsyncMock(
+        return_value=ModelProvidersListResponse(
+            providers=[],
+            total=0,
+            limit=None,
+            offset=None,
+        )
+    )
+
+    dependencies = ModuleDependencies()
+    dependencies.get_module = Mock(return_value=mock_provider_module)
+
+    llm_module = OpenAILLMChatModule(
+        dependencies=dependencies,
+        config={"llm_provider_module": "openai_llm_provider"},
+    )
+
+    # Mock request
+    request = Mock(spec=Request)
+
+    # Test with non-existent provider
+    body_json = {
+        "model": "nonexistent/gpt-4",
+        "input": [{"role": "user", "content": "Hello"}],
+    }
+
+    with pytest.raises(ValueError, match="Provider 'nonexistent' not found"):
+        await llm_module.generate_response(request, body_json)

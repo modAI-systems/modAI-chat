@@ -1,4 +1,4 @@
-import { type ComponentType, useEffect, useState } from "react";
+import { type ComponentType, useEffect, useMemo, useState } from "react";
 import type { PromptInputMessage } from "@/modules/chat-layout/shadcn/components/ai-elements/prompt-input";
 import type { ChatService, Message, MessagePart } from "@/modules/chat-service";
 import { MessagePartType, MessageRole } from "@/modules/chat-service";
@@ -51,7 +51,13 @@ export function ChatArea() {
         };
     }, []);
 
-    const providerType = selectedModel?.[0]?.type;
+    // Extract provider type from model ID (format: {provider_type}/{provider_name}/{model_id})
+    const providerType = useMemo(() => {
+        if (!selectedModel) return null;
+        const parts = selectedModel.split("/");
+        return parts.length >= 1 ? parts[0] : null;
+    }, [selectedModel]);
+
     const ChatServiceClass = providerType
         ? modules.getOne<ChatServiceConstructor>(providerType)
         : null;
@@ -85,8 +91,7 @@ export function ChatArea() {
         try {
             const parts: MessagePart[] = [];
             for await (const chunk of chatService.sendMessage(
-                selectedModel[0],
-                selectedModel[1],
+                selectedModel,
                 message.text || "",
                 currentMessages,
             )) {
@@ -129,8 +134,7 @@ export function ChatArea() {
         try {
             const parts: MessagePart[] = [];
             for await (const chunk of chatService.sendMessage(
-                selectedModel[0],
-                selectedModel[1],
+                selectedModel,
                 userMessage.content,
                 previousMessages,
             )) {

@@ -13,9 +13,9 @@ from fastapi import FastAPI
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from modai.modules.llm_provider.module import LLMProviderModule
-from modai.modules.llm_provider.openai_provider import OpenAIProviderModule
-from modai.modules.llm_provider_store.module import LLMProvider, LLMProviderStore
+from modai.modules.model_provider.module import ModelProviderModule
+from modai.modules.model_provider.openai_provider import OpenAIProviderModule
+from modai.modules.model_provider_store.module import ModelProvider, ModelProviderStore
 from modai.module import ModuleDependencies
 from datetime import datetime
 
@@ -26,12 +26,12 @@ load_dotenv(find_dotenv(str(working_dir / ".env")))
 anyio_backend = pytest.fixture(scope="session")(lambda: "asyncio")
 
 
-class TestLLMProviderModule:
-    """Test class for LLM Provider Module"""
+class TestModelProviderModule:
+    """Test class for Model Provider Module"""
 
     @pytest.fixture
-    def mock_provider_store(self) -> LLMProviderStore:
-        """Create a mock LLM provider store"""
+    def mock_provider_store(self) -> ModelProviderStore:
+        """Create a mock Model provider store"""
         mock_store = AsyncMock()
 
         # Include API key in properties when testing models
@@ -40,7 +40,7 @@ class TestLLMProviderModule:
             properties["api_key"] = os.environ["OPENAI_API_KEY"]
 
         # Sample provider data with OpenAI URL and API key
-        sample_provider = LLMProvider(
+        sample_provider = ModelProvider(
             id="test-id-123",
             name="TestProvider",
             url="https://api.openai.com/v1",
@@ -59,7 +59,9 @@ class TestLLMProviderModule:
         return mock_store
 
     @pytest.fixture
-    def web_module(self, mock_provider_store: LLMProviderStore) -> OpenAIProviderModule:
+    def web_module(
+        self, mock_provider_store: ModelProviderStore
+    ) -> OpenAIProviderModule:
         """Create web module instance"""
         dependencies = ModuleDependencies({"llm_provider_store": mock_provider_store})
         config = {"llm_provider_store_module": "llm_provider_store"}
@@ -78,15 +80,15 @@ class TestLLMProviderModule:
 
         with pytest.raises(
             ValueError,
-            match="DefaultLLMProviderModule requires 'llm_provider_store' module dependency",
+            match="DefaultModelProviderModule requires 'llm_provider_store' module dependency",
         ):
             OpenAIProviderModule(deps, {})
 
     def test_get_providers_endpoint(
-        self, test_client: TestClient, mock_provider_store: LLMProviderStore
+        self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
-        """Test GET /api/v1/llm-provider/openai endpoint"""
-        response = test_client.get("/api/v1/llm-provider/openai")
+        """Test GET /api/v1/models/providers/openai endpoint"""
+        response = test_client.get("/api/v1/models/providers/openai")
 
         assert response.status_code == 200
         data = response.json()
@@ -113,10 +115,10 @@ class TestLLMProviderModule:
         )
 
     def test_get_providers_with_pagination(
-        self, test_client: TestClient, mock_provider_store: LLMProviderStore
+        self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
-        """Test GET /api/v1/llm-provider/openai with pagination parameters"""
-        response = test_client.get("/api/v1/llm-provider/openai?limit=10&offset=5")
+        """Test GET /models/providers/openai with pagination parameters"""
+        response = test_client.get("/api/v1/models/providers/openai?limit=10&offset=5")
 
         assert response.status_code == 200
         data = response.json()
@@ -128,24 +130,24 @@ class TestLLMProviderModule:
         mock_provider_store.get_providers.assert_called_once_with(limit=10, offset=5)
 
     def test_get_providers_invalid_pagination(self, test_client):
-        """Test GET /api/v1/llm-provider/openai with invalid pagination parameters"""
+        """Test GET /models/providers/openai with invalid pagination parameters"""
         # Test negative offset
-        response = test_client.get("/api/v1/llm-provider/openai?offset=-1")
+        response = test_client.get("/api/v1/models/providers/openai?offset=-1")
         assert response.status_code == 422
 
         # Test limit too large
-        response = test_client.get("/api/v1/llm-provider/openai?limit=2000")
+        response = test_client.get("/api/v1/models/providers/openai?limit=2000")
         assert response.status_code == 422
 
         # Test limit too small
-        response = test_client.get("/api/v1/llm-provider/openai?limit=0")
+        response = test_client.get("/api/v1/models/providers/openai?limit=0")
         assert response.status_code == 422
 
     def test_get_provider_by_id(
-        self, test_client: TestClient, mock_provider_store: LLMProviderStore
+        self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
-        """Test GET /api/v1/llm-provider/openai/{id} endpoint"""
-        response = test_client.get("/api/v1/llm-provider/openai/test-id-123")
+        """Test GET /models/providers/openai/{id} endpoint"""
+        response = test_client.get("/api/v1/models/providers/openai/test-id-123")
 
         assert response.status_code == 200
         data = response.json()
@@ -164,21 +166,21 @@ class TestLLMProviderModule:
         mock_provider_store.get_provider.assert_called_once_with("test-id-123")
 
     def test_get_provider_not_found(
-        self, test_client: TestClient, mock_provider_store: LLMProviderStore
+        self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
-        """Test GET /api/v1/llm-provider/openai/{id} for non-existent provider"""
+        """Test GET /models/providers/openai/{id} for non-existent provider"""
         mock_provider_store.get_provider.return_value = None
 
-        response = test_client.get("/api/v1/llm-provider/openai/nonexistent")
+        response = test_client.get("/api/v1/models/providers/openai/nonexistent")
 
         assert response.status_code == 404
         data = response.json()
         assert "not found" in data["detail"].lower()
 
     def test_create_provider(
-        self, test_client: TestClient, mock_provider_store: LLMProviderStore
+        self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
-        """Test POST /api/v1/llm-provider/openai endpoint for creating new provider"""
+        """Test POST /models/providers/openai endpoint for creating new provider"""
         request_data = {
             "name": "NewProvider",
             "base_url": "https://api.new.com",
@@ -186,7 +188,7 @@ class TestLLMProviderModule:
             "properties": {"model": "new-model", "temperature": 0.8},
         }
 
-        response = test_client.post("/api/v1/llm-provider/openai", json=request_data)
+        response = test_client.post("/api/v1/models/providers/openai", json=request_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -212,9 +214,9 @@ class TestLLMProviderModule:
         )
 
     def test_create_provider_validation_error(
-        self, test_client: TestClient, mock_provider_store: LLMProviderStore
+        self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
-        """Test POST /api/v1/llm-provider/openai with validation error"""
+        """Test POST /models/providers/openai with validation error"""
         mock_provider_store.add_provider.side_effect = ValueError(
             "Provider name already exists"
         )
@@ -226,39 +228,39 @@ class TestLLMProviderModule:
             "properties": {},
         }
 
-        response = test_client.post("/api/v1/llm-provider/openai", json=request_data)
+        response = test_client.post("/api/v1/models/providers/openai", json=request_data)
 
         assert response.status_code == 400
         data = response.json()
         assert "already exists" in data["detail"]
 
     def test_create_provider_missing_fields(self, test_client: TestClient) -> None:
-        """Test POST /api/v1/llm-provider/openai with missing required fields"""
+        """Test POST /models/providers/openai with missing required fields"""
         # Missing name
         response = test_client.post(
-            "/api/v1/llm-provider/openai",
+            "/api/v1/models/providers/openai",
             json={"base_url": "https://api.test.com", "api_key": "test-key"},
         )
         assert response.status_code == 422
 
         # Missing base_url
         response = test_client.post(
-            "/api/v1/llm-provider/openai",
+            "/api/v1/models/providers/openai",
             json={"name": "TestProvider", "api_key": "test-key"},
         )
         assert response.status_code == 422
 
         # Missing api_key
         response = test_client.post(
-            "/api/v1/llm-provider/openai",
+            "/api/v1/models/providers/openai",
             json={"name": "TestProvider", "base_url": "https://api.test.com"},
         )
         assert response.status_code == 422
 
     def test_update_provider(
-        self, test_client: TestClient, mock_provider_store: LLMProviderStore
+        self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
-        """Test PUT /api/v1/llm-provider/openai/{provider_id} endpoint for updating existing provider"""
+        """Test PUT /models/providers/openai/{provider_id} endpoint for updating existing provider"""
         request_data = {
             "name": "UpdatedProvider",
             "base_url": "https://api.updated.com",
@@ -267,7 +269,7 @@ class TestLLMProviderModule:
         }
 
         response = test_client.put(
-            "/api/v1/llm-provider/openai/existing-id", json=request_data
+            "/api/v1/models/providers/openai/existing-id", json=request_data
         )
 
         assert response.status_code == 200
@@ -290,9 +292,9 @@ class TestLLMProviderModule:
         )
 
     def test_update_provider_not_found(
-        self, test_client: TestClient, mock_provider_store: LLMProviderStore
+        self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
-        """Test PUT /api/v1/llm-provider/openai/{provider_id} when provider doesn't exist"""
+        """Test PUT /models/providers/openai/{provider_id} when provider doesn't exist"""
         mock_provider_store.update_provider.return_value = None
 
         request_data = {
@@ -302,7 +304,7 @@ class TestLLMProviderModule:
             "properties": {},
         }
         response = test_client.put(
-            "/api/v1/llm-provider/openai/nonexistent-id", json=request_data
+            "/api/v1/models/providers/openai/nonexistent-id", json=request_data
         )
 
         assert response.status_code == 404
@@ -310,10 +312,10 @@ class TestLLMProviderModule:
         assert "not found" in data["detail"].lower()
 
     def test_delete_provider(
-        self, test_client: TestClient, mock_provider_store: LLMProviderStore
+        self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
-        """Test DELETE /api/v1/llm-provider/openai/{id} endpoint"""
-        response = test_client.delete("/api/v1/llm-provider/openai/test-id-123")
+        """Test DELETE /models/providers/openai/{id} endpoint"""
+        response = test_client.delete("/api/v1/models/providers/openai/test-id-123")
 
         assert response.status_code == 204
         assert response.content == b""  # No content for 204
@@ -322,17 +324,17 @@ class TestLLMProviderModule:
         mock_provider_store.delete_provider.assert_called_once_with("test-id-123")
 
     def test_delete_provider_idempotent(
-        self, test_client: TestClient, mock_provider_store: LLMProviderStore
+        self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
-        """Test DELETE /api/v1/llm-provider/openai/{id} is idempotent"""
+        """Test DELETE /models/providers/openai/{id} is idempotent"""
         # Even if provider doesn't exist, should return 204
-        response = test_client.delete("/api/v1/llm-provider/openai/nonexistent")
+        response = test_client.delete("/api/v1/models/providers/openai/nonexistent")
 
         assert response.status_code == 204
         mock_provider_store.delete_provider.assert_called_once_with("nonexistent")
 
     def test_endpoint_error_handling(
-        self, test_client: TestClient, mock_provider_store: LLMProviderStore
+        self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
         """Test error handling for unexpected exceptions - now raises Exception"""
         mock_provider_store.get_providers.side_effect = Exception(
@@ -341,10 +343,10 @@ class TestLLMProviderModule:
 
         # Since we removed try-catch, exceptions now bubble up and get raised by test client
         with pytest.raises(Exception, match="Database connection failed"):
-            test_client.get("/api/v1/llm-provider/openai")
+            test_client.get("/api/v1/models/providers/openai")
 
     def test_complex_properties_handling(
-        self, test_client: TestClient, mock_provider_store: LLMProviderStore
+        self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
         """Test handling of complex properties in requests and responses"""
         complex_properties = {
@@ -360,7 +362,7 @@ class TestLLMProviderModule:
             "properties": complex_properties,
         }
 
-        response = test_client.post("/api/v1/llm-provider/openai", json=request_data)
+        response = test_client.post("/api/v1/models/providers/openai", json=request_data)
 
         assert response.status_code == 201
 
@@ -377,43 +379,38 @@ class TestLLMProviderModule:
         "OPENAI_API_KEY" not in os.environ, reason="OPENAI_API_KEY not set"
     )
     def test_get_models_endpoint(
-        self, test_client: TestClient, mock_provider_store: LLMProviderStore
+        self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
-        """Test GET /api/v1/llm-provider/openai/{provider_id}/models endpoint"""
-        response = test_client.get("/api/v1/llm-provider/openai/test-id-123/models")
+        """Test GET /models/providers/openai/{provider_id}/models endpoint"""
+        response = test_client.get("/api/v1/models/providers/openai/test-id-123/models")
 
         assert response.status_code == 200
         data = response.json()
 
-        assert "provider_id" in data
-        assert "models" in data
-        assert data["provider_id"] == "test-id-123"
-        assert len(data["models"]) >= 1
+        assert "object" in data
+        assert "data" in data
+        assert data["object"] == "list"
+        assert isinstance(data["data"], list)
+        assert len(data["data"]) >= 1
 
-        # Check model structure
-        model = data["models"][0]
+        # Check model structure (OpenAI-compatible)
+        model = data["data"][0]
         assert "id" in model
-        assert "name" in model
-        assert "description" in model
-        assert "context_length" in model
-        assert "supports_streaming" in model
-        assert "supports_functions" in model
-
-        # Verify model fields have expected types
-        assert isinstance(model["context_length"], int)
-        assert isinstance(model["supports_streaming"], bool)
-        assert isinstance(model["supports_functions"], bool)
+        assert "object" in model
+        assert "created" in model
+        assert "owned_by" in model
+        assert model["object"] == "model"
 
         # Verify the provider store was called to check provider exists
         mock_provider_store.get_provider.assert_called_with("test-id-123")
 
     def test_get_models_provider_not_found(
-        self, test_client: TestClient, mock_provider_store: LLMProviderStore
+        self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
-        """Test GET /api/v1/llm-provider/openai/{provider_id}/models for non-existent provider"""
+        """Test GET /models/providers/openai/{provider_id}/models for non-existent provider"""
         mock_provider_store.get_provider.return_value = None
 
-        response = test_client.get("/api/v1/llm-provider/openai/nonexistent/models")
+        response = test_client.get("/api/v1/models/providers/openai/nonexistent/models")
 
         assert response.status_code == 404
         data = response.json()

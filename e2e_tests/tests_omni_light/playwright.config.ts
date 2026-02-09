@@ -39,8 +39,8 @@ export default defineConfig({
             }
         },
         {
-            command: "node --preserve-symlinks-main src/mock-openai-server.js",
-            url: "http://localhost:3001",
+            command: "docker run --rm -p 3001:8000 ghcr.io/modai-systems/llmock:latest",
+            url: "http://localhost:3001/health",
             reuseExistingServer: !process.env.CI,
         },
     ],

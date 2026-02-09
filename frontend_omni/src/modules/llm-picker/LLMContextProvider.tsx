@@ -1,10 +1,4 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
-import {
-    type Model,
-    type Provider,
-    useLLMProviderService,
-} from "@/modules/llm-provider-service";
 import { LLMContext } from "./index";
 
 interface LLMContextProviderProps {
@@ -14,14 +8,27 @@ interface LLMContextProviderProps {
 const STORAGE_KEY = "llm-selected-model";
 
 export function LLMContextProvider({ children }: LLMContextProviderProps) {
-    const service = useLLMProviderService();
-
-    // Get the last session selected model from localStorage
-    const [lastSessionSelectedModel] = useState<[Provider, Model] | null>(
+    // Get the last session selected model ID from localStorage
+    const [selectedModel, setSelectedModelState] = useState<string | null>(
         () => {
             try {
                 const stored = localStorage.getItem(STORAGE_KEY);
-                return stored ? JSON.parse(stored) : null;
+                if (!stored) return null;
+
+                // Handle both old format [Provider, Model] and new format (string)
+                const parsed = JSON.parse(stored);
+                if (typeof parsed === "string") {
+                    return parsed;
+                }
+                // Old format - try to migrate
+                if (Array.isArray(parsed) && parsed.length === 2) {
+                    // Old format was [provider, model], try to construct new ID
+                    const [provider, model] = parsed;
+                    if (provider?.type && provider?.name && model?.id) {
+                        return `${provider.type}/${provider.name}/${model.id}`;
+                    }
+                }
+                return null;
             } catch (error) {
                 console.warn(
                     "Failed to load selected LLM model from localStorage:",
@@ -33,40 +40,11 @@ export function LLMContextProvider({ children }: LLMContextProviderProps) {
         },
     );
 
-    // Fetch models for the provider of the last session selected model
-    const { data: models } = useSuspenseQuery({
-        queryKey: ["llm-models", lastSessionSelectedModel?.[0]?.id],
-        queryFn: async () => {
-            if (!lastSessionSelectedModel) return [];
-            const [provider] = lastSessionSelectedModel;
-            try {
-                return await service.getModels(provider.type, provider.id);
-            } catch (error) {
-                console.error(
-                    "Failed to fetch models for provider:",
-                    provider,
-                    error,
-                );
-                return [];
-            }
-        },
-    });
-
-    // Initialize selectedModel based on whether the lastSessionSelectedModel still exists
-    const [selectedModel, setSelectedModelState] = useState<
-        [Provider, Model] | null
-    >(() => {
-        if (!lastSessionSelectedModel) return null;
-        const [, model] = lastSessionSelectedModel;
-        const modelExists = models.some((m) => m.id === model.id);
-        return modelExists ? lastSessionSelectedModel : null;
-    });
-
-    const setSelectedModel = (model: [Provider, Model] | null) => {
-        setSelectedModelState(model);
+    const setSelectedModel = (modelId: string | null) => {
+        setSelectedModelState(modelId);
         try {
-            if (model) {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(model));
+            if (modelId) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(modelId));
             } else {
                 localStorage.removeItem(STORAGE_KEY);
             }

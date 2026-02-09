@@ -1,39 +1,58 @@
 import OpenAI from "openai";
 import type { ResponseInput } from "openai/resources/responses/responses.mjs";
-import type { Model, Provider } from "@/modules/llm-provider-service";
 import type { ChatService, Message, MessagePart } from "./index";
 import { MessagePartType } from "./index";
 
+/**
+ * OpenAI Chat Service that calls the backend /api/v1/responses endpoint.
+ * The backend handles provider routing based on the model ID.
+ */
 export class OpenAIChatService implements ChatService {
     async *sendMessage(
-        provider: Provider,
-        model: Model,
+        modelId: string,
         message: string,
         previousMessages: Message[],
     ): AsyncIterable<MessagePart> {
         if (!message.trim()) return;
 
+        // Parse modelId: format is "{provider_type}/{provider_name}/{model_id}"
+        const parts = modelId.split("/");
+        if (parts.length < 3) {
+            throw new Error(`Invalid model ID format: ${modelId}`);
+        }
+
+        // Backend expects full model ID for routing: "{provider_type}/{provider_name}/{model_id}"
+        // The backend router uses the first part (provider_type) to route to the appropriate LLM module
         const openai = new OpenAI({
-            apiKey: provider.api_key,
-            baseURL: provider.base_url,
+            apiKey: "not-needed-backend-handles-auth",
+            baseURL: `${window.location.origin}/api/v1`,
             dangerouslyAllowBrowser: true,
         });
 
+        yield* this.streamResponse(openai, modelId, message, previousMessages);
+    }
+
+    private async *streamResponse(
+        openai: OpenAI,
+        modelId: string,
+        message: string,
+        previousMessages: Message[],
+    ): AsyncIterable<MessagePart> {
         try {
             const inputItems = previousMessages.map((msg) => ({
                 type: "message",
                 role: msg.role,
-                content: [{ type: "text", text: msg.content }],
+                content: [{ type: "input_text", text: msg.content }],
             }));
 
             inputItems.push({
                 type: "message",
                 role: "user",
-                content: [{ type: "text", text: message.trim() }],
+                content: [{ type: "input_text", text: message.trim() }],
             });
 
             const stream = await openai.responses.create({
-                model: model.name,
+                model: modelId,
                 input: inputItems as ResponseInput,
                 stream: true,
             });

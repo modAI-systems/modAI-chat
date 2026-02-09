@@ -1,9 +1,15 @@
 import { createContext, useContext } from "react";
-import type { Model, Provider } from "@/modules/llm-provider-service";
 
+/**
+ * LLM Context Type
+ *
+ * The selectedModel is now just the model ID string in the format:
+ * {provider_type}/{provider_name}/{model_id}
+ * e.g., "openai/My Provider/gpt-4o"
+ */
 export interface LLMContextType {
-    selectedModel: [Provider, Model] | null;
-    setSelectedModel: (model: [Provider, Model] | null) => void;
+    selectedModel: string | null;
+    setSelectedModel: (modelId: string | null) => void;
 }
 
 // Create context for the LLM selection

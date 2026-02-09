@@ -23,7 +23,10 @@ class ChatWebModule(ModaiModule, ABC):
         super().__init__(dependencies, config)
         self.router = APIRouter()
         self.router.add_api_route(
-            "/api/v1/responses", self.responses_endpoint, methods=["POST"]
+            "/api/v1/responses",
+            self.responses_endpoint,
+            methods=["POST"],
+            response_model=None,  # Disable response model since we return either Response or StreamingResponse
         )
 
     @abstractmethod

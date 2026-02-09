@@ -1,5 +1,5 @@
 """
-SQLAlchemy-based LLMProviderStore implementation for production usage.
+SQLAlchemy-based ModelProviderStore implementation for production usage.
 This implementation uses pure SQLAlchemy for database persistence with isolated metadata.
 """
 
@@ -23,12 +23,12 @@ from sqlalchemy import (
 from sqlalchemy.orm import Session, sessionmaker
 
 from modai.module import ModuleDependencies, PersistenceModule
-from modai.modules.llm_provider_store.module import LLMProviderStore, LLMProvider
+from modai.modules.model_provider_store.module import ModelProviderStore, ModelProvider
 
 
-class SQLAlchemyLLMProviderStore(LLMProviderStore, PersistenceModule):
+class SQLAlchemyModelProviderStore(ModelProviderStore, PersistenceModule):
     """
-    Pure SQLAlchemy implementation of the LLMProviderStore module.
+    Pure SQLAlchemy implementation of the ModelProviderStore module.
 
     This implementation uses pure SQLAlchemy for database persistence with isolated metadata
     to ensure only this module's tables are created and managed.
@@ -43,15 +43,15 @@ class SQLAlchemyLLMProviderStore(LLMProviderStore, PersistenceModule):
         database_url = config.get("database_url")
         if not database_url:
             raise ValueError(
-                "SQLAlchemyLLMProviderStore requires 'database_url' to be specified in config"
+                "SQLAlchemyModelProviderStore requires 'database_url' to be specified in config"
             )
 
         # Create isolated metadata for this module only
         self.metadata = MetaData()
 
-        # Define the llm_providers table with isolated metadata
-        self.llm_providers_table = Table(
-            "llm_providers",
+        # Define the model_providers table with isolated metadata
+        self.model_providers_table = Table(
+            "model_providers",
             self.metadata,
             Column("id", String(255), primary_key=True),
             Column("name", String(128), unique=True, index=True),
@@ -74,12 +74,12 @@ class SQLAlchemyLLMProviderStore(LLMProviderStore, PersistenceModule):
         """Get a new database session"""
         return self.SessionLocal()
 
-    def _row_to_provider(self, row) -> LLMProvider:
-        """Convert database row to LLMProvider dataclass"""
+    def _row_to_provider(self, row) -> ModelProvider:
+        """Convert database row to ModelProvider dataclass"""
         # With JSON type, properties are automatically deserialized
         properties = row.properties if row.properties else {}
 
-        return LLMProvider(
+        return ModelProvider(
             id=row.id,
             name=row.name,
             url=row.url,
@@ -103,10 +103,10 @@ class SQLAlchemyLLMProviderStore(LLMProviderStore, PersistenceModule):
         self,
         limit: int | None = None,
         offset: int | None = None,
-    ) -> List[LLMProvider]:
+    ) -> List[ModelProvider]:
         with self._get_session() as session:
-            statement = select(self.llm_providers_table).order_by(
-                self.llm_providers_table.c.created_at
+            statement = select(self.model_providers_table).order_by(
+                self.model_providers_table.c.created_at
             )
 
             if offset:
@@ -118,10 +118,10 @@ class SQLAlchemyLLMProviderStore(LLMProviderStore, PersistenceModule):
             rows = result.fetchall()
             return [self._row_to_provider(row) for row in rows]
 
-    async def get_provider(self, provider_id: str) -> LLMProvider | None:
+    async def get_provider(self, provider_id: str) -> ModelProvider | None:
         with self._get_session() as session:
-            statement = select(self.llm_providers_table).where(
-                self.llm_providers_table.c.id == provider_id
+            statement = select(self.model_providers_table).where(
+                self.model_providers_table.c.id == provider_id
             )
             result = session.execute(statement)
             row = result.fetchone()
@@ -131,7 +131,7 @@ class SQLAlchemyLLMProviderStore(LLMProviderStore, PersistenceModule):
 
     async def add_provider(
         self, name: str, url: str, properties: dict[str, Any]
-    ) -> LLMProvider:
+    ) -> ModelProvider:
         provider_id = self._generate_provider_id()
         with self._get_session() as session:
             # Validate and prepare properties
@@ -140,7 +140,7 @@ class SQLAlchemyLLMProviderStore(LLMProviderStore, PersistenceModule):
 
             now = datetime.now()
 
-            insert_stmt = self.llm_providers_table.insert().values(
+            insert_stmt = self.model_providers_table.insert().values(
                 id=provider_id,
                 name=name.strip(),
                 url=url.strip(),
@@ -153,7 +153,7 @@ class SQLAlchemyLLMProviderStore(LLMProviderStore, PersistenceModule):
             session.commit()
 
             # Return the created provider
-            return LLMProvider(
+            return ModelProvider(
                 id=provider_id,
                 name=name.strip(),
                 url=url.strip(),
@@ -168,11 +168,11 @@ class SQLAlchemyLLMProviderStore(LLMProviderStore, PersistenceModule):
         name: str,
         url: str,
         properties: dict[str, Any],
-    ) -> LLMProvider | None:
+    ) -> ModelProvider | None:
         with self._get_session() as session:
             # Check if provider exists first
-            check_stmt = select(self.llm_providers_table).where(
-                self.llm_providers_table.c.id == provider_id
+            check_stmt = select(self.model_providers_table).where(
+                self.model_providers_table.c.id == provider_id
             )
             result = session.execute(check_stmt)
             existing_row = result.fetchone()
@@ -187,8 +187,8 @@ class SQLAlchemyLLMProviderStore(LLMProviderStore, PersistenceModule):
 
             # Update the provider
             update_stmt = (
-                update(self.llm_providers_table)
-                .where(self.llm_providers_table.c.id == provider_id)
+                update(self.model_providers_table)
+                .where(self.model_providers_table.c.id == provider_id)
                 .values(
                     name=name.strip(),
                     url=url.strip(),
@@ -201,7 +201,7 @@ class SQLAlchemyLLMProviderStore(LLMProviderStore, PersistenceModule):
             session.commit()
 
             # Return the updated provider
-            return LLMProvider(
+            return ModelProvider(
                 id=provider_id,
                 name=name.strip(),
                 url=url.strip(),
@@ -213,8 +213,8 @@ class SQLAlchemyLLMProviderStore(LLMProviderStore, PersistenceModule):
     async def delete_provider(self, provider_id: str) -> None:
         with self._get_session() as session:
             # Idempotent operation
-            delete_stmt = delete(self.llm_providers_table).where(
-                self.llm_providers_table.c.id == provider_id
+            delete_stmt = delete(self.model_providers_table).where(
+                self.model_providers_table.c.id == provider_id
             )
             session.execute(delete_stmt)
             session.commit()
