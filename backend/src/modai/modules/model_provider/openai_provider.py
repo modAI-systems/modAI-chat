@@ -152,7 +152,9 @@ class OpenAIProviderModule(ModelProviderModule):
             models_response = client.models.list()
 
             # Return in OpenAI-compatible format
-            return ModelResponse(data=[model.model_dump() for model in models_response.data])
+            return ModelResponse(
+                data=[model.model_dump() for model in models_response.data]
+            )
 
         except Exception as e:
             # Handle API errors and authentication failures
@@ -173,7 +175,9 @@ class OpenAIProviderModule(ModelProviderModule):
         # Return 204 No Content for successful deletion (idempotent)
         return None
 
-    def _create_provider_response(self, provider: ModelProvider) -> ModelProviderResponse:
+    def _create_provider_response(
+        self, provider: ModelProvider
+    ) -> ModelProviderResponse:
         """Create a LLMProviderResponse from a provider object"""
         # Extract api_key from properties for the response
         api_key = provider.properties.get("api_key", "") if provider.properties else ""
