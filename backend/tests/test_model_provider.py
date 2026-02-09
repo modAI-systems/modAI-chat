@@ -188,7 +188,9 @@ class TestModelProviderModule:
             "properties": {"model": "new-model", "temperature": 0.8},
         }
 
-        response = test_client.post("/api/v1/models/providers/openai", json=request_data)
+        response = test_client.post(
+            "/api/v1/models/providers/openai", json=request_data
+        )
 
         assert response.status_code == 201
         data = response.json()
@@ -228,7 +230,9 @@ class TestModelProviderModule:
             "properties": {},
         }
 
-        response = test_client.post("/api/v1/models/providers/openai", json=request_data)
+        response = test_client.post(
+            "/api/v1/models/providers/openai", json=request_data
+        )
 
         assert response.status_code == 400
         data = response.json()
@@ -362,7 +366,9 @@ class TestModelProviderModule:
             "properties": complex_properties,
         }
 
-        response = test_client.post("/api/v1/models/providers/openai", json=request_data)
+        response = test_client.post(
+            "/api/v1/models/providers/openai", json=request_data
+        )
 
         assert response.status_code == 201
 

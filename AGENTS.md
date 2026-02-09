@@ -2,6 +2,60 @@
 
 A comprehensive guide for AI agents working on the modAI-chat project, providing context and instructions for effective development assistance.
 
+## AI WAY OF WORKING (MANDATORY)
+
+This project is designed for AI-first development. All agents MUST follow these protocols:
+
+### 0. Context Loading (ALWAYS FIRST)
+- **RULE**: ALWAYS read project context before starting ANY task.
+- **PROCESS**:
+    1. Read `{frontend|backend}/docs/architecture/*.md` to understand frontend system design.
+    2. Read `{frontend|backend}/docs/learnings/*.md` to learn from past corrections.
+    3. Check `.agents/skills/` for relevant technology skills.
+- **WHY**: These files contain critical knowledge from past work. Skipping them leads to repeated mistakes and inconsistent code.
+
+### 1. Technology Skill Acquisition
+- **RULE**: NEVER work on a technology without verified skills.
+- **PROCESS**:
+    1. If a task involves a new technology/library: **STOP**.
+    2. Perform a web search or use the dedicated task agent to investigate best practices, common pitfalls, and API usage.
+    3. Document findings in `.agents/skills/<tech-name>/SKILL.md`.
+    4. Only proceed with implementation once the skill file exists and is reviewed.
+
+### 2. Architecture First
+- **RULE**: Architecture MUST be adapted/reviewed before coding starts.
+- **PROCESS**:
+    1. For any new feature/package, update `{frontend|backend}/docs/DECISIONS.md`.
+    2. Ensure the architecture aligns with the overall project goals.
+
+### 3. Learning from Corrections
+- **RULE**: If the user corrects a mistake, update the instructions immediately.
+- **PROCESS**:
+    1. Identify the root cause of the mistake.
+    2. Update `{frontend|backend}/docs/learnings/INSTRUCTION_UPDATES.md` with a new rule to prevent recurrence.
+    3. Append relevant rules to `AGENTS.md` if they are project-wide.
+
+### 4. Test-Driven Completion
+- **RULE**: A task is NOT done until tests pass.
+- **PROCESS**:
+    1. Every work package MUST include tests.
+    2. Tests MUST pass before the task is marked `completed` in the todo list.
+
+### 5. Code Quality Gate (MANDATORY)
+- **RULE**: ALWAYS run linting and formatting before completing any code task.
+- **PROCESS**:
+    1. Run code formatters and code linters
+    2. Fix any issues before marking task as complete.
+
+### 6. Documentation Updates for API Changes (MANDATORY)
+- **RULE**: When adding, modifying, or deleting API endpoints, ALWAYS update documentation.
+- **PROCESS**:
+    1. Check `{frontend|backend}/README.md` for endpoint references and usage examples.
+    2. Check `{frontend|backend}/docs/architecture/*.md` for endpoint documentation.
+    3. Check any other docs that reference API endpoints.
+    4. Update all affected documentation before marking task as complete.
+
+
 ## Project Overview
 
 modAI-chat is a full-stack application with separate backend and frontend components:
