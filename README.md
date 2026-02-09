@@ -1,5 +1,8 @@
 # modAI Chat (modular AI Chat)
 
+[![CI](https://github.com/modAI-systems/modAI-chat/actions/workflows/ci.yml/badge.svg)](https://github.com/modAI-systems/modAI-chat/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Highly extendable AI Web Chat UI from the community for the community.
 
 ![modAI Browser Interface](resources/modai-browser-only.png)
