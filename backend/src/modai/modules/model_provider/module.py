@@ -1,6 +1,6 @@
 """
-LLM Provider Module: Web interface for LLM provider management.
-This module provides REST API endpoints for managing LLM provider configurations.
+model provider Module: Web interface for model provider management.
+This module provides REST API endpoints for managing model provider configurations.
 """
 
 from abc import ABC, abstractmethod
@@ -11,8 +11,8 @@ from pydantic import BaseModel
 from modai.module import ModaiModule, ModuleDependencies
 
 
-class LLMProviderResponse(BaseModel):
-    """Response model for LLM Provider data"""
+class ModelProviderResponse(BaseModel):
+    """Response model for model Provider data"""
 
     id: str
     type: str
@@ -24,8 +24,8 @@ class LLMProviderResponse(BaseModel):
     updated_at: str | None
 
 
-class LLMProviderCreateRequest(BaseModel):
-    """Request model for creating or updating LLM Provider"""
+class ModelProviderCreateRequest(BaseModel):
+    """Request model for creating or updating model Provider"""
 
     name: str
     base_url: str
@@ -33,40 +33,38 @@ class LLMProviderCreateRequest(BaseModel):
     properties: dict[str, Any] = {}
 
 
-class LLMProvidersListResponse(BaseModel):
+class ModelProvidersListResponse(BaseModel):
     """Response model for provider list"""
 
-    providers: List[LLMProviderResponse]
+    providers: List[ModelProviderResponse]
     total: int
     limit: int | None
     offset: int | None
 
 
-class LargeLanguageModel(BaseModel):
-    """Response model for an individual LLM model"""
+class Model(BaseModel):
+    """Model data from a provider (OpenAI-compatible)"""
 
     id: str
-    name: str
-    description: str
-    context_length: int
-    supports_streaming: bool
-    supports_functions: bool
+    object: str = "model"
+    created: int
+    owned_by: str
 
 
-class LargeLanguageModelResponse(BaseModel):
-    """Response model for LLM models from a provider"""
+class ModelResponse(BaseModel):
+    """Response model for models from a provider (OpenAI-compatible)"""
 
-    provider_id: str
-    models: List[LargeLanguageModel]
+    object: str = "list"
+    data: List[Model]
 
 
-class LLMProviderModule(ModaiModule, ABC):
+class ModelProviderModule(ModaiModule, ABC):
     """
-    Module Declaration for: LLM Provider (Web Module)
+    Module Declaration for: Model Provider (Web Module)
 
-    Web module for LLM Provider management providing REST endpoints.
-    This module provides HTTP API access to LLM provider management operations.
-    It depends on an LLMProviderStore module for actual data operations.
+    Web module for Model Provider management providing REST endpoints.
+    This module provides HTTP API access to Model provider management operations.
+    It depends on a ModelProviderStore module for actual data operations.
     """
 
     def __init__(
@@ -76,39 +74,40 @@ class LLMProviderModule(ModaiModule, ABC):
         provider_type_name: str,
     ):
         super().__init__(dependencies, config)
+        self.provider_type_name = provider_type_name
 
         # Create router for web endpoints
         self.router = APIRouter()  # This makes it a web module
 
-        # Add LLM provider routes
+        # Add model provider routes
         self.router.add_api_route(
-            f"/api/v1/llm-provider/{provider_type_name}",
+            f"/api/v1/models/providers/{provider_type_name}",
             self.get_providers,
             methods=["GET"],
         )
         self.router.add_api_route(
-            f"/api/v1/llm-provider/{provider_type_name}",
+            f"/api/v1/models/providers/{provider_type_name}",
             self.create_provider,
             methods=["POST"],
             status_code=201,
         )
         self.router.add_api_route(
-            f"/api/v1/llm-provider/{provider_type_name}/{{provider_id}}",
+            f"/api/v1/models/providers/{provider_type_name}/{{provider_id}}",
             self.get_provider,
             methods=["GET"],
         )
         self.router.add_api_route(
-            f"/api/v1/llm-provider/{provider_type_name}/{{provider_id}}",
+            f"/api/v1/models/providers/{provider_type_name}/{{provider_id}}",
             self.update_provider,
             methods=["PUT"],
         )
         self.router.add_api_route(
-            f"/api/v1/llm-provider/{provider_type_name}/{{provider_id}}/models",
+            f"/api/v1/models/providers/{provider_type_name}/{{provider_id}}/models",
             self.get_models,
             methods=["GET"],
         )
         self.router.add_api_route(
-            f"/api/v1/llm-provider/{provider_type_name}/{{provider_id}}",
+            f"/api/v1/models/providers/{provider_type_name}/{{provider_id}}",
             self.delete_provider,
             methods=["DELETE"],
             status_code=204,
@@ -123,16 +122,16 @@ class LLMProviderModule(ModaiModule, ABC):
         offset: Optional[int] = Query(
             None, ge=0, description="Number of providers to skip"
         ),
-    ) -> LLMProvidersListResponse:
+    ) -> ModelProvidersListResponse:
         """
-        Get all LLM providers with optional pagination.
+        Get all model providers with optional pagination.
 
         Args:
             limit: Maximum number of providers to return
             offset: Number of providers to skip
 
         Returns:
-            LLMProvidersListResponse: List of providers with pagination info
+            ModelProvidersListResponse: List of providers with pagination info
 
         Raises:
             HTTPException: 500 if retrieval fails
@@ -140,15 +139,15 @@ class LLMProviderModule(ModaiModule, ABC):
         pass
 
     @abstractmethod
-    async def get_provider(self, provider_id: str) -> LLMProviderResponse:
+    async def get_provider(self, provider_id: str) -> ModelProviderResponse:
         """
-        Get a specific LLM provider by ID.
+        Get a specific model provider by ID.
 
         Args:
             provider_id: Unique identifier for the provider
 
         Returns:
-            LLMProviderResponse: Provider data
+            ModelProviderResponse: Provider data
 
         Raises:
             HTTPException: 404 if provider not found, 500 if retrieval fails
@@ -157,16 +156,16 @@ class LLMProviderModule(ModaiModule, ABC):
 
     @abstractmethod
     async def create_provider(
-        self, request: LLMProviderCreateRequest
-    ) -> LLMProviderResponse:
+        self, request: ModelProviderCreateRequest
+    ) -> ModelProviderResponse:
         """
-        Create a new LLM provider.
+        Create a new model provider.
 
         Args:
             request: Provider data
 
         Returns:
-            LLMProviderResponse: Created provider data
+            ModelProviderResponse: Created provider data
 
         Raises:
             HTTPException: 400 for validation errors, 409 for conflicts, 500 for other failures
@@ -175,17 +174,17 @@ class LLMProviderModule(ModaiModule, ABC):
 
     @abstractmethod
     async def update_provider(
-        self, provider_id: str, request: LLMProviderCreateRequest
-    ) -> LLMProviderResponse:
+        self, provider_id: str, request: ModelProviderCreateRequest
+    ) -> ModelProviderResponse:
         """
-        Update an existing LLM provider.
+        Update an existing model provider.
 
         Args:
             provider_id: The ID of the provider to update
             request: Provider data
 
         Returns:
-            LLMProviderResponse: Updated provider data
+            ModelProviderResponse: Updated provider data
 
         Raises:
             HTTPException: 400 for validation errors, 404 if provider not found, 409 for conflicts, 500 for other failures
@@ -193,7 +192,7 @@ class LLMProviderModule(ModaiModule, ABC):
         pass
 
     @abstractmethod
-    async def get_models(self, provider_id: str) -> LargeLanguageModelResponse:
+    async def get_models(self, provider_id: str) -> ModelResponse:
         """
         Get available models from a specific provider.
 
@@ -201,7 +200,7 @@ class LLMProviderModule(ModaiModule, ABC):
             provider_id: Unique identifier for the provider
 
         Returns:
-            LLMModelsResponse: Models data from the provider
+            ModelResponse: Models data from the provider
 
         Raises:
             HTTPException: 404 if provider not found, 500 if retrieval fails
@@ -211,7 +210,7 @@ class LLMProviderModule(ModaiModule, ABC):
     @abstractmethod
     async def delete_provider(self, provider_id: str) -> None:
         """
-        Delete an LLM provider.
+        Delete a model provider.
 
         Args:
             provider_id: ID of the provider to delete

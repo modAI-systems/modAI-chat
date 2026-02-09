@@ -3,12 +3,12 @@ from typing import Any, AsyncGenerator
 from openai import AsyncOpenAI, APIStatusError
 from modai.module import ModuleDependencies
 from .module import ChatLLMModule
-from typing import Any
 from openai.types.responses import (
     ResponseCreateParams as OpenAICreateResponse,
     Response as OpenAIResponse,
     ResponseStreamEvent as OpenAIResponseStreamEvent,
 )
+from modai.modules.model_provider.module import ModelProviderModule
 
 
 class OpenAILLMChatModule(ChatLLMModule):
@@ -21,11 +21,50 @@ class OpenAILLMChatModule(ChatLLMModule):
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
         super().__init__(dependencies, config)
 
+        # Get the LLM provider module dependency (key from module_dependencies in config.yaml)
+        self.provider_module: ModelProviderModule = dependencies.get_module(
+            "llm_provider_module"
+        )
+
+        if not self.provider_module:
+            raise ValueError(
+                "OpenAILLMChatModule requires 'llm_provider_module' module dependency"
+            )
+
     async def generate_response(
-        self, _: Request, body_json: OpenAICreateResponse
+        self, request: Request, body_json: OpenAICreateResponse
     ) -> OpenAIResponse | AsyncGenerator[OpenAIResponseStreamEvent, None]:
-        openai_client_config = self.config.get("openai_client", {})
-        client = AsyncOpenAI(**openai_client_config)
+        # Parse model: format is "provider_name/model_name"
+        model = body_json.get("model", "")
+        model_parts = model.split("/")
+        if len(model_parts) != 2:
+            raise ValueError(
+                f"Invalid model format: {model}. Expected 'provider_name/model_name'"
+            )
+
+        provider_name, actual_model = model_parts
+
+        # Get all providers from the provider module
+        providers_response = await self.provider_module.get_providers(
+            limit=None, offset=None
+        )
+        provider = None
+        for p in providers_response.providers:
+            if p.name == provider_name:
+                provider = p
+                break
+
+        if not provider:
+            raise ValueError(f"Provider '{provider_name}' not found")
+
+        # Create OpenAI client with the provider's API key and base URL
+        client = AsyncOpenAI(
+            api_key=provider.api_key,
+            base_url=provider.base_url if provider.base_url else None,
+        )
+
+        # Update body_json with the actual model
+        body_json["model"] = actual_model
 
         stream = body_json.get("stream", False)
 

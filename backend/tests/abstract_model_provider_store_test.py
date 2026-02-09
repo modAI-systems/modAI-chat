@@ -1,39 +1,39 @@
 """
-Abstract test base for LLMProviderStore implementations.
+Abstract test base for ModelProviderStore implementations.
 This base class provides common test scenarios that can be reused
-for different LLMProviderStore implementations.
+for different ModelProviderStore implementations.
 """
 
 import pytest
 from abc import ABC, abstractmethod
 
-from modai.modules.llm_provider_store.module import LLMProviderStore
+from modai.modules.model_provider_store.module import ModelProviderStore
 
 
-class AbstractLLMProviderStoreTestBase(ABC):
+class AbstractModelProviderStoreTestBase(ABC):
     """
-    Abstract base class for testing LLMProviderStore implementations.
+    Abstract base class for testing ModelProviderStore implementations.
 
-    Subclasses must implement the create_llm_provider_store() method to provide
-    the specific LLMProviderStore implementation to be tested.
+    Subclasses must implement the create_model_provider_store() method to provide
+    the specific ModelProviderStore implementation to be tested.
     """
 
     @abstractmethod
-    def create_llm_provider_store(self) -> LLMProviderStore:
-        """Create and return a LLMProviderStore instance for testing"""
+    def create_model_provider_store(self) -> ModelProviderStore:
+        """Create and return a ModelProviderStore instance for testing"""
         pass
 
     @pytest.fixture
-    def llm_provider_store(self):
-        """Fixture providing a LLMProviderStore instance"""
-        return self.create_llm_provider_store()
+    def model_provider_store(self):
+        """Fixture providing a ModelProviderStore instance"""
+        return self.create_model_provider_store()
 
     @pytest.mark.anyio
     async def test_add_provider_creates_provider_with_correct_attributes(
-        self, llm_provider_store: LLMProviderStore
+        self, model_provider_store: ModelProviderStore
     ):
         """Test that add_provider creates a provider with all expected attributes"""
-        provider = await llm_provider_store.add_provider(
+        provider = await model_provider_store.add_provider(
             name="OpenAI",
             url="https://api.openai.com/v1",
             properties={
@@ -56,41 +56,41 @@ class AbstractLLMProviderStoreTestBase(ABC):
 
     @pytest.mark.anyio
     async def test_get_providers_returns_all_added_providers(
-        self, llm_provider_store: LLMProviderStore
+        self, model_provider_store: ModelProviderStore
     ):
         """Test that get_providers returns all providers that were added"""
-        await llm_provider_store.add_provider(
+        await model_provider_store.add_provider(
             name="OpenAI", url="https://api.openai.com/v1", properties={}
         )
-        await llm_provider_store.add_provider(
+        await model_provider_store.add_provider(
             name="Anthropic", url="https://api.anthropic.com/v1", properties={}
         )
-        await llm_provider_store.add_provider(
-            name="Local LLM", url="http://localhost:8080/v1", properties={}
+        await model_provider_store.add_provider(
+            name="Local Model", url="http://localhost:8080/v1", properties={}
         )
 
-        all_providers = await llm_provider_store.get_providers()
+        all_providers = await model_provider_store.get_providers()
         assert len(all_providers) == 3
 
         provider_names = {p.name for p in all_providers}
-        assert provider_names == {"OpenAI", "Anthropic", "Local LLM"}
+        assert provider_names == {"OpenAI", "Anthropic", "Local Model"}
 
     @pytest.mark.anyio
     async def test_get_provider_by_id_returns_correct_provider(
-        self, llm_provider_store: LLMProviderStore
+        self, model_provider_store: ModelProviderStore
     ):
         """Test that get_provider returns the correct provider by ID"""
-        provider_a = await llm_provider_store.add_provider(
+        provider_a = await model_provider_store.add_provider(
             name="OpenAI",
             url="https://api.openai.com/v1",
             properties={"temperature": 0.7},
         )
 
-        provider_b = await llm_provider_store.add_provider(
+        provider_b = await model_provider_store.add_provider(
             name="Anthropic", url="https://api.anthropic.com/v1", properties={}
         )
 
-        retrieved_provider = await llm_provider_store.get_provider(provider_a.id)
+        retrieved_provider = await model_provider_store.get_provider(provider_a.id)
 
         assert retrieved_provider is not None
         assert retrieved_provider.id == provider_a.id
@@ -101,16 +101,16 @@ class AbstractLLMProviderStoreTestBase(ABC):
 
     @pytest.mark.anyio
     async def test_update_provider_updates_all_fields(
-        self, llm_provider_store: LLMProviderStore
+        self, model_provider_store: ModelProviderStore
     ):
         """Test that update_provider correctly updates all provider fields"""
-        original_provider = await llm_provider_store.add_provider(
+        original_provider = await model_provider_store.add_provider(
             name="OpenAI",
             url="https://api.openai.com/v1",
             properties={"api_key": "sk-test123", "model": "gpt-4"},
         )
 
-        updated_provider = await llm_provider_store.update_provider(
+        updated_provider = await model_provider_store.update_provider(
             original_provider.id,
             name="OpenAI Updated",
             url="https://api.openai.com/v2/updated",
@@ -132,37 +132,37 @@ class AbstractLLMProviderStoreTestBase(ABC):
 
     @pytest.mark.anyio
     async def test_delete_provider_removes_provider(
-        self, llm_provider_store: LLMProviderStore
+        self, model_provider_store: ModelProviderStore
     ):
         """Test that delete_provider removes the provider from the store"""
-        provider = await llm_provider_store.add_provider(
+        provider = await model_provider_store.add_provider(
             name="ToDelete", url="https://api.delete.com", properties={}
         )
 
-        await llm_provider_store.delete_provider(provider.id)
+        await model_provider_store.delete_provider(provider.id)
 
         # Verify provider is gone
-        deleted_provider = await llm_provider_store.get_provider(provider.id)
+        deleted_provider = await model_provider_store.get_provider(provider.id)
         assert deleted_provider is None
 
         # Verify it's not in the list
-        all_providers = await llm_provider_store.get_providers()
+        all_providers = await model_provider_store.get_providers()
         provider_ids = {p.id for p in all_providers}
         assert provider.id not in provider_ids
 
     @pytest.mark.anyio
     async def test_add_provider_with_duplicate_name_raises_exception(
-        self, llm_provider_store
+        self, model_provider_store
     ):
         """Test that adding a provider with duplicate name raises an exception"""
-        await llm_provider_store.add_provider(
+        await model_provider_store.add_provider(
             name="TestProvider",
             url="https://api.test.com",
             properties={"key": "value"},
         )
 
         with pytest.raises(Exception):
-            await llm_provider_store.add_provider(
+            await model_provider_store.add_provider(
                 name="TestProvider",
                 url="https://api.other.com",
                 properties={"other": "value"},
@@ -170,68 +170,68 @@ class AbstractLLMProviderStoreTestBase(ABC):
 
     @pytest.mark.anyio
     async def test_get_provider_with_nonexistent_id_returns_none(
-        self, llm_provider_store
+        self, model_provider_store
     ):
         """Test that getting a provider with non-existent ID returns None"""
-        result = await llm_provider_store.get_provider("nonexistent-id")
+        result = await model_provider_store.get_provider("nonexistent-id")
         assert result is None
 
     @pytest.mark.anyio
     async def test_update_provider_with_nonexistent_id_returns_none(
-        self, llm_provider_store
+        self, model_provider_store
     ):
         """Test that updating a provider with non-existent ID returns None"""
-        result = await llm_provider_store.update_provider(
+        result = await model_provider_store.update_provider(
             "nonexistent-id", name="NewName", url="https://api.new.com", properties={}
         )
         assert result is None
 
     @pytest.mark.anyio
     async def test_delete_provider_with_nonexistent_id_succeeds(
-        self, llm_provider_store
+        self, model_provider_store
     ):
         """Test that deleting a provider with non-existent ID doesn't raise exception (idempotent)"""
         # Should not raise any exception
-        await llm_provider_store.delete_provider("nonexistent-id")
+        await model_provider_store.delete_provider("nonexistent-id")
 
     @pytest.mark.anyio
     async def test_update_provider_with_duplicate_name_raises_exception(
-        self, llm_provider_store
+        self, model_provider_store
     ):
         """Test that updating a provider to use an existing name raises an exception"""
-        provider1 = await llm_provider_store.add_provider(
+        provider1 = await model_provider_store.add_provider(
             name="Provider1", url="https://api1.com", properties={}
         )
-        provider2 = await llm_provider_store.add_provider(
+        provider2 = await model_provider_store.add_provider(
             name="Provider2", url="https://api2.com", properties={}
         )
 
         with pytest.raises(Exception):
-            await llm_provider_store.update_provider(
+            await model_provider_store.update_provider(
                 provider2.id, name="Provider1", url="https://api2.com", properties={}
             )
 
     @pytest.mark.anyio
-    async def test_add_provider_with_empty_properties(self, llm_provider_store):
+    async def test_add_provider_with_empty_properties(self, model_provider_store):
         """Test that adding a provider with empty properties works correctly"""
-        provider = await llm_provider_store.add_provider(
+        provider = await model_provider_store.add_provider(
             name="EmptyProps", url="https://api.empty.com", properties={}
         )
         assert provider.properties == {}
 
     @pytest.mark.anyio
     async def test_add_provider_with_none_properties_defaults_to_empty_dict(
-        self, llm_provider_store
+        self, model_provider_store
     ):
         """Test that adding a provider with None properties defaults to empty dict"""
-        provider = await llm_provider_store.add_provider(
+        provider = await model_provider_store.add_provider(
             name="NoneProps", url="https://api.none.com", properties=None
         )
         assert provider.properties == {}
 
     @pytest.mark.anyio
     async def test_add_provider_with_complex_nested_properties(
-        self, llm_provider_store
+        self, model_provider_store
     ):
         """Test that complex nested properties are preserved correctly"""
         complex_props = {
@@ -254,7 +254,7 @@ class AbstractLLMProviderStoreTestBase(ABC):
             },
         }
 
-        provider = await llm_provider_store.add_provider(
+        provider = await model_provider_store.add_provider(
             name="ComplexProps", url="https://api.complex.com", properties=complex_props
         )
 
@@ -267,51 +267,51 @@ class AbstractLLMProviderStoreTestBase(ABC):
 
     @pytest.mark.anyio
     async def test_get_providers_without_pagination_returns_all(
-        self, llm_provider_store
+        self, model_provider_store
     ):
         """Test that calling get_providers without pagination returns all providers"""
         # Create 5 providers
         for i in range(5):
-            await llm_provider_store.add_provider(
+            await model_provider_store.add_provider(
                 name=f"Provider{i}", url=f"https://api{i}.com", properties={}
             )
 
-        all_providers = await llm_provider_store.get_providers()
+        all_providers = await model_provider_store.get_providers()
         assert len(all_providers) == 5
 
     @pytest.mark.anyio
     async def test_get_providers_pagination_beyond_available_records_returns_empty(
-        self, llm_provider_store
+        self, model_provider_store
     ):
         """Test that requesting pagination beyond available records returns empty list"""
         # Create 3 providers
         for i in range(3):
-            await llm_provider_store.add_provider(
+            await model_provider_store.add_provider(
                 name=f"Provider{i}", url=f"https://api{i}.com", properties={}
             )
 
-        empty_page = await llm_provider_store.get_providers(limit=5, offset=10)
+        empty_page = await model_provider_store.get_providers(limit=5, offset=10)
         assert len(empty_page) == 0
 
     @pytest.mark.anyio
     async def test_get_providers_pagination_covers_all_providers_without_overlap(
-        self, llm_provider_store
+        self, model_provider_store
     ):
         """Test that paginated results cover all providers without overlap or duplication"""
         # Create 7 providers
         for i in range(7):
-            await llm_provider_store.add_provider(
+            await model_provider_store.add_provider(
                 name=f"Provider{i:02d}", url=f"https://api{i}.com", properties={}
             )
 
         # Get all providers for comparison
-        all_providers = await llm_provider_store.get_providers()
+        all_providers = await model_provider_store.get_providers()
         all_provider_ids = {p.id for p in all_providers}
 
         # Get paginated results
-        page1 = await llm_provider_store.get_providers(limit=3, offset=0)
-        page2 = await llm_provider_store.get_providers(limit=3, offset=3)
-        page3 = await llm_provider_store.get_providers(limit=3, offset=6)
+        page1 = await model_provider_store.get_providers(limit=3, offset=0)
+        page2 = await model_provider_store.get_providers(limit=3, offset=3)
+        page3 = await model_provider_store.get_providers(limit=3, offset=6)
 
         # Collect all paginated IDs
         all_paginated_ids = set()
@@ -324,10 +324,10 @@ class AbstractLLMProviderStoreTestBase(ABC):
 
     @pytest.mark.anyio
     async def test_add_provider_trims_whitespace_from_name_and_url(
-        self, llm_provider_store
+        self, model_provider_store
     ):
         """Test that whitespace is trimmed from name and URL when adding a provider"""
-        provider = await llm_provider_store.add_provider(
+        provider = await model_provider_store.add_provider(
             name="  SpacedName  ",
             url="  https://api.spaced.com  ",
             properties={"test": "value"},
@@ -337,16 +337,16 @@ class AbstractLLMProviderStoreTestBase(ABC):
 
     @pytest.mark.anyio
     async def test_multiple_updates_to_same_provider_work_correctly(
-        self, llm_provider_store
+        self, model_provider_store
     ):
         """Test that multiple successive updates to the same provider work correctly"""
-        provider = await llm_provider_store.add_provider(
+        provider = await model_provider_store.add_provider(
             name="MultiUpdate", url="https://api.multi.com", properties={}
         )
 
         # Perform multiple updates
         for i in range(3):
-            updated_provider = await llm_provider_store.update_provider(
+            updated_provider = await model_provider_store.update_provider(
                 provider.id,
                 name="MultiUpdate",
                 url="https://api.multi.com",
@@ -356,12 +356,12 @@ class AbstractLLMProviderStoreTestBase(ABC):
 
     @pytest.mark.anyio
     async def test_update_provider_updates_timestamp_but_preserves_created_at(
-        self, llm_provider_store
+        self, model_provider_store
     ):
         """Test that updating a provider updates the updated_at timestamp but preserves created_at"""
         import asyncio
 
-        original_provider = await llm_provider_store.add_provider(
+        original_provider = await model_provider_store.add_provider(
             name="TimestampTest", url="https://api.timestamp.com", properties={}
         )
 
@@ -371,7 +371,7 @@ class AbstractLLMProviderStoreTestBase(ABC):
         # Small delay to ensure timestamp difference
         await asyncio.sleep(0.01)
 
-        updated_provider = await llm_provider_store.update_provider(
+        updated_provider = await model_provider_store.update_provider(
             original_provider.id,
             name="TimestampTestUpdated",
             url="https://api.timestamp.com",
@@ -384,7 +384,7 @@ class AbstractLLMProviderStoreTestBase(ABC):
     @pytest.mark.anyio
     async def test_add_provider_with_large_properties_succeeds(self):
         """Test that adding a provider with large properties object works correctly"""
-        provider_store = self.create_llm_provider_store()
+        provider_store = self.create_model_provider_store()
 
         # Create a large properties object
         large_properties = {
@@ -418,7 +418,7 @@ class AbstractLLMProviderStoreTestBase(ABC):
     @pytest.mark.anyio
     async def test_get_provider_retrieves_large_properties_correctly(self):
         """Test that retrieving a provider with large properties maintains data integrity"""
-        provider_store = self.create_llm_provider_store()
+        provider_store = self.create_model_provider_store()
 
         large_properties = {
             "models": [f"model-{i}" for i in range(50)],
@@ -442,7 +442,7 @@ class AbstractLLMProviderStoreTestBase(ABC):
         """Test that concurrently created providers are all persisted in the database"""
         import asyncio
 
-        provider_store = self.create_llm_provider_store()
+        provider_store = self.create_model_provider_store()
 
         # Create providers concurrently
         async def create_provider(index):
@@ -462,7 +462,7 @@ class AbstractLLMProviderStoreTestBase(ABC):
     @pytest.mark.anyio
     async def test_add_provider_preserves_unicode_characters(self):
         """Test that Unicode characters in name, URL, and properties are preserved correctly"""
-        provider_store = self.create_llm_provider_store()
+        provider_store = self.create_model_provider_store()
 
         unicode_provider = await provider_store.add_provider(
             name="Тест Provider 测试 🤖",
@@ -487,7 +487,7 @@ class AbstractLLMProviderStoreTestBase(ABC):
     @pytest.mark.anyio
     async def test_get_provider_retrieves_unicode_characters_correctly(self):
         """Test that retrieving a provider with Unicode characters maintains data integrity"""
-        provider_store = self.create_llm_provider_store()
+        provider_store = self.create_model_provider_store()
 
         created_provider = await provider_store.add_provider(
             name="Unicode测试",

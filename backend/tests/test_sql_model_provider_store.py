@@ -1,56 +1,55 @@
 import sys
 import os
 import pytest
-import json
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from modai.module import ModuleDependencies
-from modai.modules.llm_provider_store.sql_model_llm_provider_store import (
-    SQLAlchemyLLMProviderStore,
+from modai.modules.model_provider_store.sql_model_provider_store import (
+    SQLAlchemyModelProviderStore,
 )
-from tests.abstract_llm_provider_store_test import AbstractLLMProviderStoreTestBase
+from tests.abstract_model_provider_store_test import AbstractModelProviderStoreTestBase
 
 # Force anyio to use asyncio backend only
 anyio_backend = pytest.fixture(scope="session")(lambda: "asyncio")
 
 
-class TestSQLAlchemyLLMProviderStore(AbstractLLMProviderStoreTestBase):
-    """Test class for SQLAlchemyLLMProviderStore using the abstract test base"""
+class TestSQLAlchemyModelProviderStore(AbstractModelProviderStoreTestBase):
+    """Test class for SQLAlchemyModelProviderStore using the abstract test base"""
 
-    def create_llm_provider_store(self):
-        """Create and return a SQLAlchemyLLMProviderStore instance for testing"""
+    def create_model_provider_store(self):
+        """Create and return a SQLAlchemyModelProviderStore instance for testing"""
         # Use in-memory SQLite database for testing
-        return SQLAlchemyLLMProviderStore(
+        return SQLAlchemyModelProviderStore(
             ModuleDependencies(),
             {"database_url": "sqlite:///:memory:", "echo": False},
         )
 
     def test_sqlalchemy_requires_database_url(self):
-        """Test that SQLAlchemyLLMProviderStore requires database_url in config"""
+        """Test that SQLAlchemyModelProviderStore requires database_url in config"""
 
         # Test with missing database_url
         with pytest.raises(
             ValueError,
-            match="SQLAlchemyLLMProviderStore requires 'database_url' to be specified in config",
+            match="SQLAlchemyModelProviderStore requires 'database_url' to be specified in config",
         ):
-            SQLAlchemyLLMProviderStore(ModuleDependencies(), {})
+            SQLAlchemyModelProviderStore(ModuleDependencies(), {})
 
         # Test with None database_url
         with pytest.raises(
             ValueError,
-            match="SQLAlchemyLLMProviderStore requires 'database_url' to be specified in config",
+            match="SQLAlchemyModelProviderStore requires 'database_url' to be specified in config",
         ):
-            SQLAlchemyLLMProviderStore(ModuleDependencies(), {"database_url": None})
+            SQLAlchemyModelProviderStore(ModuleDependencies(), {"database_url": None})
 
         # Test with empty string database_url
         with pytest.raises(
             ValueError,
-            match="SQLAlchemyLLMProviderStore requires 'database_url' to be specified in config",
+            match="SQLAlchemyModelProviderStore requires 'database_url' to be specified in config",
         ):
-            SQLAlchemyLLMProviderStore(ModuleDependencies(), {"database_url": ""})
+            SQLAlchemyModelProviderStore(ModuleDependencies(), {"database_url": ""})
 
         # Test that valid database_url works
-        provider_store = SQLAlchemyLLMProviderStore(
+        provider_store = SQLAlchemyModelProviderStore(
             ModuleDependencies(), {"database_url": "sqlite:///:memory:"}
         )
         assert provider_store is not None
@@ -58,7 +57,7 @@ class TestSQLAlchemyLLMProviderStore(AbstractLLMProviderStoreTestBase):
     @pytest.mark.anyio
     async def test_add_provider_rejects_non_json_serializable_properties(self):
         """Test that adding a provider with non-JSON serializable properties raises an exception"""
-        provider_store = self.create_llm_provider_store()
+        provider_store = self.create_model_provider_store()
 
         class BadObject:
             def __str__(self):
@@ -79,9 +78,9 @@ class TestSQLAlchemyLLMProviderStore(AbstractLLMProviderStoreTestBase):
     @pytest.mark.anyio
     async def test_add_provider_safely_handles_sql_injection_in_name(self):
         """Test that SQL injection attempts in provider name are safely handled"""
-        provider_store = self.create_llm_provider_store()
+        provider_store = self.create_model_provider_store()
 
-        malicious_name = "Test'; DROP TABLE llm_providers; --"
+        malicious_name = "Test'; DROP TABLE model_providers; --"
         provider = await provider_store.add_provider(
             name=malicious_name,
             url="https://api.test.com",
@@ -99,10 +98,10 @@ class TestSQLAlchemyLLMProviderStore(AbstractLLMProviderStoreTestBase):
     @pytest.mark.anyio
     async def test_add_provider_safely_handles_sql_injection_in_properties(self):
         """Test that SQL injection attempts in properties are safely handled"""
-        provider_store = self.create_llm_provider_store()
+        provider_store = self.create_model_provider_store()
 
         malicious_props = {
-            "key": "'; DROP TABLE llm_providers; --",
+            "key": "'; DROP TABLE model_providers; --",
             "another_key": "normal_value",
         }
 
@@ -113,5 +112,5 @@ class TestSQLAlchemyLLMProviderStore(AbstractLLMProviderStoreTestBase):
         )
 
         # Properties should be safely stored
-        assert provider.properties["key"] == "'; DROP TABLE llm_providers; --"
+        assert provider.properties["key"] == "'; DROP TABLE model_providers; --"
         assert provider.properties["another_key"] == "normal_value"

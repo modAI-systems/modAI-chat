@@ -10,13 +10,15 @@ import {
     type CreateProviderRequest,
     LLMProviderServiceContext,
     type Model,
+    type OpenAIModel,
     type Provider,
     type ProviderService,
     type ProviderType,
     type UpdateProviderRequest,
 } from ".";
 
-interface OpenAIModel {
+// OpenAIModel type for local API responses (different from exported OpenAIModel)
+interface OpenAIModelResponse {
     id: string;
     object: string;
     created: number;
@@ -53,6 +55,56 @@ class LLMNoBackendProviderService implements ProviderService {
         } catch (error) {
             console.error("Failed to save providers to localStorage:", error);
         }
+    }
+
+    /**
+     * Get all models from all providers
+     * Aggregates models from all providers and returns them in OpenAI-compatible format
+     */
+    async getAllModels(): Promise<OpenAIModel[]> {
+        const allModels: OpenAIModel[] = [];
+
+        for (const provider of this.providers) {
+            try {
+                const response = await fetch(`${provider.base_url}/models`, {
+                    headers: {
+                        Authorization: `Bearer ${provider.api_key}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    console.error(
+                        `Failed to fetch models from provider '${provider.name}': ${response.status}`,
+                    );
+                    continue;
+                }
+
+                const data = await response.json();
+                // Map models with prefixed IDs to match backend format
+                for (const model of data.data) {
+                    allModels.push({
+                        id: `${provider.type}/${provider.name}/${model.id}`,
+                        object: model.object || "model",
+                        created: model.created || Date.now(),
+                        owned_by: model.owned_by || "unknown",
+                    });
+                }
+            } catch (error) {
+                console.error(
+                    `Error fetching models from provider '${provider.name}':`,
+                    error,
+                );
+            }
+        }
+
+        return allModels;
+    }
+
+    /**
+     * Get all providers from all types
+     */
+    async getAllProviders(): Promise<Provider[]> {
+        return this.providers;
     }
 
     /**
@@ -116,7 +168,7 @@ class LLMNoBackendProviderService implements ProviderService {
         const data = await response.json();
         // Map OpenAI-style models to our Model interface
         // This assumes the API returns { data: [{ id: string, ... }] }
-        return data.data.map((model: OpenAIModel) => ({
+        return data.data.map((model: OpenAIModelResponse) => ({
             id: model.id,
             name: model.id, // Use id as name
             description: `${provider.name} model: ${model.id}`,

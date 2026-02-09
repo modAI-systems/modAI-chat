@@ -40,8 +40,8 @@ test.describe("Chat", () => {
         await llmProviderPage.navigateTo();
         await llmProviderPage.addProvider(
             "Mock Provider",
-            "http://localhost:3001",
-            "test-api-key",
+            "http://localhost:3001/v1",
+            "your-secret-api-key",
         );
 
         // Navigate to chat and select first model

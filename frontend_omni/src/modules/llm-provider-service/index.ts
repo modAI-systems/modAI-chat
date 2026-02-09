@@ -29,6 +29,16 @@ export interface Model {
     supports_functions: boolean;
 }
 
+/**
+ * OpenAI-compatible model format returned from /models endpoint
+ */
+export interface OpenAIModel {
+    id: string;
+    object: string;
+    created: number;
+    owned_by: string;
+}
+
 export interface ProviderType {
     value: string;
     label: string;
@@ -58,6 +68,8 @@ export interface ApiErrorResponse {
 // Service interface
 export interface ProviderService {
     // Modern API methods
+    getAllModels(): Promise<OpenAIModel[]>;
+    getAllProviders(): Promise<Provider[]>;
     getProviders(providerType: ProviderType | string): Promise<Provider[]>;
     getProvider(
         providerType: ProviderType | string,

@@ -100,7 +100,8 @@ export class LoginPage {
         await this.page.getByLabel("Email", exact).fill(email);
         await this.page.getByLabel("Password", exact).fill(password);
         await this.page.getByRole("button", { name: "Login" }).click();
-        await expect(this.page).toHaveURL("/");
+        // After login, user is redirected to /chat or / depending on the app configuration
+        await expect(this.page).not.toHaveURL("/login");
     }
 }
 
@@ -125,6 +126,10 @@ export class SignupPage {
 
 export class ChatPage {
     constructor(private page: Page) {}
+
+    async goto(): Promise<void> {
+        await this.page.goto("/chat");
+    }
 
     async navigateTo(): Promise<void> {
         await this.page.getByText("Chat", exact).click();

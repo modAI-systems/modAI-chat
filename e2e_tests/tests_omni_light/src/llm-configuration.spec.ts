@@ -19,13 +19,13 @@ test.describe("LLM Picker", () => {
         await llmProviderPage.navigateTo();
         await llmProviderPage.addProvider(
             "Test Provider",
-            "http://localhost:3001",
-            "test-api-key",
+            "http://localhost:3001/v1",
+            "your-secret-api-key",
         );
 
-        // Check that LLM Picker has 2 entries (the provider returns 2 models atm)
+        // Check that LLM Picker has 3 entries (llmock returns 3 models: gpt-4o, gpt-4o-mini, gpt-3.5-turbo)
         await chatPage.navigateTo();
-        await chatPage.assertLLMModelCount(2);
+        await chatPage.assertLLMModelCount(3);
     });
 
     test("not reachable providers don't show up in LLM picker", async ({
@@ -38,17 +38,17 @@ test.describe("LLM Picker", () => {
         await llmProviderPage.navigateTo();
         await llmProviderPage.addProvider(
             "Test Provider",
-            "http://localhost:3001",
-            "test-api-key",
+            "http://localhost:3001/v1",
+            "your-secret-api-key",
         );
         await llmProviderPage.addProvider(
             "Test Provider2",
             "http://localhost:3099",
-            "test-api-key",
+            "your-secret-api-key",
         );
 
-        // Check that LLM Picker has 2 entries
+        // Check that LLM Picker has 3 entries (only the working provider's models)
         await chatPage.navigateTo();
-        await chatPage.assertLLMModelCount(2);
+        await chatPage.assertLLMModelCount(3);
     });
 });
