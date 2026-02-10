@@ -107,7 +107,7 @@ export class WithBackendOpenAIChatService extends OpenAIChatService {
     protected createOpenAI(_modelId: string): OpenAI {
         return new OpenAI({
             apiKey: "not-needed-backend-handles-auth",
-            baseURL: `/api/v1`,
+            baseURL: `${window.location.origin}/api/v1`,
             dangerouslyAllowBrowser: true,
         });
     }
