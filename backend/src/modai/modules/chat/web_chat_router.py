@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Body
+from fastapi import Request, Body
 from fastapi.responses import StreamingResponse, JSONResponse
 from typing import Any, Dict, cast
 from modai.module import ModuleDependencies

@@ -8,18 +8,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
+
       - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-      - name: Sync dependencies
+        uses: astral-sh/setup-uv@v7
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
         working-directory: backend
-        run: uv sync
+        run: uv sync --all-extras
+
       - name: Check formatting
         working-directory: backend
         run: uv run ruff format --check .
+
+      - name: Lint
+        working-directory: backend
+        run: uv run ruff check .
 
   frontend-format:
     runs-on: ubuntu-latest
@@ -31,15 +37,19 @@ jobs:
           - e2e_tests/tests_omni_light
     steps:
       - uses: actions/checkout@v6
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: "20"
+
       - name: Install pnpm
         run: npm install -g pnpm
+
       - name: Install dependencies
         working-directory: ${{ matrix.working-dir }}
         run: pnpm install
+
       - name: Check formatting and linting
         working-directory: ${{ matrix.working-dir }}
         run: pnpm check
@@ -48,32 +58,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
+
       - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-      - name: Sync dependencies
+        uses: astral-sh/setup-uv@v7
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
         working-directory: backend
-        run: uv sync
+        run: uv sync --all-extras
+
       - name: Run tests
         working-directory: backend
-        run: uv run pytest
+        run: uv run pytest -v
 
   frontend-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: "20"
+
       - name: Install pnpm
         run: npm install -g pnpm
+
       - name: Install dependencies
         working-directory: frontend_omni
         run: pnpm install
+
       - name: Run unit tests
         working-directory: frontend_omni
         run: pnpm test
@@ -87,27 +103,33 @@ jobs:
           - e2e_tests/tests_omni_light
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
+
       - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        uses: astral-sh/setup-uv@v7
+
+      - name: Set up Python
+        run: uv python install 3.13
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: "20"
+
       - name: Install pnpm
         run: npm install -g pnpm
+
       - name: Install dependencies for frontend
         working-directory: frontend_omni
         run: pnpm install
+
       - name: Install dependencies for tests
         working-directory: ${{ matrix.working-dir }}
         run: pnpm install
+
       - name: Install Playwright browsers
         working-directory: ${{ matrix.working-dir }}
         run: pnpm playwright install --with-deps
+
       - name: Run Playwright tests
         working-directory: ${{ matrix.working-dir }}
         run: pnpm test

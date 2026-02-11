@@ -11,7 +11,6 @@ from modai.module import ModaiModule, ModuleDependencies
 from modai.modules.model_provider.module import (
     ModelProviderResponse,
     ModelProviderModule,
-    ModelResponse,
     Model,
 )
 

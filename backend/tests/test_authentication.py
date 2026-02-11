@@ -3,14 +3,14 @@ import os
 import pytest
 from unittest.mock import Mock, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from modai.module import ModuleDependencies
 from modai.modules.authentication.password_authentication_module import (
     PasswordAuthenticationModule,
 )
-from modai.modules.session.module import SessionModule, Session
+from modai.modules.session.module import SessionModule
 from modai.modules.user_store.module import UserStore, User, UserCredentials
 
 

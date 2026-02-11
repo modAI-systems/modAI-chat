@@ -4,9 +4,9 @@ Tests both the abstract module interface and the simple implementation.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 from fastapi import HTTPException, Request
-from typing import Dict, Any
+from typing import Any
 
 from modai.module import ModuleDependencies
 from modai.modules.user_settings.module import (
@@ -20,7 +20,6 @@ from modai.modules.user_settings.simple_user_settings_module import (
     SimpleUserSettingsModule,
 )
 from modai.modules.session.module import SessionModule
-from modai.modules.user_settings_store.module import UserSettingsStore
 from modai.modules.user_settings_store.inmemory_user_settings_store import (
     InMemoryUserSettingsStore,
 )
@@ -186,7 +185,7 @@ class TestSimpleUserSettingsModule:
         assert isinstance(result, UserSettingsResponse)
         assert result.settings["theme"]["mode"] == "dark"
         assert result.settings["theme"]["primary_color"] == "#1976d2"
-        assert result.settings["notifications"]["email_enabled"] == True
+        assert result.settings["notifications"]["email_enabled"]
 
     @pytest.mark.asyncio
     async def test_update_user_settings_existing_user(
@@ -219,8 +218,8 @@ class TestSimpleUserSettingsModule:
         assert result.settings["theme"]["mode"] == "dark"
         assert result.settings["theme"]["primary_color"] == "#red"
         # Notifications should remain unchanged
-        assert result.settings["notifications"]["email_enabled"] == False
-        assert result.settings["notifications"]["push_enabled"] == True
+        assert not result.settings["notifications"]["email_enabled"]
+        assert result.settings["notifications"]["push_enabled"]
 
     @pytest.mark.asyncio
     async def test_update_user_settings_unauthorized_modification(
@@ -419,7 +418,7 @@ class TestSimpleUserSettingsModule:
 
         # Verify other settings are preserved
         full_settings = await module.get_user_settings(user_id, mock_request)
-        assert full_settings.settings["notifications"]["email_enabled"] == False
+        assert not full_settings.settings["notifications"]["email_enabled"]
 
     @pytest.mark.asyncio
     async def test_update_user_setting_type_unauthorized_modification(
@@ -470,6 +469,6 @@ class TestSimpleUserSettingsModule:
 
         assert isinstance(get_result, UserSettingTypeResponse)
         assert get_result.settings == update_result.settings
-        assert get_result.settings["email_enabled"] == True
-        assert get_result.settings["push_enabled"] == False
+        assert get_result.settings["email_enabled"]
+        assert not get_result.settings["push_enabled"]
         assert get_result.settings["frequency"] == "daily"

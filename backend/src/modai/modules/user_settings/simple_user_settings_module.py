@@ -3,7 +3,7 @@ Simple UserSettings implementation using UserSettingsStore.
 This implementation delegates persistence to a UserSettingsStore module.
 """
 
-from typing import Any, Dict
+from typing import Any
 from fastapi import Request, HTTPException
 
 from modai.module import ModuleDependencies

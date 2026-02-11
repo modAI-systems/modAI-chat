@@ -7,13 +7,12 @@ import os
 import pytest
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from modai.modules.model_provider.module import ModelProviderModule
 from modai.modules.model_provider.openai_provider import OpenAIProviderModule
 from modai.modules.model_provider_store.module import ModelProvider, ModelProviderStore
 from modai.module import ModuleDependencies
