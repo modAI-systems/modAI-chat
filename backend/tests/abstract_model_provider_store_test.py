@@ -199,7 +199,7 @@ class AbstractModelProviderStoreTestBase(ABC):
         self, model_provider_store
     ):
         """Test that updating a provider to use an existing name raises an exception"""
-        provider1 = await model_provider_store.add_provider(
+        await model_provider_store.add_provider(
             name="Provider1", url="https://api1.com", properties={}
         )
         provider2 = await model_provider_store.add_provider(

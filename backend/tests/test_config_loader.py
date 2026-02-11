@@ -22,7 +22,7 @@ def test_config_loader_valid_config(tmp_path: Path):
     loader = YamlConfigModule(ModuleDependencies(), {"config_path": str(config_file)})
     config = loader.get_config()
 
-    assert config["modules"]["health"]["enabled"] == True
+    assert config["modules"]["health"]["enabled"]
 
 
 def test_config_loader_invalid_yaml(tmp_path: Path):

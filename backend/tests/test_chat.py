@@ -6,7 +6,6 @@ import pytest
 import pytest_asyncio
 from openai import AsyncOpenAI
 from unittest.mock import Mock, AsyncMock
-from typing import AsyncGenerator
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from modai.module import ModuleDependencies
@@ -70,7 +69,7 @@ async def openai_client(request):
 async def test_llm_generate_response():
     """Test LLM generate_response method directly."""
     from fastapi import Request
-    from unittest.mock import Mock, AsyncMock
+    from unittest.mock import Mock
     from modai.modules.model_provider.module import (
         ModelProvidersListResponse,
         ModelProviderResponse,
@@ -139,7 +138,7 @@ async def test_llm_generate_response():
 async def test_llm_generate_response_streaming():
     """Test LLM generate_response method directly for streaming."""
     from fastapi import Request
-    from unittest.mock import Mock, AsyncMock
+    from unittest.mock import Mock
     from modai.modules.model_provider.module import (
         ModelProvidersListResponse,
         ModelProviderResponse,
@@ -210,7 +209,7 @@ async def test_llm_generate_response_streaming():
 async def test_chat_responses_api(openai_client: AsyncOpenAI, request):
     """Test chat responses API."""
 
-    client_type = request.node.callspec.params["openai_client"]
+    request.node.callspec.params["openai_client"]
     model = "gpt-4o"  # No backend_proxy
 
     # Make the request
@@ -242,7 +241,7 @@ async def test_chat_responses_api(openai_client: AsyncOpenAI, request):
 async def test_chat_responses_api_streaming(openai_client: AsyncOpenAI, request):
     """Test streaming chat responses API."""
 
-    client_type = request.node.callspec.params["openai_client"]
+    request.node.callspec.params["openai_client"]
     model = "gpt-4o"  # No backend_proxy
 
     # Make the streaming request
@@ -351,7 +350,7 @@ async def test_chat_web_module_routing_streaming():
 async def test_openai_llm_invalid_model_format():
     """Test OpenAILLMChatModule with invalid model format."""
     from fastapi import Request
-    from unittest.mock import Mock, AsyncMock
+    from unittest.mock import Mock
     from modai.modules.model_provider.module import (
         ModelProvidersListResponse,
         ModelProviderResponse,
@@ -403,7 +402,7 @@ async def test_openai_llm_invalid_model_format():
 async def test_openai_llm_provider_not_found():
     """Test OpenAILLMChatModule when provider is not found."""
     from fastapi import Request
-    from unittest.mock import Mock, AsyncMock
+    from unittest.mock import Mock
     from modai.modules.model_provider.module import ModelProvidersListResponse
 
     # Mock provider module with no providers

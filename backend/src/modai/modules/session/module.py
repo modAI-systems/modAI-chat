@@ -8,7 +8,7 @@ Session Module: Provides session management handling capabilities.
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import Request, Response
 from modai.module import ModaiModule, ModuleDependencies

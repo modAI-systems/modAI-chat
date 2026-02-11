@@ -81,7 +81,7 @@ class TestSQLAlchemyUserSettingsStore(ABC):
         assert isinstance(result, dict)
         assert result["theme"]["mode"] == "dark"
         assert result["theme"]["primary_color"] == "#1976d2"
-        assert result["notifications"]["email_enabled"] == True
+        assert result["notifications"]["email_enabled"]
 
     @pytest.mark.asyncio
     async def test_update_user_settings_existing_user(self, store: UserSettingsStore):
@@ -104,8 +104,8 @@ class TestSQLAlchemyUserSettingsStore(ABC):
         assert result["theme"]["mode"] == "dark"
         assert result["theme"]["primary_color"] == "#red"
         # Notifications should remain unchanged
-        assert result["notifications"]["email_enabled"] == False
-        assert result["notifications"]["push_enabled"] == True
+        assert not result["notifications"]["email_enabled"]
+        assert result["notifications"]["push_enabled"]
 
     @pytest.mark.asyncio
     async def test_update_user_settings_invalid_params(self, store: UserSettingsStore):
@@ -160,7 +160,7 @@ class TestSQLAlchemyUserSettingsStore(ABC):
         all_settings = await store.get_user_settings(user_id)
         assert all_settings["theme"] == setting_data
         # Other settings should remain unchanged
-        assert all_settings["notifications"]["email_enabled"] == False
+        assert not all_settings["notifications"]["email_enabled"]
 
     @pytest.mark.asyncio
     async def test_update_user_setting_by_module_invalid_params(
@@ -243,7 +243,7 @@ class TestSQLAlchemyUserSettingsStore(ABC):
         # Verify the setting was deleted
         remaining_settings = await store.get_user_settings(user_id)
         assert "theme" not in remaining_settings
-        assert remaining_settings["notifications"]["email_enabled"] == True
+        assert remaining_settings["notifications"]["email_enabled"]
 
     @pytest.mark.asyncio
     async def test_delete_last_setting_by_module(self, store: UserSettingsStore):
@@ -279,7 +279,7 @@ class TestSQLAlchemyUserSettingsStore(ABC):
 
         # Initially no settings
         result = await store.user_has_settings(user_id)
-        assert result == False
+        assert not result
 
         # Add settings
         settings = {"theme": {"mode": "dark"}}
@@ -287,14 +287,14 @@ class TestSQLAlchemyUserSettingsStore(ABC):
 
         # Should have settings now
         result = await store.user_has_settings(user_id)
-        assert result == True
+        assert result
 
         # Delete settings
         await store.delete_user_settings(user_id)
 
         # Should not have settings anymore
         result = await store.user_has_settings(user_id)
-        assert result == False
+        assert not result
 
     @pytest.mark.asyncio
     async def test_user_has_settings_invalid_user_id(self, store: UserSettingsStore):

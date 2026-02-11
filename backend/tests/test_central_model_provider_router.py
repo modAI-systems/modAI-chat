@@ -5,8 +5,6 @@ Tests for Central Model Provider Router.
 import sys
 import os
 import pytest
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 
