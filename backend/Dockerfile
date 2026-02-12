@@ -18,10 +18,15 @@ RUN uv sync --no-dev
 #################
 FROM python:3.13-alpine
 
+# Create non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 # Copy the app from build stage
-COPY --from=build /app /app
+COPY --from=build --chown=appuser:appgroup /app /app
 
 WORKDIR /app
+
+USER appuser
 
 EXPOSE 8080
 
