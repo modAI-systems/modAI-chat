@@ -5,13 +5,15 @@ from dotenv import find_dotenv, load_dotenv
 import pytest
 import pytest_asyncio
 from openai import AsyncOpenAI
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import Mock, MagicMock, AsyncMock
+from fastapi.testclient import TestClient
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from modai.module import ModuleDependencies
 from modai.modules.chat.openai_llm_chat import OpenAILLMChatModule
 from modai.modules.chat.web_chat_router import ChatWebModule
 from modai.modules.chat.module import ChatLLMModule
+from modai.modules.session.module import SessionModule, Session
 import openai
 
 
@@ -262,6 +264,15 @@ async def test_chat_responses_api_streaming(openai_client: AsyncOpenAI, request)
     assert "Hello" in full_content
 
 
+def _create_chat_mock_session_module():
+    """Create a mock session module that validates successfully."""
+    session_module = MagicMock(spec=SessionModule)
+    session_module.validate_session_for_http.return_value = Session(
+        user_id="test-user", additional={}
+    )
+    return session_module
+
+
 @pytest.mark.asyncio
 async def test_chat_web_module_routing():
     """Test ChatWebModule routing to dummy LLM module."""
@@ -273,9 +284,12 @@ async def test_chat_web_module_routing():
         config={},
     )
 
-    # Mock dependencies
+    session_module = _create_chat_mock_session_module()
+
+    # Mock dependencies - include session in modules dict
     mock_dependencies = Mock(spec=ModuleDependencies)
     mock_dependencies.get_module.return_value = dummy_module
+    mock_dependencies.modules = {"session": session_module}
 
     # Create ChatWebModule
     web_module = ChatWebModule(
@@ -312,9 +326,12 @@ async def test_chat_web_module_routing_streaming():
         config={},
     )
 
-    # Mock dependencies
+    session_module = _create_chat_mock_session_module()
+
+    # Mock dependencies - include session in modules dict
     mock_dependencies = Mock(spec=ModuleDependencies)
     mock_dependencies.get_module.return_value = dummy_module
+    mock_dependencies.modules = {"session": session_module}
 
     # Create ChatWebModule
     web_module = ChatWebModule(
@@ -435,3 +452,37 @@ async def test_openai_llm_provider_not_found():
 
     with pytest.raises(ValueError, match="Provider 'nonexistent' not found"):
         await llm_module.generate_response(request, body_json)
+
+
+def test_responses_endpoint_rejects_unauthenticated_request():
+    """The POST /responses endpoint must return 401 without a valid session."""
+    from fastapi import FastAPI, HTTPException
+
+    dummy_module = DummyLLMModule(
+        dependencies=ModuleDependencies(),
+        config={},
+    )
+
+    rejecting_session = MagicMock(spec=SessionModule)
+    rejecting_session.validate_session_for_http.side_effect = HTTPException(
+        status_code=401, detail="Missing, invalid or expired session"
+    )
+
+    mock_dependencies = Mock(spec=ModuleDependencies)
+    mock_dependencies.get_module.return_value = dummy_module
+    mock_dependencies.modules = {"session": rejecting_session}
+
+    web_module = ChatWebModule(
+        dependencies=mock_dependencies,
+        config={"clients": {"dummy": "dummy_module"}},
+    )
+
+    app = FastAPI()
+    app.include_router(web_module.router)
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/v1/responses",
+        json={"model": "dummy/test_model", "input": "hello"},
+    )
+    assert response.status_code == 401

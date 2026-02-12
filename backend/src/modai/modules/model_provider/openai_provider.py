@@ -4,7 +4,7 @@ This implementation provides web-based LLM provider management using an LLMProvi
 """
 
 from typing import Any, Optional
-from fastapi import HTTPException, Query
+from fastapi import HTTPException, Query, Request
 from openai import OpenAI
 
 from modai.module import ModuleDependencies
@@ -16,6 +16,7 @@ from modai.modules.model_provider.module import (
     ModelResponse,
 )
 from modai.modules.model_provider_store.module import ModelProviderStore, ModelProvider
+from modai.modules.session.module import SessionModule
 
 OPENAI_PROVIDER_TYPE = "openai"
 
@@ -39,8 +40,16 @@ class OpenAIProviderModule(ModelProviderModule):
                 f"DefaultModelProviderModule requires '{provider_store_name}' module dependency"
             )
 
+        # Get session module for authentication
+        self.session_module: SessionModule = dependencies.modules.get("session")
+        if not self.session_module:
+            raise ValueError(
+                "OpenAIProviderModule requires a 'session' module dependency"
+            )
+
     async def get_providers(
         self,
+        request: Request,
         limit: Optional[int] = Query(
             None, ge=1, le=1000, description="Maximum number of providers to return"
         ),
@@ -49,6 +58,7 @@ class OpenAIProviderModule(ModelProviderModule):
         ),
     ) -> ModelProvidersListResponse:
         """Get all LLM providers with optional pagination"""
+        self.session_module.validate_session_for_http(request)
         providers = await self.provider_store.get_providers(limit=limit, offset=offset)
 
         # Convert to response models
@@ -61,8 +71,11 @@ class OpenAIProviderModule(ModelProviderModule):
             offset=offset,
         )
 
-    async def get_provider(self, provider_id: str) -> ModelProviderResponse:
+    async def get_provider(
+        self, request: Request, provider_id: str
+    ) -> ModelProviderResponse:
         """Get a specific LLM provider by ID"""
+        self.session_module.validate_session_for_http(request)
         provider = await self.provider_store.get_provider(provider_id)
         if not provider:
             raise HTTPException(
@@ -73,17 +86,20 @@ class OpenAIProviderModule(ModelProviderModule):
         return self._create_provider_response(provider)
 
     async def create_provider(
-        self, request: ModelProviderCreateRequest
+        self, request: Request, provider_data: ModelProviderCreateRequest
     ) -> ModelProviderResponse:
         """Create a new LLM provider"""
+        self.session_module.validate_session_for_http(request)
         try:
             # Merge api_key into properties for storage
-            properties = (request.properties or {}).copy()
-            properties["api_key"] = request.api_key
+            properties = (provider_data.properties or {}).copy()
+            properties["api_key"] = provider_data.api_key
 
             # Create new provider
             provider = await self.provider_store.add_provider(
-                name=request.name, url=request.base_url, properties=properties
+                name=provider_data.name,
+                url=provider_data.base_url,
+                properties=properties,
             )
 
             return self._create_provider_response(provider)
@@ -95,19 +111,23 @@ class OpenAIProviderModule(ModelProviderModule):
             raise
 
     async def update_provider(
-        self, provider_id: str, request: ModelProviderCreateRequest
+        self,
+        request: Request,
+        provider_id: str,
+        provider_data: ModelProviderCreateRequest,
     ) -> ModelProviderResponse:
         """Update an existing LLM provider"""
+        self.session_module.validate_session_for_http(request)
         try:
             # Merge api_key into properties for storage
-            properties = (request.properties or {}).copy()
-            properties["api_key"] = request.api_key
+            properties = (provider_data.properties or {}).copy()
+            properties["api_key"] = provider_data.api_key
 
             # Update existing provider
             provider = await self.provider_store.update_provider(
                 provider_id=provider_id,
-                name=request.name,
-                url=request.base_url,
+                name=provider_data.name,
+                url=provider_data.base_url,
                 properties=properties,
             )
             if not provider:
@@ -124,8 +144,9 @@ class OpenAIProviderModule(ModelProviderModule):
             # Re-raise HTTPExceptions as-is
             raise
 
-    async def get_models(self, provider_id: str) -> ModelResponse:
+    async def get_models(self, request: Request, provider_id: str) -> ModelResponse:
         """Get available models from a specific provider"""
+        self.session_module.validate_session_for_http(request)
         # Check if provider exists
         provider = await self.provider_store.get_provider(provider_id)
         if not provider:
@@ -169,8 +190,9 @@ class OpenAIProviderModule(ModelProviderModule):
                     detail=f"Failed to fetch models from provider '{provider_id}': {str(e)}",
                 )
 
-    async def delete_provider(self, provider_id: str) -> None:
+    async def delete_provider(self, request: Request, provider_id: str) -> None:
         """Delete an LLM provider"""
+        self.session_module.validate_session_for_http(request)
         await self.provider_store.delete_provider(provider_id)
         # Return 204 No Content for successful deletion (idempotent)
         return None

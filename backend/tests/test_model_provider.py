@@ -15,7 +15,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from modai.modules.model_provider.openai_provider import OpenAIProviderModule
 from modai.modules.model_provider_store.module import ModelProvider, ModelProviderStore
+from modai.modules.session.module import SessionModule, Session
 from modai.module import ModuleDependencies
+from unittest.mock import MagicMock
 from datetime import datetime
 
 working_dir = Path.cwd()
@@ -58,11 +60,24 @@ class TestModelProviderModule:
         return mock_store
 
     @pytest.fixture
+    def mock_session_module(self) -> SessionModule:
+        """Create a mock session module that always validates successfully."""
+        session_module = MagicMock(spec=SessionModule)
+        session_module.validate_session_for_http.return_value = Session(
+            user_id="test-user", additional={}
+        )
+        return session_module
+
+    @pytest.fixture
     def web_module(
-        self, mock_provider_store: ModelProviderStore
+        self,
+        mock_provider_store: ModelProviderStore,
+        mock_session_module: SessionModule,
     ) -> OpenAIProviderModule:
         """Create web module instance"""
-        dependencies = ModuleDependencies({"llm_provider_store": mock_provider_store})
+        dependencies = ModuleDependencies(
+            {"llm_provider_store": mock_provider_store, "session": mock_session_module}
+        )
         config = {"llm_provider_store_module": "llm_provider_store"}
         return OpenAIProviderModule(dependencies, config)
 
@@ -420,3 +435,49 @@ class TestModelProviderModule:
         assert response.status_code == 404
         data = response.json()
         assert "not found" in data["detail"].lower()
+
+    def test_all_endpoints_reject_unauthenticated_requests(
+        self, mock_provider_store: ModelProviderStore
+    ) -> None:
+        """All model provider endpoints must return 401 without a valid session."""
+        from fastapi import HTTPException
+
+        # Create a session module that always rejects
+        rejecting_session = MagicMock(spec=SessionModule)
+        rejecting_session.validate_session_for_http.side_effect = HTTPException(
+            status_code=401, detail="Missing, invalid or expired session"
+        )
+
+        dependencies = ModuleDependencies(
+            {"llm_provider_store": mock_provider_store, "session": rejecting_session}
+        )
+        module = OpenAIProviderModule(
+            dependencies, {"llm_provider_store_module": "llm_provider_store"}
+        )
+
+        app = FastAPI()
+        app.include_router(module.router)
+        client = TestClient(app)
+
+        provider_body = {
+            "name": "Test",
+            "base_url": "https://api.test.com",
+            "api_key": "key",
+        }
+
+        endpoints = [
+            ("GET", "/api/v1/models/providers/openai"),
+            ("POST", "/api/v1/models/providers/openai", provider_body),
+            ("GET", "/api/v1/models/providers/openai/some-id"),
+            ("PUT", "/api/v1/models/providers/openai/some-id", provider_body),
+            ("DELETE", "/api/v1/models/providers/openai/some-id"),
+            ("GET", "/api/v1/models/providers/openai/some-id/models"),
+        ]
+
+        for entry in endpoints:
+            method, path = entry[0], entry[1]
+            json_body = entry[2] if len(entry) > 2 else None
+            response = client.request(method, path, json=json_body)
+            assert response.status_code == 401, (
+                f"{method} {path} returned {response.status_code}, expected 401"
+            )

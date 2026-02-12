@@ -4,7 +4,7 @@ This module provides the GET /models/providers endpoint that returns all provide
 """
 
 from typing import Any, List, Optional
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 
 from modai.module import ModaiModule, ModuleDependencies
@@ -13,6 +13,7 @@ from modai.modules.model_provider.module import (
     ModelProviderModule,
     Model,
 )
+from modai.modules.session.module import SessionModule
 
 
 class ModelsListResponse(BaseModel):
@@ -40,6 +41,12 @@ class CentralModelProviderRouter(ModaiModule):
         super().__init__(dependencies, config)
         self.router = APIRouter()
 
+        self.session_module: SessionModule = dependencies.modules.get("session")
+        if not self.session_module:
+            raise ValueError(
+                "CentralModelProviderRouter requires a 'session' module dependency"
+            )
+
         # Add the central route for getting all providers
         self.router.add_api_route(
             "/api/v1/models/providers",
@@ -56,6 +63,7 @@ class CentralModelProviderRouter(ModaiModule):
 
     async def get_all_providers(
         self,
+        request: Request,
         limit: Optional[int] = Query(
             None, ge=1, le=1000, description="Maximum number of providers to return"
         ),
@@ -73,6 +81,8 @@ class CentralModelProviderRouter(ModaiModule):
         Returns:
             ModelProvidersAllResponse with providers list and pagination info
         """
+        self.session_module.validate_session_for_http(request)
+
         all_providers = []
 
         # Get all provider modules from dependencies
@@ -87,7 +97,7 @@ class CentralModelProviderRouter(ModaiModule):
                 # Call the get_providers method on each provider module
                 # But we need to modify it to not apply pagination per module
                 providers_response = await provider_module.get_providers(
-                    limit=None, offset=None
+                    request, limit=None, offset=None
                 )
                 all_providers.extend(providers_response.providers)
             except Exception as e:
@@ -111,7 +121,7 @@ class CentralModelProviderRouter(ModaiModule):
             offset=offset,
         )
 
-    async def get_all_models(self) -> ModelsListResponse:
+    async def get_all_models(self, request: Request) -> ModelsListResponse:
         """
         Get all models from all providers across all provider types.
         Returns in OpenAI-compatible format.
@@ -119,6 +129,8 @@ class CentralModelProviderRouter(ModaiModule):
         Returns:
             ModelsListResponse with all available models
         """
+        self.session_module.validate_session_for_http(request)
+
         all_models = []
 
         # Get all provider modules from dependencies
@@ -131,13 +143,15 @@ class CentralModelProviderRouter(ModaiModule):
             try:
                 # Get all providers for this module type
                 providers_response = await provider_module.get_providers(
-                    limit=None, offset=None
+                    request, limit=None, offset=None
                 )
 
                 # For each provider, get its models
                 for provider in providers_response.providers:
                     try:
-                        models_response = await provider_module.get_models(provider.id)
+                        models_response = await provider_module.get_models(
+                            request, provider.id
+                        )
 
                         # Add models with prefixed IDs to avoid conflicts
                         for model_data in models_response.data:

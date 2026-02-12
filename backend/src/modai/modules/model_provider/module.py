@@ -5,7 +5,7 @@ This module provides REST API endpoints for managing model provider configuratio
 
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 
 from modai.module import ModaiModule, ModuleDependencies
@@ -116,6 +116,7 @@ class ModelProviderModule(ModaiModule, ABC):
     @abstractmethod
     async def get_providers(
         self,
+        request: Request,
         limit: Optional[int] = Query(
             None, ge=1, le=1000, description="Maximum number of providers to return"
         ),
@@ -127,6 +128,7 @@ class ModelProviderModule(ModaiModule, ABC):
         Get all model providers with optional pagination.
 
         Args:
+            request: FastAPI request object
             limit: Maximum number of providers to return
             offset: Number of providers to skip
 
@@ -134,91 +136,107 @@ class ModelProviderModule(ModaiModule, ABC):
             ModelProvidersListResponse: List of providers with pagination info
 
         Raises:
+            HTTPException: 401 if not authenticated
             HTTPException: 500 if retrieval fails
         """
         pass
 
     @abstractmethod
-    async def get_provider(self, provider_id: str) -> ModelProviderResponse:
+    async def get_provider(
+        self, request: Request, provider_id: str
+    ) -> ModelProviderResponse:
         """
         Get a specific model provider by ID.
 
         Args:
+            request: FastAPI request object
             provider_id: Unique identifier for the provider
 
         Returns:
             ModelProviderResponse: Provider data
 
         Raises:
+            HTTPException: 401 if not authenticated
             HTTPException: 404 if provider not found, 500 if retrieval fails
         """
         pass
 
     @abstractmethod
     async def create_provider(
-        self, request: ModelProviderCreateRequest
+        self, request: Request, provider_data: ModelProviderCreateRequest
     ) -> ModelProviderResponse:
         """
         Create a new model provider.
 
         Args:
-            request: Provider data
+            request: FastAPI request object
+            provider_data: Provider data
 
         Returns:
             ModelProviderResponse: Created provider data
 
         Raises:
+            HTTPException: 401 if not authenticated
             HTTPException: 400 for validation errors, 409 for conflicts, 500 for other failures
         """
         pass
 
     @abstractmethod
     async def update_provider(
-        self, provider_id: str, request: ModelProviderCreateRequest
+        self,
+        request: Request,
+        provider_id: str,
+        provider_data: ModelProviderCreateRequest,
     ) -> ModelProviderResponse:
         """
         Update an existing model provider.
 
         Args:
+            request: FastAPI request object
             provider_id: The ID of the provider to update
-            request: Provider data
+            provider_data: Provider data
 
         Returns:
             ModelProviderResponse: Updated provider data
 
         Raises:
+            HTTPException: 401 if not authenticated
             HTTPException: 400 for validation errors, 404 if provider not found, 409 for conflicts, 500 for other failures
         """
         pass
 
     @abstractmethod
-    async def get_models(self, provider_id: str) -> ModelResponse:
+    async def get_models(self, request: Request, provider_id: str) -> ModelResponse:
         """
         Get available models from a specific provider.
 
         Args:
+            request: FastAPI request object
             provider_id: Unique identifier for the provider
 
         Returns:
             ModelResponse: Models data from the provider
 
         Raises:
+            HTTPException: 401 if not authenticated
             HTTPException: 404 if provider not found, 500 if retrieval fails
         """
         pass
 
     @abstractmethod
-    async def delete_provider(self, provider_id: str) -> None:
+    async def delete_provider(self, request: Request, provider_id: str) -> None:
         """
         Delete a model provider.
 
         Args:
+            request: FastAPI request object
             provider_id: ID of the provider to delete
 
         Returns:
             None (204 No Content)
 
         Raises:
+            HTTPException: 401 if not authenticated
             HTTPException: 500 if deletion fails
         """
         pass

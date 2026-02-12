@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse, JSONResponse
 from typing import Any, Dict, cast
 from modai.module import ModuleDependencies
 from .module import ChatLLMModule, ChatWebModule as ChatWebModuleBase
+from modai.modules.session.module import SessionModule
 import openai
 from openai.types.responses import ResponseCreateParams
 
@@ -15,6 +16,10 @@ class ChatWebModule(ChatWebModuleBase):
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
         super().__init__(dependencies, config)
         # Router is already set up in base class with response_model=None
+        self.session_module: SessionModule = dependencies.modules.get("session")
+        if not self.session_module:
+            raise ValueError("ChatWebModule requires a 'session' module dependency")
+
         clients_config = config.get("clients", {})
         self.clients: Dict[str, ChatLLMModule] = {}
         for prefix, module_name in clients_config.items():
@@ -34,6 +39,8 @@ class ChatWebModule(ChatWebModuleBase):
         """
         Routes the chat request to the appropriate LLM module based on the model prefix.
         """
+        self.session_module.validate_session_for_http(request)
+
         model = body_json.get("model", "")
 
         if not model:
