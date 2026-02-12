@@ -1,10 +1,10 @@
 ---
 services:
   backend:
-    image: gcr.io//modAI-systems/modai-chat-backend:latest
+    image: ghcr.io/modai-systems/modai-chat-backend:latest
 
   frontend:
-    image: gcr.io//modAI-systems/modai-chat-frontend-omni:latest
+    image: ghcr.io/modai-systems/modai-chat-frontend:latest
     environment:
       - API_BACKEND_URL=http://backend:8080
     ports:
