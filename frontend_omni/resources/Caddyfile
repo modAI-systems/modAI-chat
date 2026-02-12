@@ -4,8 +4,8 @@ localhost {
 	}
 
 	handle {
-		root * /usr/share/caddy/html
+		root * /app
 		try_files {path} {path}/ /index.html
 		file_server
-   }
+	}
 }
