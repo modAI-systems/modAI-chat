@@ -5,6 +5,7 @@ Tests for Central Model Provider Router.
 import sys
 import os
 import pytest
+from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 
@@ -17,6 +18,7 @@ from modai.modules.model_provider.module import (
     ModelProvidersListResponse,
     ModelResponse,
 )
+from modai.modules.session.module import SessionModule, Session
 from modai.module import ModuleDependencies
 
 
@@ -31,7 +33,7 @@ class DummyModelProviderModule(ModelProviderModule):
         self.providers_data = providers_data
         self.models_data = models_data
 
-    async def get_providers(self, limit=None, offset=None):
+    async def get_providers(self, request=None, limit=None, offset=None):
         return ModelProvidersListResponse(
             providers=self.providers_data,
             total=len(self.providers_data),
@@ -39,24 +41,26 @@ class DummyModelProviderModule(ModelProviderModule):
             offset=offset,
         )
 
-    async def get_provider(self, provider_id: str):
+    async def get_provider(self, request=None, provider_id: str = ""):
         for provider in self.providers_data:
             if provider.id == provider_id:
                 return provider
         raise Exception("Provider not found")
 
-    async def create_provider(self, request):
+    async def create_provider(self, request=None, provider_data=None):
         raise NotImplementedError()
 
-    async def update_provider(self, provider_id: str, request):
+    async def update_provider(
+        self, request=None, provider_id: str = "", provider_data=None
+    ):
         raise NotImplementedError()
 
-    async def get_models(self, provider_id: str):
+    async def get_models(self, request=None, provider_id: str = ""):
         if provider_id in self.models_data:
             return self.models_data[provider_id]
         raise Exception("Models not found")
 
-    async def delete_provider(self, provider_id: str):
+    async def delete_provider(self, request=None, provider_id: str = ""):
         raise NotImplementedError()
 
 
@@ -129,12 +133,22 @@ class TestCentralModelProviderRouter:
         return [openai_module, ollama_module]
 
     @pytest.fixture
-    def central_router(self, mock_provider_modules):
+    def mock_session_module(self):
+        """Create a mock session module that always validates successfully."""
+        session_module = MagicMock(spec=SessionModule)
+        session_module.validate_session_for_http.return_value = Session(
+            user_id="test-user", additional={}
+        )
+        return session_module
+
+    @pytest.fixture
+    def central_router(self, mock_provider_modules, mock_session_module):
         """Create central router instance"""
         dependencies = ModuleDependencies(
             {
                 "openai_provider": mock_provider_modules[0],
                 "ollama_provider": mock_provider_modules[1],
+                "session": mock_session_module,
             }
         )
         config = {}
@@ -205,9 +219,9 @@ class TestCentralModelProviderRouter:
         assert data["limit"] == 1
         assert data["offset"] == 0
 
-    def test_get_all_providers_empty(self):
+    def test_get_all_providers_empty(self, mock_session_module):
         """Test GET /models/providers with no provider modules"""
-        dependencies = ModuleDependencies({})
+        dependencies = ModuleDependencies({"session": mock_session_module})
         config = {}
         router = CentralModelProviderRouter(dependencies, config)
 
@@ -223,9 +237,9 @@ class TestCentralModelProviderRouter:
         assert data["providers"] == []
         assert data["total"] == 0
 
-    def test_get_all_models_empty(self):
+    def test_get_all_models_empty(self, mock_session_module):
         """Test GET /models with no provider modules"""
-        dependencies = ModuleDependencies({})
+        dependencies = ModuleDependencies({"session": mock_session_module})
         config = {}
         router = CentralModelProviderRouter(dependencies, config)
 
@@ -240,3 +254,30 @@ class TestCentralModelProviderRouter:
 
         assert data["object"] == "list"
         assert data["data"] == []
+
+    def test_all_endpoints_reject_unauthenticated_requests(self):
+        """All central model provider endpoints must return 401 without a valid session."""
+        from fastapi import HTTPException
+
+        rejecting_session = MagicMock(spec=SessionModule)
+        rejecting_session.validate_session_for_http.side_effect = HTTPException(
+            status_code=401, detail="Missing, invalid or expired session"
+        )
+
+        dependencies = ModuleDependencies({"session": rejecting_session})
+        router = CentralModelProviderRouter(dependencies, config={})
+
+        app = FastAPI()
+        app.include_router(router.router)
+        client = TestClient(app)
+
+        endpoints = [
+            ("GET", "/api/v1/models/providers"),
+            ("GET", "/api/v1/models"),
+        ]
+
+        for method, path in endpoints:
+            response = client.request(method, path)
+            assert response.status_code == 401, (
+                f"{method} {path} returned {response.status_code}, expected 401"
+            )

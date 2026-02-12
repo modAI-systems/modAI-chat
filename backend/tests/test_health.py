@@ -22,3 +22,10 @@ def test_health_endpoint_returns_healthy_status(client):
     response = client.get("/api/v1/health")
     assert response.status_code == 200
     assert response.json() == {"status": "healthy"}
+
+
+def test_health_endpoint_requires_no_authentication(client):
+    """Health endpoint must be accessible without any session or credentials."""
+    response = client.get("/api/v1/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "healthy"

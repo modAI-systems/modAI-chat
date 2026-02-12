@@ -8,6 +8,7 @@ modules:
         openai: chat_openai
     module_dependencies:
       chat_openai: chat_openai
+      session: "session"
   chat_openai:
     class: modai.modules.chat.openai_llm_chat.OpenAILLMChatModule
     module_dependencies:
@@ -21,10 +22,12 @@ modules:
     class: modai.modules.model_provider.openai_provider.OpenAIProviderModule
     module_dependencies:
       llm_provider_store: "model_provider_store"
+      session: "session"
   central_model_provider_router:
     class: modai.modules.model_provider.central_router.CentralModelProviderRouter
     module_dependencies:
       openai_provider: "openai_model_provider"
+      session: "session"
   user_store:
     class: modai.modules.user_store.sql_model_user_store.SQLAlchemyUserStore
     config:
