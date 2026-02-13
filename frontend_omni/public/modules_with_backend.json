@@ -62,7 +62,8 @@
     {
       "id": "llm-context",
       "type": "GlobalContextProvider",
-      "path": "@/modules/llm-picker/LLMContextProvider"
+      "path": "@/modules/llm-picker/LLMContextProvider",
+      "dependencies": ["flag:sessionActive"]
     },
     {
       "id": "llm-chat-top-pane",
@@ -72,17 +73,20 @@
     {
       "id": "llm-provider-service",
       "type": "GlobalContextProvider",
-      "path": "@/modules/llm-provider-service/LLMRestProviderService"
+      "path": "@/modules/llm-provider-service/LLMRestProviderService",
+      "dependencies": ["flag:sessionActive"]
     },
     {
       "id": "chat-side-panels-provider",
       "type": "GlobalContextProvider",
-      "path": "@/modules/chat-layout/ChatSidePanelProvider"
+      "path": "@/modules/chat-layout/ChatSidePanelProvider",
+      "dependencies": ["flag:sessionActive"]
     },
     {
       "id": "global-settings-sidebar-footer",
       "type": "SidebarFooterItem",
-      "path": "@/modules/settings/SidebarFooterItemGlobal"
+      "path": "@/modules/settings/SidebarFooterItemGlobal",
+      "dependencies": ["flag:sessionActive"]
     },
     {
       "id": "global-settings-router",
@@ -106,7 +110,8 @@
     {
       "id": "openai-chat-service",
       "type": "openai",
-      "path": "@/modules/chat-service/WithBackendOpenAIService"
+      "path": "@/modules/chat-service/WithBackendOpenAIService",
+      "dependencies": ["flag:sessionActive"]
     }
   ]
 }
