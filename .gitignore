@@ -1,10 +1,43 @@
+# Python
 __pycache__/
-node_modules/
-test-results/
-playwright-report/
 venv/
 .venv/
 uv.lock
-.env
-.vscode/
 .pytest_cache/
+.ruff_cache/
+*egg-info/
+
+# JS / Node
+node_modules/
+dist/
+dist-ssr
+*.local
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Test output
+test-results/
+playwright-report/
+
+# Frontend generated
+frontend_omni/public/modules.json
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Other
+.env
+*.db
