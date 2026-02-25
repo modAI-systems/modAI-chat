@@ -47,7 +47,7 @@ class PasswordAuthenticationModule(AuthenticationModule):
         self.user_store: UserStore = dependencies.modules.get("user_store")
 
         # Add password authentication specific routes
-        self.router.add_api_route("/api/v1/auth/signup", self.signup, methods=["POST"])
+        self.router.add_api_route("/api/auth/signup", self.signup, methods=["POST"])
 
     async def login(
         self,

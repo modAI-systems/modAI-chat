@@ -81,33 +81,33 @@ class ModelProviderModule(ModaiModule, ABC):
 
         # Add model provider routes
         self.router.add_api_route(
-            f"/api/v1/models/providers/{provider_type_name}",
+            f"/api/models/providers/{provider_type_name}",
             self.get_providers,
             methods=["GET"],
         )
         self.router.add_api_route(
-            f"/api/v1/models/providers/{provider_type_name}",
+            f"/api/models/providers/{provider_type_name}",
             self.create_provider,
             methods=["POST"],
             status_code=201,
         )
         self.router.add_api_route(
-            f"/api/v1/models/providers/{provider_type_name}/{{provider_id}}",
+            f"/api/models/providers/{provider_type_name}/{{provider_id}}",
             self.get_provider,
             methods=["GET"],
         )
         self.router.add_api_route(
-            f"/api/v1/models/providers/{provider_type_name}/{{provider_id}}",
+            f"/api/models/providers/{provider_type_name}/{{provider_id}}",
             self.update_provider,
             methods=["PUT"],
         )
         self.router.add_api_route(
-            f"/api/v1/models/providers/{provider_type_name}/{{provider_id}}/models",
+            f"/api/models/providers/{provider_type_name}/{{provider_id}}/models",
             self.get_models,
             methods=["GET"],
         )
         self.router.add_api_route(
-            f"/api/v1/models/providers/{provider_type_name}/{{provider_id}}",
+            f"/api/models/providers/{provider_type_name}/{{provider_id}}",
             self.delete_provider,
             methods=["DELETE"],
             status_code=204,

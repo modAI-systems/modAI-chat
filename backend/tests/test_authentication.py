@@ -60,7 +60,7 @@ def test_login_success(client):
     session_module.start_new_session.return_value = None
 
     payload = {"email": "admin@example.com", "password": "admin"}
-    response = test_client.post("/api/v1/auth/login", json=payload)
+    response = test_client.post("/api/auth/login", json=payload)
     assert response.status_code == 200
 
     response_data = response.json()
@@ -87,7 +87,7 @@ def test_login_invalid_credentials(client):
     user_store.get_user_credentials.return_value = test_credentials
 
     payload = {"email": "admin@example.com", "password": "wrong-password"}
-    response = test_client.post("/api/v1/auth/login", json=payload)
+    response = test_client.post("/api/auth/login", json=payload)
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid email or password"
 
@@ -102,7 +102,7 @@ def test_login_nonexistent_user(client):
     user_store.get_user_by_email.return_value = None
 
     payload = {"email": "nonexistent@example.com", "password": "password"}
-    response = test_client.post("/api/v1/auth/login", json=payload)
+    response = test_client.post("/api/auth/login", json=payload)
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid email or password"
 
@@ -118,7 +118,7 @@ def test_logout_with_valid_session_cookie(client):
     session_module.end_session.return_value = None
 
     # Test logout
-    logout_response = test_client.post("/api/v1/auth/logout")
+    logout_response = test_client.post("/api/auth/logout")
     assert logout_response.status_code == 200
     assert logout_response.json()["message"] == "Successfully logged out"
 
@@ -133,7 +133,7 @@ def test_logout_with_invalid_session_cookie(client):
     # Mock that session module doesn't raise any exception
     session_module.end_session.return_value = None
 
-    response = test_client.post("/api/v1/auth/logout")
+    response = test_client.post("/api/auth/logout")
     assert response.status_code == 200
     assert response.json()["message"] == "Successfully logged out"
 
@@ -148,7 +148,7 @@ def test_logout_without_session_cookie(client):
     # Mock that session module doesn't raise any exception
     session_module.end_session.return_value = None
 
-    response = test_client.post("/api/v1/auth/logout")
+    response = test_client.post("/api/auth/logout")
     assert response.status_code == 200
     assert response.json()["message"] == "Successfully logged out"
 
@@ -168,7 +168,7 @@ def test_login_user_without_credentials(client):
     user_store.get_user_credentials.return_value = None  # No credentials
 
     payload = {"email": "admin@example.com", "password": "admin"}
-    response = test_client.post("/api/v1/auth/login", json=payload)
+    response = test_client.post("/api/auth/login", json=payload)
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid email or password"
 
@@ -191,7 +191,7 @@ def test_signup_success(client):
         "password": "password123",
         "full_name": "New User",
     }
-    response = test_client.post("/api/v1/auth/signup", json=payload)
+    response = test_client.post("/api/auth/signup", json=payload)
     assert response.status_code == 200
 
     response_data = response.json()
@@ -220,7 +220,7 @@ def test_signup_existing_user(client):
         "password": "password123",
         "full_name": "New User",
     }
-    response = test_client.post("/api/v1/auth/signup", json=payload)
+    response = test_client.post("/api/auth/signup", json=payload)
     assert response.status_code == 400
     assert response.json()["detail"] == "User with this email already exists"
 
@@ -246,7 +246,7 @@ def test_signup_password_creation_failure(client):
         "password": "password123",
         "full_name": "Test User",
     }
-    response = test_client.post("/api/v1/auth/signup", json=payload)
+    response = test_client.post("/api/auth/signup", json=payload)
     assert response.status_code == 500
     assert response.json()["detail"] == "Failed to create user account"
 

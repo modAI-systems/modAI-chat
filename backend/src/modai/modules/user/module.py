@@ -28,7 +28,7 @@ class UserModule(ModaiModule, ABC):
 
         # Add user routes
         self.router.add_api_route(
-            "/api/v1/user", self.get_current_user, methods=["GET"]
+            "/api/user", self.get_current_user, methods=["GET"]
         )
 
     @abstractmethod

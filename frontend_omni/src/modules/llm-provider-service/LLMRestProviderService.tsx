@@ -45,7 +45,7 @@ class LLMRestProviderService implements ProviderService {
      * Get all models from all providers (via /models endpoint)
      */
     async getAllModels(): Promise<OpenAIModel[]> {
-        const response = await fetch(`/api/v1/models`);
+        const response = await fetch(`/api/models`);
 
         if (!response.ok) {
             throw new Error(
@@ -61,7 +61,7 @@ class LLMRestProviderService implements ProviderService {
      * Get all providers from all types
      */
     async getAllProviders(): Promise<Provider[]> {
-        const response = await fetch(`/api/v1/models/providers`);
+        const response = await fetch(`/api/models/providers`);
 
         if (!response.ok) {
             throw new Error(
@@ -83,7 +83,7 @@ class LLMRestProviderService implements ProviderService {
             typeof providerType === "string"
                 ? providerType
                 : providerType.value;
-        const response = await fetch(`/api/v1/models/providers/${typeValue}`);
+        const response = await fetch(`/api/models/providers/${typeValue}`);
 
         if (!response.ok) {
             throw new Error(
@@ -107,7 +107,7 @@ class LLMRestProviderService implements ProviderService {
                 ? providerType
                 : providerType.value;
         const response = await fetch(
-            `/api/v1/models/providers/${typeValue}/${providerId}`,
+            `/api/models/providers/${typeValue}/${providerId}`,
         );
 
         if (!response.ok) {
@@ -131,7 +131,7 @@ class LLMRestProviderService implements ProviderService {
                 ? providerType
                 : providerType.value;
         const response = await fetch(
-            `/api/v1/models/providers/${typeValue}/${providerId}/models`,
+            `/api/models/providers/${typeValue}/${providerId}/models`,
         );
 
         if (!response.ok) {
@@ -155,7 +155,7 @@ class LLMRestProviderService implements ProviderService {
             typeof providerType === "string"
                 ? providerType
                 : providerType.value;
-        const response = await fetch(`/api/v1/models/providers/${typeValue}`, {
+        const response = await fetch(`/api/models/providers/${typeValue}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -179,7 +179,7 @@ class LLMRestProviderService implements ProviderService {
                 ? providerType
                 : providerType.value;
         const response = await fetch(
-            `/api/v1/models/providers/${typeValue}/${providerId}`,
+            `/api/models/providers/${typeValue}/${providerId}`,
             {
                 method: "PUT",
                 headers: {
@@ -204,7 +204,7 @@ class LLMRestProviderService implements ProviderService {
                 ? providerType
                 : providerType.value;
         const response = await fetch(
-            `/api/v1/models/providers/${typeValue}/${providerId}`,
+            `/api/models/providers/${typeValue}/${providerId}`,
             {
                 method: "DELETE",
             },

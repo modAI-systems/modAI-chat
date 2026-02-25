@@ -37,7 +37,7 @@ export default defineConfig({
         },
         {
             command: "cd ../../backend && rm -f *.db && uv run uvicorn modai.main:app",
-            url: "http://localhost:8000/api/v1/health",
+            url: "http://localhost:8000/api/health",
             reuseExistingServer: !process.env.CI,
         },
         {

@@ -38,8 +38,8 @@ flowchart TD
 - Integration with session management
 
 **API Endpoints**:
-- `POST /api/v1/auth/login` - User authentication (200 OK / 401 Unauthorized / 422 Unprocessable Entity)
-- `POST /api/v1/auth/logout` - Session termination (200 OK / 401 Unauthorized)
+- `POST /api/auth/login` - User authentication (200 OK / 401 Unauthorized / 422 Unprocessable Entity)
+- `POST /api/auth/logout` - Session termination (200 OK / 401 Unauthorized)
 
 **Dependencies**:
 - Session Module (for session creation/destruction)
@@ -166,7 +166,7 @@ Because of the variety of options, the session module interface is rather generi
 - REST API for permission discovery
 
 **API Endpoints**:
-- `GET /api/v1/auth/permissions` - List all registered permissions for client discovery (200 OK / 401 Unauthorized if auth required)
+- `GET /api/auth/permissions` - List all registered permissions for client discovery (200 OK / 401 Unauthorized if auth required)
 
 **Key Functions**:
 ```python
@@ -192,7 +192,7 @@ async def validate_permission(self, user_id: str, resource: str, action: str) ->
 @dataclass
 class PermissionDefinition:
     """Definition of a permission for registration purposes"""
-    resource: str           # e.g., "/api/v1/documents", "/api/v1/user/*"
+    resource: str           # e.g., "/api/documents", "/api/user/*"
     actions: list[str]      # e.g., ["read", "write", "delete"]
     resource_name: str      # Human-readable name, e.g., "Document Library", "User Management"
     description: str | None = None  # Optional detailed description
@@ -204,13 +204,13 @@ class PermissionDefinition:
 {
   "permissions": [
     {
-      "resource": "/api/v1/provider/*/models",
+      "resource": "/api/provider/*/models",
       "actions": ["read"],
       "resource_name": "Large Language Models",
       "description": "Models available through the AI provider"
     },
     {
-      "resource": "/api/v1/file/*",
+      "resource": "/api/file/*",
       "actions": ["read", "write", "delete"],
       "resource_name": "User Files",
       "description": "Access individual uploated files outside a document library"
@@ -233,18 +233,18 @@ The resource identifier is a string, so arbitrary content can be put in, but it 
 advisable to use a **pseudo endpoint notation** which reflects the endpoints
 of the module exactly or at least to a certain extent.
 
-If a module e.g. has an endpoint `/api/v1/files` then this is also a good candidate
+If a module e.g. has an endpoint `/api/files` then this is also a good candidate
 for the resource identifier.
 
-If a module has several endpoints like `/api/v1/file/{id}/title`,
-`/api/v1/file/{id}/name`, ... then it is not advisable to create permissions for
-each single endpoint, but instead use a more generic one like `/api/v1/file/*` as
+If a module has several endpoints like `/api/file/{id}/title`,
+`/api/file/{id}/name`, ... then it is not advisable to create permissions for
+each single endpoint, but instead use a more generic one like `/api/file/*` as
 resource name.
 
 In some cases it can even be interesting to share resource identifiers across modules.
 E.g. if there are several LLM Provider modules which should follow the endpoint pattern
-`/api/v1/provider`, then usually we don't want to have permissions for each provider
-individually. Here a resource identifier of `/api/v1/provider/` could be shared amongst
+`/api/provider`, then usually we don't want to have permissions for each provider
+individually. Here a resource identifier of `/api/provider/` could be shared amongst
 all provider modules.
 
 Benefits of Pseudo-Endpoint-based Permissions:
@@ -289,7 +289,7 @@ class SomeWebModule(ModaiModule, ABC):
         """Register all permissions used by this module"""
         self.authorization_module.register_permission(
             PermissionDefinition(
-                resource="/api/v1/some",
+                resource="/api/some",
                 actions=["read", "write", "delete"],
                 resource_name="Some Resources"
             )
@@ -314,7 +314,7 @@ class SomeWebModule(ModaiModule):
         ...
 
         # Add routes
-        self.router.add_api_route("/api/v1/some", self.get_some, methods=["GET"])
+        self.router.add_api_route("/api/some", self.get_some, methods=["GET"])
         ...
 
     async def get_some(self, request: Request):
@@ -323,7 +323,7 @@ class SomeWebModule(ModaiModule):
 
         # 2. Validate endpoint permissions
         await self.authorization_module.validate_permission(
-            session.user_id, "/api/v1/some", "read"
+            session.user_id, "/api/some", "read"
         )
 
         # 3. Process request
@@ -353,7 +353,7 @@ sequenceDiagram
     Auth->>Session: start_new_session()
     Session-->>Auth: Session created
     Auth-->>Client: 200 OK (session cookie)
-    Client->>SomeWebModule: GET /api/v1/file/1
+    Client->>SomeWebModule: GET /api/file/1
     SomeWebModule->>Session: validate_session()
     Session-->>SomeWebModule: Session data
     SomeWebModule->>Authorization: validate_permission()

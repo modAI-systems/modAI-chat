@@ -163,7 +163,7 @@ class TestCentralModelProviderRouter:
 
     def test_get_all_providers_endpoint(self, test_client):
         """Test GET /models/providers endpoint"""
-        response = test_client.get("/api/v1/models/providers")
+        response = test_client.get("/api/models/providers")
 
         assert response.status_code == 200
         data = response.json()
@@ -181,7 +181,7 @@ class TestCentralModelProviderRouter:
 
     def test_get_all_models_endpoint(self, test_client):
         """Test GET /models endpoint"""
-        response = test_client.get("/api/v1/models")
+        response = test_client.get("/api/models")
 
         assert response.status_code == 200
         data = response.json()
@@ -208,8 +208,8 @@ class TestCentralModelProviderRouter:
             assert "owned_by" in model
 
     def test_get_all_providers_with_pagination(self, test_client):
-        """Test GET /api/v1/models/providers with pagination"""
-        response = test_client.get("/api/v1/models/providers?limit=1&offset=0")
+        """Test GET /api/models/providers with pagination"""
+        response = test_client.get("/api/models/providers?limit=1&offset=0")
 
         assert response.status_code == 200
         data = response.json()
@@ -229,7 +229,7 @@ class TestCentralModelProviderRouter:
         app.include_router(router.router)
         client = TestClient(app)
 
-        response = client.get("/api/v1/models/providers")
+        response = client.get("/api/models/providers")
 
         assert response.status_code == 200
         data = response.json()
@@ -247,7 +247,7 @@ class TestCentralModelProviderRouter:
         app.include_router(router.router)
         client = TestClient(app)
 
-        response = client.get("/api/v1/models")
+        response = client.get("/api/models")
 
         assert response.status_code == 200
         data = response.json()
@@ -272,8 +272,8 @@ class TestCentralModelProviderRouter:
         client = TestClient(app)
 
         endpoints = [
-            ("GET", "/api/v1/models/providers"),
-            ("GET", "/api/v1/models"),
+            ("GET", "/api/models/providers"),
+            ("GET", "/api/models"),
         ]
 
         for method, path in endpoints:

@@ -11,7 +11,7 @@ export class HttpUserService implements UserService {
      * @throws Error if the request fails or user is not authenticated
      */
     async fetchCurrentUser(): Promise<User> {
-        const response = await fetch("/api/v1/user", {
+        const response = await fetch("/api/user", {
             method: "GET",
             credentials: "include", // Include cookies for session authentication
             headers: {
