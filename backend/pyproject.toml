@@ -22,5 +22,11 @@ dev = [
     "ruff",
 ]
 
+[tool.pytest.ini_options]
+testpaths = ["src"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
 [tool.uv]
 package = true

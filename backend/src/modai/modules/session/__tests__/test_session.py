@@ -1,11 +1,7 @@
-import sys
-import os
 import pytest
 from unittest.mock import MagicMock
 import jwt
 from datetime import datetime, timedelta, timezone
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from modai.module import ModuleDependencies
 from modai.modules.session.jwt_session_module import JwtSessionModule
 from modai.modules.session.module import Session

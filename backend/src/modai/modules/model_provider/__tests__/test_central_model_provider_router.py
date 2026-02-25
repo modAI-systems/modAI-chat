@@ -2,14 +2,10 @@
 Tests for Central Model Provider Router.
 """
 
-import sys
-import os
 import pytest
 from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from modai.modules.model_provider.central_router import CentralModelProviderRouter
 from modai.modules.model_provider.module import (

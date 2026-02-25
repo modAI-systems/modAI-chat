@@ -123,8 +123,8 @@ Before any backend work, read relevant architecture documents:
 ### Testing
 
 - **Framework**: pytest
-- **Command**: `uv run pytest` or `uv run pytest tests/test_*.py`
-- **Location**: `backend/tests/`
+- **Command**: `uv run pytest`
+- **Location**: Tests live alongside source code in `__tests__/` directories under `backend/src/modai/` and `backend/src/modai/modules/*/`
 - **Test Coverage**: Always add unit tests for new features or bug fixes
 - **Test Isolation**: Use mocking for external dependencies
 - **Atomic Tests**: Each test function should test one specific behavior

@@ -1,10 +1,6 @@
-import sys
-import os
 import yaml
 import pytest
 from pathlib import Path
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from modai.module import ModuleDependencies
 from modai.modules.startup_config.yaml_config_module import YamlConfigModule
