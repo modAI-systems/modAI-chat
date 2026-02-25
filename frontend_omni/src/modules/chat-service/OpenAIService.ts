@@ -100,14 +100,14 @@ export abstract class OpenAIChatService implements ChatService {
 
 /**
  * OpenAI Chat Service for use with a backend.
- * Routes requests through the backend /api/chat/raw endpoint which handles
+ * Routes requests through the backend /api endpoint which handles
  * provider routing and authentication.
  */
 export class WithBackendOpenAIChatService extends OpenAIChatService {
     protected createOpenAI(_modelId: string): OpenAI {
         return new OpenAI({
             apiKey: "not-needed-backend-handles-auth",
-            baseURL: `${window.location.origin}/api/chat/raw`,
+            baseURL: `${window.location.origin}/api`,
             dangerouslyAllowBrowser: true,
         });
     }
