@@ -479,7 +479,7 @@ def test_responses_endpoint_rejects_unauthenticated_request():
     client = TestClient(app)
 
     response = client.post(
-        "/api/chat/raw/responses",
+        "/api/responses",
         json={"model": "dummy/test_model", "input": "hello"},
     )
     assert response.status_code == 401

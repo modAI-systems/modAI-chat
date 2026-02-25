@@ -10,7 +10,7 @@ modules:
       chat_openai: chat_openai
       session: "session"
   chat_openai:
-    class: modai.modules.chat.openai_llm_chat.OpenAILLMChatModule
+    class: modai.modules.chat.openai_raw_chat.OpenAILLMChatModule
     module_dependencies:
       llm_provider_module: openai_model_provider
   model_provider_store:

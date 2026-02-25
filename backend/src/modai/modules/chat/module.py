@@ -15,7 +15,7 @@ class ChatWebModule(ModaiModule, ABC):
     """
     Module Declaration for: Chat Responses (Web Module)
 
-    Provides the /api/chat/raw/responses endpoint for chat completions.
+    Provides the /api/responses endpoint for chat completions.
     Fully OpenAI /responses API compatible.
     """
 
@@ -23,7 +23,7 @@ class ChatWebModule(ModaiModule, ABC):
         super().__init__(dependencies, config)
         self.router = APIRouter()
         self.router.add_api_route(
-            "/api/chat/raw/responses",
+            "/api/responses",
             self.responses_endpoint,
             methods=["POST"],
             response_model=None,  # Disable response model since we return either Response or StreamingResponse
