@@ -50,8 +50,8 @@ class OpenAILLMChatModule(ChatLLMModule):
 
     def _parse_model(self, model: str) -> tuple[str, str]:
         """Parse 'provider_name/model_name' into its components."""
-        model_parts = model.split("/")
-        if len(model_parts) != 2:
+        model_parts = model.split("/", maxsplit=1)
+        if len(model_parts) != 2 or not model_parts[0] or not model_parts[1]:
             raise ValueError(
                 f"Invalid model format: {model}. Expected 'provider_name/model_name'"
             )

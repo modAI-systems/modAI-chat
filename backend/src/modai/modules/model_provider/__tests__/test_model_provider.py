@@ -20,6 +20,8 @@ from datetime import datetime
 working_dir = Path.cwd()
 load_dotenv(find_dotenv(str(working_dir / ".env")))
 
+OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+
 # Force anyio to use asyncio backend only
 anyio_backend = pytest.fixture(scope="session")(lambda: "asyncio")
 
@@ -41,7 +43,7 @@ class TestModelProviderModule:
         sample_provider = ModelProvider(
             id="test-id-123",
             name="TestProvider",
-            url="https://api.openai.com/v1",
+            url=OPENAI_BASE_URL,
             properties=properties,
             created_at=datetime(2024, 1, 1, 12, 0, 0),
             updated_at=datetime(2024, 1, 1, 12, 0, 0),
@@ -113,7 +115,7 @@ class TestModelProviderModule:
         provider = data["providers"][0]
         assert provider["id"] == "test-id-123"
         assert provider["name"] == "TestProvider"
-        assert provider["base_url"] == "https://api.openai.com/v1"
+        assert provider["base_url"] == OPENAI_BASE_URL
         assert provider["properties"]["key"] == "value"
         # Verify that api_key is available as a direct field
         assert "api_key" in provider
@@ -165,7 +167,7 @@ class TestModelProviderModule:
 
         assert data["id"] == "test-id-123"
         assert data["name"] == "TestProvider"
-        assert data["base_url"] == "https://api.openai.com/v1"
+        assert data["base_url"] == OPENAI_BASE_URL
         assert data["properties"]["key"] == "value"
         # Verify that api_key is available as a direct field
         assert "api_key" in data
