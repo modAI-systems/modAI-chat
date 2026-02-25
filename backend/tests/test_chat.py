@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from modai.module import ModuleDependencies
-from modai.modules.chat.openai_llm_chat import OpenAILLMChatModule
+from modai.modules.chat.openai_raw_chat import OpenAILLMChatModule
 from modai.modules.chat.web_chat_router import ChatWebModule
 from modai.modules.chat.module import ChatLLMModule
 from modai.modules.session.module import SessionModule, Session
