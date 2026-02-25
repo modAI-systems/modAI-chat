@@ -57,6 +57,7 @@ async def openai_client(request):
     if client_type == "direct":
         openai_client = AsyncOpenAI(
             api_key=os.environ["OPENAI_API_KEY"],
+            base_url=os.environ.get("OPENAI_BASE_URL"),
         )
         yield openai_client
     else:
@@ -80,7 +81,7 @@ async def test_llm_generate_response():
         id="test_provider",
         type="openai",
         name="myopenai",
-        base_url="https://api.openai.com/v1",
+        base_url=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
         api_key=os.environ["OPENAI_API_KEY"],
         properties={},
         created_at=None,
@@ -106,8 +107,9 @@ async def test_llm_generate_response():
     request = Mock(spec=Request)
 
     # Test non-streaming
+    model = os.environ.get("OPENAI_MODEL", "gpt-5")
     body_json = {
-        "model": "myopenai/gpt-4o",
+        "model": f"myopenai/{model}",
         "input": [{"role": "user", "content": "Just echo the word 'Hello'"}],
     }
 
@@ -149,7 +151,7 @@ async def test_llm_generate_response_streaming():
         id="test_provider",
         type="openai",
         name="myopenai",
-        base_url="https://api.openai.com/v1",
+        base_url=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
         api_key=os.environ["OPENAI_API_KEY"],
         properties={},
         created_at=None,
@@ -175,8 +177,9 @@ async def test_llm_generate_response_streaming():
     request = Mock(spec=Request)
 
     # Test streaming
+    model = os.environ.get("OPENAI_MODEL", "gpt-5")
     body_json = {
-        "model": "myopenai/gpt-4o",
+        "model": f"myopenai/{model}",
         "input": [{"role": "user", "content": "Just echo the word 'Hello'"}],
         "stream": True,
     }
@@ -209,7 +212,7 @@ async def test_chat_responses_api(openai_client: AsyncOpenAI, request):
     """Test chat responses API."""
 
     request.node.callspec.params["openai_client"]
-    model = "gpt-4o"  # No backend_proxy
+    model = os.environ.get("OPENAI_MODEL", "gpt-5")
 
     # Make the request
     response = await openai_client.responses.create(
@@ -241,7 +244,7 @@ async def test_chat_responses_api_streaming(openai_client: AsyncOpenAI, request)
     """Test streaming chat responses API."""
 
     request.node.callspec.params["openai_client"]
-    model = "gpt-4o"  # No backend_proxy
+    model = os.environ.get("OPENAI_MODEL", "gpt-5")
 
     # Make the streaming request
     stream = await openai_client.responses.create(
@@ -443,7 +446,7 @@ async def test_openai_llm_provider_not_found():
 
     # Test with non-existent provider
     body_json = {
-        "model": "nonexistent/gpt-4",
+        "model": "nonexistent/gpt-5",
         "input": [{"role": "user", "content": "Hello"}],
     }
 

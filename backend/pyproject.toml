@@ -12,6 +12,8 @@ dependencies = [
     "pyjwt",
     "python-dotenv",
     "sqlalchemy",
+    "strands-agents",
+    "strands-agents-tools",
 ]
 
 [dependency-groups]
