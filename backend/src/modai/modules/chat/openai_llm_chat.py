@@ -8,7 +8,7 @@ from openai.types.responses import (
     Response as OpenAIResponse,
     ResponseStreamEvent as OpenAIResponseStreamEvent,
 )
-from modai.modules.model_provider.module import ModelProviderModule
+from modai.modules.model_provider.module import ModelProviderModule, ModelProviderResponse
 
 
 class OpenAILLMChatModule(ChatLLMModule):
@@ -34,44 +34,42 @@ class OpenAILLMChatModule(ChatLLMModule):
     async def generate_response(
         self, request: Request, body_json: OpenAICreateResponse
     ) -> OpenAIResponse | AsyncGenerator[OpenAIResponseStreamEvent, None]:
-        # Parse model: format is "provider_name/model_name"
-        model = body_json.get("model", "")
+        provider_name, actual_model = self._parse_model(body_json.get("model", ""))
+        provider = await self._resolve_provider(provider_name)
+        client = self._create_client(provider)
+
+        body_json["model"] = actual_model
+
+        if body_json.get("stream", False):
+            return self._generate_streaming_response(client, body_json)
+        else:
+            return await self._generate_non_streaming_response(client, body_json)
+
+    def _parse_model(self, model: str) -> tuple[str, str]:
+        """Parse 'provider_name/model_name' into its components."""
         model_parts = model.split("/")
         if len(model_parts) != 2:
             raise ValueError(
                 f"Invalid model format: {model}. Expected 'provider_name/model_name'"
             )
+        return model_parts[0], model_parts[1]
 
-        provider_name, actual_model = model_parts
-
-        # Get all providers from the provider module
+    async def _resolve_provider(self, provider_name: str) -> ModelProviderResponse:
+        """Look up the provider by name from the provider module."""
         providers_response = await self.provider_module.get_providers(
             limit=None, offset=None
         )
-        provider = None
         for p in providers_response.providers:
             if p.name == provider_name:
-                provider = p
-                break
+                return p
+        raise ValueError(f"Provider '{provider_name}' not found")
 
-        if not provider:
-            raise ValueError(f"Provider '{provider_name}' not found")
-
-        # Create OpenAI client with the provider's API key and base URL
-        client = AsyncOpenAI(
+    def _create_client(self, provider: ModelProviderResponse) -> AsyncOpenAI:
+        """Create an AsyncOpenAI client from a provider configuration."""
+        return AsyncOpenAI(
             api_key=provider.api_key,
             base_url=provider.base_url if provider.base_url else None,
         )
-
-        # Update body_json with the actual model
-        body_json["model"] = actual_model
-
-        stream = body_json.get("stream", False)
-
-        if stream:
-            return self._generate_streaming_response(client, body_json)
-        else:
-            return await self._generate_non_streaming_response(client, body_json)
 
     async def _generate_streaming_response(
         self, client: AsyncOpenAI, body_json: OpenAICreateResponse
