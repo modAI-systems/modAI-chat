@@ -38,7 +38,7 @@ class OpenAILLMChatModule(ChatLLMModule):
         self, request: Request, body_json: OpenAICreateResponse
     ) -> OpenAIResponse | AsyncGenerator[OpenAIResponseStreamEvent, None]:
         provider_name, actual_model = self._parse_model(body_json.get("model", ""))
-        provider = await self._resolve_provider(provider_name)
+        provider = await self._resolve_provider(request, provider_name)
         client = self._create_client(provider)
 
         body_json["model"] = actual_model
@@ -57,10 +57,12 @@ class OpenAILLMChatModule(ChatLLMModule):
             )
         return model_parts[0], model_parts[1]
 
-    async def _resolve_provider(self, provider_name: str) -> ModelProviderResponse:
+    async def _resolve_provider(
+        self, request: Request, provider_name: str
+    ) -> ModelProviderResponse:
         """Look up the provider by name from the provider module."""
         providers_response = await self.provider_module.get_providers(
-            limit=None, offset=None
+            request=request, limit=None, offset=None
         )
         for p in providers_response.providers:
             if p.name == provider_name:
