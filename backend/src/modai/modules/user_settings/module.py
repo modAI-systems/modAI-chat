@@ -50,20 +50,20 @@ class UserSettingsModule(ModaiModule, ABC):
 
         # Add user settings routes
         self.router.add_api_route(
-            "/api/v1/user/{user_id}/settings", self.get_user_settings, methods=["GET"]
+            "/api/user/{user_id}/settings", self.get_user_settings, methods=["GET"]
         )
         self.router.add_api_route(
-            "/api/v1/user/{user_id}/settings",
+            "/api/user/{user_id}/settings",
             self.update_user_settings,
             methods=["PUT"],
         )
         self.router.add_api_route(
-            "/api/v1/user/{user_id}/settings/{setting_type}",
+            "/api/user/{user_id}/settings/{setting_type}",
             self.get_user_setting_type,
             methods=["GET"],
         )
         self.router.add_api_route(
-            "/api/v1/user/{user_id}/settings/{setting_type}",
+            "/api/user/{user_id}/settings/{setting_type}",
             self.update_user_setting_type,
             methods=["PUT"],
         )

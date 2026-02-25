@@ -49,14 +49,14 @@ class CentralModelProviderRouter(ModaiModule):
 
         # Add the central route for getting all providers
         self.router.add_api_route(
-            "/api/v1/models/providers",
+            "/api/models/providers",
             self.get_all_providers,
             methods=["GET"],
         )
 
         # Add the central route for getting all models
         self.router.add_api_route(
-            "/api/v1/models",
+            "/api/models",
             self.get_all_models,
             methods=["GET"],
         )

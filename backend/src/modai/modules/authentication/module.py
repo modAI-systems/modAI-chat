@@ -44,8 +44,8 @@ class AuthenticationModule(ModaiModule, ABC):
         self.security = HTTPBearer()
 
         # Add authentication routes
-        self.router.add_api_route("/api/v1/auth/login", self.login, methods=["POST"])
-        self.router.add_api_route("/api/v1/auth/logout", self.logout, methods=["POST"])
+        self.router.add_api_route("/api/auth/login", self.login, methods=["POST"])
+        self.router.add_api_route("/api/auth/logout", self.logout, methods=["POST"])
 
     @abstractmethod
     async def login(

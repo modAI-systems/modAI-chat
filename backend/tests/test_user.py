@@ -93,7 +93,7 @@ def test_get_current_user_success(client):
     user_store.get_user_by_id.return_value = test_user
 
     # Call the endpoint
-    response = test_client.get("/api/v1/user")
+    response = test_client.get("/api/user")
 
     assert response.status_code == 200
     response_data = response.json()
@@ -118,7 +118,7 @@ def test_get_current_user_user_not_found(client):
     user_store.get_user_by_id.return_value = None  # User not found
 
     # Call the endpoint
-    response = test_client.get("/api/v1/user")
+    response = test_client.get("/api/user")
 
     assert response.status_code == 404
     assert response.json()["detail"] == "User not found"
@@ -140,7 +140,7 @@ def test_get_current_user_invalid_session(client):
     )
 
     # Call the endpoint
-    response = test_client.get("/api/v1/user")
+    response = test_client.get("/api/user")
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Missing, invalid or expired session"

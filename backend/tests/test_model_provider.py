@@ -101,8 +101,8 @@ class TestModelProviderModule:
     def test_get_providers_endpoint(
         self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
-        """Test GET /api/v1/models/providers/openai endpoint"""
-        response = test_client.get("/api/v1/models/providers/openai")
+        """Test GET /api/models/providers/openai endpoint"""
+        response = test_client.get("/api/models/providers/openai")
 
         assert response.status_code == 200
         data = response.json()
@@ -132,7 +132,7 @@ class TestModelProviderModule:
         self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
         """Test GET /models/providers/openai with pagination parameters"""
-        response = test_client.get("/api/v1/models/providers/openai?limit=10&offset=5")
+        response = test_client.get("/api/models/providers/openai?limit=10&offset=5")
 
         assert response.status_code == 200
         data = response.json()
@@ -146,22 +146,22 @@ class TestModelProviderModule:
     def test_get_providers_invalid_pagination(self, test_client):
         """Test GET /models/providers/openai with invalid pagination parameters"""
         # Test negative offset
-        response = test_client.get("/api/v1/models/providers/openai?offset=-1")
+        response = test_client.get("/api/models/providers/openai?offset=-1")
         assert response.status_code == 422
 
         # Test limit too large
-        response = test_client.get("/api/v1/models/providers/openai?limit=2000")
+        response = test_client.get("/api/models/providers/openai?limit=2000")
         assert response.status_code == 422
 
         # Test limit too small
-        response = test_client.get("/api/v1/models/providers/openai?limit=0")
+        response = test_client.get("/api/models/providers/openai?limit=0")
         assert response.status_code == 422
 
     def test_get_provider_by_id(
         self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
         """Test GET /models/providers/openai/{id} endpoint"""
-        response = test_client.get("/api/v1/models/providers/openai/test-id-123")
+        response = test_client.get("/api/models/providers/openai/test-id-123")
 
         assert response.status_code == 200
         data = response.json()
@@ -185,7 +185,7 @@ class TestModelProviderModule:
         """Test GET /models/providers/openai/{id} for non-existent provider"""
         mock_provider_store.get_provider.return_value = None
 
-        response = test_client.get("/api/v1/models/providers/openai/nonexistent")
+        response = test_client.get("/api/models/providers/openai/nonexistent")
 
         assert response.status_code == 404
         data = response.json()
@@ -203,7 +203,7 @@ class TestModelProviderModule:
         }
 
         response = test_client.post(
-            "/api/v1/models/providers/openai", json=request_data
+            "/api/models/providers/openai", json=request_data
         )
 
         assert response.status_code == 201
@@ -245,7 +245,7 @@ class TestModelProviderModule:
         }
 
         response = test_client.post(
-            "/api/v1/models/providers/openai", json=request_data
+            "/api/models/providers/openai", json=request_data
         )
 
         assert response.status_code == 400
@@ -256,21 +256,21 @@ class TestModelProviderModule:
         """Test POST /models/providers/openai with missing required fields"""
         # Missing name
         response = test_client.post(
-            "/api/v1/models/providers/openai",
+            "/api/models/providers/openai",
             json={"base_url": "https://api.test.com", "api_key": "test-key"},
         )
         assert response.status_code == 422
 
         # Missing base_url
         response = test_client.post(
-            "/api/v1/models/providers/openai",
+            "/api/models/providers/openai",
             json={"name": "TestProvider", "api_key": "test-key"},
         )
         assert response.status_code == 422
 
         # Missing api_key
         response = test_client.post(
-            "/api/v1/models/providers/openai",
+            "/api/models/providers/openai",
             json={"name": "TestProvider", "base_url": "https://api.test.com"},
         )
         assert response.status_code == 422
@@ -287,7 +287,7 @@ class TestModelProviderModule:
         }
 
         response = test_client.put(
-            "/api/v1/models/providers/openai/existing-id", json=request_data
+            "/api/models/providers/openai/existing-id", json=request_data
         )
 
         assert response.status_code == 200
@@ -322,7 +322,7 @@ class TestModelProviderModule:
             "properties": {},
         }
         response = test_client.put(
-            "/api/v1/models/providers/openai/nonexistent-id", json=request_data
+            "/api/models/providers/openai/nonexistent-id", json=request_data
         )
 
         assert response.status_code == 404
@@ -333,7 +333,7 @@ class TestModelProviderModule:
         self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
         """Test DELETE /models/providers/openai/{id} endpoint"""
-        response = test_client.delete("/api/v1/models/providers/openai/test-id-123")
+        response = test_client.delete("/api/models/providers/openai/test-id-123")
 
         assert response.status_code == 204
         assert response.content == b""  # No content for 204
@@ -346,7 +346,7 @@ class TestModelProviderModule:
     ) -> None:
         """Test DELETE /models/providers/openai/{id} is idempotent"""
         # Even if provider doesn't exist, should return 204
-        response = test_client.delete("/api/v1/models/providers/openai/nonexistent")
+        response = test_client.delete("/api/models/providers/openai/nonexistent")
 
         assert response.status_code == 204
         mock_provider_store.delete_provider.assert_called_once_with("nonexistent")
@@ -361,7 +361,7 @@ class TestModelProviderModule:
 
         # Since we removed try-catch, exceptions now bubble up and get raised by test client
         with pytest.raises(Exception, match="Database connection failed"):
-            test_client.get("/api/v1/models/providers/openai")
+            test_client.get("/api/models/providers/openai")
 
     def test_complex_properties_handling(
         self, test_client: TestClient, mock_provider_store: ModelProviderStore
@@ -381,7 +381,7 @@ class TestModelProviderModule:
         }
 
         response = test_client.post(
-            "/api/v1/models/providers/openai", json=request_data
+            "/api/models/providers/openai", json=request_data
         )
 
         assert response.status_code == 201
@@ -402,7 +402,7 @@ class TestModelProviderModule:
         self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
         """Test GET /models/providers/openai/{provider_id}/models endpoint"""
-        response = test_client.get("/api/v1/models/providers/openai/test-id-123/models")
+        response = test_client.get("/api/models/providers/openai/test-id-123/models")
 
         assert response.status_code == 200
         data = response.json()
@@ -430,7 +430,7 @@ class TestModelProviderModule:
         """Test GET /models/providers/openai/{provider_id}/models for non-existent provider"""
         mock_provider_store.get_provider.return_value = None
 
-        response = test_client.get("/api/v1/models/providers/openai/nonexistent/models")
+        response = test_client.get("/api/models/providers/openai/nonexistent/models")
 
         assert response.status_code == 404
         data = response.json()
@@ -466,12 +466,12 @@ class TestModelProviderModule:
         }
 
         endpoints = [
-            ("GET", "/api/v1/models/providers/openai"),
-            ("POST", "/api/v1/models/providers/openai", provider_body),
-            ("GET", "/api/v1/models/providers/openai/some-id"),
-            ("PUT", "/api/v1/models/providers/openai/some-id", provider_body),
-            ("DELETE", "/api/v1/models/providers/openai/some-id"),
-            ("GET", "/api/v1/models/providers/openai/some-id/models"),
+            ("GET", "/api/models/providers/openai"),
+            ("POST", "/api/models/providers/openai", provider_body),
+            ("GET", "/api/models/providers/openai/some-id"),
+            ("PUT", "/api/models/providers/openai/some-id", provider_body),
+            ("DELETE", "/api/models/providers/openai/some-id"),
+            ("GET", "/api/models/providers/openai/some-id/models"),
         ]
 
         for entry in endpoints:

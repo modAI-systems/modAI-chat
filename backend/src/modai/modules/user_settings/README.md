@@ -10,10 +10,10 @@ The User Settings module provides REST API endpoints for managing user-specific 
 
 The module provides four endpoints for managing user settings:
 
-1. **Bulk operations** (`/api/v1/user/{user_id}/settings`): Get all settings or update multiple setting types at once
-2. **Single type operations** (`/api/v1/user/{user_id}/settings/{setting_type}`): Get or update a specific setting type
+1. **Bulk operations** (`/api/user/{user_id}/settings`): Get all settings or update multiple setting types at once
+2. **Single type operations** (`/api/user/{user_id}/settings/{setting_type}`): Get or update a specific setting type
 
-### GET /api/v1/user/{user_id}/settings
+### GET /api/user/{user_id}/settings
 Retrieves all settings for a specific user.
 
 **Authentication**: Required (session-based)
@@ -40,7 +40,7 @@ Retrieves all settings for a specific user.
 - `403 Forbidden`: User doesn't have permission to access these settings
 - `404 Not Found`: User not found
 
-### PUT /api/v1/user/{user_id}/settings
+### PUT /api/user/{user_id}/settings
 Updates settings for a specific user. Only provided setting types are updated, existing settings for other types are preserved.
 
 **Authentication**: Required (session-based)
@@ -81,7 +81,7 @@ Updates settings for a specific user. Only provided setting types are updated, e
 - `404 Not Found`: User not found
 - `422 Unprocessable Entity`: Invalid settings data format
 
-### GET /api/v1/user/{user_id}/settings/{setting_type}
+### GET /api/user/{user_id}/settings/{setting_type}
 Retrieves a specific setting type for a user.
 
 **Authentication**: Required (session-based)
@@ -103,7 +103,7 @@ Retrieves a specific setting type for a user.
 - `403 Forbidden`: User doesn't have permission to access these settings
 - `404 Not Found`: User not found (returns empty settings if setting type doesn't exist)
 
-### PUT /api/v1/user/{user_id}/settings/{setting_type}
+### PUT /api/user/{user_id}/settings/{setting_type}
 Updates a specific setting type for a user. This completely replaces the setting type data.
 
 **Authentication**: Required (session-based)
@@ -190,17 +190,17 @@ user_settings:
 ### Frontend Integration
 ```typescript
 // Get all user settings
-const allSettings = await fetch('/api/v1/user/123/settings', {
+const allSettings = await fetch('/api/user/123/settings', {
   credentials: 'include'
 }).then(r => r.json());
 
 // Get specific setting type
-const themeSettings = await fetch('/api/v1/user/123/settings/theme', {
+const themeSettings = await fetch('/api/user/123/settings/theme', {
   credentials: 'include'
 }).then(r => r.json());
 
 // Update all settings (merge)
-await fetch('/api/v1/user/123/settings', {
+await fetch('/api/user/123/settings', {
   method: 'PUT',
   credentials: 'include',
   headers: { 'Content-Type': 'application/json' },
@@ -212,7 +212,7 @@ await fetch('/api/v1/user/123/settings', {
 });
 
 // Update specific setting type (replace)
-await fetch('/api/v1/user/123/settings/theme', {
+await fetch('/api/user/123/settings/theme', {
   method: 'PUT',
   credentials: 'include',
   headers: { 'Content-Type': 'application/json' },

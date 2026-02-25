@@ -13,7 +13,7 @@ class HealthModule(ModaiModule, ABC):
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
         super().__init__(dependencies, config)
         self.router = APIRouter()  # This makes it a web module
-        self.router.add_api_route("/api/v1/health", self.get_health, methods=["GET"])
+        self.router.add_api_route("/api/health", self.get_health, methods=["GET"])
 
     @abstractmethod
     def get_health(self) -> dict[str, Any]:

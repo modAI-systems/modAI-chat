@@ -23,7 +23,7 @@ export class AuthenticationService implements AuthService {
      * @throws Error if login fails
      */
     async login(credentials: LoginRequest): Promise<LoginResponse> {
-        const response = await fetch("/api/v1/auth/login", {
+        const response = await fetch("/api/auth/login", {
             method: "POST",
             credentials: "include", // Include cookies for session authentication
             headers: {
@@ -48,7 +48,7 @@ export class AuthenticationService implements AuthService {
      * @throws Error if signup fails
      */
     async signup(credentials: SignupRequest): Promise<SignupResponse> {
-        const response = await fetch("/api/v1/auth/signup", {
+        const response = await fetch("/api/auth/signup", {
             method: "POST",
             credentials: "include", // Include cookies for session authentication
             headers: {
@@ -72,7 +72,7 @@ export class AuthenticationService implements AuthService {
      * @throws Error if logout fails
      */
     async logout(): Promise<LoginResponse> {
-        const response = await fetch("/api/v1/auth/logout", {
+        const response = await fetch("/api/auth/logout", {
             method: "POST",
             credentials: "include", // Include cookies for session authentication
             headers: {
