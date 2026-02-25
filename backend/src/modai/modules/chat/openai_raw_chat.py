@@ -8,7 +8,10 @@ from openai.types.responses import (
     Response as OpenAIResponse,
     ResponseStreamEvent as OpenAIResponseStreamEvent,
 )
-from modai.modules.model_provider.module import ModelProviderModule, ModelProviderResponse
+from modai.modules.model_provider.module import (
+    ModelProviderModule,
+    ModelProviderResponse,
+)
 
 
 class OpenAILLMChatModule(ChatLLMModule):

@@ -27,9 +27,7 @@ class UserModule(ModaiModule, ABC):
         self.router = APIRouter()  # This makes it a web module
 
         # Add user routes
-        self.router.add_api_route(
-            "/api/user", self.get_current_user, methods=["GET"]
-        )
+        self.router.add_api_route("/api/user", self.get_current_user, methods=["GET"])
 
     @abstractmethod
     async def get_current_user(self, request: Request) -> UserResponse:

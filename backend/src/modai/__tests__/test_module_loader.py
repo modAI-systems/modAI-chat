@@ -1,8 +1,5 @@
-import sys
-import os
 from typing import Any
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from modai.module import ModaiModule, ModuleDependencies
 from modai.module_loader import ModuleLoader
 
@@ -29,7 +26,7 @@ def test_import_class_success():
     startup_config = {
         "modules": {
             "foo": {
-                "class": "tests.test_module_loader.DummyModule",
+                "class": "modai.__tests__.test_module_loader.DummyModule",
                 "config": {"some": "nicevalue"},
             }
         }
@@ -47,7 +44,10 @@ def test_load_module_disabled(caplog):
     """Test loading a disabled module."""
     startup_config = {
         "modules": {
-            "foo": {"class": "tests.test_module_loader.DummyModule", "enabled": False}
+            "foo": {
+                "class": "modai.__tests__.test_module_loader.DummyModule",
+                "enabled": False,
+            }
         }
     }
     loader = ModuleLoader(startup_config)
@@ -79,11 +79,11 @@ def test_module_dependencies():
     startup_config = {
         "modules": {
             "bar": {
-                "class": "tests.test_module_loader.DummyModule",
+                "class": "modai.__tests__.test_module_loader.DummyModule",
                 "module_dependencies": {"foo": "foo"},
             },
             "foo": {
-                "class": "tests.test_module_loader.DummyModule",
+                "class": "modai.__tests__.test_module_loader.DummyModule",
             },
         }
     }
@@ -107,15 +107,15 @@ def test_module_dependencies_chain():
     startup_config = {
         "modules": {
             "baz": {
-                "class": "tests.test_module_loader.DummyModule",
+                "class": "modai.__tests__.test_module_loader.DummyModule",
                 "module_dependencies": {"bar": "bar"},
             },
             "bar": {
-                "class": "tests.test_module_loader.DummyModule",
+                "class": "modai.__tests__.test_module_loader.DummyModule",
                 "module_dependencies": {"foo": "foo"},
             },
             "foo": {
-                "class": "tests.test_module_loader.DummyModule",
+                "class": "modai.__tests__.test_module_loader.DummyModule",
             },
         }
     }
@@ -144,7 +144,7 @@ def test_module_dependencies_unresolvable():
     startup_config = {
         "modules": {
             "bar": {
-                "class": "tests.test_module_loader.DummyModule",
+                "class": "modai.__tests__.test_module_loader.DummyModule",
                 "module_dependencies": {"foo": "nonexistent"},
             },
         }

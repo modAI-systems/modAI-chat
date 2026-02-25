@@ -1,12 +1,8 @@
-import sys
-import os
 import pytest
 from unittest.mock import Mock, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 from datetime import datetime
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from modai.module import ModuleDependencies
 from modai.modules.user.simple_user_module import SimpleUserModule
 from modai.modules.session.module import SessionModule, Session

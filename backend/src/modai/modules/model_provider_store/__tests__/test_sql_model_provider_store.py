@@ -1,13 +1,12 @@
-import sys
-import os
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from modai.module import ModuleDependencies
 from modai.modules.model_provider_store.sql_model_provider_store import (
     SQLAlchemyModelProviderStore,
 )
-from tests.abstract_model_provider_store_test import AbstractModelProviderStoreTestBase
+from modai.modules.model_provider_store.__tests__.abstract_model_provider_store_test import (
+    AbstractModelProviderStoreTestBase,
+)
 
 # Force anyio to use asyncio backend only
 anyio_backend = pytest.fixture(scope="session")(lambda: "asyncio")

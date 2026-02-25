@@ -2,7 +2,6 @@
 Tests for LLM Provider Module REST API endpoints.
 """
 
-import sys
 import os
 import pytest
 from pathlib import Path
@@ -10,8 +9,6 @@ from dotenv import find_dotenv, load_dotenv
 from unittest.mock import AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from modai.modules.model_provider.openai_provider import OpenAIProviderModule
 from modai.modules.model_provider_store.module import ModelProvider, ModelProviderStore
@@ -202,9 +199,7 @@ class TestModelProviderModule:
             "properties": {"model": "new-model", "temperature": 0.8},
         }
 
-        response = test_client.post(
-            "/api/models/providers/openai", json=request_data
-        )
+        response = test_client.post("/api/models/providers/openai", json=request_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -244,9 +239,7 @@ class TestModelProviderModule:
             "properties": {},
         }
 
-        response = test_client.post(
-            "/api/models/providers/openai", json=request_data
-        )
+        response = test_client.post("/api/models/providers/openai", json=request_data)
 
         assert response.status_code == 400
         data = response.json()
@@ -380,9 +373,7 @@ class TestModelProviderModule:
             "properties": complex_properties,
         }
 
-        response = test_client.post(
-            "/api/models/providers/openai", json=request_data
-        )
+        response = test_client.post("/api/models/providers/openai", json=request_data)
 
         assert response.status_code == 201
 

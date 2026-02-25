@@ -1,5 +1,4 @@
 from pathlib import Path
-import sys
 import os
 from dotenv import find_dotenv, load_dotenv
 import pytest
@@ -7,8 +6,6 @@ import pytest_asyncio
 from openai import AsyncOpenAI
 from unittest.mock import Mock, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from modai.module import ModuleDependencies
 from modai.modules.chat.openai_raw_chat import OpenAILLMChatModule
 from modai.modules.chat.web_chat_router import ChatWebModule
