@@ -23,7 +23,6 @@ from openai.types.responses import (
 )
 from openai.types.responses.response_create_params import (
     ResponseCreateParams as OpenAICreateResponse,
-    ResponseCreateParamsBase,
 )
 from strands import Agent
 from strands.models import OpenAIModel
@@ -36,6 +35,8 @@ from modai.modules.model_provider.module import (
 )
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant."
 
 
 class StrandsAgentChatModule(ChatLLMModule):
@@ -102,7 +103,7 @@ def _parse_model(model: str) -> tuple[str, str]:
 def _create_agent(
     provider: ModelProviderResponse,
     model_id: str,
-    body_json: ResponseCreateParamsBase,
+    body_json: OpenAICreateResponse,
 ) -> Agent:
     """Build a fresh Strands ``Agent`` for this request."""
     client_args: dict[str, Any] = {"api_key": provider.api_key}
@@ -111,7 +112,7 @@ def _create_agent(
 
     model = OpenAIModel(model_id=model_id, client_args=client_args)
 
-    system_prompt = body_json.get("instructions") or "You are a helpful assistant."
+    system_prompt = body_json.get("instructions") or DEFAULT_SYSTEM_PROMPT
     prior_messages = _build_conversation_history(body_json)
 
     return Agent(
@@ -123,7 +124,7 @@ def _create_agent(
 
 
 def _build_conversation_history(
-    body_json: ResponseCreateParamsBase,
+    body_json: OpenAICreateResponse,
 ) -> list[dict[str, Any]]:
     """Convert the ``input`` field into Strands-style messages.
 
@@ -141,7 +142,7 @@ def _build_conversation_history(
     ]
 
 
-def _extract_last_user_message(body_json: ResponseCreateParamsBase) -> str:
+def _extract_last_user_message(body_json: OpenAICreateResponse) -> str:
     """Return the text of the last user message from ``input``."""
     input_data = body_json.get("input", "")
     if isinstance(input_data, str):
