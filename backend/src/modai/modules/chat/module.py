@@ -8,7 +8,13 @@ from fastapi import APIRouter, Request, Body
 from fastapi.responses import StreamingResponse
 from typing import Any, AsyncGenerator
 from modai.module import ModaiModule, ModuleDependencies
-import openai
+from openai.types.responses import (
+    Response as OpenAIResponse,
+    ResponseStreamEvent as OpenAIResponseStreamEvent,
+)
+from openai.types.responses.response_create_params import (
+    ResponseCreateParams as OpenAICreateResponse,
+)
 
 
 class ChatWebModule(ModaiModule, ABC):
@@ -33,8 +39,8 @@ class ChatWebModule(ModaiModule, ABC):
     async def responses_endpoint(
         self,
         request: Request,
-        body_json: openai.types.responses.ResponseCreateParams = Body(...),
-    ) -> openai.types.responses.Response | StreamingResponse:
+        body_json: OpenAICreateResponse = Body(...),
+    ) -> OpenAIResponse | StreamingResponse:
         """
         Handles responses requests. Must be implemented by concrete implementations.
         Fully OpenAI /responses API compatible.
@@ -61,11 +67,8 @@ class ChatLLMModule(ModaiModule, ABC):
 
     @abstractmethod
     async def generate_response(
-        self, request: Request, body_json: openai.types.responses.ResponseCreateParams
-    ) -> (
-        openai.types.responses.Response
-        | AsyncGenerator[openai.types.responses.ResponseStreamEvent, None]
-    ):
+        self, request: Request, body_json: OpenAICreateResponse
+    ) -> OpenAIResponse | AsyncGenerator[OpenAIResponseStreamEvent, None]:
         """
         Generate a streaming or non-streaming chat response.
 
