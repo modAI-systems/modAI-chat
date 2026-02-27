@@ -9,7 +9,7 @@ modules:
     module_dependencies:
       chat_openai: chat_openai
   chat_openai:
-    class: modai.modules.chat.openai_raw_chat.OpenAILLMChatModule
+    class: modai.modules.chat.openai_agent_chat.StrandsAgentChatModule
     module_dependencies:
       llm_provider_module: openai_model_provider
   model_provider_store:

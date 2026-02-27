@@ -14,6 +14,8 @@ from modai.modules.model_provider.module import (
 )
 
 
+# The module is at the moment unuses as I'm unsure if we should support a raw LLM Access as the agentic
+# chat is more what a chat backend needs
 class OpenAILLMChatModule(ChatLLMModule):
     """
     OpenAI LLM Provider for Chat Responses.
