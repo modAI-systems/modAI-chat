@@ -1,0 +1,6 @@
+[project]
+name = "my-tool"
+version = "1.0.0"
+description = "Short description of the tool"
+requires-python = ">=3.12"
+dependencies = ["fastapi", "uvicorn"]
