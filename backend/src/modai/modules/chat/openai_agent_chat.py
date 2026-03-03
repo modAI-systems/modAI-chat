@@ -2,8 +2,9 @@
 Strands Agent Chat Module: ChatLLMModule implementation using Strands Agents SDK.
 
 Routes OpenAI-compatible requests through the Strands Agent framework with
-OpenAI model provider. Tool support is planned for later — this module currently
-only serves model requests via the framework.
+OpenAI model provider. Supports external tool microservices via the Tool
+Registry — requested tools are resolved, wrapped as Strands agent tools,
+and invoked over HTTP during the agent's reasoning loop.
 """
 
 import asyncio
@@ -12,6 +13,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator
 
+import httpx
 from fastapi import Request
 from openai.types.responses import (
     Response as OpenAIResponse,
@@ -26,6 +28,8 @@ from openai.types.responses.response_create_params import (
 )
 from strands import Agent
 from strands.models import OpenAIModel
+from strands.tools.tools import PythonAgentTool
+from strands.types.tools import ToolResult, ToolSpec, ToolUse
 
 from modai.module import ModuleDependencies
 from modai.modules.chat.module import ChatLLMModule
@@ -33,17 +37,20 @@ from modai.modules.model_provider.module import (
     ModelProviderModule,
     ModelProviderResponse,
 )
+from modai.modules.tools.module import ToolDefinition, ToolRegistryModule
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant."
+TOOL_HTTP_TIMEOUT_SECONDS = 30.0
 
 
 class StrandsAgentChatModule(ChatLLMModule):
     """Strands Agent LLM Provider for Chat Responses.
 
     Implements the ChatLLMModule interface using the Strands Agents SDK
-    with OpenAI model provider.  No tool support yet.
+    with OpenAI model provider.  Supports external tool microservices
+    via an optional Tool Registry dependency.
     """
 
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
@@ -57,12 +64,17 @@ class StrandsAgentChatModule(ChatLLMModule):
                 "StrandsAgentChatModule requires 'llm_provider_module' module dependency"
             )
 
+        self.tool_registry: ToolRegistryModule | None = dependencies.get_module(
+            "tool_registry"
+        )
+
     async def generate_response(
         self, request: Request, body_json: OpenAICreateResponse
     ) -> OpenAIResponse | AsyncGenerator[OpenAIResponseStreamEvent, None]:
         provider_name, actual_model = _parse_model(body_json.get("model", ""))
         provider = await self._resolve_provider(request, provider_name)
-        agent = _create_agent(provider, actual_model, body_json)
+        tools = await _resolve_request_tools(body_json, self.tool_registry)
+        agent = _create_agent(provider, actual_model, body_json, tools)
         user_message = _extract_last_user_message(body_json)
 
         if body_json.get("stream", False):
@@ -104,6 +116,7 @@ def _create_agent(
     provider: ModelProviderResponse,
     model_id: str,
     body_json: OpenAICreateResponse,
+    tools: list[PythonAgentTool] | None = None,
 ) -> Agent:
     """Build a fresh Strands ``Agent`` for this request."""
     client_args: dict[str, Any] = {"api_key": provider.api_key}
@@ -119,6 +132,7 @@ def _create_agent(
         model=model,
         system_prompt=system_prompt,
         messages=prior_messages or None,
+        tools=tools or [],
         callback_handler=None,  # suppress default stdout printing
     )
 
@@ -176,6 +190,130 @@ def _message_text(msg: Any) -> str:
             ]
             return " ".join(texts)
     return ""
+
+
+# ---------------------------------------------------------------------------
+# Tool resolution helpers
+# ---------------------------------------------------------------------------
+
+
+def _extract_tool_names(body_json: OpenAICreateResponse) -> list[str]:
+    """Extract tool function names from the OpenAI-format request body."""
+    tools = body_json.get("tools", [])
+    names: list[str] = []
+    for tool in tools:
+        if isinstance(tool, dict) and tool.get("type") == "function":
+            fn = tool.get("function", {})
+            if isinstance(fn, dict):
+                name = fn.get("name")
+                if name:
+                    names.append(name)
+    return names
+
+
+async def _resolve_request_tools(
+    body_json: OpenAICreateResponse,
+    tool_registry: ToolRegistryModule | None,
+) -> list[PythonAgentTool]:
+    """Resolve requested tools from the request body into Strands agent tools.
+
+    For each tool name in the request, the corresponding ``ToolDefinition``
+    is looked up in the registry and wrapped as a ``PythonAgentTool`` that
+    invokes the tool microservice over HTTP.
+
+    Returns an empty list when no registry is configured or no tools are
+    requested.
+    """
+    if not tool_registry:
+        return []
+
+    tool_names = _extract_tool_names(body_json)
+    if not tool_names:
+        return []
+
+    strands_tools: list[PythonAgentTool] = []
+    for name in tool_names:
+        tool_def = await tool_registry.get_tool_by_name(name)
+        if tool_def is None:
+            logger.warning("Tool '%s' not found in registry, skipping", name)
+            continue
+        strands_tool = _create_http_tool(tool_def)
+        if strands_tool:
+            strands_tools.append(strands_tool)
+
+    return strands_tools
+
+
+def _create_http_tool(tool_def: ToolDefinition) -> PythonAgentTool | None:
+    """Create a Strands ``PythonAgentTool`` that invokes a tool via HTTP.
+
+    The tool spec (name, description, input schema) is derived from the
+    tool's OpenAPI spec.  The handler makes an HTTP request to the tool's
+    endpoint and returns the response body to the LLM.
+    """
+    operation = _extract_operation(tool_def.openapi_spec)
+    if not operation:
+        logger.warning(
+            "No operation found in OpenAPI spec for tool at %s", tool_def.url
+        )
+        return None
+
+    operation_id = operation.get("operationId", "")
+    description = operation.get("summary") or operation.get("description", "")
+
+    request_body = operation.get("requestBody", {})
+    content = request_body.get("content", {})
+    json_content = content.get("application/json", {})
+    parameters_schema = json_content.get("schema", {"type": "object", "properties": {}})
+
+    tool_spec: ToolSpec = {
+        "name": operation_id,
+        "description": description,
+        "inputSchema": {"json": parameters_schema},
+    }
+
+    url = tool_def.url
+    method = tool_def.method
+
+    def _handler(tool_use: ToolUse, **kwargs: Any) -> ToolResult:  # noqa: ARG001
+        """Invoke the tool microservice over HTTP."""
+        params = tool_use["input"]
+        try:
+            with httpx.Client(timeout=TOOL_HTTP_TIMEOUT_SECONDS) as client:
+                response = client.request(
+                    method=method.upper(),
+                    url=url,
+                    json=params,
+                )
+                response.raise_for_status()
+                return {
+                    "toolUseId": tool_use["toolUseId"],
+                    "status": "success",
+                    "content": [{"text": response.text}],
+                }
+        except Exception as exc:
+            logger.error("Tool '%s' invocation failed: %s", operation_id, exc)
+            return {
+                "toolUseId": tool_use["toolUseId"],
+                "status": "error",
+                "content": [{"text": f"Tool invocation failed: {exc}"}],
+            }
+
+    return PythonAgentTool(
+        tool_name=operation_id,
+        tool_spec=tool_spec,
+        tool_func=_handler,
+    )
+
+
+def _extract_operation(spec: dict[str, Any]) -> dict[str, Any] | None:
+    """Extract the first operation from an OpenAPI spec."""
+    paths = spec.get("paths", {})
+    for _path, methods in paths.items():
+        for _method, operation in methods.items():
+            if isinstance(operation, dict) and "operationId" in operation:
+                return operation
+    return None
 
 
 # ---------------------------------------------------------------------------
