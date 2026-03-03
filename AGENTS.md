@@ -9,8 +9,8 @@ This project is designed for AI-first development. All agents MUST follow these 
 ### 0. Context Loading (ALWAYS FIRST)
 - **RULE**: ALWAYS read project context before starting ANY task.
 - **PROCESS**:
-    1. Read `{frontend|backend}/docs/architecture/*.md` to understand frontend system design.
-    2. Read `{frontend|backend}/docs/learnings/*.md` to learn from past corrections.
+    1. Read `{frontend_omni|backend/omni}/docs/architecture/*.md` to understand frontend system design.
+    2. Read `{frontend_omni|backend/omni}/docs/learnings/*.md` to learn from past corrections.
     3. Check `.agents/skills/` for relevant technology skills.
 - **WHY**: These files contain critical knowledge from past work. Skipping them leads to repeated mistakes and inconsistent code.
 
@@ -25,14 +25,14 @@ This project is designed for AI-first development. All agents MUST follow these 
 ### 2. Architecture First
 - **RULE**: Architecture MUST be adapted/reviewed before coding starts.
 - **PROCESS**:
-    1. For any new feature/package, update `{frontend|backend}/docs/DECISIONS.md`.
+    1. For any new feature/package, update `{frontend_omni|backend/omni}/docs/DECISIONS.md`.
     2. Ensure the architecture aligns with the overall project goals.
 
 ### 3. Learning from Corrections
 - **RULE**: If the user corrects a mistake, update the instructions immediately.
 - **PROCESS**:
     1. Identify the root cause of the mistake.
-    2. Update `{frontend|backend}/docs/learnings/INSTRUCTION_UPDATES.md` with a new rule to prevent recurrence.
+    2. Update `{frontend_omni|backend/omni}/docs/learnings/INSTRUCTION_UPDATES.md` with a new rule to prevent recurrence.
     3. Append relevant rules to `AGENTS.md` if they are project-wide.
 
 ### 4. Test-Driven Completion
@@ -50,8 +50,8 @@ This project is designed for AI-first development. All agents MUST follow these 
 ### 6. Documentation Updates for API Changes (MANDATORY)
 - **RULE**: When adding, modifying, or deleting API endpoints, ALWAYS update documentation.
 - **PROCESS**:
-    1. Check `{frontend|backend}/README.md` for endpoint references and usage examples.
-    2. Check `{frontend|backend}/docs/architecture/*.md` for endpoint documentation.
+    1. Check `{frontend_omni|backend/omni}/README.md` for endpoint references and usage examples.
+    2. Check `{frontend_omni|backend/omni}/docs/architecture/*.md` for endpoint documentation.
     3. Check any other docs that reference API endpoints.
     4. Update all affected documentation before marking task as complete.
 
@@ -105,7 +105,7 @@ modAI-chat is a full-stack application with separate backend and frontend compon
 
 ### Environment Setup
 
-- **Location**: Work in `backend/` directory. When executing commands, switch to the backend dir.
+- **Location**: Work in `backend/omni/` directory. When executing commands, switch to the backend dir.
 - **Package Manager**: Use [UV](https://docs.astral.sh/uv/) for dependency management
 - **Start Server**: `uv run uvicorn modai.main:app`
 - **Install Dependencies**: `uv add <package-name>`
@@ -114,17 +114,17 @@ modAI-chat is a full-stack application with separate backend and frontend compon
 
 Before any backend work, read relevant architecture documents:
 
-- **Always read**: `backend/architecture/core.md`
-- **Authentication work**: `backend/architecture/auth.md`
-- **Chat/AI features**: `backend/architecture/chat.md`
-- **Database work**: `backend/architecture/persistence.md`
+- **Always read**: `backend/omni/docs/architecture/core.md`
+- **Authentication work**: `backend/omni/docs/architecture/auth.md`
+- **Chat/AI features**: `backend/omni/docs/architecture/chat.md`
+- **Database work**: `backend/omni/docs/architecture/persistence.md`
 - **SQLModel work**: https://fastapi.tiangolo.com/tutorial/sql-databases/
 
 ### Testing
 
 - **Framework**: pytest
 - **Command**: `uv run pytest`
-- **Location**: Tests live alongside source code in `__tests__/` directories under `backend/src/modai/` and `backend/src/modai/modules/*/`
+- **Location**: Tests live alongside source code in `__tests__/` directories under `backend/omni/src/modai/` and `backend/omni/src/modai/modules/*/`
 - **Test Coverage**: Always add unit tests for new features or bug fixes
 - **Test Isolation**: Use mocking for external dependencies
 - **Atomic Tests**: Each test function should test one specific behavior
@@ -195,6 +195,6 @@ For comprehensive e2e testing best practices and patterns, refer to `e2e_tests/B
 
 - **Backend**: Never expose internal error details to users
 - **Frontend**: Validate all user inputs
-- **Authentication**: Follow architecture guidelines in `backend/architecture/auth.md`
+- **Authentication**: Follow architecture guidelines in `backend/omni/docs/architecture/auth.md`
 
 This guide provides AI agents with the essential context needed to work effectively on both backend and frontend components while maintaining project standards and architectural integrity.

@@ -20,15 +20,15 @@ jobs:
         run: uv python install 3.13
 
       - name: Install dependencies
-        working-directory: backend
+        working-directory: backend/omni
         run: uv sync --all-extras
 
       - name: Check formatting
-        working-directory: backend
+        working-directory: backend/omni
         run: uv run ruff format --check .
 
       - name: Lint
-        working-directory: backend
+        working-directory: backend/omni
         run: uv run ruff check .
 
   frontend-format:
@@ -70,11 +70,11 @@ jobs:
         run: uv python install 3.13
 
       - name: Install dependencies
-        working-directory: backend
+        working-directory: backend/omni
         run: uv sync --all-extras
 
       - name: Run tests
-        working-directory: backend
+        working-directory: backend/omni
         run: uv run pytest -v
 
   frontend-unit:

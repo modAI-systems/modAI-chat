@@ -23,7 +23,7 @@ We try to keep the root of the repo slim and add things like `package.json` file
 
 **Folder hierarchy:**
 
-* **./backend**: Contains the Python Backend code
+* **./backend/omni**: Contains the Python Backend code
 * **./frontend_omni**: Universal full fledged chat frontend
 
 ## 🖥️ modAI Frontends
@@ -40,7 +40,7 @@ Why more than one frontend: because there are different use cases. e.g. one full
 
 ### Backend Setup
 ```bash
-cd backend
+cd backend/omni
 uv sync
 uv run uvicorn modai.main:app --reload
 ```

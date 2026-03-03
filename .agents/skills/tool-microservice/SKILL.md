@@ -155,4 +155,4 @@ Expected:
 
 ## Architecture Reference
 
-See `backend/docs/architecture/tools.md` for the full tools architecture including the registry module, web module, and chat agent integration.
+See `backend/omni/docs/architecture/tools.md` for the full tools architecture including the registry module, web module, and chat agent integration.
