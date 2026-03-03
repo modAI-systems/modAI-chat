@@ -19,11 +19,16 @@ from modai.modules.chat.openai_agent_chat import (
     _to_strands_message,
     _message_text,
     _build_openai_response,
+    _extract_tool_names,
+    _resolve_request_tools,
+    _create_http_tool,
+    _extract_operation,
 )
 from modai.modules.model_provider.module import (
     ModelProviderResponse,
     ModelProvidersListResponse,
 )
+from modai.modules.tools.module import ToolDefinition
 import openai
 
 working_dir = Path.cwd()
@@ -213,6 +218,272 @@ class TestBuildOpenAIResponse:
 
 
 # ---------------------------------------------------------------------------
+# _extract_tool_names
+# ---------------------------------------------------------------------------
+
+SAMPLE_OPENAPI_SPEC = {
+    "openapi": "3.1.0",
+    "info": {"title": "Calculator Tool", "version": "1.0.0"},
+    "paths": {
+        "/calculate": {
+            "post": {
+                "summary": "Evaluate a math expression",
+                "operationId": "calculate",
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "expression": {
+                                        "type": "string",
+                                        "description": "Math expression to evaluate",
+                                    }
+                                },
+                                "required": ["expression"],
+                            }
+                        }
+                    },
+                },
+                "responses": {
+                    "200": {
+                        "description": "Calculation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {"result": {"type": "number"}},
+                                }
+                            }
+                        },
+                    }
+                },
+            }
+        }
+    },
+}
+
+
+class TestExtractToolNames:
+    def test_extracts_function_tool_names(self):
+        body = {
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {"name": "calculate", "description": "calc"},
+                },
+                {
+                    "type": "function",
+                    "function": {"name": "web_search", "description": "search"},
+                },
+            ]
+        }
+        assert _extract_tool_names(body) == ["calculate", "web_search"]
+
+    def test_empty_tools(self):
+        assert _extract_tool_names({"tools": []}) == []
+
+    def test_no_tools_key(self):
+        assert _extract_tool_names({"model": "gpt-4o"}) == []
+
+    def test_skips_non_function_types(self):
+        body = {
+            "tools": [
+                {"type": "code_interpreter"},
+                {
+                    "type": "function",
+                    "function": {"name": "calculate"},
+                },
+            ]
+        }
+        assert _extract_tool_names(body) == ["calculate"]
+
+    def test_skips_missing_name(self):
+        body = {"tools": [{"type": "function", "function": {"description": "no name"}}]}
+        assert _extract_tool_names(body) == []
+
+
+# ---------------------------------------------------------------------------
+# _extract_operation
+# ---------------------------------------------------------------------------
+
+
+class TestExtractOperation:
+    def test_extracts_first_operation(self):
+        op = _extract_operation(SAMPLE_OPENAPI_SPEC)
+        assert op is not None
+        assert op["operationId"] == "calculate"
+        assert op["summary"] == "Evaluate a math expression"
+
+    def test_returns_none_for_empty_spec(self):
+        assert _extract_operation({}) is None
+        assert _extract_operation({"paths": {}}) is None
+
+    def test_skips_non_dict_operations(self):
+        spec = {"paths": {"/foo": {"post": "not a dict"}}}
+        assert _extract_operation(spec) is None
+
+    def test_skips_operations_without_operation_id(self):
+        spec = {"paths": {"/foo": {"post": {"summary": "no id"}}}}
+        assert _extract_operation(spec) is None
+
+
+# ---------------------------------------------------------------------------
+# _create_http_tool
+# ---------------------------------------------------------------------------
+
+
+class TestCreateHttpTool:
+    def test_creates_tool_from_valid_definition(self):
+        tool_def = ToolDefinition(
+            url="http://calc:8000/calculate",
+            method="POST",
+            openapi_spec=SAMPLE_OPENAPI_SPEC,
+        )
+        tool = _create_http_tool(tool_def)
+        assert tool is not None
+        assert tool.tool_name == "calculate"
+        assert tool.tool_spec["name"] == "calculate"
+        assert tool.tool_spec["description"] == "Evaluate a math expression"
+        schema = tool.tool_spec["inputSchema"]["json"]
+        assert "expression" in schema["properties"]
+
+    def test_returns_none_for_empty_spec(self):
+        tool_def = ToolDefinition(
+            url="http://calc:8000/calculate",
+            method="POST",
+            openapi_spec={"paths": {}},
+        )
+        assert _create_http_tool(tool_def) is None
+
+    def test_tool_handler_success(self):
+        tool_def = ToolDefinition(
+            url="http://calc:8000/calculate",
+            method="POST",
+            openapi_spec=SAMPLE_OPENAPI_SPEC,
+        )
+        tool = _create_http_tool(tool_def)
+        assert tool is not None
+
+        mock_response = Mock()
+        mock_response.raise_for_status = Mock()
+        mock_response.text = '{"result": 42}'
+
+        with patch(
+            "modai.modules.chat.openai_agent_chat.httpx.Client"
+        ) as mock_client_cls:
+            mock_client = Mock()
+            mock_client.__enter__ = Mock(return_value=mock_client)
+            mock_client.__exit__ = Mock(return_value=False)
+            mock_client.request.return_value = mock_response
+            mock_client_cls.return_value = mock_client
+
+            result = tool._tool_func(
+                {
+                    "toolUseId": "tu_123",
+                    "name": "calculate",
+                    "input": {"expression": "6*7"},
+                },
+            )
+
+        assert result["status"] == "success"
+        assert result["toolUseId"] == "tu_123"
+        assert '{"result": 42}' in result["content"][0]["text"]
+        mock_client.request.assert_called_once_with(
+            method="POST",
+            url="http://calc:8000/calculate",
+            json={"expression": "6*7"},
+        )
+
+    def test_tool_handler_http_error(self):
+        tool_def = ToolDefinition(
+            url="http://calc:8000/calculate",
+            method="POST",
+            openapi_spec=SAMPLE_OPENAPI_SPEC,
+        )
+        tool = _create_http_tool(tool_def)
+        assert tool is not None
+
+        with patch(
+            "modai.modules.chat.openai_agent_chat.httpx.Client"
+        ) as mock_client_cls:
+            mock_client = Mock()
+            mock_client.__enter__ = Mock(return_value=mock_client)
+            mock_client.__exit__ = Mock(return_value=False)
+            mock_client.request.side_effect = Exception("Connection refused")
+            mock_client_cls.return_value = mock_client
+
+            result = tool._tool_func(
+                {
+                    "toolUseId": "tu_456",
+                    "name": "calculate",
+                    "input": {"expression": "1/0"},
+                },
+            )
+
+        assert result["status"] == "error"
+        assert result["toolUseId"] == "tu_456"
+        assert "Connection refused" in result["content"][0]["text"]
+
+
+# ---------------------------------------------------------------------------
+# _resolve_request_tools
+# ---------------------------------------------------------------------------
+
+
+class TestResolveRequestTools:
+    @pytest.mark.asyncio
+    async def test_returns_empty_when_no_registry(self):
+        body = {
+            "tools": [
+                {"type": "function", "function": {"name": "calculate"}},
+            ]
+        }
+        result = await _resolve_request_tools(body, None)
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_returns_empty_when_no_tools_in_request(self):
+        mock_registry = Mock()
+        result = await _resolve_request_tools({"model": "gpt-4o"}, mock_registry)
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_resolves_tools_from_registry(self):
+        tool_def = ToolDefinition(
+            url="http://calc:8000/calculate",
+            method="POST",
+            openapi_spec=SAMPLE_OPENAPI_SPEC,
+        )
+        mock_registry = Mock()
+        mock_registry.get_tool_by_name = AsyncMock(return_value=tool_def)
+
+        body = {
+            "tools": [
+                {"type": "function", "function": {"name": "calculate"}},
+            ]
+        }
+        result = await _resolve_request_tools(body, mock_registry)
+        assert len(result) == 1
+        assert result[0].tool_name == "calculate"
+        mock_registry.get_tool_by_name.assert_called_once_with("calculate")
+
+    @pytest.mark.asyncio
+    async def test_skips_unknown_tools(self):
+        mock_registry = Mock()
+        mock_registry.get_tool_by_name = AsyncMock(return_value=None)
+
+        body = {
+            "tools": [
+                {"type": "function", "function": {"name": "unknown_tool"}},
+            ]
+        }
+        result = await _resolve_request_tools(body, mock_registry)
+        assert result == []
+
+
+# ---------------------------------------------------------------------------
 # StrandsAgentChatModule.__init__
 # ---------------------------------------------------------------------------
 
@@ -227,6 +498,20 @@ class TestStrandsAgentChatModuleInit:
         deps = _make_dependencies()
         module = StrandsAgentChatModule(dependencies=deps, config={})
         assert module.provider_module is not None
+
+    def test_tool_registry_is_none_when_not_configured(self):
+        deps = _make_dependencies()
+        module = StrandsAgentChatModule(dependencies=deps, config={})
+        assert module.tool_registry is None
+
+    def test_tool_registry_set_when_configured(self):
+        mock_registry = Mock()
+        provider_module = _make_mock_provider_module()
+        deps = ModuleDependencies(
+            {"llm_provider_module": provider_module, "tool_registry": mock_registry}
+        )
+        module = StrandsAgentChatModule(dependencies=deps, config={})
+        assert module.tool_registry is mock_registry
 
 
 # ---------------------------------------------------------------------------
@@ -355,6 +640,109 @@ async def test_generate_response_streaming():
     # Completed
     assert events[4].type == "response.completed"
     assert events[4].response.output[0].content[0].text == "Hello world"
+
+
+@pytest.mark.asyncio
+async def test_generate_response_with_tools():
+    """Tools from the request body are resolved and passed to the agent."""
+    tool_def = ToolDefinition(
+        url="http://calc:8000/calculate",
+        method="POST",
+        openapi_spec=SAMPLE_OPENAPI_SPEC,
+    )
+    mock_registry = Mock()
+    mock_registry.get_tool_by_name = AsyncMock(return_value=tool_def)
+
+    provider_module = _make_mock_provider_module()
+    deps = ModuleDependencies(
+        {"llm_provider_module": provider_module, "tool_registry": mock_registry}
+    )
+    module = StrandsAgentChatModule(dependencies=deps, config={})
+    request = Mock(spec=Request)
+
+    fake_result = _FakeAgentResult()
+
+    with (
+        patch(
+            "modai.modules.chat.openai_agent_chat._create_agent"
+        ) as mock_create_agent,
+        patch("asyncio.to_thread", new_callable=AsyncMock, return_value=fake_result),
+    ):
+        mock_agent = Mock()
+        mock_create_agent.return_value = mock_agent
+
+        body = {
+            "model": "myprovider/gpt-4o",
+            "input": [{"role": "user", "content": "Calculate 6*7"}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "calculate",
+                        "description": "Evaluate a math expression",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"expression": {"type": "string"}},
+                        },
+                    },
+                }
+            ],
+        }
+
+        result = await module.generate_response(request, body)
+
+    # Verify the tool registry was queried
+    mock_registry.get_tool_by_name.assert_called_once_with("calculate")
+
+    # Verify _create_agent was called with tools
+    call_args = mock_create_agent.call_args
+    tools_arg = call_args[0][3] if len(call_args[0]) > 3 else call_args[1].get("tools")
+    assert tools_arg is not None
+    assert len(tools_arg) == 1
+    assert tools_arg[0].tool_name == "calculate"
+
+    assert isinstance(result, openai.types.responses.Response)
+
+
+@pytest.mark.asyncio
+async def test_generate_response_without_tool_registry():
+    """Without tool_registry configured, tools in request are ignored."""
+    deps = _make_dependencies()
+    module = StrandsAgentChatModule(dependencies=deps, config={})
+    request = Mock(spec=Request)
+
+    fake_result = _FakeAgentResult()
+
+    with (
+        patch(
+            "modai.modules.chat.openai_agent_chat._create_agent"
+        ) as mock_create_agent,
+        patch("asyncio.to_thread", new_callable=AsyncMock, return_value=fake_result),
+    ):
+        mock_agent = Mock()
+        mock_create_agent.return_value = mock_agent
+
+        body = {
+            "model": "myprovider/gpt-4o",
+            "input": [{"role": "user", "content": "Hello"}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {"name": "calculate"},
+                }
+            ],
+        }
+
+        result = await module.generate_response(request, body)
+
+    # _create_agent should be called with empty tools list
+    call_args = mock_create_agent.call_args
+    tools_arg = (
+        call_args[0][3] if len(call_args[0]) > 3 else call_args[1].get("tools", [])
+    )
+    assert tools_arg == []
+
+    assert isinstance(result, openai.types.responses.Response)
 
 
 # ---------------------------------------------------------------------------
