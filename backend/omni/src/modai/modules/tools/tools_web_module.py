@@ -60,7 +60,7 @@ def _transform_openapi_to_openai(spec: dict[str, Any]) -> dict[str, Any] | None:
 
             name = operation["operationId"]
             description = operation.get("summary") or operation.get("description", "")
-            parameters = _extract_parameters(operation)
+            parameters = _extract_parameters(operation, spec)
 
             return {
                 "type": "function",
@@ -78,9 +78,44 @@ def _transform_openapi_to_openai(spec: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
-def _extract_parameters(operation: dict[str, Any]) -> dict[str, Any]:
-    """Extract parameter schema from an OpenAPI operation's request body."""
+def _extract_parameters(
+    operation: dict[str, Any], spec: dict[str, Any]
+) -> dict[str, Any]:
+    """Extract parameter schema from an OpenAPI operation's request body.
+
+    Resolves any $ref references against the full OpenAPI spec so the
+    returned schema is fully inlined (OpenAI does not support $ref).
+    """
     request_body = operation.get("requestBody", {})
     content = request_body.get("content", {})
     json_content = content.get("application/json", {})
-    return json_content.get("schema", {"type": "object", "properties": {}})
+    schema = json_content.get("schema", {"type": "object", "properties": {}})
+    return _resolve_refs(schema, spec)
+
+
+def _resolve_refs(node: Any, spec: dict[str, Any]) -> Any:
+    """Recursively resolve all $ref pointers in a JSON Schema against the OpenAPI spec."""
+    if isinstance(node, dict):
+        if "$ref" in node:
+            resolved = _follow_ref(node["$ref"], spec)
+            return _resolve_refs(resolved, spec)
+        return {key: _resolve_refs(value, spec) for key, value in node.items()}
+    if isinstance(node, list):
+        return [_resolve_refs(item, spec) for item in node]
+    return node
+
+
+def _follow_ref(ref: str, spec: dict[str, Any]) -> dict[str, Any]:
+    """Follow a JSON Pointer reference like '#/components/schemas/Foo'."""
+    if not ref.startswith("#/"):
+        logger.warning("Unsupported $ref format: %s", ref)
+        return {}
+    parts = ref.lstrip("#/").split("/")
+    current: Any = spec
+    for part in parts:
+        if isinstance(current, dict):
+            current = current.get(part)
+        else:
+            logger.warning("Could not resolve $ref path: %s", ref)
+            return {}
+    return current if isinstance(current, dict) else {}

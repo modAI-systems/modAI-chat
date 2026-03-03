@@ -7,6 +7,7 @@ from modai.modules.tools.module import ToolDefinition
 from modai.modules.tools.tools_web_module import (
     OpenAIToolsWebModule,
     _extract_parameters,
+    _resolve_refs,
     _transform_openapi_to_openai,
 )
 
@@ -144,22 +145,56 @@ class TestExtractParameters:
                 }
             }
         }
-        result = _extract_parameters(operation)
+        result = _extract_parameters(operation, {})
         assert result == {
             "type": "object",
             "properties": {"x": {"type": "integer"}},
         }
 
     def test_returns_default_when_no_request_body(self):
-        result = _extract_parameters({})
+        result = _extract_parameters({}, {})
         assert result == {"type": "object", "properties": {}}
 
     def test_returns_default_when_no_json_content(self):
         operation = {
             "requestBody": {"content": {"text/plain": {"schema": {"type": "string"}}}}
         }
-        result = _extract_parameters(operation)
+        result = _extract_parameters(operation, {})
         assert result == {"type": "object", "properties": {}}
+
+    def test_resolves_ref_in_schema(self):
+        spec = {
+            "components": {
+                "schemas": {
+                    "DiceRequest": {
+                        "type": "object",
+                        "properties": {
+                            "count": {"type": "integer", "description": "Number of dice"},
+                            "sides": {"type": "integer", "description": "Sides per die"},
+                        },
+                        "required": ["count", "sides"],
+                    }
+                }
+            }
+        }
+        operation = {
+            "requestBody": {
+                "content": {
+                    "application/json": {
+                        "schema": {"$ref": "#/components/schemas/DiceRequest"}
+                    }
+                }
+            }
+        }
+        result = _extract_parameters(operation, spec)
+        assert result == {
+            "type": "object",
+            "properties": {
+                "count": {"type": "integer", "description": "Number of dice"},
+                "sides": {"type": "integer", "description": "Sides per die"},
+            },
+            "required": ["count", "sides"],
+        }
 
 
 class TestToolsWebModule:
@@ -267,3 +302,110 @@ class TestToolsWebModule:
         names = [t["function"]["name"] for t in result["tools"]]
         assert "calculate" in names
         assert "web_search" in names
+
+
+class TestResolveRefs:
+    def test_returns_primitive_as_is(self):
+        assert _resolve_refs("hello", {}) == "hello"
+        assert _resolve_refs(42, {}) == 42
+        assert _resolve_refs(None, {}) is None
+
+    def test_returns_dict_without_refs_unchanged(self):
+        node = {"type": "string", "description": "test"}
+        assert _resolve_refs(node, {}) == node
+
+    def test_resolves_top_level_ref(self):
+        spec = {"components": {"schemas": {"Foo": {"type": "object", "properties": {}}}}}
+        node = {"$ref": "#/components/schemas/Foo"}
+        assert _resolve_refs(node, spec) == {"type": "object", "properties": {}}
+
+    def test_resolves_nested_ref(self):
+        spec = {
+            "components": {
+                "schemas": {
+                    "Bar": {"type": "string", "description": "A bar"},
+                }
+            }
+        }
+        node = {
+            "type": "object",
+            "properties": {
+                "bar": {"$ref": "#/components/schemas/Bar"},
+            },
+        }
+        result = _resolve_refs(node, spec)
+        assert result == {
+            "type": "object",
+            "properties": {
+                "bar": {"type": "string", "description": "A bar"},
+            },
+        }
+
+    def test_resolves_refs_in_list(self):
+        spec = {"components": {"schemas": {"X": {"type": "integer"}}}}
+        node = [{"$ref": "#/components/schemas/X"}, {"type": "string"}]
+        result = _resolve_refs(node, spec)
+        assert result == [{"type": "integer"}, {"type": "string"}]
+
+    def test_returns_empty_dict_for_unresolvable_ref(self):
+        result = _resolve_refs({"$ref": "#/components/schemas/Missing"}, {})
+        assert result == {}
+
+    def test_returns_empty_dict_for_non_local_ref(self):
+        result = _resolve_refs({"$ref": "https://example.com/schema.json"}, {})
+        assert result == {}
+
+
+class TestTransformWithRefs:
+    """Integration test: full OpenAPI spec with $ref (like FastAPI generates)."""
+
+    DICE_ROLLER_SPEC = {
+        "openapi": "3.1.0",
+        "info": {"title": "Dice Roller Tool", "version": "1.0.0"},
+        "paths": {
+            "/roll": {
+                "post": {
+                    "summary": "Roll dice and return the results",
+                    "operationId": "roll_dice",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DiceRequest"
+                                }
+                            }
+                        },
+                    },
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "DiceRequest": {
+                    "type": "object",
+                    "properties": {
+                        "count": {
+                            "type": "integer",
+                            "default": 1,
+                            "description": "Number of dice to roll",
+                        },
+                        "sides": {
+                            "type": "integer",
+                            "default": 6,
+                            "description": "Number of sides per die",
+                        },
+                    },
+                }
+            }
+        },
+    }
+
+    def test_transform_resolves_refs(self):
+        result = _transform_openapi_to_openai(self.DICE_ROLLER_SPEC)
+        assert result is not None
+        params = result["function"]["parameters"]
+        assert params["type"] == "object"
+        assert "count" in params["properties"]
+        assert "sides" in params["properties"]
+        assert "$ref" not in str(params)
