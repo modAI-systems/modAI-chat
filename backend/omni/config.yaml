@@ -65,7 +65,9 @@ modules:
   tool_registry:
     class: modai.modules.tools.tool_registry.HttpToolRegistryModule
     config:
-      tools: []
+      tools:
+        - url: http://localhost:8001/roll
+          method: POST
       # Example:
       # tools:
       #   - url: http://calculator-service:8000/calculate

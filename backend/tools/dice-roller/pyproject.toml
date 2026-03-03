@@ -1,0 +1,6 @@
+[project]
+name = "dice-roller"
+version = "1.0.0"
+description = "A showcase tool that rolls dice"
+requires-python = ">=3.12"
+dependencies = ["fastapi", "uvicorn"]

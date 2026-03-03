@@ -29,59 +29,50 @@ A valid tool microservice MUST:
 
 ### 1. Create the Microservice
 
-Use any HTTP framework. Example with Python FastAPI:
+Tools live under `backend/tools/<tool-name>/`. Each tool needs a `pyproject.toml` and a `main.py`.
 
-```python
-from fastapi import FastAPI
+Use the Python template files as a starting point:
+- [references/pyproject.toml](references/pyproject.toml) — minimal UV project definition
+- [references/main.py](references/main.py) — FastAPI app template with request/response models
 
-app = FastAPI(
-    title="Calculator Tool",
-    version="1.0.0",
-    description="Evaluate mathematical expressions",
-)
+Copy them into your tool directory, rename classes/endpoints, and implement your logic. FastAPI automatically generates the `/openapi.json` spec from the route definition.
 
-@app.post("/calculate", operation_id="calculate", summary="Evaluate a math expression")
-async def calculate(expression: str) -> dict:
-    """Evaluate the given math expression and return the result."""
-    result = eval(expression)  # Use a safe evaluator in production
-    return {"result": result}
+A working example is available at `backend/tools/dice-roller/`.
+
+**Run the tool:**
+
+```bash
+cd backend/tools/<tool-name>
+uv sync
+uv run uvicorn main:app --port <port>
 ```
-
-FastAPI automatically generates the `/openapi.json` spec from the route definition.
 
 ### 2. Verify the OpenAPI Spec
 
 Start the service and check that `/openapi.json` contains:
 
-- `operationId` — unique name for the tool (e.g. `"calculate"`)
+- `operationId` — unique name for the tool (e.g. `"roll_dice"`)
 - `summary` or `description` — what the tool does (shown to the LLM)
 - `requestBody.content.application/json.schema` — input parameters
 
 ```bash
-curl http://localhost:8000/openapi.json | jq '.paths'
+curl http://localhost:8001/openapi.json | jq '.paths'
 ```
 
-Expected structure:
+The dice roller produces this structure:
 
 ```json
 {
-  "/calculate": {
+  "/roll": {
     "post": {
-      "summary": "Evaluate a math expression",
-      "operationId": "calculate",
+      "summary": "Roll dice and return the results",
+      "operationId": "roll_dice",
       "requestBody": {
         "required": true,
         "content": {
           "application/json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "expression": {
-                  "type": "string",
-                  "description": "Math expression to evaluate"
-                }
-              },
-              "required": ["expression"]
+              "$ref": "#/components/schemas/DiceRequest"
             }
           }
         }
@@ -101,7 +92,7 @@ modules:
     class: modai.modules.tools.tool_registry.HttpToolRegistryModule
     config:
       tools:
-        - url: http://calculator-service:8000/calculate
+        - url: http://localhost:8001/roll
           method: POST
 ```
 
@@ -118,7 +109,7 @@ The registry derives the base URL from `url` (strips the path) and appends `/ope
 3. Call `GET /api/tools` and verify your tool appears in OpenAI function-calling format:
 
 ```bash
-curl http://localhost:8000/api/tools | jq '.tools[] | select(.function.name == "calculate")'
+curl http://localhost:8000/api/tools | jq '.tools[] | select(.function.name == "roll_dice")'
 ```
 
 Expected:
@@ -127,8 +118,8 @@ Expected:
 {
   "type": "function",
   "function": {
-    "name": "calculate",
-    "description": "Evaluate a math expression",
+    "name": "roll_dice",
+    "description": "Roll dice and return the results",
     "parameters": { ... },
     "strict": true
   }
@@ -149,7 +140,7 @@ Expected:
 ## Common Pitfalls
 
 - **Missing `operationId`**: The tool will be silently skipped. Always set `operationId` on your trigger operation.
-- **Wrong URL in config**: The `url` must be the full trigger endpoint (e.g. `/calculate`), not just the base URL. The registry strips the path to derive the base for fetching `/openapi.json`.
+- **Wrong URL in config**: The `url` must be the full trigger endpoint (e.g. `http://localhost:8001/roll`), not just the base URL. The registry strips the path to derive the base for fetching `/openapi.json`.
 - **Multiple operations**: The registry uses the **first** operation with an `operationId` it finds. Keep one trigger operation per tool service.
 - **Non-JSON responses**: The LLM expects JSON results. Always return `application/json`.
 
