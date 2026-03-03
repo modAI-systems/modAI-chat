@@ -13,6 +13,7 @@ modules:
     class: modai.modules.chat.openai_agent_chat.StrandsAgentChatModule
     module_dependencies:
       llm_provider_module: openai_model_provider
+      tool_registry: tool_registry
   model_provider_store:
     class: modai.modules.model_provider_store.sql_model_provider_store.SQLAlchemyModelProviderStore
     config:
@@ -60,3 +61,19 @@ modules:
     module_dependencies:
       session: "session"
       user_settings_store: "user_settings_store"
+
+  tool_registry:
+    class: modai.modules.tools.tool_registry.HttpToolRegistryModule
+    config:
+      tools: []
+      # Example:
+      # tools:
+      #   - url: http://calculator-service:8000/calculate
+      #     method: POST
+      #   - url: http://web-search-service:8000/search
+      #     method: PUT
+
+  tools_web:
+    class: modai.modules.tools.tools_web_module.OpenAIToolsWebModule
+    module_dependencies:
+      tool_registry: tool_registry
