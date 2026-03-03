@@ -12,7 +12,7 @@ jobs:
       matrix:
         include:
           - name: backend
-            context: backend
+            context: backend/omni
             package: modai-chat-backend
           - name: frontend
             context: frontend_omni

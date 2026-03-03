@@ -45,7 +45,7 @@ properly in the `.vscode/settings.json`:
     "python.testing.pytestArgs": [],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "python.testing.cwd": "${workspaceFolder}/backend"
+    "python.testing.cwd": "${workspaceFolder}/backend/omni"
 }
 ```
 
