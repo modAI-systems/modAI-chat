@@ -1,0 +1,35 @@
+# llmock Configuration
+# Each section is consumed by its respective router/component
+
+# API key for authentication (optional - if not set, no auth required)
+api-key: "your-secret-api-key"
+
+# CORS configuration
+cors:
+  allow-origins:
+    - "http://localhost:8000"
+
+# Models configuration (used by models router)
+models:
+  - id: "gpt-4o"
+    created: 1715367049
+    owned_by: "openai"
+  - id: "gpt-4o-mini"
+    created: 1721172741
+    owned_by: "openai"
+  - id: "gpt-3.5-turbo"
+    created: 1677610602
+    owned_by: "openai"
+
+# Ordered list of strategies to try. The first strategy that returns a
+# non-empty result wins. At least one must be set.
+#
+# Available strategies:
+#   MirrorStrategy    - echoes back the last user message
+#   ToolCallStrategy  - triggered by `call tool '<name>' with '<json>'` phrase in last user message
+#   ErrorStrategy     - triggered by `raise error <json>` phrase in last user message
+#
+strategies:
+  - ErrorStrategy
+  - ToolCallStrategy
+  - MirrorStrategy
