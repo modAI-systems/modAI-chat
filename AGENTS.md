@@ -40,6 +40,7 @@ This project is designed for AI-first development. All agents MUST follow these 
 - **PROCESS**:
     1. Every work package MUST include tests.
     2. Tests MUST pass before the task is marked `completed` in the todo list.
+    3. **NO WHITEBOX TESTING**: Tests MUST only test the **public interface / observable behavior**. NEVER test private/internal functions directly. Private helpers are covered indirectly through the public API. This applies to every layer: backend modules, API endpoints, frontend components, and utility files.
 
 ### 5. Code Quality Gate (MANDATORY)
 - **RULE**: ALWAYS run linting and formatting before completing any code task.
@@ -128,6 +129,8 @@ Before any backend work, read relevant architecture documents:
 - **Test Coverage**: Always add unit tests for new features or bug fixes
 - **Test Isolation**: Use mocking for external dependencies
 - **Atomic Tests**: Each test function should test one specific behavior
+- **NO WHITEBOX TESTING — Behavior Testing Only**: Only test the public interface of a module/class/endpoint. NEVER import or directly call functions prefixed with `_`. NEVER assert on internal instance attributes or private state. Private/internal logic is tested indirectly through the public API. If you feel the need to test a private function directly, it is a signal that the public API test coverage is insufficient — fix the public tests instead.
+- **Coverage targets**: Happy paths (e.g. streaming, non-streaming, tool calling) AND error paths (e.g. connection errors, timeouts, invalid input, unavailable dependencies) — all exercised through the public API only.
 
 ### Persistence
 
@@ -174,6 +177,8 @@ cd frontend_omni
 pnpm test            # Run javascript unit tests (vitest)
 pnpm check           # Run linter
 ```
+
+- **NO WHITEBOX TESTING — Behavior Testing Only**: Only test public component behavior and exported functions. NEVER directly test internal/private helpers or assert on internal component state. Internal logic is tested indirectly through the public API. Tests should cover happy paths and error paths. If you feel the need to test an unexported helper, improve the public-API test coverage instead.
 
 ### Frontend
 
