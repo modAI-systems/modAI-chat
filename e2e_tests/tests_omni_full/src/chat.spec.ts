@@ -40,7 +40,7 @@ test.describe("Chat", () => {
         await llmProviderPage.navigateTo();
         await llmProviderPage.addProvider(
             "Mock Provider",
-            "http://localhost:3001/v1",
+            "http://localhost:3001/",
             "your-secret-api-key",
         );
 
