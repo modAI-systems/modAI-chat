@@ -169,8 +169,14 @@ class TestExtractParameters:
                     "DiceRequest": {
                         "type": "object",
                         "properties": {
-                            "count": {"type": "integer", "description": "Number of dice"},
-                            "sides": {"type": "integer", "description": "Sides per die"},
+                            "count": {
+                                "type": "integer",
+                                "description": "Number of dice",
+                            },
+                            "sides": {
+                                "type": "integer",
+                                "description": "Sides per die",
+                            },
                         },
                         "required": ["count", "sides"],
                     }
@@ -315,7 +321,9 @@ class TestResolveRefs:
         assert _resolve_refs(node, {}) == node
 
     def test_resolves_top_level_ref(self):
-        spec = {"components": {"schemas": {"Foo": {"type": "object", "properties": {}}}}}
+        spec = {
+            "components": {"schemas": {"Foo": {"type": "object", "properties": {}}}}
+        }
         node = {"$ref": "#/components/schemas/Foo"}
         assert _resolve_refs(node, spec) == {"type": "object", "properties": {}}
 
@@ -371,9 +379,7 @@ class TestTransformWithRefs:
                         "required": True,
                         "content": {
                             "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/DiceRequest"
-                                }
+                                "schema": {"$ref": "#/components/schemas/DiceRequest"}
                             }
                         },
                     },

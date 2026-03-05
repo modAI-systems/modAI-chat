@@ -22,7 +22,9 @@ dev = [
     "datamodel-code-generator[ruff]",
     "pytest",
     "pytest-asyncio",
+    "pytest-httpserver",
     "ruff",
+    "testcontainers",
 ]
 
 [tool.pytest.ini_options]
