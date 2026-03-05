@@ -133,6 +133,7 @@ def _create_agent(
         system_prompt=system_prompt,
         messages=prior_messages or None,
         tools=tools or [],
+        retry_strategy=None,  # For now, now retry handling. Could be added in the future if needed.
         callback_handler=None,  # suppress default stdout printing
     )
 

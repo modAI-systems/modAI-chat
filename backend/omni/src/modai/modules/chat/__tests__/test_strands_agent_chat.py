@@ -1,227 +1,60 @@
-"""Tests for the StrandsAgentChatModule."""
+"""Tests for StrandsAgentChatModule — public interface only.
 
+Every test exercises only the two public entry-points:
+  * ``StrandsAgentChatModule.__init__``
+  * ``StrandsAgentChatModule.generate_response``
+
+Internal / private helpers are tested **indirectly** through these methods.
+
+A llmock testcontainer (``ghcr.io/modai-systems/llmock:latest``) is used as
+a deterministic mock LLM server.  By default it echoes the last user message
+back (MirrorStrategy) and can return HTTP errors via ErrorStrategy triggers.
+"""
+
+import json
 import os
+import time
 from pathlib import Path
+from typing import Any
+from unittest.mock import AsyncMock, Mock
 
+import httpx as httpx_lib
+import openai
 import pytest
+import yaml
 from dotenv import find_dotenv, load_dotenv
-from unittest.mock import AsyncMock, Mock, patch
-from dataclasses import dataclass, field
-
 from fastapi import Request
+from testcontainers.core.container import DockerContainer
 
 from modai.module import ModuleDependencies
-from modai.modules.chat.openai_agent_chat import (
-    StrandsAgentChatModule,
-    _parse_model,
-    _extract_last_user_message,
-    _build_conversation_history,
-    _to_strands_message,
-    _message_text,
-    _build_openai_response,
-    _extract_tool_names,
-    _resolve_request_tools,
-    _create_http_tool,
-    _extract_operation,
-)
+from modai.modules.chat.openai_agent_chat import StrandsAgentChatModule
 from modai.modules.model_provider.module import (
     ModelProviderResponse,
     ModelProvidersListResponse,
 )
 from modai.modules.tools.module import ToolDefinition
-import openai
 
 working_dir = Path.cwd()
 load_dotenv(find_dotenv(str(working_dir / ".env")))
 
 
 # ---------------------------------------------------------------------------
-# Fixtures
+# llmock container
 # ---------------------------------------------------------------------------
 
+LLMOCK_IMAGE = "ghcr.io/modai-systems/llmock:latest"
+LLMOCK_PORT = 8000
+LLMOCK_API_KEY = "test-key"
 
-def _make_provider(name: str = "myprovider") -> ModelProviderResponse:
-    return ModelProviderResponse(
-        id="provider_1",
-        type="openai",
-        name=name,
-        base_url="https://api.openai.com/v1",
-        api_key="sk-test-key",
-        properties={},
-        created_at=None,
-        updated_at=None,
-    )
+LLMOCK_CONFIG: dict[str, Any] = {
+    "api-key": LLMOCK_API_KEY,
+    "models": [
+        {"id": "gpt-4o", "created": 1715367049, "owned_by": "openai"},
+    ],
+    "strategies": ["ErrorStrategy", "ToolCallStrategy", "MirrorStrategy"],
+}
 
-
-def _make_mock_provider_module(providers: list[ModelProviderResponse] | None = None):
-    providers = providers or [_make_provider()]
-    mock = Mock()
-    mock.get_providers = AsyncMock(
-        return_value=ModelProvidersListResponse(
-            providers=providers,
-            total=len(providers),
-            limit=None,
-            offset=None,
-        )
-    )
-    return mock
-
-
-def _make_dependencies(provider_module=None):
-    provider_module = provider_module or _make_mock_provider_module()
-    deps = ModuleDependencies({"llm_provider_module": provider_module})
-    return deps
-
-
-# ---------------------------------------------------------------------------
-# _parse_model
-# ---------------------------------------------------------------------------
-
-
-class TestParseModel:
-    def test_valid_model(self):
-        provider, model = _parse_model("myprovider/gpt-4o")
-        assert provider == "myprovider"
-        assert model == "gpt-4o"
-
-    def test_valid_model_with_slash_in_name(self):
-        provider, model = _parse_model("myprovider/azure/gpt-5")
-        assert provider == "myprovider"
-        assert model == "azure/gpt-5"
-
-    def test_invalid_no_slash(self):
-        with pytest.raises(ValueError, match="Invalid model format"):
-            _parse_model("gpt-4o")
-
-
-# ---------------------------------------------------------------------------
-# _extract_last_user_message
-# ---------------------------------------------------------------------------
-
-
-class TestExtractLastUserMessage:
-    def test_string_input(self):
-        body = {"input": "Hello there"}
-        assert _extract_last_user_message(body) == "Hello there"
-
-    def test_list_simple_content(self):
-        body = {"input": [{"role": "user", "content": "Hi"}]}
-        assert _extract_last_user_message(body) == "Hi"
-
-    def test_list_structured_content(self):
-        body = {
-            "input": [
-                {"role": "user", "content": [{"type": "input_text", "text": "Hello"}]}
-            ]
-        }
-        assert _extract_last_user_message(body) == "Hello"
-
-    def test_multiple_messages_returns_last(self):
-        body = {
-            "input": [
-                {"role": "user", "content": "First"},
-                {"role": "assistant", "content": "Response"},
-                {"role": "user", "content": "Second"},
-            ]
-        }
-        assert _extract_last_user_message(body) == "Second"
-
-    def test_empty_input(self):
-        assert _extract_last_user_message({"input": ""}) == ""
-        assert _extract_last_user_message({"input": []}) == ""
-        assert _extract_last_user_message({}) == ""
-
-
-# ---------------------------------------------------------------------------
-# _build_conversation_history
-# ---------------------------------------------------------------------------
-
-
-class TestBuildConversationHistory:
-    def test_string_input_returns_empty(self):
-        assert _build_conversation_history({"input": "Hello"}) == []
-
-    def test_single_message_returns_empty(self):
-        body = {"input": [{"role": "user", "content": "Hi"}]}
-        assert _build_conversation_history(body) == []
-
-    def test_multi_turn_excludes_last(self):
-        body = {
-            "input": [
-                {"role": "user", "content": "Hello"},
-                {"role": "assistant", "content": "Hi"},
-                {"role": "user", "content": "How are you?"},
-            ]
-        }
-        history = _build_conversation_history(body)
-        assert len(history) == 2
-        assert history[0]["role"] == "user"
-        assert history[0]["content"] == [{"text": "Hello"}]
-        assert history[1]["role"] == "assistant"
-        assert history[1]["content"] == [{"text": "Hi"}]
-
-
-# ---------------------------------------------------------------------------
-# _to_strands_message / _message_text
-# ---------------------------------------------------------------------------
-
-
-class TestMessageConversion:
-    def test_to_strands_message_simple(self):
-        msg = _to_strands_message({"role": "user", "content": "Hello"})
-        assert msg == {"role": "user", "content": [{"text": "Hello"}]}
-
-    def test_to_strands_message_structured(self):
-        msg = _to_strands_message(
-            {"role": "assistant", "content": [{"type": "output_text", "text": "Hey"}]}
-        )
-        assert msg == {"role": "assistant", "content": [{"text": "Hey"}]}
-
-    def test_message_text_string(self):
-        assert _message_text("Hello") == "Hello"
-
-    def test_message_text_dict_string_content(self):
-        assert _message_text({"content": "Hello"}) == "Hello"
-
-    def test_message_text_dict_list_content(self):
-        assert (
-            _message_text({"content": [{"type": "input_text", "text": "Hi"}]}) == "Hi"
-        )
-
-    def test_message_text_none(self):
-        assert _message_text(None) == ""
-
-
-# ---------------------------------------------------------------------------
-# _build_openai_response
-# ---------------------------------------------------------------------------
-
-
-class TestBuildOpenAIResponse:
-    def test_builds_valid_response(self):
-        resp = _build_openai_response(
-            text="Hello!",
-            model="gpt-4o",
-            response_id="resp_test123",
-            msg_id="msg_test456",
-            input_tokens=10,
-            output_tokens=5,
-        )
-        assert isinstance(resp, openai.types.responses.Response)
-        assert resp.id == "resp_test123"
-        assert resp.model == "gpt-4o"
-        assert resp.status == "completed"
-        assert resp.output[0].content[0].text == "Hello!"
-        assert resp.usage.input_tokens == 10
-        assert resp.usage.output_tokens == 5
-        assert resp.usage.total_tokens == 15
-
-
-# ---------------------------------------------------------------------------
-# _extract_tool_names
-# ---------------------------------------------------------------------------
-
-SAMPLE_OPENAPI_SPEC = {
+SAMPLE_TOOL_OPENAPI_SPEC: dict[str, Any] = {
     "openapi": "3.1.0",
     "info": {"title": "Calculator Tool", "version": "1.0.0"},
     "paths": {
@@ -238,7 +71,7 @@ SAMPLE_OPENAPI_SPEC = {
                                 "properties": {
                                     "expression": {
                                         "type": "string",
-                                        "description": "Math expression to evaluate",
+                                        "description": "Math expression",
                                     }
                                 },
                                 "required": ["expression"],
@@ -265,613 +98,771 @@ SAMPLE_OPENAPI_SPEC = {
 }
 
 
-class TestExtractToolNames:
-    def test_extracts_function_tool_names(self):
-        body = {
-            "tools": [
-                {
-                    "type": "function",
-                    "function": {"name": "calculate", "description": "calc"},
-                },
-                {
-                    "type": "function",
-                    "function": {"name": "web_search", "description": "search"},
-                },
-            ]
-        }
-        assert _extract_tool_names(body) == ["calculate", "web_search"]
+@pytest.fixture(scope="module")
+def llmock_base_url(
+    request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory
+) -> str:
+    """llmock container with ErrorStrategy + ToolCallStrategy + MirrorStrategy (module-scoped)."""
+    config_file: Path = tmp_path_factory.mktemp("llmock") / "config.yaml"
+    config_file.write_text(yaml.dump(LLMOCK_CONFIG))
+    os.chmod(config_file, 0o644)
 
-    def test_empty_tools(self):
-        assert _extract_tool_names({"tools": []}) == []
+    container = (
+        DockerContainer(LLMOCK_IMAGE)
+        .with_exposed_ports(LLMOCK_PORT)
+        .with_volume_mapping(str(config_file), "/app/config.yaml", "ro")
+    )
+    container.start()
 
-    def test_no_tools_key(self):
-        assert _extract_tool_names({"model": "gpt-4o"}) == []
+    host = container.get_container_host_ip()
+    port = container.get_exposed_port(LLMOCK_PORT)
+    root_url = f"http://{host}:{port}"
+    _wait_for_health(root_url)
 
-    def test_skips_non_function_types(self):
-        body = {
-            "tools": [
-                {"type": "code_interpreter"},
-                {
-                    "type": "function",
-                    "function": {"name": "calculate"},
-                },
-            ]
-        }
-        assert _extract_tool_names(body) == ["calculate"]
-
-    def test_skips_missing_name(self):
-        body = {"tools": [{"type": "function", "function": {"description": "no name"}}]}
-        assert _extract_tool_names(body) == []
+    request.addfinalizer(container.stop)
+    return f"{root_url}/"
 
 
-# ---------------------------------------------------------------------------
-# _extract_operation
-# ---------------------------------------------------------------------------
+def _wait_for_health(base_url: str, timeout: float = 30.0) -> None:
+    """Poll the llmock health endpoint until it responds."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            resp = httpx_lib.get(f"{base_url}/health", timeout=2.0)
+            if resp.status_code == 200:
+                return
+        except Exception:
+            pass
+        time.sleep(0.5)
+    raise TimeoutError(
+        f"llmock health check at {base_url}/health did not respond within {timeout}s"
+    )
 
 
-class TestExtractOperation:
-    def test_extracts_first_operation(self):
-        op = _extract_operation(SAMPLE_OPENAPI_SPEC)
-        assert op is not None
-        assert op["operationId"] == "calculate"
-        assert op["summary"] == "Evaluate a math expression"
-
-    def test_returns_none_for_empty_spec(self):
-        assert _extract_operation({}) is None
-        assert _extract_operation({"paths": {}}) is None
-
-    def test_skips_non_dict_operations(self):
-        spec = {"paths": {"/foo": {"post": "not a dict"}}}
-        assert _extract_operation(spec) is None
-
-    def test_skips_operations_without_operation_id(self):
-        spec = {"paths": {"/foo": {"post": {"summary": "no id"}}}}
-        assert _extract_operation(spec) is None
+# ===================================================================
+# 1) Construction tests  (__init__)
+# ===================================================================
 
 
-# ---------------------------------------------------------------------------
-# _create_http_tool
-# ---------------------------------------------------------------------------
+class TestConstruction:
+    """Tests for module construction via __init__."""
 
-
-class TestCreateHttpTool:
-    def test_creates_tool_from_valid_definition(self):
-        tool_def = ToolDefinition(
-            url="http://calc:8000/calculate",
-            method="POST",
-            openapi_spec=SAMPLE_OPENAPI_SPEC,
-        )
-        tool = _create_http_tool(tool_def)
-        assert tool is not None
-        assert tool.tool_name == "calculate"
-        assert tool.tool_spec["name"] == "calculate"
-        assert tool.tool_spec["description"] == "Evaluate a math expression"
-        schema = tool.tool_spec["inputSchema"]["json"]
-        assert "expression" in schema["properties"]
-
-    def test_returns_none_for_empty_spec(self):
-        tool_def = ToolDefinition(
-            url="http://calc:8000/calculate",
-            method="POST",
-            openapi_spec={"paths": {}},
-        )
-        assert _create_http_tool(tool_def) is None
-
-    def test_tool_handler_success(self):
-        tool_def = ToolDefinition(
-            url="http://calc:8000/calculate",
-            method="POST",
-            openapi_spec=SAMPLE_OPENAPI_SPEC,
-        )
-        tool = _create_http_tool(tool_def)
-        assert tool is not None
-
-        mock_response = Mock()
-        mock_response.raise_for_status = Mock()
-        mock_response.text = '{"result": 42}'
-
-        with patch(
-            "modai.modules.chat.openai_agent_chat.httpx.Client"
-        ) as mock_client_cls:
-            mock_client = Mock()
-            mock_client.__enter__ = Mock(return_value=mock_client)
-            mock_client.__exit__ = Mock(return_value=False)
-            mock_client.request.return_value = mock_response
-            mock_client_cls.return_value = mock_client
-
-            result = tool._tool_func(
-                {
-                    "toolUseId": "tu_123",
-                    "name": "calculate",
-                    "input": {"expression": "6*7"},
-                },
-            )
-
-        assert result["status"] == "success"
-        assert result["toolUseId"] == "tu_123"
-        assert '{"result": 42}' in result["content"][0]["text"]
-        mock_client.request.assert_called_once_with(
-            method="POST",
-            url="http://calc:8000/calculate",
-            json={"expression": "6*7"},
-        )
-
-    def test_tool_handler_http_error(self):
-        tool_def = ToolDefinition(
-            url="http://calc:8000/calculate",
-            method="POST",
-            openapi_spec=SAMPLE_OPENAPI_SPEC,
-        )
-        tool = _create_http_tool(tool_def)
-        assert tool is not None
-
-        with patch(
-            "modai.modules.chat.openai_agent_chat.httpx.Client"
-        ) as mock_client_cls:
-            mock_client = Mock()
-            mock_client.__enter__ = Mock(return_value=mock_client)
-            mock_client.__exit__ = Mock(return_value=False)
-            mock_client.request.side_effect = Exception("Connection refused")
-            mock_client_cls.return_value = mock_client
-
-            result = tool._tool_func(
-                {
-                    "toolUseId": "tu_456",
-                    "name": "calculate",
-                    "input": {"expression": "1/0"},
-                },
-            )
-
-        assert result["status"] == "error"
-        assert result["toolUseId"] == "tu_456"
-        assert "Connection refused" in result["content"][0]["text"]
-
-
-# ---------------------------------------------------------------------------
-# _resolve_request_tools
-# ---------------------------------------------------------------------------
-
-
-class TestResolveRequestTools:
-    @pytest.mark.asyncio
-    async def test_returns_empty_when_no_registry(self):
-        body = {
-            "tools": [
-                {"type": "function", "function": {"name": "calculate"}},
-            ]
-        }
-        result = await _resolve_request_tools(body, None)
-        assert result == []
-
-    @pytest.mark.asyncio
-    async def test_returns_empty_when_no_tools_in_request(self):
-        mock_registry = Mock()
-        result = await _resolve_request_tools({"model": "gpt-4o"}, mock_registry)
-        assert result == []
-
-    @pytest.mark.asyncio
-    async def test_resolves_tools_from_registry(self):
-        tool_def = ToolDefinition(
-            url="http://calc:8000/calculate",
-            method="POST",
-            openapi_spec=SAMPLE_OPENAPI_SPEC,
-        )
-        mock_registry = Mock()
-        mock_registry.get_tool_by_name = AsyncMock(return_value=tool_def)
-
-        body = {
-            "tools": [
-                {"type": "function", "function": {"name": "calculate"}},
-            ]
-        }
-        result = await _resolve_request_tools(body, mock_registry)
-        assert len(result) == 1
-        assert result[0].tool_name == "calculate"
-        mock_registry.get_tool_by_name.assert_called_once_with("calculate")
-
-    @pytest.mark.asyncio
-    async def test_skips_unknown_tools(self):
-        mock_registry = Mock()
-        mock_registry.get_tool_by_name = AsyncMock(return_value=None)
-
-        body = {
-            "tools": [
-                {"type": "function", "function": {"name": "unknown_tool"}},
-            ]
-        }
-        result = await _resolve_request_tools(body, mock_registry)
-        assert result == []
-
-
-# ---------------------------------------------------------------------------
-# StrandsAgentChatModule.__init__
-# ---------------------------------------------------------------------------
-
-
-class TestStrandsAgentChatModuleInit:
-    def test_raises_without_provider(self):
+    def test_raises_without_provider_module(self):
         deps = ModuleDependencies({})
         with pytest.raises(ValueError, match="llm_provider_module"):
             StrandsAgentChatModule(dependencies=deps, config={})
 
-    def test_creates_with_provider(self):
-        deps = _make_dependencies()
-        module = StrandsAgentChatModule(dependencies=deps, config={})
-        assert module.provider_module is not None
+    def test_creates_successfully_with_valid_dependencies(self):
+        """Construction with a valid provider module must not raise."""
+        StrandsAgentChatModule(dependencies=_make_dependencies(), config={})
 
-    def test_tool_registry_is_none_when_not_configured(self):
-        deps = _make_dependencies()
-        module = StrandsAgentChatModule(dependencies=deps, config={})
-        assert module.tool_registry is None
 
-    def test_tool_registry_set_when_configured(self):
-        mock_registry = Mock()
-        provider_module = _make_mock_provider_module()
-        deps = ModuleDependencies(
-            {"llm_provider_module": provider_module, "tool_registry": mock_registry}
+# ===================================================================
+# 2) Happy-path: non-streaming generate_response
+# ===================================================================
+
+
+class TestNonStreamingHappyPath:
+    """generate_response returns an OpenAI Response when stream is False.
+
+    llmock MirrorStrategy echoes the last user message back, so the
+    response text matches the input.
+    """
+
+    @pytest.mark.asyncio
+    async def test_response_contains_mirrored_text(self, llmock_base_url):
+        """llmock MirrorStrategy echoes the last user message."""
+        module = _llmock_module(llmock_base_url)
+        body = {
+            "model": "myprovider/gpt-4o",
+            "input": "Say hello",
+        }
+
+        result = await module.generate_response(_make_request(), body)
+
+        assert result.status == "completed"
+        assert "Say hello" in result.output[0].content[0].text
+
+    @pytest.mark.asyncio
+    async def test_response_reports_token_usage(self, llmock_base_url):
+        module = _llmock_module(llmock_base_url)
+        body = {
+            "model": "myprovider/gpt-4o",
+            "input": "Hi",
+        }
+
+        result = await module.generate_response(_make_request(), body)
+
+        assert result.usage.input_tokens > 0
+        assert result.usage.output_tokens > 0
+        assert result.usage.total_tokens > 0
+
+    @pytest.mark.asyncio
+    async def test_multi_turn_conversation_succeeds(self, llmock_base_url):
+        """Multi-turn conversation with prior history produces a valid response."""
+        module = _llmock_module(llmock_base_url)
+        body = {
+            "model": "myprovider/gpt-4o",
+            "input": [
+                {"role": "user", "content": "Hi"},
+                {"role": "assistant", "content": "Hello!"},
+                {"role": "user", "content": "How are you?"},
+            ],
+        }
+
+        result = await module.generate_response(_make_request(), body)
+
+        assert isinstance(result, openai.types.responses.Response)
+        assert result.status == "completed"
+        assert len(result.output) > 0
+
+    @pytest.mark.asyncio
+    async def test_system_prompt_from_instructions_field(self, llmock_base_url):
+        """The 'instructions' field is accepted and the response succeeds."""
+        module = _llmock_module(llmock_base_url)
+        body = {
+            "model": "myprovider/gpt-4o",
+            "input": "Hi",
+            "instructions": "You are a pirate.",
+        }
+
+        result = await module.generate_response(_make_request(), body)
+
+        assert isinstance(result, openai.types.responses.Response)
+        assert result.status == "completed"
+
+
+# ===================================================================
+# 3) Happy-path: streaming generate_response
+# ===================================================================
+
+
+class TestStreamingHappyPath:
+    """generate_response returns an async generator when stream=True."""
+
+    @pytest.mark.asyncio
+    async def test_stream_assembled_text_echoes_input(self, llmock_base_url):
+        """The assembled text from all deltas matches the mirrored input."""
+        module = _llmock_module(llmock_base_url)
+
+        gen = await module.generate_response(
+            _make_request(),
+            {
+                "model": "myprovider/gpt-4o",
+                "input": "Hola Mundo",
+                "stream": True,
+            },
         )
-        module = StrandsAgentChatModule(dependencies=deps, config={})
-        assert module.tool_registry is mock_registry
+
+        events = [e async for e in gen]
+
+        full_text = "".join(
+            e.delta
+            for e in events
+            if getattr(e, "type", None) == "response.output_text.delta"
+        )
+        assert "Hola Mundo" in full_text
+        assert len(events) > 2  # at least created + completed events
+
+    @pytest.mark.asyncio
+    async def test_stream_completed_response_is_valid(self, llmock_base_url):
+        """The final completed event carries a valid OpenAI Response."""
+        module = _llmock_module(llmock_base_url)
+
+        gen = await module.generate_response(
+            _make_request(),
+            {
+                "model": "myprovider/gpt-4o",
+                "input": "Test message",
+                "stream": True,
+            },
+        )
+
+        events = [e async for e in gen]
+        completed = events[-1]
+
+        assert isinstance(completed.response, openai.types.responses.Response)
+        assert completed.response.status == "completed"
+        assert len(completed.response.output) > 0
+        assert completed.response.output[0].content[0].text != ""
 
 
-# ---------------------------------------------------------------------------
-# StrandsAgentChatModule.generate_response (mocked)
-# ---------------------------------------------------------------------------
+# ===================================================================
+# 4) Happy-path: tool calling
+# ===================================================================
 
 
-@dataclass
-class _FakeUsage:
-    inputTokens: int = 10
-    outputTokens: int = 20
-    totalTokens: int = 30
+class TestToolCallingHappyPath:
+    """Tools are resolved from the registry and forwarded to the agent."""
 
-    def get(self, key, default=0):
-        return getattr(self, key, default)
+    def _make_tool_registry(self, tool_def: ToolDefinition | None = None) -> Mock:
+        registry = Mock()
+        if tool_def:
+            registry.get_tool_by_name = AsyncMock(return_value=tool_def)
+        else:
+            registry.get_tool_by_name = AsyncMock(return_value=None)
+        return registry
 
-
-@dataclass
-class _FakeMetrics:
-    accumulated_usage: dict = field(
-        default_factory=lambda: {
-            "inputTokens": 10,
-            "outputTokens": 20,
-            "totalTokens": 30,
-        }
-    )
-
-
-@dataclass
-class _FakeAgentResult:
-    text: str = "Mocked response"
-    metrics: _FakeMetrics = field(default_factory=_FakeMetrics)
-    stop_reason: str = "end_turn"
-    message: dict = field(
-        default_factory=lambda: {
-            "role": "assistant",
-            "content": [{"text": "Mocked response"}],
-        }
-    )
-
-    def __str__(self) -> str:
-        return self.text
-
-
-@pytest.mark.asyncio
-async def test_generate_response_non_streaming():
-    """Non-streaming generate_response returns an OpenAI Response."""
-    deps = _make_dependencies()
-    module = StrandsAgentChatModule(dependencies=deps, config={})
-    request = Mock(spec=Request)
-
-    fake_result = _FakeAgentResult()
-
-    with (
-        patch(
-            "modai.modules.chat.openai_agent_chat._create_agent"
-        ) as mock_create_agent,
-        patch("asyncio.to_thread", new_callable=AsyncMock, return_value=fake_result),
+    @pytest.mark.asyncio
+    async def test_actual_http_call_reaches_tool_endpoint(
+        self, llmock_base_url, httpserver
     ):
-        mock_agent = Mock()
-        mock_create_agent.return_value = mock_agent
+        """The tool HTTP endpoint receives the POST request with the correct JSON body.
+
+        A real local HTTP server (pytest-httpserver) acts as the tool endpoint.
+        ToolCallStrategy fires exactly once when the user message contains the
+        trigger phrase. The tool responds with a result; on the next turn
+        MirrorStrategy takes over and the agent completes successfully.
+        This is a full end-to-end exercise of the httpx.Client call in _create_http_tool.
+        """
+        from werkzeug.wrappers import Response as WerkzeugResponse
+
+        captured_body: dict[str, Any] = {}
+
+        def _capture(request):
+            nonlocal captured_body
+            captured_body = request.get_json()
+            return WerkzeugResponse(
+                json.dumps({"result": 42}),
+                status=200,
+                content_type="application/json",
+            )
+
+        httpserver.expect_oneshot_request(
+            "/calculate", method="POST"
+        ).respond_with_handler(_capture)
+
+        tool_def = ToolDefinition(
+            url=httpserver.url_for("/calculate"),
+            method="POST",
+            openapi_spec=SAMPLE_TOOL_OPENAPI_SPEC,
+        )
+        registry = self._make_tool_registry(tool_def)
+        module = _llmock_module(llmock_base_url, tool_registry=registry)
 
         body = {
             "model": "myprovider/gpt-4o",
-            "input": [{"role": "user", "content": "Hello"}],
+            "input": "call tool 'calculate' with '{\"expression\": \"6*7\"}'",
+            "tools": [{"type": "function", "function": {"name": "calculate"}}],
         }
 
-        result = await module.generate_response(request, body)
+        result = await module.generate_response(_make_request(), body)
 
-    assert isinstance(result, openai.types.responses.Response)
-    assert result.status == "completed"
-    assert result.output[0].content[0].text == "Mocked response"
-    assert result.usage.input_tokens == 10
-    assert result.usage.output_tokens == 20
+        assert result.status == "completed"
+        httpserver.check_assertions()
+        assert isinstance(captured_body, dict)
+        assert "expression" in captured_body
+        assert captured_body["expression"] == "6*7"
 
+    @pytest.mark.asyncio
+    async def test_actual_http_call_reaches_tool_endpoint_streaming(
+        self, llmock_base_url, httpserver
+    ):
+        """Same as above but for streaming: the tool endpoint receives the call
+        and the stream completes successfully.
+        """
+        from werkzeug.wrappers import Response as WerkzeugResponse
 
-@pytest.mark.asyncio
-async def test_generate_response_streaming():
-    """Streaming generate_response returns an async generator of events."""
-    deps = _make_dependencies()
-    module = StrandsAgentChatModule(dependencies=deps, config={})
-    request = Mock(spec=Request)
+        captured_body: dict[str, Any] = {}
 
-    async def fake_stream_async(prompt):
-        yield {"data": "Hello"}
-        yield {"data": " world"}
+        def _capture(request):
+            nonlocal captured_body
+            captured_body = request.get_json()
+            return WerkzeugResponse(
+                json.dumps({"result": 42}),
+                status=200,
+                content_type="application/json",
+            )
 
-    with patch(
-        "modai.modules.chat.openai_agent_chat._create_agent"
-    ) as mock_create_agent:
-        mock_agent = Mock()
-        mock_agent.stream_async = fake_stream_async
-        mock_create_agent.return_value = mock_agent
+        httpserver.expect_oneshot_request(
+            "/calculate", method="POST"
+        ).respond_with_handler(_capture)
+
+        tool_def = ToolDefinition(
+            url=httpserver.url_for("/calculate"),
+            method="POST",
+            openapi_spec=SAMPLE_TOOL_OPENAPI_SPEC,
+        )
+        registry = self._make_tool_registry(tool_def)
+        module = _llmock_module(llmock_base_url, tool_registry=registry)
 
         body = {
             "model": "myprovider/gpt-4o",
-            "input": [{"role": "user", "content": "Hi"}],
+            "input": "call tool 'calculate' with '{\"expression\": \"6*7\"}'",
+            "tools": [{"type": "function", "function": {"name": "calculate"}}],
             "stream": True,
         }
 
-        result = await module.generate_response(request, body)
+        gen = await module.generate_response(_make_request(), body)
+        events = [e async for e in gen]
 
-    # Result should be an async generator
-    assert hasattr(result, "__aiter__")
-
-    events = []
-    async for event in result:
-        events.append(event)
-
-    # Expected: created, 2 text deltas, text done, completed
-    assert len(events) == 5
-
-    # First event is response.created
-    assert events[0].type == "response.created"
-
-    # Delta events
-    assert events[1].type == "response.output_text.delta"
-    assert events[1].delta == "Hello"
-    assert events[2].type == "response.output_text.delta"
-    assert events[2].delta == " world"
-
-    # Text done
-    assert events[3].type == "response.output_text.done"
-    assert events[3].text == "Hello world"
-
-    # Completed
-    assert events[4].type == "response.completed"
-    assert events[4].response.output[0].content[0].text == "Hello world"
+        assert events[-1].type == "response.completed"
+        httpserver.check_assertions()
+        assert isinstance(captured_body, dict)
+        assert "expression" in captured_body
 
 
-@pytest.mark.asyncio
-async def test_generate_response_with_tools():
-    """Tools from the request body are resolved and passed to the agent."""
-    tool_def = ToolDefinition(
-        url="http://calc:8000/calculate",
-        method="POST",
-        openapi_spec=SAMPLE_OPENAPI_SPEC,
-    )
-    mock_registry = Mock()
-    mock_registry.get_tool_by_name = AsyncMock(return_value=tool_def)
+# ===================================================================
+# 5) Error-path: invalid model / provider issues
+# ===================================================================
 
-    provider_module = _make_mock_provider_module()
-    deps = ModuleDependencies(
-        {"llm_provider_module": provider_module, "tool_registry": mock_registry}
-    )
-    module = StrandsAgentChatModule(dependencies=deps, config={})
-    request = Mock(spec=Request)
 
-    fake_result = _FakeAgentResult()
+class TestModelAndProviderErrors:
+    """Errors when the model string is malformed or provider is unknown."""
 
-    with (
-        patch(
-            "modai.modules.chat.openai_agent_chat._create_agent"
-        ) as mock_create_agent,
-        patch("asyncio.to_thread", new_callable=AsyncMock, return_value=fake_result),
-    ):
-        mock_agent = Mock()
-        mock_create_agent.return_value = mock_agent
+    @pytest.mark.asyncio
+    async def test_invalid_model_format_no_slash(self):
+        module = StrandsAgentChatModule(dependencies=_make_dependencies(), config={})
+        with pytest.raises(ValueError, match="Invalid model format"):
+            await module.generate_response(
+                _make_request(),
+                {"model": "gpt-4o", "input": "Hi"},
+            )
 
+    @pytest.mark.asyncio
+    async def test_invalid_model_format_empty_provider(self):
+        module = StrandsAgentChatModule(dependencies=_make_dependencies(), config={})
+        with pytest.raises(ValueError, match="Invalid model format"):
+            await module.generate_response(
+                _make_request(),
+                {"model": "/gpt-4o", "input": "Hi"},
+            )
+
+    @pytest.mark.asyncio
+    async def test_invalid_model_format_empty_model(self):
+        module = StrandsAgentChatModule(dependencies=_make_dependencies(), config={})
+        with pytest.raises(ValueError, match="Invalid model format"):
+            await module.generate_response(
+                _make_request(),
+                {"model": "provider/", "input": "Hi"},
+            )
+
+    @pytest.mark.asyncio
+    async def test_provider_not_found(self):
+        module = StrandsAgentChatModule(dependencies=_make_dependencies(), config={})
+        with pytest.raises(ValueError, match="Provider 'unknown' not found"):
+            await module.generate_response(
+                _make_request(),
+                {"model": "unknown/gpt-4o", "input": "Hi"},
+            )
+
+    @pytest.mark.asyncio
+    async def test_provider_module_raises_propagates(self):
+        """If the provider module itself raises, the error propagates."""
+        provider_module = Mock()
+        provider_module.get_providers = AsyncMock(
+            side_effect=RuntimeError("DB connection lost")
+        )
+        module = StrandsAgentChatModule(
+            dependencies=_make_dependencies(provider_module=provider_module), config={}
+        )
+
+        with pytest.raises(RuntimeError, match="DB connection lost"):
+            await module.generate_response(
+                _make_request(),
+                {"model": "myprovider/gpt-4o", "input": "Hi"},
+            )
+
+
+# ===================================================================
+# 6) Error-path: LLM unreachable / LLM errors
+# ===================================================================
+
+
+class TestLLMErrors:
+    """Errors during the actual LLM call (non-streaming and streaming)."""
+
+    @pytest.mark.asyncio
+    async def test_non_streaming_error_trigger_429(self, llmock_base_url):
+        """llmock ErrorStrategy returns 429 when message matches trigger."""
+        module = _llmock_module(llmock_base_url)
+
+        with pytest.raises(Exception):
+            await module.generate_response(
+                _make_request(),
+                {
+                    "model": "myprovider/gpt-4o",
+                    "input": 'raise error {"code": 429, "message": "Rate limit exceeded"}',
+                },
+            )
+
+    @pytest.mark.asyncio
+    async def test_non_streaming_error_trigger_500(self, llmock_base_url):
+        """llmock ErrorStrategy returns 500 when message matches trigger."""
+        module = _llmock_module(llmock_base_url)
+
+        with pytest.raises(Exception):
+            await module.generate_response(
+                _make_request(),
+                {
+                    "model": "myprovider/gpt-4o",
+                    "input": 'raise error {"code": 500, "message": "Internal server error"}',
+                },
+            )
+
+    @pytest.mark.asyncio
+    async def test_non_streaming_connection_error(self):
+        """Connection error when the LLM is unreachable."""
+        provider = _make_provider(base_url="http://localhost:1/v1", api_key="unused")
+        module = StrandsAgentChatModule(
+            dependencies=_make_dependencies(
+                provider_module=_make_provider_module([provider])
+            ),
+            config={},
+        )
+
+        with pytest.raises(Exception):
+            await module.generate_response(
+                _make_request(),
+                {"model": "myprovider/gpt-4o", "input": "Hi"},
+            )
+
+    @pytest.mark.asyncio
+    async def test_streaming_error_trigger(self, llmock_base_url):
+        """Error during streaming when llmock ErrorStrategy is triggered."""
+        module = _llmock_module(llmock_base_url)
+
+        gen = await module.generate_response(
+            _make_request(),
+            {
+                "model": "myprovider/gpt-4o",
+                "input": 'raise error {"code": 500, "message": "Internal server error"}',
+                "stream": True,
+            },
+        )
+
+        with pytest.raises(Exception):
+            async for _ in gen:
+                pass
+
+    @pytest.mark.asyncio
+    async def test_streaming_connection_error(self):
+        """Connection error during streaming when LLM is unreachable."""
+        provider = _make_provider(base_url="http://localhost:1/v1", api_key="unused")
+        module = StrandsAgentChatModule(
+            dependencies=_make_dependencies(
+                provider_module=_make_provider_module([provider])
+            ),
+            config={},
+        )
+
+        gen = await module.generate_response(
+            _make_request(),
+            {
+                "model": "myprovider/gpt-4o",
+                "input": "Hi",
+                "stream": True,
+            },
+        )
+
+        with pytest.raises(Exception):
+            async for _ in gen:
+                pass
+
+
+# ===================================================================
+# 7) Error-path: tool not available / tool errors
+# ===================================================================
+
+
+class TestToolErrors:
+    """Errors during tool resolution and tool invocation."""
+
+    @pytest.mark.asyncio
+    async def test_unknown_tool_is_silently_skipped(self, llmock_base_url):
+        """A tool name not found in the registry is skipped; response still succeeds."""
+        registry = Mock()
+        registry.get_tool_by_name = AsyncMock(return_value=None)
+
+        module = _llmock_module(llmock_base_url, tool_registry=registry)
         body = {
             "model": "myprovider/gpt-4o",
-            "input": [{"role": "user", "content": "Calculate 6*7"}],
+            "input": "Hi",
             "tools": [
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "calculate",
-                        "description": "Evaluate a math expression",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {"expression": {"type": "string"}},
-                        },
-                    },
-                }
+                {"type": "function", "function": {"name": "nonexistent_tool"}},
             ],
         }
 
-        result = await module.generate_response(request, body)
+        result = await module.generate_response(_make_request(), body)
 
-    # Verify the tool registry was queried
-    mock_registry.get_tool_by_name.assert_called_once_with("calculate")
+        assert isinstance(result, openai.types.responses.Response)
+        assert result.status == "completed"
 
-    # Verify _create_agent was called with tools
-    call_args = mock_create_agent.call_args
-    tools_arg = call_args[0][3] if len(call_args[0]) > 3 else call_args[1].get("tools")
-    assert tools_arg is not None
-    assert len(tools_arg) == 1
-    assert tools_arg[0].tool_name == "calculate"
+    @pytest.mark.asyncio
+    async def test_tool_with_invalid_openapi_spec_is_skipped(self, llmock_base_url):
+        """A tool whose OpenAPI spec has no valid operation is skipped."""
+        bad_tool_def = ToolDefinition(
+            url="http://broken:8000/noop",
+            method="POST",
+            openapi_spec={"paths": {}},  # no operations
+        )
+        registry = Mock()
+        registry.get_tool_by_name = AsyncMock(return_value=bad_tool_def)
 
-    assert isinstance(result, openai.types.responses.Response)
-
-
-@pytest.mark.asyncio
-async def test_generate_response_without_tool_registry():
-    """Without tool_registry configured, tools in request are ignored."""
-    deps = _make_dependencies()
-    module = StrandsAgentChatModule(dependencies=deps, config={})
-    request = Mock(spec=Request)
-
-    fake_result = _FakeAgentResult()
-
-    with (
-        patch(
-            "modai.modules.chat.openai_agent_chat._create_agent"
-        ) as mock_create_agent,
-        patch("asyncio.to_thread", new_callable=AsyncMock, return_value=fake_result),
-    ):
-        mock_agent = Mock()
-        mock_create_agent.return_value = mock_agent
-
+        module = _llmock_module(llmock_base_url, tool_registry=registry)
         body = {
             "model": "myprovider/gpt-4o",
-            "input": [{"role": "user", "content": "Hello"}],
+            "input": "Hi",
             "tools": [
-                {
-                    "type": "function",
-                    "function": {"name": "calculate"},
-                }
+                {"type": "function", "function": {"name": "broken_tool"}},
             ],
         }
 
-        result = await module.generate_response(request, body)
+        result = await module.generate_response(_make_request(), body)
 
-    # _create_agent should be called with empty tools list
-    call_args = mock_create_agent.call_args
-    tools_arg = (
-        call_args[0][3] if len(call_args[0]) > 3 else call_args[1].get("tools", [])
+        assert isinstance(result, openai.types.responses.Response)
+        assert result.status == "completed"
+
+    @pytest.mark.asyncio
+    async def test_tool_registry_error_propagates(self):
+        """If the tool registry raises, the error propagates."""
+        registry = Mock()
+        registry.get_tool_by_name = AsyncMock(
+            side_effect=RuntimeError("Registry unavailable")
+        )
+
+        module = StrandsAgentChatModule(
+            dependencies=_make_dependencies(tool_registry=registry), config={}
+        )
+        body = {
+            "model": "myprovider/gpt-4o",
+            "input": "Hi",
+            "tools": [
+                {"type": "function", "function": {"name": "calculate"}},
+            ],
+        }
+
+        with pytest.raises(RuntimeError, match="Registry unavailable"):
+            await module.generate_response(_make_request(), body)
+
+    @pytest.mark.asyncio
+    async def test_tool_invocation_http_error_agent_handles_gracefully(
+        self, llmock_base_url
+    ):
+        """When a tool URL is unreachable the agent receives a tool error.
+
+        ToolCallStrategy fires exactly once (only when the last conversation
+        message is a user message). On the next turn the last message is the
+        tool result, so MirrorStrategy takes over and the agent completes.
+        """
+        tool_def = ToolDefinition(
+            url="http://localhost:1/calculate",  # unreachable
+            method="POST",
+            openapi_spec=SAMPLE_TOOL_OPENAPI_SPEC,
+        )
+        registry = Mock()
+        registry.get_tool_by_name = AsyncMock(return_value=tool_def)
+
+        module = _llmock_module(llmock_base_url, tool_registry=registry)
+        body = {
+            "model": "myprovider/gpt-4o",
+            "input": "call tool 'calculate' with '{}'",
+            "tools": [{"type": "function", "function": {"name": "calculate"}}],
+        }
+
+        result = await module.generate_response(_make_request(), body)
+        assert result.status == "completed"
+
+    @pytest.mark.asyncio
+    async def test_tool_invocation_success_request_sent_to_tool(
+        self, llmock_base_url, httpserver
+    ):
+        """The tool HTTP endpoint receives the call forwarded by the agent.
+
+        ``pytest-httpserver`` acts as the real tool endpoint — no patching.
+        ToolCallStrategy fires exactly once (user-message-only trigger). The
+        tool responds; on the next turn the last message is the tool result so
+        MirrorStrategy takes over and returns a completed response.
+        """
+        httpserver.expect_oneshot_request("/calculate").respond_with_json({"result": 4})
+
+        tool_def = ToolDefinition(
+            url=httpserver.url_for("/calculate"),
+            method="POST",
+            openapi_spec=SAMPLE_TOOL_OPENAPI_SPEC,
+        )
+        registry = Mock()
+        registry.get_tool_by_name = AsyncMock(return_value=tool_def)
+
+        module = _llmock_module(llmock_base_url, tool_registry=registry)
+        body = {
+            "model": "myprovider/gpt-4o",
+            "input": "call tool 'calculate' with '{\"expression\": \"2+2\"}'",
+            "tools": [{"type": "function", "function": {"name": "calculate"}}],
+        }
+
+        result = await module.generate_response(_make_request(), body)
+        assert result.status == "completed"
+        httpserver.check_assertions()
+
+    @pytest.mark.asyncio
+    async def test_partial_tools_resolved_when_some_missing(self, llmock_base_url):
+        """When some tools are found and others not, only found tools are used."""
+        calc_def = ToolDefinition(
+            url="http://calc:8000/calculate",
+            method="POST",
+            openapi_spec=SAMPLE_TOOL_OPENAPI_SPEC,
+        )
+        registry = Mock()
+        registry.get_tool_by_name = AsyncMock(
+            side_effect=lambda name: calc_def if name == "calculate" else None
+        )
+
+        module = _llmock_module(llmock_base_url, tool_registry=registry)
+        body = {
+            "model": "myprovider/gpt-4o",
+            "input": "Do stuff",
+            "tools": [
+                {"type": "function", "function": {"name": "calculate"}},
+                {"type": "function", "function": {"name": "missing_tool"}},
+            ],
+        }
+
+        result = await module.generate_response(_make_request(), body)
+
+        assert registry.get_tool_by_name.call_count == 2
+        assert isinstance(result, openai.types.responses.Response)
+
+
+# ===================================================================
+# 8) Integration tests (require OPENAI_API_KEY in .env)
+# ===================================================================
+
+
+@pytest.mark.skipif("OPENAI_API_KEY" not in os.environ, reason="OPENAI_API_KEY not set")
+class TestRealProviderIntegration:
+    """End-to-end tests against a real LLM. Skipped if OPENAI_API_KEY is absent."""
+
+    @staticmethod
+    def _real_provider() -> ModelProviderResponse:
+        return ModelProviderResponse(
+            id="test_provider",
+            type="openai",
+            name="myopenai",
+            base_url=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+            api_key=os.environ.get("OPENAI_API_KEY", ""),
+            properties={},
+            created_at=None,
+            updated_at=None,
+        )
+
+    @staticmethod
+    def _real_model() -> str:
+        model = os.environ.get("OPENAI_MODEL", "gpt-4o")
+        return f"myopenai/{model}"
+
+    def _real_deps(self) -> ModuleDependencies:
+        provider = self._real_provider()
+        return _make_dependencies(provider_module=_make_provider_module([provider]))
+
+    @pytest.mark.asyncio
+    async def test_non_streaming_integration(self):
+        module = StrandsAgentChatModule(dependencies=self._real_deps(), config={})
+        body = {
+            "model": self._real_model(),
+            "input": [{"role": "user", "content": "Just echo the word 'Hello'"}],
+        }
+
+        result = await module.generate_response(_make_request(), body)
+
+        assert isinstance(result, openai.types.responses.Response)
+        assert result.status == "completed"
+        assert "Hello" in result.output[0].content[0].text
+        assert result.usage.input_tokens > 0
+        assert result.usage.output_tokens > 0
+
+    @pytest.mark.asyncio
+    async def test_streaming_integration(self):
+        module = StrandsAgentChatModule(dependencies=self._real_deps(), config={})
+        body = {
+            "model": self._real_model(),
+            "input": [{"role": "user", "content": "Just echo the word 'Hello'"}],
+            "stream": True,
+        }
+
+        gen = await module.generate_response(_make_request(), body)
+        assert hasattr(gen, "__aiter__")
+
+        events = []
+        async for event in gen:
+            events.append(event)
+
+        assert len(events) >= 3
+        assert events[0].type == "response.created"
+
+        full_text = "".join(
+            e.delta
+            for e in events
+            if getattr(e, "type", None) == "response.output_text.delta"
+        )
+        assert "Hello" in full_text
+
+        assert events[-1].type == "response.completed"
+        assert events[-1].response.output[0].content[0].text == full_text
+
+
+# ---------------------------------------------------------------------------
+# Shared helpers / fixtures
+# ---------------------------------------------------------------------------
+
+
+def _make_dependencies(
+    provider_module=None,
+    tool_registry=None,
+) -> ModuleDependencies:
+    modules: dict[str, Any] = {
+        "llm_provider_module": provider_module or _make_provider_module(),
+    }
+    if tool_registry is not None:
+        modules["tool_registry"] = tool_registry
+    return ModuleDependencies(modules)
+
+
+def _make_request() -> Request:
+    return Mock(spec=Request)
+
+
+def _llmock_module(
+    base_url: str,
+    tool_registry=None,
+) -> StrandsAgentChatModule:
+    """Create a ``StrandsAgentChatModule`` pointing at the llmock container."""
+    provider = _make_provider(base_url=base_url, api_key=LLMOCK_API_KEY)
+    return StrandsAgentChatModule(
+        dependencies=_make_dependencies(
+            provider_module=_make_provider_module([provider]),
+            tool_registry=tool_registry,
+        ),
+        config={},
     )
-    assert tools_arg == []
-
-    assert isinstance(result, openai.types.responses.Response)
 
 
-# ---------------------------------------------------------------------------
-# Provider resolution
-# ---------------------------------------------------------------------------
+def _make_provider_module(providers: list[ModelProviderResponse] | None = None):
+    providers = providers or [_make_provider()]
+    mock = Mock()
+    mock.get_providers = AsyncMock(
+        return_value=ModelProvidersListResponse(
+            providers=providers,
+            total=len(providers),
+            limit=None,
+            offset=None,
+        )
+    )
+    return mock
 
 
-@pytest.mark.asyncio
-async def test_invalid_model_format():
-    """Raises ValueError for an invalid model string."""
-    deps = _make_dependencies()
-    module = StrandsAgentChatModule(dependencies=deps, config={})
-    request = Mock(spec=Request)
-
-    body = {
-        "model": "no_slash_model",
-        "input": "Hello",
-    }
-    with pytest.raises(ValueError, match="Invalid model format"):
-        await module.generate_response(request, body)
-
-
-@pytest.mark.asyncio
-async def test_provider_not_found():
-    """Raises ValueError when provider name is unknown."""
-    deps = _make_dependencies()
-    module = StrandsAgentChatModule(dependencies=deps, config={})
-    request = Mock(spec=Request)
-
-    body = {
-        "model": "unknown/gpt-4o",
-        "input": "Hello",
-    }
-    with pytest.raises(ValueError, match="Provider 'unknown' not found"):
-        await module.generate_response(request, body)
-
-
-# ---------------------------------------------------------------------------
-# Integration tests (require OPENAI_API_KEY in .env)
-# ---------------------------------------------------------------------------
-
-
-def _make_real_provider() -> ModelProviderResponse:
-    """Create a provider backed by the env-var credentials."""
+def _make_provider(
+    name: str = "myprovider",
+    base_url: str = "https://api.openai.com/v1",
+    api_key: str = "sk-test-key",
+) -> ModelProviderResponse:
     return ModelProviderResponse(
-        id="test_provider",
+        id="provider_1",
         type="openai",
-        name="myopenai",
-        base_url=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
-        api_key=os.environ.get("OPENAI_API_KEY", ""),
+        name=name,
+        base_url=base_url,
+        api_key=api_key,
         properties={},
         created_at=None,
         updated_at=None,
     )
-
-
-def _make_real_dependencies() -> ModuleDependencies:
-    """Dependencies wired to the real provider from env vars."""
-    provider = _make_real_provider()
-    provider_module = _make_mock_provider_module([provider])
-    return ModuleDependencies({"llm_provider_module": provider_module})
-
-
-def _real_model() -> str:
-    """Return 'myopenai/<model>' using OPENAI_MODEL from env."""
-    model = os.environ.get("OPENAI_MODEL", "gpt-4o")
-    return f"myopenai/{model}"
-
-
-@pytest.mark.skipif("OPENAI_API_KEY" not in os.environ, reason="OPENAI_API_KEY not set")
-@pytest.mark.asyncio
-async def test_strands_generate_response_non_streaming_integration():
-    """Integration: non-streaming response via Strands Agent + real LLM."""
-    deps = _make_real_dependencies()
-    module = StrandsAgentChatModule(dependencies=deps, config={})
-    request = Mock(spec=Request)
-
-    body = {
-        "model": _real_model(),
-        "input": [{"role": "user", "content": "Just echo the word 'Hello'"}],
-    }
-
-    result = await module.generate_response(request, body)
-
-    assert isinstance(result, openai.types.responses.Response)
-    assert result.status == "completed"
-    assert result.output
-    assert len(result.output) > 0
-    text = result.output[0].content[0].text
-    assert "Hello" in text
-    assert result.usage.input_tokens > 0
-    assert result.usage.output_tokens > 0
-
-
-@pytest.mark.skipif("OPENAI_API_KEY" not in os.environ, reason="OPENAI_API_KEY not set")
-@pytest.mark.asyncio
-async def test_strands_generate_response_streaming_integration():
-    """Integration: streaming response via Strands Agent + real LLM."""
-    deps = _make_real_dependencies()
-    module = StrandsAgentChatModule(dependencies=deps, config={})
-    request = Mock(spec=Request)
-
-    body = {
-        "model": _real_model(),
-        "input": [{"role": "user", "content": "Just echo the word 'Hello'"}],
-        "stream": True,
-    }
-
-    result = await module.generate_response(request, body)
-    assert hasattr(result, "__aiter__")
-
-    events = []
-    async for event in result:
-        events.append(event)
-
-    # Must have at least created + text done + completed
-    assert len(events) >= 3
-
-    # First is response.created
-    assert events[0].type == "response.created"
-
-    # Collect text deltas
-    full_text = ""
-    for evt in events:
-        if hasattr(evt, "type") and evt.type == "response.output_text.delta":
-            full_text += evt.delta
-
-    assert "Hello" in full_text
-
-    # Last is response.completed
-    assert events[-1].type == "response.completed"
-    assert events[-1].response.output[0].content[0].text == full_text
