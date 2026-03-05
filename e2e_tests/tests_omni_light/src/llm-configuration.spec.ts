@@ -19,7 +19,7 @@ test.describe("LLM Picker", () => {
         await llmProviderPage.navigateTo();
         await llmProviderPage.addProvider(
             "Test Provider",
-            "http://localhost:3001/v1",
+            "http://localhost:3001",
             "your-secret-api-key",
         );
 
@@ -38,7 +38,7 @@ test.describe("LLM Picker", () => {
         await llmProviderPage.navigateTo();
         await llmProviderPage.addProvider(
             "Test Provider",
-            "http://localhost:3001/v1",
+            "http://localhost:3001",
             "your-secret-api-key",
         );
         await llmProviderPage.addProvider(
