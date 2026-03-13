@@ -343,8 +343,57 @@ class TestToolRun:
             method="POST",
             url="http://calc:8000/calculate",
             json={"expression": "6*7"},
+            headers={},
         )
         assert result == '{"result": 42}'
+
+    @pytest.mark.asyncio
+    async def test_run_forwards_bearer_token_as_authorization_header(self):
+        """When _bearer_token is in params it becomes Authorization: Bearer <token>."""
+        module = self._make_module(
+            [{"url": "http://calc:8000/calculate", "method": "POST"}]
+        )
+
+        fetch_response = MagicMock()
+        fetch_response.raise_for_status = lambda: None
+        fetch_response.json.return_value = SAMPLE_OPENAPI_SPEC
+
+        run_response = MagicMock()
+        run_response.raise_for_status = lambda: None
+        run_response.text = '{"result": 42}'
+
+        async def mock_get(url, **kwargs):
+            return fetch_response
+
+        with patch(
+            "modai.modules.tools.tool_registry_openapi.httpx.AsyncClient"
+        ) as mock_client_cls:
+            mock_client = AsyncMock()
+            mock_client.get = mock_get
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=False)
+            mock_client_cls.return_value = mock_client
+            tools = await module.get_tools()
+
+        tool = tools[0]
+
+        mock_run_client = AsyncMock()
+        mock_run_client.request = AsyncMock(return_value=run_response)
+        mock_run_client.__aenter__ = AsyncMock(return_value=mock_run_client)
+        mock_run_client.__aexit__ = AsyncMock(return_value=False)
+
+        with patch(
+            "modai.modules.tools.tool_registry_openapi.httpx.AsyncClient",
+            return_value=mock_run_client,
+        ):
+            await tool.run({"expression": "2+2", "_bearer_token": "secret"})
+
+        mock_run_client.request.assert_called_once_with(
+            method="POST",
+            url="http://calc:8000/calculate",
+            json={"expression": "2+2"},
+            headers={"Authorization": "Bearer secret"},
+        )
 
 
 class TestFetchOpenapiSpec:

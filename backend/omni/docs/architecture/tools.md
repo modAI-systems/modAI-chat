@@ -108,6 +108,18 @@ A tool definition contains enough information to construct an LLM tool call but 
 - Exposes its `definition` (read-only)
 - Provides a `run(params)` operation that executes the tool with the given parameters and returns the result
 
+#### Reserved `_`-prefixed keys in `params`
+
+Callers may inject caller-supplied metadata into the `params` dict using keys prefixed with `_`. These keys are **never** forwarded to the tool microservice's JSON body — tool implementations must extract and consume them before sending the request.
+
+Currently defined reserved keys:
+
+| Key | Type | Description |
+|---|---|---|
+| `_bearer_token` | `str \| None` | Forwarded as `Authorization: Bearer <token>` HTTP header |
+
+This convention keeps the `Tool.run` interface stable while allowing callers to pass through transport-level concerns (auth, tracing, etc.) without requiring interface changes.
+
 ### 4.2 Tool Registry Module (Plain Module)
 
 **Purpose**: Aggregates tools from all configured sources and provides lookup by name.
