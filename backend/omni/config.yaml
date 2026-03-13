@@ -62,8 +62,13 @@ modules:
       session: "session"
       user_settings_store: "user_settings_store"
 
+  http_client:
+    class: modai.modules.http_client.httpx_http_client_module.HttpxHttpClientModule
+
   tool_registry:
     class: modai.modules.tools.tool_registry_openapi.OpenAPIToolRegistryModule
+    module_dependencies:
+      http_client: "http_client"
     config:
       tools:
         - url: http://localhost:8001/roll
