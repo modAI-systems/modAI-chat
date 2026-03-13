@@ -1,5 +1,5 @@
 ---
-name: tool-microservice
+name: modai-tool
 description: How to create a new tool microservice for modAI-chat. Tools are independent HTTP microservices that expose an OpenAPI spec and a trigger endpoint. They are registered in modAI's tool registry via config.yaml.
 ---
 
