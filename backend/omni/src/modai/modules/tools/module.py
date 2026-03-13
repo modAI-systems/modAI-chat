@@ -41,7 +41,12 @@ class Tool(ABC):
 
         Args:
             params: Parameters to pass to the tool, typically the arguments
-                    returned by an LLM tool call.
+                    returned by an LLM tool call.  Callers may inject
+                    additional transport-level properties using ``_``-prefixed
+                    keys (e.g. ``_bearer_token``).  These reserved keys must
+                    be extracted and consumed by the implementation before
+                    building the request payload — they are never forwarded
+                    to the tool microservice as part of the JSON body.
 
         Returns:
             The tool's result (implementation-specific).

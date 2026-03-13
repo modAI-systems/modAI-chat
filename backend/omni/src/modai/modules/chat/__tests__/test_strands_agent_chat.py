@@ -667,6 +667,84 @@ class TestToolErrors:
         assert result.status == "completed"
 
     @pytest.mark.asyncio
+    async def test_additional_tool_properties_from_request_are_injected_into_params(
+        self, llmock_base_url
+    ):
+        """Properties extracted from the request are injected as _-prefixed keys in tool params."""
+        captured_params: list[dict] = []
+
+        class _CapturingTool(Tool):
+            @property
+            def definition(self) -> ToolDefinition:
+                return ToolDefinition(
+                    name="calculate",
+                    description="Evaluate a math expression",
+                    parameters={
+                        "type": "object",
+                        "properties": {"expression": {"type": "string"}},
+                    },
+                )
+
+            async def run(self, params: dict[str, Any]) -> Any:
+                captured_params.append(dict(params))
+                return "42"
+
+        registry = Mock()
+        registry.get_tool_by_name = AsyncMock(return_value=_CapturingTool())
+
+        module = _llmock_module(llmock_base_url, tool_registry=registry)
+        body = {
+            "model": "myprovider/gpt-4o",
+            "input": "call tool 'calculate' with '{\"expression\": \"1+1\"}'",
+            "tools": [{"type": "function", "function": {"name": "calculate"}}],
+        }
+
+        await module.generate_response(
+            _make_request(authorization="Bearer mytoken"), body
+        )
+
+        assert len(captured_params) >= 1
+        assert captured_params[0].get("_bearer_token") == "mytoken"
+
+    @pytest.mark.asyncio
+    async def test_no_additional_tool_properties_injected_when_absent_in_request(
+        self, llmock_base_url
+    ):
+        """When the request carries no extractable properties, no _-prefixed keys are injected."""
+        captured_params: list[dict] = []
+
+        class _CapturingTool(Tool):
+            @property
+            def definition(self) -> ToolDefinition:
+                return ToolDefinition(
+                    name="calculate",
+                    description="Evaluate a math expression",
+                    parameters={
+                        "type": "object",
+                        "properties": {"expression": {"type": "string"}},
+                    },
+                )
+
+            async def run(self, params: dict[str, Any]) -> Any:
+                captured_params.append(dict(params))
+                return "42"
+
+        registry = Mock()
+        registry.get_tool_by_name = AsyncMock(return_value=_CapturingTool())
+
+        module = _llmock_module(llmock_base_url, tool_registry=registry)
+        body = {
+            "model": "myprovider/gpt-4o",
+            "input": "call tool 'calculate' with '{\"expression\": \"1+1\"}'",
+            "tools": [{"type": "function", "function": {"name": "calculate"}}],
+        }
+
+        await module.generate_response(_make_request(), body)
+
+        assert len(captured_params) >= 1
+        assert not any(k.startswith("_") for k in captured_params[0])
+
+    @pytest.mark.asyncio
     async def test_tool_registry_error_propagates(self):
         """If the tool registry raises, the error propagates."""
         registry = Mock()
@@ -888,8 +966,12 @@ def _make_dependencies(
     return ModuleDependencies(modules)
 
 
-def _make_request() -> Request:
-    return Mock(spec=Request)
+def _make_request(authorization: str | None = None) -> Request:
+    mock = Mock(spec=Request)
+    mock.headers.get.side_effect = lambda name, default="": (
+        authorization if name == "Authorization" and authorization else default
+    )
+    return mock
 
 
 def _llmock_module(

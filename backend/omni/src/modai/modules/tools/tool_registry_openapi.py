@@ -30,12 +30,25 @@ class _OpenAPITool(Tool):
         return self._definition_val
 
     async def run(self, params: dict[str, Any]) -> Any:
-        """Invoke the tool microservice over HTTP with the given parameters."""
+        """Invoke the tool microservice over HTTP with the given parameters.
+
+        Extracts reserved metadata keys from ``params`` before sending the
+        request.  Currently recognised keys:
+
+        * ``_bearer_token`` — forwarded as the ``Authorization: Bearer``
+          header; never included in the JSON request body.
+        """
+        body = dict(params)
+        bearer_token = body.pop("_bearer_token", None)
+        headers: dict[str, str] = {}
+        if bearer_token:
+            headers["Authorization"] = f"Bearer {bearer_token}"
         async with httpx.AsyncClient(timeout=TOOL_HTTP_TIMEOUT_SECONDS) as client:
             response = await client.request(
                 method=self._method.upper(),
                 url=self._url,
-                json=params,
+                json=body,
+                headers=headers,
             )
             response.raise_for_status()
             return response.text
