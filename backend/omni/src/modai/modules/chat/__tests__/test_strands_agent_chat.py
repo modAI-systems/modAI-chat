@@ -32,10 +32,41 @@ from modai.modules.model_provider.module import (
     ModelProviderResponse,
     ModelProvidersListResponse,
 )
-from modai.modules.tools.module import ToolDefinition
+from modai.modules.tools.module import Tool, ToolDefinition
 
 working_dir = Path.cwd()
 load_dotenv(find_dotenv(str(working_dir / ".env")))
+
+
+def _make_tool(
+    definition: ToolDefinition, run_url: str = "", run_method: str = "POST"
+) -> Tool:
+    """Create a Tool stub for testing.
+
+    If run_url is provided the tool will make a real HTTP call to that URL
+    when run() is called; otherwise run() returns an empty string.
+    """
+    url = run_url
+    method = run_method
+
+    class _TestTool(Tool):
+        @property
+        def definition(self) -> ToolDefinition:
+            return definition
+
+        async def run(self, params: dict[str, Any]) -> Any:
+            if url:
+                import httpx
+
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.request(
+                        method=method.upper(), url=url, json=params
+                    )
+                    response.raise_for_status()
+                    return response.text
+            return ""
+
+    return _TestTool()
 
 
 # ---------------------------------------------------------------------------
@@ -295,10 +326,10 @@ class TestStreamingHappyPath:
 class TestToolCallingHappyPath:
     """Tools are resolved from the registry and forwarded to the agent."""
 
-    def _make_tool_registry(self, tool_def: ToolDefinition | None = None) -> Mock:
+    def _make_tool_registry(self, tool: Tool | None = None) -> Mock:
         registry = Mock()
-        if tool_def:
-            registry.get_tool_by_name = AsyncMock(return_value=tool_def)
+        if tool:
+            registry.get_tool_by_name = AsyncMock(return_value=tool)
         else:
             registry.get_tool_by_name = AsyncMock(return_value=None)
         return registry
@@ -332,12 +363,19 @@ class TestToolCallingHappyPath:
             "/calculate", method="POST"
         ).respond_with_handler(_capture)
 
-        tool_def = ToolDefinition(
-            url=httpserver.url_for("/calculate"),
-            method="POST",
-            openapi_spec=SAMPLE_TOOL_OPENAPI_SPEC,
+        definition = ToolDefinition(
+            name="calculate",
+            description="Evaluate a math expression",
+            parameters={
+                "type": "object",
+                "properties": {"expression": {"type": "string"}},
+                "required": ["expression"],
+            },
         )
-        registry = self._make_tool_registry(tool_def)
+        tool = _make_tool(
+            definition, run_url=httpserver.url_for("/calculate"), run_method="POST"
+        )
+        registry = self._make_tool_registry(tool)
         module = _llmock_module(llmock_base_url, tool_registry=registry)
 
         body = {
@@ -378,12 +416,19 @@ class TestToolCallingHappyPath:
             "/calculate", method="POST"
         ).respond_with_handler(_capture)
 
-        tool_def = ToolDefinition(
-            url=httpserver.url_for("/calculate"),
-            method="POST",
-            openapi_spec=SAMPLE_TOOL_OPENAPI_SPEC,
+        definition = ToolDefinition(
+            name="calculate",
+            description="Evaluate a math expression",
+            parameters={
+                "type": "object",
+                "properties": {"expression": {"type": "string"}},
+                "required": ["expression"],
+            },
         )
-        registry = self._make_tool_registry(tool_def)
+        tool = _make_tool(
+            definition, run_url=httpserver.url_for("/calculate"), run_method="POST"
+        )
+        registry = self._make_tool_registry(tool)
         module = _llmock_module(llmock_base_url, tool_registry=registry)
 
         body = {
@@ -589,15 +634,23 @@ class TestToolErrors:
         assert result.status == "completed"
 
     @pytest.mark.asyncio
-    async def test_tool_with_invalid_openapi_spec_is_skipped(self, llmock_base_url):
-        """A tool whose OpenAPI spec has no valid operation is skipped."""
-        bad_tool_def = ToolDefinition(
-            url="http://broken:8000/noop",
-            method="POST",
-            openapi_spec={"paths": {}},  # no operations
-        )
+    async def test_tool_run_error_is_handled_gracefully(self, llmock_base_url):
+        """A tool whose run() raises an error does not crash the agent."""
+
+        class _FailingTool(Tool):
+            @property
+            def definition(self) -> ToolDefinition:
+                return ToolDefinition(
+                    name="broken_tool",
+                    description="Broken",
+                    parameters={"type": "object", "properties": {}},
+                )
+
+            async def run(self, params: dict[str, Any]) -> Any:
+                raise RuntimeError("tool exploded")
+
         registry = Mock()
-        registry.get_tool_by_name = AsyncMock(return_value=bad_tool_def)
+        registry.get_tool_by_name = AsyncMock(return_value=_FailingTool())
 
         module = _llmock_module(llmock_base_url, tool_registry=registry)
         body = {
@@ -645,13 +698,20 @@ class TestToolErrors:
         message is a user message). On the next turn the last message is the
         tool result, so MirrorStrategy takes over and the agent completes.
         """
-        tool_def = ToolDefinition(
-            url="http://localhost:1/calculate",  # unreachable
-            method="POST",
-            openapi_spec=SAMPLE_TOOL_OPENAPI_SPEC,
+        definition = ToolDefinition(
+            name="calculate",
+            description="Evaluate a math expression",
+            parameters={
+                "type": "object",
+                "properties": {"expression": {"type": "string"}},
+            },
+        )
+        # run_url points to an unreachable port — tool.run() will raise
+        tool = _make_tool(
+            definition, run_url="http://localhost:1/calculate", run_method="POST"
         )
         registry = Mock()
-        registry.get_tool_by_name = AsyncMock(return_value=tool_def)
+        registry.get_tool_by_name = AsyncMock(return_value=tool)
 
         module = _llmock_module(llmock_base_url, tool_registry=registry)
         body = {
@@ -676,13 +736,19 @@ class TestToolErrors:
         """
         httpserver.expect_oneshot_request("/calculate").respond_with_json({"result": 4})
 
-        tool_def = ToolDefinition(
-            url=httpserver.url_for("/calculate"),
-            method="POST",
-            openapi_spec=SAMPLE_TOOL_OPENAPI_SPEC,
+        definition = ToolDefinition(
+            name="calculate",
+            description="Evaluate a math expression",
+            parameters={
+                "type": "object",
+                "properties": {"expression": {"type": "string"}},
+            },
+        )
+        tool = _make_tool(
+            definition, run_url=httpserver.url_for("/calculate"), run_method="POST"
         )
         registry = Mock()
-        registry.get_tool_by_name = AsyncMock(return_value=tool_def)
+        registry.get_tool_by_name = AsyncMock(return_value=tool)
 
         module = _llmock_module(llmock_base_url, tool_registry=registry)
         body = {
@@ -698,14 +764,18 @@ class TestToolErrors:
     @pytest.mark.asyncio
     async def test_partial_tools_resolved_when_some_missing(self, llmock_base_url):
         """When some tools are found and others not, only found tools are used."""
-        calc_def = ToolDefinition(
-            url="http://calc:8000/calculate",
-            method="POST",
-            openapi_spec=SAMPLE_TOOL_OPENAPI_SPEC,
+        calc_definition = ToolDefinition(
+            name="calculate",
+            description="Evaluate a math expression",
+            parameters={
+                "type": "object",
+                "properties": {"expression": {"type": "string"}},
+            },
         )
+        calc_tool = _make_tool(calc_definition)
         registry = Mock()
         registry.get_tool_by_name = AsyncMock(
-            side_effect=lambda name: calc_def if name == "calculate" else None
+            side_effect=lambda name: calc_tool if name == "calculate" else None
         )
 
         module = _llmock_module(llmock_base_url, tool_registry=registry)

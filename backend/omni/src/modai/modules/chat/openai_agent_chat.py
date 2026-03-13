@@ -13,7 +13,6 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator
 
-import httpx
 from fastapi import Request
 from openai.types.responses import (
     Response as OpenAIResponse,
@@ -37,12 +36,11 @@ from modai.modules.model_provider.module import (
     ModelProviderModule,
     ModelProviderResponse,
 )
-from modai.modules.tools.module import ToolDefinition, ToolRegistryModule
+from modai.modules.tools.module import Tool, ToolRegistryModule
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant."
-TOOL_HTTP_TIMEOUT_SECONDS = 30.0
 
 
 class StrandsAgentChatModule(ChatLLMModule):
@@ -234,66 +232,41 @@ async def _resolve_request_tools(
 
     strands_tools: list[PythonAgentTool] = []
     for name in tool_names:
-        tool_def = await tool_registry.get_tool_by_name(name)
-        if tool_def is None:
+        tool = await tool_registry.get_tool_by_name(name)
+        if tool is None:
             logger.warning("Tool '%s' not found in registry, skipping", name)
             continue
-        strands_tool = _create_http_tool(tool_def)
-        if strands_tool:
-            strands_tools.append(strands_tool)
+        strands_tools.append(_create_strands_tool(tool))
 
     return strands_tools
 
 
-def _create_http_tool(tool_def: ToolDefinition) -> PythonAgentTool | None:
-    """Create a Strands ``PythonAgentTool`` that invokes a tool via HTTP.
+def _create_strands_tool(tool: Tool) -> PythonAgentTool:
+    """Wrap a Tool as a Strands ``PythonAgentTool``.
 
-    The tool spec (name, description, input schema) is derived from the
-    tool's OpenAPI spec.  The handler makes an HTTP request to the tool's
-    endpoint and returns the response body to the LLM.
+    The tool spec (name, description, input schema) comes from the tool's
+    definition.  The handler delegates execution to ``tool.run``.
     """
-    operation = _extract_operation(tool_def.openapi_spec)
-    if not operation:
-        logger.warning(
-            "No operation found in OpenAPI spec for tool at %s", tool_def.url
-        )
-        return None
-
-    operation_id = operation.get("operationId", "")
-    description = operation.get("summary") or operation.get("description", "")
-
-    request_body = operation.get("requestBody", {})
-    content = request_body.get("content", {})
-    json_content = content.get("application/json", {})
-    parameters_schema = json_content.get("schema", {"type": "object", "properties": {}})
+    definition = tool.definition
 
     tool_spec: ToolSpec = {
-        "name": operation_id,
-        "description": description,
-        "inputSchema": {"json": parameters_schema},
+        "name": definition.name,
+        "description": definition.description,
+        "inputSchema": {"json": definition.parameters},
     }
 
-    url = tool_def.url
-    method = tool_def.method
-
-    def _handler(tool_use: ToolUse, **kwargs: Any) -> ToolResult:  # noqa: ARG001
-        """Invoke the tool microservice over HTTP."""
+    async def _handler(tool_use: ToolUse, **kwargs: Any) -> ToolResult:  # noqa: ARG001
+        """Invoke the tool and wrap the result for Strands."""
         params = tool_use["input"]
         try:
-            with httpx.Client(timeout=TOOL_HTTP_TIMEOUT_SECONDS) as client:
-                response = client.request(
-                    method=method.upper(),
-                    url=url,
-                    json=params,
-                )
-                response.raise_for_status()
-                return {
-                    "toolUseId": tool_use["toolUseId"],
-                    "status": "success",
-                    "content": [{"text": response.text}],
-                }
+            result = await tool.run(params)
+            return {
+                "toolUseId": tool_use["toolUseId"],
+                "status": "success",
+                "content": [{"text": str(result)}],
+            }
         except Exception as exc:
-            logger.error("Tool '%s' invocation failed: %s", operation_id, exc)
+            logger.error("Tool '%s' invocation failed: %s", definition.name, exc)
             return {
                 "toolUseId": tool_use["toolUseId"],
                 "status": "error",
@@ -301,20 +274,10 @@ def _create_http_tool(tool_def: ToolDefinition) -> PythonAgentTool | None:
             }
 
     return PythonAgentTool(
-        tool_name=operation_id,
+        tool_name=definition.name,
         tool_spec=tool_spec,
         tool_func=_handler,
     )
-
-
-def _extract_operation(spec: dict[str, Any]) -> dict[str, Any] | None:
-    """Extract the first operation from an OpenAPI spec."""
-    paths = spec.get("paths", {})
-    for _path, methods in paths.items():
-        for _method, operation in methods.items():
-            if isinstance(operation, dict) and "operationId" in operation:
-                return operation
-    return None
 
 
 # ---------------------------------------------------------------------------

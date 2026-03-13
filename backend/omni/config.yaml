@@ -63,7 +63,7 @@ modules:
       user_settings_store: "user_settings_store"
 
   tool_registry:
-    class: modai.modules.tools.tool_registry.HttpToolRegistryModule
+    class: modai.modules.tools.tool_registry_openapi.OpenAPIToolRegistryModule
     config:
       tools:
         - url: http://localhost:8001/roll

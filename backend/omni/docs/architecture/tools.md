@@ -1,13 +1,13 @@
 # Tools Architecture
 
 ## 1. Overview
-- **Architecture Style**: Microservice-based tool system with a registry and a web layer that serves tools in OpenAI format
+- **Architecture Style**: Microservice-based tool system with a generic tool abstraction and a web layer that serves tools in OpenAI format
 - **Design Principles**:
-  - Tools are independent microservices — each tool is a standalone service with its own OpenAPI spec
-  - OpenAPI as contract — the tool's definition (parameters, description, endpoints) is read from its OpenAPI spec
-  - Registry as aggregator — the Tool Registry fetches and holds OpenAPI specs + invocation metadata (url, method) without transformation
-  - Web layer transforms — the Tools Web Module converts OpenAPI specs into OpenAI function-calling format for the frontend
-  - Chat Agent resolves via registry — when the LLM emits a tool call, the Chat Agent looks up the tool's url and method from the registry to make the HTTP call
+  - Tools are LLM-agnostic — a tool has a definition (name, description, parameters) and a run capability; neither is tied to any LLM API
+  - OpenAPI as one registry implementation — the OpenAPI registry fetches specs from microservices and creates tool instances that handle HTTP invocation internally
+  - Registry encapsulates invocation — callers do not need to know about URLs, methods, or HTTP; they just run a tool with parameters
+  - Web layer transforms definitions — the Tools Web Module converts tool definitions to OpenAI function-calling format
+  - Extensible — new registry implementations can plug in any tool backend (HTTP, gRPC, in-process functions, etc.) without changing callers
 - **Quality Attributes**: Decoupled, language-agnostic, independently deployable, discoverable
 
 ## 2. Tool Microservice Convention
@@ -80,54 +80,77 @@ flowchart TD
     TR -->|GET /openapi.json| TS2[Tool Service B]
     FE -->|POST /api/responses with tool names| CR[Chat Router]
     CR --> CA[Chat Agent Module]
-    CA -->|lookup tool by name| TR
-    CA -->|HTTP trigger| TS1
-    CA -->|HTTP trigger| TS2
+    CA -->|get_tool_by_name| TR
+    CA -->|tool.run params | TS1
+    CA -->|tool.run params | TS2
 ```
 
 **Flow**:
 1. Frontend calls `GET /api/tools` to discover all available tools
-2. Tools Web Module asks the Tool Registry for all tools (OpenAPI specs + url + method)
-3. Tools Web Module transforms the OpenAPI specs into **OpenAI function-calling format** and returns them to the frontend
-4. User selects which tools to enable for a chat session
-5. Frontend sends `POST /api/responses` with tool names (as received from `GET /api/tools`)
-6. When the LLM emits a `tool_call` with a function name, the Chat Agent **looks up** that name in the Tool Registry to get the tool's url and method
-7. The Chat Agent sends an HTTP request to the tool's microservice endpoint and returns the result to the LLM
+2. Tools Web Module asks the Tool Registry for all tools and converts their definitions to OpenAI format
+3. User selects which tools to enable for a chat session
+4. Frontend sends `POST /api/responses` with tool names (as received from `GET /api/tools`)
+5. When the LLM emits a `tool_call`, the Chat Agent looks up the tool by name in the registry
+6. The Chat Agent runs the tool with the LLM-supplied parameters — the tool directly invokes the microservice; no registry involvement at invocation time
 
 ## 4. Module Architecture
 
-### 4.1 Tool Registry Module (Plain Module)
+### 4.1 Core Abstractions
 
-**Purpose**: Aggregates OpenAPI specs from all configured tool microservices and provides tool lookup for invocation.
+**Tool Definition** — a value object with three fields:
+- `name` — unique identifier derived from the OpenAPI `operationId`
+- `description` — human-readable text describing what the tool does
+- `parameters` — a fully-resolved JSON Schema (all `$ref` pointers inlined) describing the input
+
+A tool definition contains enough information to construct an LLM tool call but is not tied to any specific LLM API.
+
+**Tool** — pairs a definition with execution capability:
+- Exposes its `definition` (read-only)
+- Provides a `run(params)` operation that executes the tool with the given parameters and returns the result
+
+### 4.2 Tool Registry Module (Plain Module)
+
+**Purpose**: Aggregates tools from all configured sources and provides lookup by name.
 
 **Responsibilities**:
-- Maintain a list of configured tool microservice URLs and their HTTP methods
-- Fetch the OpenAPI spec from each tool microservice
-- Return all tools with their OpenAPI specs, urls, and methods (unmodified)
-- Provide lookup by tool name — given a function name (derived from `operationId`), return the tool's url, method, and parameters
-- Handle unavailable tool services gracefully (skip with warning, don't fail the whole request)
+- Return all available tools via `get_tools`
+- Look up a tool by name via `get_tool_by_name`
+- Handle unavailable tool services gracefully (skip with warning, don't fail)
 
-**No module dependencies**: The registry does not depend on other modAI modules. Tool microservices are external HTTP services configured via the module's config.
+**No module dependencies**: The registry does not depend on other modAI modules.
 
-### 4.2 Tools Web Module (Web Module)
+### 4.3 OpenAPI Tool Registry (concrete implementation)
 
-**Purpose**: Exposes `GET /api/tools` endpoint. Transforms tool definitions from OpenAPI format into OpenAI function-calling format so the frontend can use them directly.
+**Purpose**: Concrete registry implementation that harvests OpenAPI specs from configured HTTP microservices.
 
-**Dependencies**: Tool Registry Module (injected via `module_dependencies`)
+**How it works**:
+- On each call to `get_tools`, fetches `/openapi.json` from each configured service
+- Extracts the tool definition from the spec: `operationId` → name, `summary`/`description` → description, request body schema → parameters (all `$ref` resolved inline)
+- Each resulting tool's run operation makes an HTTP call to the configured trigger endpoint with the supplied parameters
+
+**Configuration** — each tool entry specifies:
+- `url`: The full trigger endpoint URL of the tool microservice
+- `method`: The HTTP method to use when invoking the tool (e.g. POST, PUT, GET)
+
+### 4.4 Tools Web Module (Web Module)
+
+**Purpose**: Exposes `GET /api/tools` endpoint. Transforms tool definitions into OpenAI function-calling format.
+
+**Dependencies**: Tool Registry Module
 
 **Responsibilities**:
 - Expose `GET /api/tools` endpoint
-- Call the Tool Registry to get all available tools with their OpenAPI specs
-- Transform each tool's OpenAPI spec into OpenAI function-calling format (see section 5.1)
-- Return the transformed tools to the frontend
+- Call the Tool Registry to get all available tools
+- Convert each tool definition to OpenAI function-calling format
+- Return the transformed tool definitions to the frontend
 
-### 4.3 Chat Agent Module (existing, updated dependency)
+### 4.5 Chat Agent Module
 
-The Chat Agent Module receives a `tool_registry` dependency. When the LLM emits a `tool_call`:
+The Chat Agent Module receives a tool registry dependency. When the LLM emits a `tool_call`:
 1. Extract the function name from the tool call
-2. Look up the function name in the Tool Registry to get url + method
-3. Send the HTTP request with the tool call arguments to the tool's endpoint
-4. Return the response to the LLM
+2. Look up the tool by name in the registry
+3. Run the tool with the LLM-supplied parameters — no HTTP knowledge needed in the chat module
+4. Return the result to the LLM
 
 ## 5. API Endpoints
 
@@ -137,14 +160,12 @@ The Chat Agent Module receives a `tool_registry` dependency. When the LLM emits 
 
 **Endpoint**: `GET /api/tools`
 
-**Purpose**: Returns all available tools in OpenAI function-calling format. The frontend can pass these tool definitions directly when calling `/api/responses`.
+**Purpose**: Returns all available tools in OpenAI function-calling format.
 
-The Tools Web Module fetches tool data from the registry (OpenAPI specs + metadata) and transforms each tool into OpenAI format.
-
-**OpenAPI → OpenAI Transformation**:
-- `operationId` → `function.name`
-- `summary` (or `description`) → `function.description`
-- Request body `schema` → `function.parameters`
+**Tool Definition → OpenAI Transformation**:
+- `name` → `function.name`
+- `description` → `function.description`
+- `parameters` → `function.parameters` (already resolved, no `$ref`)
 
 **Response Format (200 OK)**:
 ```json
@@ -166,73 +187,19 @@ The Tools Web Module fetches tool data from the registry (OpenAPI specs + metada
           "required": ["expression"]
         }
       }
-    },
-    {
-      "type": "function",
-      "function": {
-        "name": "web_search",
-        "description": "Search the web for current information",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "query": {
-              "type": "string",
-              "description": "Search query"
-            }
-          },
-          "required": ["query"]
-        }
-      }
     }
   ]
 }
 ```
 
-If a tool service is unreachable, it is omitted from the response and a warning is logged. The endpoint never fails due to a single unavailable tool.
+If a tool service is unreachable, it is omitted from the response and a warning is logged.
 
 ## 6. Configuration
 
-```yaml
-modules:
-  tool_registry:
-    class: modai.modules.tools.tool_registry.HttpToolRegistryModule
-    config:
-      tools:
-        - url: http://calculator-service:8000/calculate
-          method: POST
-        - url: http://web-search-service:8000/search
-          method: PUT
-
-  tools_web:
-    class: modai.modules.tools.tools_web_module.ToolsWebModule
-    module_dependencies:
-      tool_registry: tool_registry
-
-  chat_openai:
-    class: modai.modules.chat.openai_agent_chat.StrandsAgentChatModule
-    module_dependencies:
-      llm_provider_module: openai_model_provider
-      tool_registry: tool_registry
-```
-
-Each entry in `tools` (on the registry) has:
+The tool registry is configured with a list of tool microservice endpoints. Each entry has:
 - `url`: The full trigger endpoint URL of the tool microservice
 - `method`: The HTTP method used to invoke the tool (e.g. PUT, POST, GET)
 
-The registry derives the base URL from `url` to fetch the OpenAPI spec (appending `/openapi.json` to the base).
+The registry derives the base URL from `url` (strips the path) and appends `/openapi.json` to fetch the spec.
 
-## 7. Design Decisions
-
-- **Decision 1**: Tools are independent microservices, not modAI modules.
-  - **Rationale**: Maximum decoupling — tools can be written in any language, deployed independently, and reused across systems.
-  - **Trade-off**: Network overhead for spec fetching and tool invocation vs. in-process calls.
-
-- **Decision 2**: OpenAPI spec is fetched at request time, not cached.
-  - **Rationale**: Simplicity — no cache invalidation needed. Tool services can update their specs and changes are immediately visible.
-  - **Trade-off**: Higher latency on `GET /api/tools`. Can be optimized with caching later if needed.
-
-- **Decision 3**: The Tool Registry stores OpenAPI specs unmodified. The Tools Web Module transforms them.
-  - **Rationale**: Separation of concerns — the registry is a pure aggregator, the web module handles format conversion. This keeps each module focused on one job.
-
-- **Decision 4**: Tool name for lookup is derived from `operationId` in the OpenAPI spec.
-  - **Rationale**: `operationId` is a standard OpenAPI field designed to uniquely identify an operation, making it a natural tool name.
+See `config.yaml` and `default_config.yaml` for concrete configuration examples.
