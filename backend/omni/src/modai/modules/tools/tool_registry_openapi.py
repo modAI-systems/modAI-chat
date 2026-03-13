@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 import httpx
 
 from modai.module import ModuleDependencies
+from modai.modules.http_client.module import HttpClientModule
 from modai.modules.tools.module import Tool, ToolDefinition, ToolRegistryModule
 
 logger = logging.getLogger(__name__)
@@ -20,10 +21,17 @@ class _OpenAPITool(Tool):
     over HTTP when ``run`` is called.
     """
 
-    def __init__(self, url: str, method: str, definition: ToolDefinition) -> None:
+    def __init__(
+        self,
+        url: str,
+        method: str,
+        definition: ToolDefinition,
+        http_client_factory: HttpClientModule,
+    ) -> None:
         self._url = url
         self._method = method
         self._definition_val = definition
+        self._http_client_factory = http_client_factory
 
     @property
     def definition(self) -> ToolDefinition:
@@ -43,7 +51,9 @@ class _OpenAPITool(Tool):
         headers: dict[str, str] = {}
         if bearer_token:
             headers["Authorization"] = f"Bearer {bearer_token}"
-        async with httpx.AsyncClient(timeout=TOOL_HTTP_TIMEOUT_SECONDS) as client:
+        async with self._http_client_factory.new(
+            timeout=TOOL_HTTP_TIMEOUT_SECONDS
+        ) as client:
             response = await client.request(
                 method=self._method.upper(),
                 url=self._url,
@@ -70,6 +80,9 @@ class OpenAPIToolRegistryModule(ToolRegistryModule):
         The registry derives the base URL from "url" and appends
         "/openapi.json" to fetch the spec.
 
+    Module Dependencies:
+        http_client: an HttpClientModule used for all outbound HTTP requests.
+
     Example config:
         tools:
           - url: http://calculator-service:8000/calculate
@@ -81,11 +94,12 @@ class OpenAPIToolRegistryModule(ToolRegistryModule):
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
         super().__init__(dependencies, config)
         self.tool_services: list[dict[str, str]] = config.get("tools", [])
+        self._http_client: HttpClientModule = dependencies.get_module("http_client")  # type: ignore[assignment]
 
     async def get_tools(self) -> list[Tool]:
         tools: list[Tool] = []
 
-        async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS) as client:
+        async with self._http_client.new(timeout=HTTP_TIMEOUT_SECONDS) as client:
             for service in self.tool_services:
                 url = service["url"]
                 method = service["method"]
@@ -101,7 +115,12 @@ class OpenAPIToolRegistryModule(ToolRegistryModule):
                     )
                     continue
                 tools.append(
-                    _OpenAPITool(url=url, method=method, definition=definition)
+                    _OpenAPITool(
+                        url=url,
+                        method=method,
+                        definition=definition,
+                        http_client_factory=self._http_client,
+                    )
                 )
 
         return tools
@@ -193,7 +212,7 @@ async def _fetch_openapi_spec(
 ) -> dict[str, Any] | None:
     openapi_url = f"{base_url.rstrip('/')}/openapi.json"
     try:
-        response = await client.get(openapi_url)
+        response = await client.request("GET", openapi_url)
         response.raise_for_status()
         return response.json()
     except httpx.HTTPStatusError as e:

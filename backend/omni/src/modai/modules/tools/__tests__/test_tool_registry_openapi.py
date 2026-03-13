@@ -1,9 +1,12 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from contextlib import asynccontextmanager
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
 
 from modai.module import ModuleDependencies
+from modai.modules.http_client.module import HttpClientModule
 from modai.modules.tools.module import Tool, ToolDefinition
 from modai.modules.tools.tool_registry_openapi import (
     OpenAPIToolRegistryModule,
@@ -11,6 +14,34 @@ from modai.modules.tools.tool_registry_openapi import (
     _derive_base_url,
     _fetch_openapi_spec,
 )
+
+
+class _StubHttpClientFactory(HttpClientModule):
+    """Test factory that yields clients in sequence; reuses the last one when exhausted."""
+
+    def __init__(self, *clients: httpx.AsyncClient):
+        super().__init__(ModuleDependencies(), {})
+        self._clients = list(clients)
+        self._index = 0
+
+    def new(self, timeout: float) -> Any:
+        @asynccontextmanager
+        async def _ctx():
+            idx = min(self._index, len(self._clients) - 1)
+            self._index += 1
+            yield self._clients[idx]
+
+        return _ctx()
+
+
+def _mock_response(spec: dict | None = None, text: str = "") -> MagicMock:
+    """Build a minimal mock httpx response."""
+    resp = MagicMock()
+    resp.raise_for_status = MagicMock()
+    if spec is not None:
+        resp.json.return_value = spec
+    resp.text = text
+    return resp
 
 
 SAMPLE_OPENAPI_SPEC = {
@@ -114,10 +145,14 @@ class TestBuildToolDefinition:
 
 
 class TestOpenAPIToolRegistryModule:
-    def _make_module(self, tools: list[dict]) -> OpenAPIToolRegistryModule:
-        deps = ModuleDependencies()
-        config = {"tools": tools}
-        return OpenAPIToolRegistryModule(deps, config)
+    def _make_module(
+        self, tools: list[dict], factory=None
+    ) -> OpenAPIToolRegistryModule:
+        if factory is None:
+            # Provide a factory that yields a no-op async client by default
+            factory = _StubHttpClientFactory(AsyncMock())
+        deps = ModuleDependencies({"http_client": factory})
+        return OpenAPIToolRegistryModule(deps, {"tools": tools})
 
     @pytest.mark.asyncio
     async def test_get_tools_empty_config(self):
@@ -127,13 +162,6 @@ class TestOpenAPIToolRegistryModule:
 
     @pytest.mark.asyncio
     async def test_get_tools_returns_tools_from_all_services(self):
-        module = self._make_module(
-            [
-                {"url": "http://calc:8000/calculate", "method": "POST"},
-                {"url": "http://search:8000/search", "method": "PUT"},
-            ]
-        )
-
         search_spec = {
             **SAMPLE_OPENAPI_SPEC,
             "paths": {
@@ -156,27 +184,22 @@ class TestOpenAPIToolRegistryModule:
             },
         }
 
-        async def mock_get(url, **kwargs):
+        async def mock_request(method, url, **kwargs):
             if "calc" in url:
-                resp = MagicMock()
-                resp.raise_for_status = lambda: None
-                resp.json.return_value = SAMPLE_OPENAPI_SPEC
-                return resp
-            resp = MagicMock()
-            resp.raise_for_status = lambda: None
-            resp.json.return_value = search_spec
-            return resp
+                return _mock_response(spec=SAMPLE_OPENAPI_SPEC)
+            return _mock_response(spec=search_spec)
 
-        with patch(
-            "modai.modules.tools.tool_registry_openapi.httpx.AsyncClient"
-        ) as mock_client_cls:
-            mock_client = AsyncMock()
-            mock_client.get = mock_get
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
-            mock_client_cls.return_value = mock_client
+        mock_client = AsyncMock()
+        mock_client.request = mock_request
+        module = self._make_module(
+            [
+                {"url": "http://calc:8000/calculate", "method": "POST"},
+                {"url": "http://search:8000/search", "method": "PUT"},
+            ],
+            factory=_StubHttpClientFactory(mock_client),
+        )
 
-            result = await module.get_tools()
+        result = await module.get_tools()
 
         assert len(result) == 2
         assert isinstance(result[0], Tool)
@@ -186,27 +209,16 @@ class TestOpenAPIToolRegistryModule:
 
     @pytest.mark.asyncio
     async def test_tool_definition_extracted_from_spec(self):
+        mock_client = AsyncMock()
+        mock_client.request = AsyncMock(
+            return_value=_mock_response(spec=SAMPLE_OPENAPI_SPEC)
+        )
         module = self._make_module(
-            [{"url": "http://calc:8000/calculate", "method": "POST"}]
+            [{"url": "http://calc:8000/calculate", "method": "POST"}],
+            factory=_StubHttpClientFactory(mock_client),
         )
 
-        mock_response = MagicMock()
-        mock_response.raise_for_status = lambda: None
-        mock_response.json.return_value = SAMPLE_OPENAPI_SPEC
-
-        async def mock_get(url, **kwargs):
-            return mock_response
-
-        with patch(
-            "modai.modules.tools.tool_registry_openapi.httpx.AsyncClient"
-        ) as mock_client_cls:
-            mock_client = AsyncMock()
-            mock_client.get = mock_get
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
-            mock_client_cls.return_value = mock_client
-
-            result = await module.get_tools()
+        result = await module.get_tools()
 
         assert len(result) == 1
         definition = result[0].definition
@@ -216,59 +228,37 @@ class TestOpenAPIToolRegistryModule:
 
     @pytest.mark.asyncio
     async def test_get_tools_skips_unavailable_service(self):
+        async def mock_request(method, url, **kwargs):
+            if "bad" in url:
+                raise httpx.ConnectError("Connection refused")
+            return _mock_response(spec=SAMPLE_OPENAPI_SPEC)
+
+        mock_client = AsyncMock()
+        mock_client.request = mock_request
         module = self._make_module(
             [
                 {"url": "http://good:8000/run", "method": "POST"},
                 {"url": "http://bad:8000/run", "method": "POST"},
-            ]
+            ],
+            factory=_StubHttpClientFactory(mock_client),
         )
 
-        mock_response_good = MagicMock()
-        mock_response_good.raise_for_status = lambda: None
-        mock_response_good.json.return_value = SAMPLE_OPENAPI_SPEC
-
-        async def mock_get(url, **kwargs):
-            if "bad" in url:
-                raise httpx.ConnectError("Connection refused")
-            return mock_response_good
-
-        with patch(
-            "modai.modules.tools.tool_registry_openapi.httpx.AsyncClient"
-        ) as mock_client_cls:
-            mock_client = AsyncMock()
-            mock_client.get = mock_get
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
-            mock_client_cls.return_value = mock_client
-
-            result = await module.get_tools()
+        result = await module.get_tools()
 
         assert len(result) == 1
         assert result[0].definition.name == "calculate"
 
     @pytest.mark.asyncio
     async def test_get_tools_skips_spec_without_operation_id(self):
-        module = self._make_module([{"url": "http://tool:8000/run", "method": "POST"}])
-
         no_op_spec = {"paths": {"/run": {"post": {"summary": "No operationId"}}}}
+        mock_client = AsyncMock()
+        mock_client.request = AsyncMock(return_value=_mock_response(spec=no_op_spec))
+        module = self._make_module(
+            [{"url": "http://tool:8000/run", "method": "POST"}],
+            factory=_StubHttpClientFactory(mock_client),
+        )
 
-        mock_response = MagicMock()
-        mock_response.raise_for_status = lambda: None
-        mock_response.json.return_value = no_op_spec
-
-        async def mock_get(url, **kwargs):
-            return mock_response
-
-        with patch(
-            "modai.modules.tools.tool_registry_openapi.httpx.AsyncClient"
-        ) as mock_client_cls:
-            mock_client = AsyncMock()
-            mock_client.get = mock_get
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
-            mock_client_cls.return_value = mock_client
-
-            result = await module.get_tools()
+        result = await module.get_tools()
 
         assert result == []
 
@@ -293,53 +283,37 @@ class TestOpenAPIToolRegistryModule:
 class TestToolRun:
     """Tool.run invokes the tool microservice over HTTP."""
 
-    def _make_module(self, tools: list[dict]) -> OpenAPIToolRegistryModule:
-        deps = ModuleDependencies()
+    def _make_module(
+        self, tools: list[dict], factory=None
+    ) -> OpenAPIToolRegistryModule:
+        if factory is None:
+            factory = _StubHttpClientFactory(AsyncMock())
+        deps = ModuleDependencies({"http_client": factory})
         return OpenAPIToolRegistryModule(deps, {"tools": tools})
 
     @pytest.mark.asyncio
     async def test_run_makes_http_request_to_tool_endpoint(self):
-        module = self._make_module(
-            [{"url": "http://calc:8000/calculate", "method": "POST"}]
+        spec_client = AsyncMock()
+        spec_client.request = AsyncMock(
+            return_value=_mock_response(spec=SAMPLE_OPENAPI_SPEC)
         )
 
-        fetch_response = MagicMock()
-        fetch_response.raise_for_status = lambda: None
-        fetch_response.json.return_value = SAMPLE_OPENAPI_SPEC
+        run_response = _mock_response(text='{"result": 42}')
+        run_client = AsyncMock()
+        run_client.request = AsyncMock(return_value=run_response)
 
-        run_response = MagicMock()
-        run_response.raise_for_status = lambda: None
-        run_response.text = '{"result": 42}'
+        # factory yields spec_client on first new() call, run_client on second
+        module = self._make_module(
+            [{"url": "http://calc:8000/calculate", "method": "POST"}],
+            factory=_StubHttpClientFactory(spec_client, run_client),
+        )
 
-        async def mock_get(url, **kwargs):
-            return fetch_response
-
-        with patch(
-            "modai.modules.tools.tool_registry_openapi.httpx.AsyncClient"
-        ) as mock_client_cls:
-            mock_client = AsyncMock()
-            mock_client.get = mock_get
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
-            mock_client_cls.return_value = mock_client
-
-            tools = await module.get_tools()
-
+        tools = await module.get_tools()
         assert len(tools) == 1
-        tool = tools[0]
 
-        mock_run_client = AsyncMock()
-        mock_run_client.request = AsyncMock(return_value=run_response)
-        mock_run_client.__aenter__ = AsyncMock(return_value=mock_run_client)
-        mock_run_client.__aexit__ = AsyncMock(return_value=False)
+        result = await tools[0].run({"expression": "6*7"})
 
-        with patch(
-            "modai.modules.tools.tool_registry_openapi.httpx.AsyncClient",
-            return_value=mock_run_client,
-        ):
-            result = await tool.run({"expression": "6*7"})
-
-        mock_run_client.request.assert_called_once_with(
+        run_client.request.assert_called_once_with(
             method="POST",
             url="http://calc:8000/calculate",
             json={"expression": "6*7"},
@@ -350,45 +324,24 @@ class TestToolRun:
     @pytest.mark.asyncio
     async def test_run_forwards_bearer_token_as_authorization_header(self):
         """When _bearer_token is in params it becomes Authorization: Bearer <token>."""
-        module = self._make_module(
-            [{"url": "http://calc:8000/calculate", "method": "POST"}]
+        spec_client = AsyncMock()
+        spec_client.request = AsyncMock(
+            return_value=_mock_response(spec=SAMPLE_OPENAPI_SPEC)
         )
 
-        fetch_response = MagicMock()
-        fetch_response.raise_for_status = lambda: None
-        fetch_response.json.return_value = SAMPLE_OPENAPI_SPEC
+        run_response = _mock_response(text='{"result": 42}')
+        run_client = AsyncMock()
+        run_client.request = AsyncMock(return_value=run_response)
 
-        run_response = MagicMock()
-        run_response.raise_for_status = lambda: None
-        run_response.text = '{"result": 42}'
+        module = self._make_module(
+            [{"url": "http://calc:8000/calculate", "method": "POST"}],
+            factory=_StubHttpClientFactory(spec_client, run_client),
+        )
 
-        async def mock_get(url, **kwargs):
-            return fetch_response
+        tools = await module.get_tools()
+        await tools[0].run({"expression": "2+2", "_bearer_token": "secret"})
 
-        with patch(
-            "modai.modules.tools.tool_registry_openapi.httpx.AsyncClient"
-        ) as mock_client_cls:
-            mock_client = AsyncMock()
-            mock_client.get = mock_get
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
-            mock_client_cls.return_value = mock_client
-            tools = await module.get_tools()
-
-        tool = tools[0]
-
-        mock_run_client = AsyncMock()
-        mock_run_client.request = AsyncMock(return_value=run_response)
-        mock_run_client.__aenter__ = AsyncMock(return_value=mock_run_client)
-        mock_run_client.__aexit__ = AsyncMock(return_value=False)
-
-        with patch(
-            "modai.modules.tools.tool_registry_openapi.httpx.AsyncClient",
-            return_value=mock_run_client,
-        ):
-            await tool.run({"expression": "2+2", "_bearer_token": "secret"})
-
-        mock_run_client.request.assert_called_once_with(
+        run_client.request.assert_called_once_with(
             method="POST",
             url="http://calc:8000/calculate",
             json={"expression": "2+2"},
@@ -405,11 +358,11 @@ class TestFetchOpenapiSpec:
         mock_response.json.return_value = SAMPLE_OPENAPI_SPEC
 
         client = AsyncMock()
-        client.get = AsyncMock(return_value=mock_response)
+        client.request = AsyncMock(return_value=mock_response)
 
         result = await _fetch_openapi_spec(client, "http://tool:8000")
         assert result == SAMPLE_OPENAPI_SPEC
-        client.get.assert_called_once_with("http://tool:8000/openapi.json")
+        client.request.assert_called_once_with("GET", "http://tool:8000/openapi.json")
 
     @pytest.mark.asyncio
     async def test_strips_trailing_slash(self):
@@ -419,10 +372,10 @@ class TestFetchOpenapiSpec:
         mock_response.json.return_value = SAMPLE_OPENAPI_SPEC
 
         client = AsyncMock()
-        client.get = AsyncMock(return_value=mock_response)
+        client.request = AsyncMock(return_value=mock_response)
 
         await _fetch_openapi_spec(client, "http://tool:8000/")
-        client.get.assert_called_once_with("http://tool:8000/openapi.json")
+        client.request.assert_called_once_with("GET", "http://tool:8000/openapi.json")
 
     @pytest.mark.asyncio
     async def test_http_error_returns_none(self):
@@ -435,7 +388,7 @@ class TestFetchOpenapiSpec:
         )
 
         client = AsyncMock()
-        client.get = AsyncMock(return_value=mock_response)
+        client.request = AsyncMock(return_value=mock_response)
 
         result = await _fetch_openapi_spec(client, "http://tool:8000")
         assert result is None
@@ -443,7 +396,7 @@ class TestFetchOpenapiSpec:
     @pytest.mark.asyncio
     async def test_connection_error_returns_none(self):
         client = AsyncMock()
-        client.get = AsyncMock(side_effect=httpx.ConnectError("Connection refused"))
+        client.request = AsyncMock(side_effect=httpx.ConnectError("Connection refused"))
 
         result = await _fetch_openapi_spec(client, "http://tool:8000")
         assert result is None
@@ -451,7 +404,7 @@ class TestFetchOpenapiSpec:
     @pytest.mark.asyncio
     async def test_unexpected_error_returns_none(self):
         client = AsyncMock()
-        client.get = AsyncMock(side_effect=RuntimeError("something went wrong"))
+        client.request = AsyncMock(side_effect=RuntimeError("something went wrong"))
 
         result = await _fetch_openapi_spec(client, "http://tool:8000")
         assert result is None
@@ -472,46 +425,35 @@ class TestDeriveBaseUrl:
 
 
 class TestGetToolByName:
-    def _make_module(self, tools: list[dict]) -> OpenAPIToolRegistryModule:
-        deps = ModuleDependencies()
-        config = {"tools": tools}
-        return OpenAPIToolRegistryModule(deps, config)
+    def _make_module(
+        self, tools: list[dict], factory=None
+    ) -> OpenAPIToolRegistryModule:
+        if factory is None:
+            factory = _StubHttpClientFactory(AsyncMock())
+        deps = ModuleDependencies({"http_client": factory})
+        return OpenAPIToolRegistryModule(deps, {"tools": tools})
 
-    def _mock_httpx(self, spec_map: dict[str, dict]):
-        mock_responses = {}
-        for key, spec in spec_map.items():
-            resp = MagicMock()
-            resp.status_code = 200
-            resp.raise_for_status = lambda: None
-            resp.json.return_value = spec
-            mock_responses[key] = resp
+    def _make_spec_factory(self, spec_map: dict[str, dict]):
+        """Build an HttpClientFactory whose client dispatches by URL key."""
 
-        async def mock_get(url, **kwargs):
-            for key, resp in mock_responses.items():
+        async def mock_request(method, url, **kwargs):
+            for key, spec in spec_map.items():
                 if key in url:
-                    return resp
+                    return _mock_response(spec=spec)
             raise httpx.ConnectError("No mock for " + url)
 
-        mock_client_cls = patch(
-            "modai.modules.tools.tool_registry_openapi.httpx.AsyncClient"
-        )
-        return mock_client_cls, mock_get
+        mock_client = AsyncMock()
+        mock_client.request = mock_request
+        return _StubHttpClientFactory(mock_client)
 
     @pytest.mark.asyncio
     async def test_finds_tool_by_name(self):
         module = self._make_module(
-            [{"url": "http://calc:8000/calculate", "method": "POST"}]
+            [{"url": "http://calc:8000/calculate", "method": "POST"}],
+            factory=self._make_spec_factory({"calc": SAMPLE_OPENAPI_SPEC}),
         )
 
-        mock_client_cls, mock_get = self._mock_httpx({"calc": SAMPLE_OPENAPI_SPEC})
-        with mock_client_cls as cls:
-            mock_client = AsyncMock()
-            mock_client.get = mock_get
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
-            cls.return_value = mock_client
-
-            result = await module.get_tool_by_name("calculate")
+        result = await module.get_tool_by_name("calculate")
 
         assert result is not None
         assert isinstance(result, Tool)
@@ -521,18 +463,11 @@ class TestGetToolByName:
     @pytest.mark.asyncio
     async def test_returns_none_for_unknown_name(self):
         module = self._make_module(
-            [{"url": "http://calc:8000/calculate", "method": "POST"}]
+            [{"url": "http://calc:8000/calculate", "method": "POST"}],
+            factory=self._make_spec_factory({"calc": SAMPLE_OPENAPI_SPEC}),
         )
 
-        mock_client_cls, mock_get = self._mock_httpx({"calc": SAMPLE_OPENAPI_SPEC})
-        with mock_client_cls as cls:
-            mock_client = AsyncMock()
-            mock_client.get = mock_get
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
-            cls.return_value = mock_client
-
-            result = await module.get_tool_by_name("nonexistent")
+        result = await module.get_tool_by_name("nonexistent")
 
         assert result is None
 
