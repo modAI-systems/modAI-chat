@@ -89,7 +89,7 @@ Add the tool to the `tool_registry` module's `tools` list in `config.yaml` (and 
 ```yaml
 modules:
   tool_registry:
-    class: modai.modules.tools.tool_registry.HttpToolRegistryModule
+    class: modai.modules.tools.tool_registry_openapi.OpenAPIToolRegistryModule
     config:
       tools:
         - url: http://localhost:8001/roll
