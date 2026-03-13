@@ -6,9 +6,17 @@ updates:
     schedule:
       interval: weekly
     target-branch: 'main'
+    groups:
+      all-uv:
+        patterns:
+          - "*"
 
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
       interval: weekly
     target-branch: 'main'
+    groups:
+      all-gha:
+        patterns:
+          - "*"
