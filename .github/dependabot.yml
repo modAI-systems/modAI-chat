@@ -2,12 +2,27 @@
 version: 2
 updates:
   - package-ecosystem: uv
-    directory: '/'
+    directories:
+      - '/backend/omni'
+      - '/backend/tools/dice-roller'
     schedule:
       interval: weekly
     target-branch: 'main'
     groups:
       all-uv:
+        patterns:
+          - "*"
+
+  - package-ecosystem: npm
+    directories:
+      - '/frontend_omni'
+      - '/e2e_tests/tests_omni_full'
+      - '/e2e_tests/tests_omni_light'
+    schedule:
+      interval: weekly
+    target-branch: 'main'
+    groups:
+      all-pnpm:
         patterns:
           - "*"
 
