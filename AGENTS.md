@@ -188,6 +188,36 @@ pnpm check           # Run linter
 
 For comprehensive e2e testing best practices and patterns, refer to `e2e_tests/BEST_PRACTICES.md`.
 
+## Git Hooks (prek)
+
+Pre-commit hooks use prek's **workspace mode**. Each sub-project has its own
+`.pre-commit-config.yaml` (with `orphan: true`), discovered automatically from
+the root `.pre-commit-config.yaml`.
+
+Layout:
+- `.pre-commit-config.yaml` — workspace root (empty, enables discovery)
+- `backend/omni/.pre-commit-config.yaml` — ruff format + ruff check
+- `backend/tools/dice-roller/.pre-commit-config.yaml` — ruff format + ruff check
+- `frontend_omni/.pre-commit-config.yaml` — biome check
+- `e2e_tests/tests_omni_full/.pre-commit-config.yaml` — biome check
+- `e2e_tests/tests_omni_light/.pre-commit-config.yaml` — biome check
+
+Hooks check (but do not auto-fix) on every commit and fail if issues remain.
+
+**One-time setup** after cloning:
+```bash
+uv tool install prek   # Install prek binary (skip if already installed)
+prek install           # Wire hooks into .git/hooks/pre-commit
+```
+
+**Manual run:**
+```bash
+prek run               # Run on staged files only
+prek run --all-files   # Run on all files
+prek run backend/omni/ # Run hooks for a specific project
+prek run ruff-check    # Run a single hook by id
+```
+
 ## Development Workflow
 
 1. **Read Architecture**: Always read relevant architecture docs first
