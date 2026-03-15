@@ -69,6 +69,69 @@ SAMPLE_OPENAPI_SPEC = {
     },
 }
 
+PATH_PARAMS_SPEC = {
+    "openapi": "3.1.0",
+    "info": {"title": "User Tool", "version": "1.0.0"},
+    "paths": {
+        "/users/{user_id}/orders/{order_id}": {
+            "get": {
+                "summary": "Get a specific user order",
+                "operationId": "get_user_order",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": True,
+                        "description": "The user's ID",
+                        "schema": {"type": "string"},
+                    },
+                    {
+                        "name": "order_id",
+                        "in": "path",
+                        "required": True,
+                        "description": "The order's ID",
+                        "schema": {"type": "integer"},
+                    },
+                ],
+            }
+        }
+    },
+}
+
+PATH_PARAMS_WITH_BODY_SPEC = {
+    "openapi": "3.1.0",
+    "info": {"title": "Update Tool", "version": "1.0.0"},
+    "paths": {
+        "/items/{item_id}": {
+            "put": {
+                "summary": "Update an item",
+                "operationId": "update_item",
+                "parameters": [
+                    {
+                        "name": "item_id",
+                        "in": "path",
+                        "required": True,
+                        "description": "The item's ID",
+                        "schema": {"type": "integer"},
+                    },
+                ],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {"name": {"type": "string"}},
+                                "required": ["name"],
+                            }
+                        }
+                    },
+                },
+            }
+        }
+    },
+}
+
 DICE_ROLLER_SPEC = {
     "openapi": "3.1.0",
     "info": {"title": "Dice Roller Tool", "version": "1.0.0"},
@@ -143,8 +206,29 @@ class TestBuildToolDefinition:
             },
         )
 
+    def test_path_parameters_only(self):
+        definition = _build_tool_definition(PATH_PARAMS_SPEC)
+        assert definition is not None
+        assert definition.name == "get_user_order"
+        assert definition.description == "Get a specific user order"
+        params = definition.parameters
+        assert params["type"] == "object"
+        assert "user_id" in params["properties"]
+        assert "order_id" in params["properties"]
+        assert params["properties"]["user_id"]["type"] == "string"
+        assert params["properties"]["user_id"]["description"] == "The user's ID"
+        assert params["properties"]["order_id"]["type"] == "integer"
+        assert set(params["required"]) == {"user_id", "order_id"}
 
-class TestOpenAPIToolRegistryModule:
+    def test_path_parameters_merged_with_request_body(self):
+        definition = _build_tool_definition(PATH_PARAMS_WITH_BODY_SPEC)
+        assert definition is not None
+        params = definition.parameters
+        assert "item_id" in params["properties"]
+        assert "name" in params["properties"]
+        assert "item_id" in params["required"]
+        assert "name" in params["required"]
+
     def _make_module(
         self, tools: list[dict], factory=None
     ) -> OpenAPIToolRegistryModule:
@@ -346,6 +430,75 @@ class TestToolRun:
             url="http://calc:8000/calculate",
             json={"expression": "2+2"},
             headers={"Authorization": "Bearer secret"},
+        )
+
+    @pytest.mark.asyncio
+    async def test_run_substitutes_path_parameters_into_url(self):
+        """Path parameters are substituted into the URL template, not sent in the body."""
+        spec_client = AsyncMock()
+        spec_client.request = AsyncMock(
+            return_value=_mock_response(spec=PATH_PARAMS_SPEC)
+        )
+
+        run_response = _mock_response(text='{"order": "details"}')
+        run_client = AsyncMock()
+        run_client.request = AsyncMock(return_value=run_response)
+
+        module = self._make_module(
+            [
+                {
+                    "url": "http://users:8000/users/{user_id}/orders/{order_id}",
+                    "method": "GET",
+                }
+            ],
+            factory=_StubHttpClientFactory(spec_client, run_client),
+        )
+
+        tools = await module.get_tools()
+        assert len(tools) == 1
+
+        result = await tools[0].run({"user_id": "alice", "order_id": 42})
+
+        run_client.request.assert_called_once_with(
+            method="GET",
+            url="http://users:8000/users/alice/orders/42",
+            json={},
+            headers={},
+        )
+        assert result == '{"order": "details"}'
+
+    @pytest.mark.asyncio
+    async def test_run_substitutes_path_parameters_leaving_body_params(self):
+        """Path params are substituted into URL; remaining params go in the request body."""
+        spec_client = AsyncMock()
+        spec_client.request = AsyncMock(
+            return_value=_mock_response(spec=PATH_PARAMS_WITH_BODY_SPEC)
+        )
+
+        run_response = _mock_response(text='{"updated": true}')
+        run_client = AsyncMock()
+        run_client.request = AsyncMock(return_value=run_response)
+
+        module = self._make_module(
+            [
+                {
+                    "url": "http://items:8000/items/{item_id}",
+                    "method": "PUT",
+                }
+            ],
+            factory=_StubHttpClientFactory(spec_client, run_client),
+        )
+
+        tools = await module.get_tools()
+        assert len(tools) == 1
+
+        await tools[0].run({"item_id": 7, "name": "Widget"})
+
+        run_client.request.assert_called_once_with(
+            method="PUT",
+            url="http://items:8000/items/7",
+            json={"name": "Widget"},
+            headers={},
         )
 
 

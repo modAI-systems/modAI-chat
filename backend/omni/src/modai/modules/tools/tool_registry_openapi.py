@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Any
 from urllib.parse import urlparse
 
@@ -45,18 +46,27 @@ class _OpenAPITool(Tool):
 
         * ``_bearer_token`` — forwarded as the ``Authorization: Bearer``
           header; never included in the JSON request body.
+
+        Path parameters present in the URL template (e.g. ``{user_id}``) are
+        substituted directly into the URL and removed from the request body.
         """
         body = dict(params)
         bearer_token = body.pop("_bearer_token", None)
         headers: dict[str, str] = {}
         if bearer_token:
             headers["Authorization"] = f"Bearer {bearer_token}"
+
+        url = self._url
+        for name in re.findall(r"\{(\w+)\}", url):
+            if name in body:
+                url = url.replace(f"{{{name}}}", str(body.pop(name)))
+
         async with self._http_client_factory.new(
             timeout=TOOL_HTTP_TIMEOUT_SECONDS
         ) as client:
             response = await client.request(
                 method=self._method.upper(),
-                url=self._url,
+                url=url,
                 json=body,
                 headers=headers,
             )
@@ -158,16 +168,51 @@ def _build_tool_definition(spec: dict[str, Any]) -> ToolDefinition | None:
 def _extract_parameters(
     operation: dict[str, Any], spec: dict[str, Any]
 ) -> dict[str, Any]:
-    """Extract and resolve the parameter schema from an OpenAPI operation's request body.
+    """Extract and resolve the parameter schema from an OpenAPI operation.
 
-    Resolves any $ref references against the full OpenAPI spec so the
-    returned schema is fully inlined.
+    Combines:
+    - Request body schema (``application/json``), with ``$ref`` pointers fully
+      resolved.
+    - Path parameters (``in: path``) from the ``parameters`` array, merged as
+      additional properties so the LLM knows to supply them.
     """
     request_body = operation.get("requestBody", {})
     content = request_body.get("content", {})
     json_content = content.get("application/json", {})
     schema = json_content.get("schema", {"type": "object", "properties": {}})
-    return _resolve_refs(schema, spec)
+    resolved = _resolve_refs(schema, spec)
+
+    path_params = _extract_path_parameters(operation, spec)
+    if not path_params:
+        return resolved
+
+    properties = dict(resolved.get("properties", {}))
+    required: list[str] = list(resolved.get("required", []))
+
+    for param in path_params:
+        name = param["name"]
+        param_schema: dict[str, Any] = dict(param.get("schema", {"type": "string"}))
+        if param.get("description"):
+            param_schema["description"] = param["description"]
+        properties[name] = param_schema
+        if param.get("required", True) and name not in required:
+            required.append(name)
+
+    result: dict[str, Any] = {**resolved, "properties": properties}
+    if required:
+        result["required"] = required
+    return result
+
+
+def _extract_path_parameters(
+    operation: dict[str, Any], spec: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Return resolved path parameters (``in: path``) from an OpenAPI operation."""
+    return [
+        _resolve_refs(param, spec)
+        for param in operation.get("parameters", [])
+        if _resolve_refs(param, spec).get("in") == "path"
+    ]
 
 
 def _resolve_refs(node: Any, spec: dict[str, Any]) -> Any:
