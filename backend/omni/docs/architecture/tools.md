@@ -16,7 +16,8 @@ Each tool is a standalone microservice that follows these conventions:
 
 1. **HTTP endpoint**: The tool is triggered via an HTTP request. Each tool chooses the HTTP method (PUT, POST, GET, etc.) that is most idiomatic for its use case. The method is configured in the tool registry.
 2. **OpenAPI spec**: The microservice exposes its OpenAPI specification (typically at `/openapi.json`). This spec documents all endpoints, including the trigger endpoint with its parameters, description, and response schema.
-3. **Independence**: Tools have no dependency on modAI. They are plain HTTP microservices that can be developed, deployed, and tested independently in any language/framework.
+3. **Path parameters**: If the trigger URL contains path parameters (e.g. `/users/{user_id}/orders/{order_id}`), they must be declared in the OpenAPI spec as `parameters` with `"in": "path"`. The registry includes them in the tool definition so the LLM knows to supply them; at invocation time they are substituted into the URL and are not forwarded in the request body.
+4. **Independence**: Tools have no dependency on modAI. They are plain HTTP microservices that can be developed, deployed, and tested independently in any language/framework.
 
 ### Example Tool Microservice (OpenAPI spec)
 ```json
@@ -69,6 +70,49 @@ Each tool is a standalone microservice that follows these conventions:
   }
 }
 ```
+
+### Example Tool Microservice with Path Parameters (OpenAPI spec)
+```json
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Order Tool",
+    "version": "1.0.0",
+    "description": "Retrieve a specific user order"
+  },
+  "paths": {
+    "/users/{user_id}/orders/{order_id}": {
+      "get": {
+        "summary": "Get a user order",
+        "operationId": "get_user_order",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "description": "The user's ID",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "description": "The order's ID",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order details"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+The registry will build a tool definition that includes `user_id` and `order_id` as required parameters. When the LLM calls the tool with `{"user_id": "alice", "order_id": 42}`, the registry substitutes those values into the URL (`/users/alice/orders/42`) and sends an empty JSON body.
 
 ## 3. System Context
 
@@ -137,8 +181,15 @@ This convention keeps the `Tool.run` interface stable while allowing callers to 
 
 **How it works**:
 - On each call to `get_tools`, fetches `/openapi.json` from each configured service
-- Extracts the tool definition from the spec: `operationId` → name, `summary`/`description` → description, request body schema → parameters (all `$ref` resolved inline)
-- Each resulting tool's run operation makes an HTTP call to the configured trigger endpoint with the supplied parameters
+- Extracts the tool definition from the spec:
+  - `operationId` → name
+  - `summary`/`description` → description
+  - Request body schema → parameters (all `$ref` resolved inline)
+  - Path parameters (`in: path`) from the `parameters` array are merged into the schema's `properties` and `required` lists so the LLM is told to supply them
+- Each resulting tool's `run` operation:
+  1. Resolves `{param_name}` placeholders in the configured URL by substituting values from the supplied `params` dict
+  2. Sends the remaining parameters as the JSON request body
+  3. Makes an HTTP call to the resolved URL using the configured method
 
 **Configuration** — each tool entry specifies:
 - `url`: The full trigger endpoint URL of the tool microservice
