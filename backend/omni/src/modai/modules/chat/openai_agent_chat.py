@@ -259,7 +259,9 @@ async def _resolve_request_tools(
 
     strands_tools: list[PythonAgentTool] = []
     for name in tool_names:
-        tool = await tool_registry.get_tool_by_name(name)
+        tool = await tool_registry.get_tool_by_name(
+            name, predefined_params=additional_tool_properties
+        )
         if tool is None:
             logger.warning("Tool '%s' not found in registry, skipping", name)
             continue

@@ -853,7 +853,7 @@ class TestToolErrors:
         calc_tool = _make_tool(calc_definition)
         registry = Mock()
         registry.get_tool_by_name = AsyncMock(
-            side_effect=lambda name: calc_tool if name == "calculate" else None
+            side_effect=lambda name, **_: calc_tool if name == "calculate" else None
         )
 
         module = _llmock_module(llmock_base_url, tool_registry=registry)

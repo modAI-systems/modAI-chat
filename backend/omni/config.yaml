@@ -65,7 +65,7 @@ modules:
   http_client:
     class: modai.modules.http_client.httpx_http_client_module.HttpxHttpClientModule
 
-  tool_registry:
+  openapi_tool_registry:
     class: modai.modules.tools.tool_registry_openapi.OpenAPIToolRegistryModule
     module_dependencies:
       http_client: "http_client"
@@ -79,6 +79,11 @@ modules:
       #     method: POST
       #   - url: http://web-search-service:8000/search
       #     method: PUT
+
+  tool_registry:
+    class: modai.modules.tools.tool_registry_predefined_vars.PredefinedVariablesToolRegistryModule
+    module_dependencies:
+      delegate_registry: "openapi_tool_registry"
 
   tools_web:
     class: modai.modules.tools.tools_web_module.OpenAIToolsWebModule
