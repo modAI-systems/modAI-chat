@@ -106,7 +106,10 @@ class OpenAPIToolRegistryModule(ToolRegistryModule):
         self.tool_services: list[dict[str, str]] = config.get("tools", [])
         self._http_client: HttpClientModule = dependencies.get_module("http_client")  # type: ignore[assignment]
 
-    async def get_tools(self) -> list[Tool]:
+    async def get_tools(
+        self,
+        predefined_params: dict[str, Any] | None = None,  # noqa: ARG002
+    ) -> list[Tool]:
         tools: list[Tool] = []
 
         async with self._http_client.new(timeout=HTTP_TIMEOUT_SECONDS) as client:
@@ -135,7 +138,11 @@ class OpenAPIToolRegistryModule(ToolRegistryModule):
 
         return tools
 
-    async def get_tool_by_name(self, name: str) -> Tool | None:
+    async def get_tool_by_name(
+        self,
+        name: str,
+        predefined_params: dict[str, Any] | None = None,  # noqa: ARG002
+    ) -> Tool | None:
         tools = await self.get_tools()
         for tool in tools:
             if tool.definition.name == name:

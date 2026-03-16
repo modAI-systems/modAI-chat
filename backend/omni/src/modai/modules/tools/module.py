@@ -77,21 +77,37 @@ class ToolRegistryModule(ModaiModule, ABC):
         super().__init__(dependencies, config)
 
     @abstractmethod
-    async def get_tools(self) -> list[Tool]:
+    async def get_tools(
+        self, predefined_params: dict[str, Any] | None = None
+    ) -> list[Tool]:
         """
         Returns all configured tools.
 
         Each Tool provides its definition and run capability.
         Unavailable tool services are omitted with a warning logged.
+
+        Args:
+            predefined_params: Optional dict of ``_``-prefixed keys whose
+                values are already known by the caller (e.g.
+                ``{"_session_id": "abc", "_bearer_token": "xyz"}``).
+                Implementations may use these to strip the corresponding
+                properties from tool definitions so the LLM is not asked to
+                supply values that are already available.
         """
         pass
 
     @abstractmethod
-    async def get_tool_by_name(self, name: str) -> Tool | None:
+    async def get_tool_by_name(
+        self, name: str, predefined_params: dict[str, Any] | None = None
+    ) -> Tool | None:
         """
         Look up a tool by its name.
 
         Returns the matching Tool if found, or None if not found.
+
+        Args:
+            name: The tool's unique name (derived from OpenAPI ``operationId``).
+            predefined_params: Same semantics as in :meth:`get_tools`.
         """
         pass
 
