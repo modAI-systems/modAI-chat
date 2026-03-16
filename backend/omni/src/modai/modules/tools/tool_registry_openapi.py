@@ -28,11 +28,13 @@ class _OpenAPITool(Tool):
         method: str,
         definition: ToolDefinition,
         http_client_factory: HttpClientModule,
+        header_param_names: frozenset[str] = frozenset(),
     ) -> None:
         self._url = url
         self._method = method
         self._definition_val = definition
         self._http_client_factory = http_client_factory
+        self._header_param_names = header_param_names
 
     @property
     def definition(self) -> ToolDefinition:
@@ -49,12 +51,19 @@ class _OpenAPITool(Tool):
 
         Path parameters present in the URL template (e.g. ``{user_id}``) are
         substituted directly into the URL and removed from the request body.
+
+        Header parameters declared in the OpenAPI spec (``in: header``) are
+        forwarded as-is HTTP headers and removed from the request body.
         """
         body = dict(params)
         bearer_token = body.pop("_bearer_token", None)
         headers: dict[str, str] = {}
         if bearer_token:
             headers["Authorization"] = f"Bearer {bearer_token}"
+
+        for header_name in self._header_param_names:
+            if header_name in body:
+                headers[header_name] = str(body.pop(header_name))
 
         url = self._url
         for name in re.findall(r"\{(\w+)\}", url):
@@ -120,7 +129,7 @@ class OpenAPIToolRegistryModule(ToolRegistryModule):
                 spec = await _fetch_openapi_spec(client, base_url)
                 if spec is None:
                     continue
-                definition = _build_tool_definition(spec)
+                definition, header_param_names = _build_tool_definition(spec)
                 if definition is None:
                     logger.warning(
                         "No valid operation with operationId found in spec from %s, skipping",
@@ -133,6 +142,7 @@ class OpenAPIToolRegistryModule(ToolRegistryModule):
                         method=method,
                         definition=definition,
                         http_client_factory=self._http_client,
+                        header_param_names=header_param_names,
                     )
                 )
 
@@ -150,13 +160,18 @@ class OpenAPIToolRegistryModule(ToolRegistryModule):
         return None
 
 
-def _build_tool_definition(spec: dict[str, Any]) -> ToolDefinition | None:
+def _build_tool_definition(
+    spec: dict[str, Any],
+) -> tuple[ToolDefinition, frozenset[str]] | tuple[None, frozenset[str]]:
     """Build a ToolDefinition from an OpenAPI spec.
 
     Extracts name (operationId), description (summary/description), and
-    parameters (request body schema with $ref fully resolved).
+    parameters (request body schema with $ref fully resolved, path params and
+    header params merged in).
 
-    Returns None if no operation with an operationId is found.
+    Returns a ``(ToolDefinition, header_param_names)`` tuple so callers know
+    which parameter names map to HTTP headers at invocation time.  Returns
+    ``(None, frozenset())`` if no operation with an operationId is found.
     """
     paths = spec.get("paths", {})
     for _path, methods in paths.items():
@@ -166,10 +181,12 @@ def _build_tool_definition(spec: dict[str, Any]) -> ToolDefinition | None:
             name = operation["operationId"]
             description = operation.get("summary") or operation.get("description", "")
             parameters = _extract_parameters(operation, spec)
+            header_params = _extract_header_parameters(operation, spec)
+            header_param_names = frozenset(p["name"] for p in header_params)
             return ToolDefinition(
                 name=name, description=description, parameters=parameters
-            )
-    return None
+            ), header_param_names
+    return None, frozenset()
 
 
 def _extract_parameters(
@@ -180,8 +197,11 @@ def _extract_parameters(
     Combines:
     - Request body schema (``application/json``), with ``$ref`` pointers fully
       resolved.
-    - Path parameters (``in: path``) from the ``parameters`` array, merged as
-      additional properties so the LLM knows to supply them.
+    - Path parameters (``in: path``) merged as additional properties so the
+      LLM knows to supply them for URL substitution.
+    - Header parameters (``in: header``) merged as additional properties so
+      the LLM knows to supply them; at invocation time they are forwarded as
+      HTTP headers rather than in the request body.
     """
     request_body = operation.get("requestBody", {})
     content = request_body.get("content", {})
@@ -189,14 +209,17 @@ def _extract_parameters(
     schema = json_content.get("schema", {"type": "object", "properties": {}})
     resolved = _resolve_refs(schema, spec)
 
-    path_params = _extract_path_parameters(operation, spec)
-    if not path_params:
+    extra_params = [
+        *_extract_path_parameters(operation, spec),
+        *_extract_header_parameters(operation, spec),
+    ]
+    if not extra_params:
         return resolved
 
     properties = dict(resolved.get("properties", {}))
     required: list[str] = list(resolved.get("required", []))
 
-    for param in path_params:
+    for param in extra_params:
         name = param["name"]
         param_schema: dict[str, Any] = dict(param.get("schema", {"type": "string"}))
         if param.get("description"):
@@ -219,6 +242,17 @@ def _extract_path_parameters(
         _resolve_refs(param, spec)
         for param in operation.get("parameters", [])
         if _resolve_refs(param, spec).get("in") == "path"
+    ]
+
+
+def _extract_header_parameters(
+    operation: dict[str, Any], spec: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Return resolved header parameters (``in: header``) from an OpenAPI operation."""
+    return [
+        _resolve_refs(param, spec)
+        for param in operation.get("parameters", [])
+        if _resolve_refs(param, spec).get("in") == "header"
     ]
 
 

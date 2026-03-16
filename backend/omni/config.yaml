@@ -84,6 +84,12 @@ modules:
     class: modai.modules.tools.tool_registry_predefined_vars.PredefinedVariablesToolRegistryModule
     module_dependencies:
       delegate_registry: "openapi_tool_registry"
+    config:
+      # Map tool parameter names that differ from the predefined variable name.
+      # Format: <tool_param_name>: <predefined_var_name_without_leading_underscore>
+      # Example: the predefined _session_id fills the tool's X-Session-Id header param.
+      # variable_mappings:
+      #   X-Session-Id: session_id
 
   tools_web:
     class: modai.modules.tools.tools_web_module.OpenAIToolsWebModule

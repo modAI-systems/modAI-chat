@@ -55,9 +55,15 @@ def _stub_registry(*tools: Tool) -> ToolRegistryModule:
     return registry
 
 
-def _make_module(inner: ToolRegistryModule) -> PredefinedVariablesToolRegistryModule:
+def _make_module(
+    inner: ToolRegistryModule,
+    variable_mappings: dict[str, str] | None = None,
+) -> PredefinedVariablesToolRegistryModule:
     deps = ModuleDependencies({"delegate_registry": inner})
-    return PredefinedVariablesToolRegistryModule(deps, {})
+    config: dict = {}
+    if variable_mappings:
+        config["variable_mappings"] = variable_mappings
+    return PredefinedVariablesToolRegistryModule(deps, config)
 
 
 FULL_DEFINITION = ToolDefinition(
@@ -81,6 +87,19 @@ SIMPLE_DEFINITION = ToolDefinition(
         "type": "object",
         "properties": {"expression": {"type": "string"}},
         "required": ["expression"],
+    },
+)
+
+HEADER_DEFINITION = ToolDefinition(
+    name="fetch_data",
+    description="Fetch session data",
+    parameters={
+        "type": "object",
+        "properties": {
+            "X-Session-Id": {"type": "string", "description": "Active session"},
+            "filter": {"type": "string", "description": "Optional filter"},
+        },
+        "required": ["X-Session-Id"],
     },
 )
 
@@ -304,3 +323,143 @@ class TestRunTranslation:
 
         # Same object — no wrapper was needed
         assert result is tool
+
+
+# ---------------------------------------------------------------------------
+# variable_mappings config
+# ---------------------------------------------------------------------------
+
+
+class TestVariableMappings:
+    @pytest.mark.asyncio
+    async def test_mapped_tool_param_hidden_from_definition(self):
+        """X-Session-Id is stripped when _session_id is predefined and mapping is configured."""
+        tool = _make_tool(HEADER_DEFINITION)
+        module = _make_module(
+            _stub_registry(tool),
+            variable_mappings={"X-Session-Id": "session_id"},
+        )
+
+        result = await module.get_tools(predefined_params={"_session_id": "sess-abc"})
+
+        assert len(result) == 1
+        params = result[0].definition.parameters
+        assert "X-Session-Id" not in params["properties"]
+        assert "filter" in params["properties"]
+        assert "X-Session-Id" not in params.get("required", [])
+
+    @pytest.mark.asyncio
+    async def test_mapped_param_not_hidden_when_predefined_var_absent(self):
+        """If _session_id is not in predefined_params, X-Session-Id stays visible."""
+        tool = _make_tool(HEADER_DEFINITION)
+        module = _make_module(
+            _stub_registry(tool),
+            variable_mappings={"X-Session-Id": "session_id"},
+        )
+
+        result = await module.get_tools(predefined_params={})
+
+        assert result[0].definition == HEADER_DEFINITION
+
+    @pytest.mark.asyncio
+    async def test_run_translates_predefined_key_to_mapped_tool_param(self):
+        """_session_id is translated to X-Session-Id (not session_id) per the mapping."""
+        inner_tool, calls = _make_capturing_tool(HEADER_DEFINITION)
+        module = _make_module(
+            _stub_registry(inner_tool),
+            variable_mappings={"X-Session-Id": "session_id"},
+        )
+
+        wrapped = await module.get_tool_by_name(
+            "fetch_data", predefined_params={"_session_id": "sess-xyz"}
+        )
+        assert wrapped is not None
+
+        await wrapped.run({"filter": "recent", "_session_id": "sess-xyz"})
+
+        assert len(calls) == 1
+        assert calls[0]["X-Session-Id"] == "sess-xyz"
+        assert "session_id" not in calls[0]
+        assert "_session_id" not in calls[0]
+
+    @pytest.mark.asyncio
+    async def test_direct_and_configured_mappings_coexist(self):
+        """A direct-mapped param (session_id) and a configured mapping (X-Session-Id)
+        for different predefined vars can both be active at the same time."""
+        definition = ToolDefinition(
+            name="multi_param_tool",
+            description="Tool with both direct and mapped params",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string"},
+                    "X-Tenant": {"type": "string"},
+                    "query": {"type": "string"},
+                },
+                "required": ["session_id", "X-Tenant", "query"],
+            },
+        )
+        inner_tool, calls = _make_capturing_tool(definition)
+        module = _make_module(
+            _stub_registry(inner_tool),
+            variable_mappings={"X-Tenant": "tenant_id"},
+        )
+
+        wrapped = await module.get_tool_by_name(
+            "multi_param_tool",
+            predefined_params={"_session_id": "s1", "_tenant_id": "acme"},
+        )
+        assert wrapped is not None
+
+        # Both session_id and X-Tenant should be hidden from the definition
+        params = wrapped.definition.parameters
+        assert "session_id" not in params["properties"]
+        assert "X-Tenant" not in params["properties"]
+        assert "query" in params["properties"]
+
+        await wrapped.run({"query": "hello", "_session_id": "s1", "_tenant_id": "acme"})
+
+        assert calls[0]["session_id"] == "s1"  # direct mapping
+        assert calls[0]["X-Tenant"] == "acme"  # configured mapping
+        assert "_session_id" not in calls[0]
+        assert "_tenant_id" not in calls[0]
+
+    @pytest.mark.asyncio
+    async def test_configured_mapping_overrides_direct_for_same_var(self):
+        """When a mapping routes _session_id to X-Session-Id, the default
+        session_id → _session_id direct mapping must NOT also be applied."""
+        definition = ToolDefinition(
+            name="override_tool",
+            description="Test override",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string"},
+                    "X-Session-Id": {"type": "string"},
+                },
+                "required": ["session_id", "X-Session-Id"],
+            },
+        )
+        inner_tool, calls = _make_capturing_tool(definition)
+        # Map _session_id to X-Session-Id only — session_id in schema remains unaffected
+        module = _make_module(
+            _stub_registry(inner_tool),
+            variable_mappings={"X-Session-Id": "session_id"},
+        )
+
+        wrapped = await module.get_tool_by_name(
+            "override_tool",
+            predefined_params={"_session_id": "s1"},
+        )
+        assert wrapped is not None
+
+        # Only X-Session-Id should be hidden; session_id (different schema prop) stays
+        params = wrapped.definition.parameters
+        assert "X-Session-Id" not in params["properties"]
+        assert "session_id" in params["properties"]
+
+        await wrapped.run({"session_id": "manual", "_session_id": "s1"})
+
+        assert calls[0]["X-Session-Id"] == "s1"
+        assert calls[0]["session_id"] == "manual"
+        assert "_session_id" not in calls[0]

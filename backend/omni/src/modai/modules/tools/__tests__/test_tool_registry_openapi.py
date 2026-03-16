@@ -98,6 +98,69 @@ PATH_PARAMS_SPEC = {
     },
 }
 
+HEADER_PARAMS_SPEC = {
+    "openapi": "3.1.0",
+    "info": {"title": "Session Tool", "version": "1.0.0"},
+    "paths": {
+        "/data": {
+            "get": {
+                "summary": "Fetch session data",
+                "operationId": "fetch_data",
+                "parameters": [
+                    {
+                        "name": "X-Session-Id",
+                        "in": "header",
+                        "required": True,
+                        "description": "Active session identifier",
+                        "schema": {"type": "string"},
+                    },
+                    {
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": False,
+                        "description": "Optional tenant override",
+                        "schema": {"type": "string"},
+                    },
+                ],
+            }
+        }
+    },
+}
+
+HEADER_AND_BODY_SPEC = {
+    "openapi": "3.1.0",
+    "info": {"title": "Submit Tool", "version": "1.0.0"},
+    "paths": {
+        "/submit": {
+            "post": {
+                "summary": "Submit a payload",
+                "operationId": "submit",
+                "parameters": [
+                    {
+                        "name": "X-Request-Id",
+                        "in": "header",
+                        "required": True,
+                        "description": "Idempotency key",
+                        "schema": {"type": "string"},
+                    }
+                ],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {"payload": {"type": "string"}},
+                                "required": ["payload"],
+                            }
+                        }
+                    },
+                },
+            }
+        }
+    },
+}
+
 PATH_PARAMS_WITH_BODY_SPEC = {
     "openapi": "3.1.0",
     "info": {"title": "Update Tool", "version": "1.0.0"},
@@ -175,7 +238,8 @@ DICE_ROLLER_SPEC = {
 
 class TestBuildToolDefinition:
     def test_openapi_with_inline_schema(self):
-        assert _build_tool_definition(SAMPLE_OPENAPI_SPEC) == ToolDefinition(
+        definition, header_names = _build_tool_definition(SAMPLE_OPENAPI_SPEC)
+        assert definition == ToolDefinition(
             name="calculate",
             description="Evaluate a math expression",
             parameters={
@@ -184,9 +248,11 @@ class TestBuildToolDefinition:
                 "required": ["expression"],
             },
         )
+        assert header_names == frozenset()
 
     def test_openapi_with_ref_schema(self):
-        assert _build_tool_definition(DICE_ROLLER_SPEC) == ToolDefinition(
+        definition, header_names = _build_tool_definition(DICE_ROLLER_SPEC)
+        assert definition == ToolDefinition(
             name="roll_dice",
             description="Roll dice and return the results",
             parameters={
@@ -205,9 +271,10 @@ class TestBuildToolDefinition:
                 },
             },
         )
+        assert header_names == frozenset()
 
     def test_path_parameters_only(self):
-        definition = _build_tool_definition(PATH_PARAMS_SPEC)
+        definition, header_names = _build_tool_definition(PATH_PARAMS_SPEC)
         assert definition is not None
         assert definition.name == "get_user_order"
         assert definition.description == "Get a specific user order"
@@ -219,15 +286,48 @@ class TestBuildToolDefinition:
         assert params["properties"]["user_id"]["description"] == "The user's ID"
         assert params["properties"]["order_id"]["type"] == "integer"
         assert set(params["required"]) == {"user_id", "order_id"}
+        assert header_names == frozenset()
 
     def test_path_parameters_merged_with_request_body(self):
-        definition = _build_tool_definition(PATH_PARAMS_WITH_BODY_SPEC)
+        definition, header_names = _build_tool_definition(PATH_PARAMS_WITH_BODY_SPEC)
         assert definition is not None
         params = definition.parameters
         assert "item_id" in params["properties"]
         assert "name" in params["properties"]
         assert "item_id" in params["required"]
         assert "name" in params["required"]
+        assert header_names == frozenset()
+
+    def test_header_parameters_in_definition(self):
+        definition, header_names = _build_tool_definition(HEADER_PARAMS_SPEC)
+        assert definition is not None
+        params = definition.parameters
+        assert "X-Session-Id" in params["properties"]
+        assert "X-Tenant" in params["properties"]
+        assert params["properties"]["X-Session-Id"]["type"] == "string"
+        assert (
+            params["properties"]["X-Session-Id"]["description"]
+            == "Active session identifier"
+        )
+        assert "X-Session-Id" in params["required"]
+        assert "X-Tenant" not in params.get("required", [])
+        assert header_names == {"X-Session-Id", "X-Tenant"}
+
+    def test_header_parameters_merged_with_request_body(self):
+        definition, header_names = _build_tool_definition(HEADER_AND_BODY_SPEC)
+        assert definition is not None
+        params = definition.parameters
+        assert "X-Request-Id" in params["properties"]
+        assert "payload" in params["properties"]
+        assert "X-Request-Id" in params["required"]
+        assert "payload" in params["required"]
+        assert header_names == {"X-Request-Id"}
+
+    def test_no_operation_id_returns_none(self):
+        spec = {"paths": {"/run": {"post": {"summary": "no id"}}}}
+        definition, header_names = _build_tool_definition(spec)
+        assert definition is None
+        assert header_names == frozenset()
 
     def _make_module(
         self, tools: list[dict], factory=None
@@ -499,6 +599,64 @@ class TestToolRun:
             url="http://items:8000/items/7",
             json={"name": "Widget"},
             headers={},
+        )
+
+    @pytest.mark.asyncio
+    async def test_run_forwards_header_parameters_as_http_headers(self):
+        """Header parameters declared in the spec are forwarded as HTTP headers, not in the body."""
+        spec_client = AsyncMock()
+        spec_client.request = AsyncMock(
+            return_value=_mock_response(spec=HEADER_AND_BODY_SPEC)
+        )
+
+        run_response = _mock_response(text='{"ok": true}')
+        run_client = AsyncMock()
+        run_client.request = AsyncMock(return_value=run_response)
+
+        module = self._make_module(
+            [{"url": "http://submit:8000/submit", "method": "POST"}],
+            factory=_StubHttpClientFactory(spec_client, run_client),
+        )
+
+        tools = await module.get_tools()
+        assert len(tools) == 1
+
+        await tools[0].run({"payload": "hello", "X-Request-Id": "req-abc"})
+
+        run_client.request.assert_called_once_with(
+            method="POST",
+            url="http://submit:8000/submit",
+            json={"payload": "hello"},
+            headers={"X-Request-Id": "req-abc"},
+        )
+
+    @pytest.mark.asyncio
+    async def test_run_combines_bearer_token_and_header_parameters(self):
+        """Both _bearer_token and header params end up in the headers dict."""
+        spec_client = AsyncMock()
+        spec_client.request = AsyncMock(
+            return_value=_mock_response(spec=HEADER_AND_BODY_SPEC)
+        )
+
+        run_response = _mock_response(text='{"ok": true}')
+        run_client = AsyncMock()
+        run_client.request = AsyncMock(return_value=run_response)
+
+        module = self._make_module(
+            [{"url": "http://submit:8000/submit", "method": "POST"}],
+            factory=_StubHttpClientFactory(spec_client, run_client),
+        )
+
+        tools = await module.get_tools()
+        await tools[0].run(
+            {"payload": "hello", "X-Request-Id": "req-abc", "_bearer_token": "tok"}
+        )
+
+        run_client.request.assert_called_once_with(
+            method="POST",
+            url="http://submit:8000/submit",
+            json={"payload": "hello"},
+            headers={"Authorization": "Bearer tok", "X-Request-Id": "req-abc"},
         )
 
 
