@@ -69,7 +69,7 @@ class ModuleLoader:
                 continue
 
             module_class_path = full_module_config.get("class")
-            nested_config = full_module_config.get("config", {})
+            nested_config = full_module_config.get("config") or {}
             self._load_module(
                 module_name, module_class_path, module_dependencies, nested_config
             )
