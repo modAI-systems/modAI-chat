@@ -1,0 +1,24 @@
+{
+  "name": "frontend_omni_svelte",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "rsbuild dev",
+    "build": "rsbuild build",
+    "check": "biome check",
+    "check:write": "biome check --write",
+    "preview": "rsbuild preview"
+  },
+  "dependencies": {
+    "svelte": "^5.53.13",
+    "tailwindcss": "^4.2.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.7",
+    "@rsbuild/core": "^1.7.3",
+    "@rsbuild/plugin-svelte": "^1.1.1",
+    "@tailwindcss/postcss": "^4.2.1",
+    "typescript": "^5.9.3"
+  }
+}
