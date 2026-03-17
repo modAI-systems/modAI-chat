@@ -58,11 +58,28 @@ def test_load_module_disabled(caplog):
 
 
 def test_load_module_none_config():
-    """Test loading a module with None config."""
-    startup_config = {"modules": {}}
-    loader = ModuleLoader(startup_config)
+    """Test loading a module whose config key is None (e.g. YAML 'config:' with only comments).
 
-    assert loader.loaded_modules == {}
+    When a YAML config block has all its children commented out, the key is
+    present in the parsed dict but its value is None - not missing.  The
+    module loader must treat None the same as an empty dict so that modules
+    that call config.get(...) in their __init__ don't raise AttributeError.
+    """
+    startup_config = {
+        "modules": {
+            "foo": {
+                "class": "modai.__tests__.test_module_loader.DummyModule",
+                "config": None,  # YAML: config: (with only commented-out children)
+            }
+        }
+    }
+    loader = ModuleLoader(startup_config)
+    loader.load_modules()
+
+    dummy_module = loader.get_module("foo")
+    assert dummy_module is not None
+    assert isinstance(dummy_module, DummyModule)
+    assert dummy_module.config == {}
 
 
 def test_load_module_import_error():
