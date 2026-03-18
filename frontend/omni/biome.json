@@ -26,6 +26,12 @@
 			"quoteStyle": "double"
 		}
 	},
+	"css": {
+		"parser": {
+			"cssModules": false,
+			"tailwindDirectives": true
+		}
+	},
 	"assist": {
 		"enabled": true,
 		"actions": {
@@ -42,6 +48,9 @@
 					"correctness": {
 						"noUnusedImports": "off",
 						"noUnusedVariables": "off"
+					},
+					"style": {
+						"useImportType": "off"
 					}
 				}
 			}

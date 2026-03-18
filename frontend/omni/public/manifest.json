@@ -6,6 +6,12 @@
       "type": "HelloComponent",
       "path": "@/modules/hello/HelloComponent",
       "dependencies": []
+    },
+    {
+      "id": "chatbot",
+      "type": "ChatbotComponent",
+      "path": "@/modules/chatbot/ChatbotComponent",
+      "dependencies": []
     }
   ]
 }
