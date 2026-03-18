@@ -12,6 +12,12 @@
       "type": "ChatbotComponent",
       "path": "@/modules/chatbot/ChatbotComponent",
       "dependencies": []
+    },
+    {
+      "id": "llm-provider-management",
+      "type": "LLMProviderManagementComponent",
+      "path": "@/modules/llm-provider-management/LLMProviderManagementComponent",
+      "dependencies": []
     }
   ]
 }
