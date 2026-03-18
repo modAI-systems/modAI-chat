@@ -31,12 +31,9 @@ export default defineConfig({
     ],
     webServer: [
         {
-            command: "cd ../../frontend_omni && ln -sf modules_browser_only.json public/modules.json && pnpm build && pnpm preview",
+            command: "cd ../../frontend/omni && pnpm build && pnpm preview",
             url: "http://localhost:4173",
             reuseExistingServer: !process.env.CI,
-            env: {
-                MODULES_JSON_NAME: "modules_browser_only.json"
-            }
         },
         {
             command: "docker container run --rm -p 3001:8000 -e LLMOCK_CORS_ALLOW_ORIGINS='http://localhost:4173' ghcr.io/modai-systems/llmock:latest",
