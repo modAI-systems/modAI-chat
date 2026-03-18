@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "playwright test",
+    "test:debug": "playwright test --debug",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
     "check": "biome check",

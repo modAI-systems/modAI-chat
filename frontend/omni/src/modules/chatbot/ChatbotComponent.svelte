@@ -9,6 +9,10 @@ import {
 	UserIcon,
 } from "lucide-svelte";
 import { marked } from "marked";
+import {
+	llmProviderService,
+	type ProviderModel,
+} from "@/modules/llm-provider-service/index.svelte.js";
 import * as Avatar from "$lib/components/ui/avatar/index.js";
 import { Badge } from "$lib/components/ui/badge/index.js";
 import { Button } from "$lib/components/ui/button/index.js";
@@ -16,54 +20,68 @@ import * as Collapsible from "$lib/components/ui/collapsible/index.js";
 import * as Command from "$lib/components/ui/command/index.js";
 import * as Popover from "$lib/components/ui/popover/index.js";
 import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
-import { Separator } from "$lib/components/ui/separator/index.js";
 import { Textarea } from "$lib/components/ui/textarea/index.js";
 
 // ---------------------------------------------------------------------------
-// Models data
+// Provider service & dynamic models
 // ---------------------------------------------------------------------------
 
-interface Model {
-	chef: string;
-	chefSlug: string;
-	id: string;
-	name: string;
+let availableModels = $state<ProviderModel[]>([]);
+let modelsLoading = $state(false);
+let selectedModel = $state("");
+
+async function loadModels() {
+	modelsLoading = true;
+	try {
+		const models = await llmProviderService.fetchModels();
+		availableModels = models;
+		if (
+			models.length > 0 &&
+			!models.find((m) => m.selectId === selectedModel)
+		) {
+			selectedModel = models[0].selectId;
+		}
+	} finally {
+		modelsLoading = false;
+	}
 }
 
-const models: Model[] = [
-	{ chef: "OpenAI", chefSlug: "openai", id: "gpt-4o", name: "GPT-4o" },
-	{
-		chef: "OpenAI",
-		chefSlug: "openai",
-		id: "gpt-4o-mini",
-		name: "GPT-4o Mini",
-	},
-	{
-		chef: "OpenAI",
-		chefSlug: "openai",
-		id: "gpt-3.5-turbo",
-		name: "GPT-3.5 Turbo",
-	},
-];
+$effect(() => {
+	// Re-run when providers list changes
+	llmProviderService.providers.length;
+	loadModels();
+});
 
-const chefs = [...new Set(models.map((m) => m.chef))];
+const selectedModelData = $derived(
+	availableModels.find((m) => m.selectId === selectedModel),
+);
+
+const providerGroups = $derived(
+	[...new Set(availableModels.map((m) => m.providerName))].map((name) => ({
+		name,
+		models: availableModels.filter((m) => m.providerName === name),
+	})),
+);
 
 // ---------------------------------------------------------------------------
-// State
+// Chat
 // ---------------------------------------------------------------------------
 
-let selectedModel = $state(models[0].id);
 let modelSelectorOpen = $state(false);
 let input = $state("");
 let conversationEl = $state<HTMLElement | null>(null);
 
-const selectedModelData = $derived(models.find((m) => m.id === selectedModel));
-
 const chat = new Chat({
 	api: "/api/chat",
 	body: {
-		get model() {
-			return selectedModel;
+		get modelId() {
+			return selectedModelData?.modelId ?? "gpt-4o";
+		},
+		get baseURL() {
+			return selectedModelData?.providerBaseUrl ?? "";
+		},
+		get apiKey() {
+			return selectedModelData?.providerApiKey ?? "";
 		},
 	},
 });
@@ -118,8 +136,8 @@ function handleSuggestion(suggestion: string) {
 	chat.sendMessage({ text: suggestion });
 }
 
-function handleModelSelect(modelId: string) {
-	selectedModel = modelId;
+function handleModelSelect(selectId: string) {
+	selectedModel = selectId;
 	modelSelectorOpen = false;
 }
 
@@ -134,6 +152,7 @@ function renderMarkdown(text: string): string {
 const isIdle = $derived(
 	chat.status !== "streaming" && chat.status !== "submitted",
 );
+const canChat = $derived(availableModels.length > 0 && isIdle);
 </script>
 
 <div class="relative flex size-full flex-col divide-y overflow-hidden">
@@ -143,24 +162,35 @@ const isIdle = $derived(
 	<ScrollArea class="flex-1" bind:ref={conversationEl}>
 		<div class="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6">
 			{#if chat.messages.length === 0}
-				<!-- Empty state -->
-				<div
-					class="flex flex-col items-center justify-center gap-6 py-20"
-				>
+				{#if modelsLoading}
+					<div class="flex items-center justify-center gap-2 py-20">
+						<Loader2 class="text-muted-foreground size-6 animate-spin" />
+						<span class="text-muted-foreground text-sm">Loading models...</span>
+					</div>
+				{:else}
+					<!-- Normal empty state -->
 					<div
-						class="bg-primary/10 flex size-16 items-center justify-center rounded-full"
+						class="flex flex-col items-center justify-center gap-6 py-20"
 					>
-						<BotIcon class="text-primary size-8" />
+						<div
+							class="bg-primary/10 flex size-16 items-center justify-center rounded-full"
+						>
+							<BotIcon class="text-primary size-8" />
+						</div>
+						<div class="text-center">
+							<h2 class="text-2xl font-semibold tracking-tight">
+								How can I help you today?
+							</h2>
+							<p class="text-muted-foreground mt-2 text-sm">
+								{#if availableModels.length === 0}
+									Add a provider in Settings to start chatting.
+								{:else}
+									Ask me anything or pick a suggestion below.
+								{/if}
+							</p>
+						</div>
 					</div>
-					<div class="text-center">
-						<h2 class="text-2xl font-semibold tracking-tight">
-							How can I help you today?
-						</h2>
-						<p class="text-muted-foreground mt-2 text-sm">
-							Ask me anything or pick a suggestion below.
-						</p>
-					</div>
-				</div>
+				{/if}
 			{/if}
 
 			{#each chat.messages as message (message.id)}
@@ -182,7 +212,7 @@ const isIdle = $derived(
 						<!-- Message content -->
 						<div class="min-w-0 flex-1">
 							<p class="text-muted-foreground mb-1 text-xs font-medium {message.role === 'user' ? 'text-right' : ''}">
-								{message.role === "user" ? "You" : selectedModelData?.name ?? "Assistant"}
+								{message.role === "user" ? "You" : selectedModelData?.modelName ?? "Assistant"}
 							</p>
 							<div class="flex flex-col gap-2 {message.role === 'user' ? 'items-end' : ''}">
 								{#each message.parts as part}
@@ -266,7 +296,7 @@ const isIdle = $derived(
 	<!-- ================================================================ -->
 	<div class="shrink-0">
 		<!-- Suggestions -->
-		{#if chat.messages.length === 0}
+		{#if chat.messages.length === 0 && availableModels.length > 0}
 			<div
 				class="flex flex-wrap justify-center gap-2 border-b px-4 py-3"
 			>
@@ -292,7 +322,7 @@ const isIdle = $derived(
 					placeholder="Type a message..."
 					class="min-h-[44px] resize-none"
 					rows={1}
-					disabled={!isIdle}
+					disabled={!canChat}
 				/>
 				<div class="flex items-center justify-between">
 					<!-- Left: Model selector -->
@@ -323,18 +353,18 @@ const isIdle = $derived(
 									<Command.Empty
 										>No models found.</Command.Empty
 									>
-									{#each chefs as chef}
-										<Command.Group heading={chef}>
-											{#each models.filter((m) => m.chef === chef) as m}
-												<Command.Item
-													onSelect={() =>
-														handleModelSelect(m.id)}
-													value={m.id}
+								{#each providerGroups as group}
+									<Command.Group heading={group.name}>
+										{#each group.models as m}
+											<Command.Item
+												onSelect={() =>
+													handleModelSelect(m.selectId)}
+												value={m.selectId}
+											>
+												<span class="flex-1"
+													>{m.modelName}</span
 												>
-													<span class="flex-1"
-														>{m.name}</span
-													>
-													{#if selectedModel === m.id}
+												{#if selectedModel === m.selectId}
 														<Check
 															class="size-4"
 														/>
@@ -352,7 +382,7 @@ const isIdle = $derived(
 					<Button
 						type="submit"
 						size="sm"
-						disabled={!input.trim() || !isIdle}
+						disabled={!input.trim() || !canChat}
 						class="gap-1.5"
 					>
 						{#if !isIdle}
