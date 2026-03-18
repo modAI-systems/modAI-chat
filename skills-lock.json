@@ -15,6 +15,11 @@
       "source": "ejirocodes/agent-skills",
       "sourceType": "github",
       "computedHash": "bfcbba3d355aede6f6be9720f195206d4dcaa7c152787ea00c06cb4a1ac44ba4"
+    },
+    "vite": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "computedHash": "867ff66238f3152e9c494339ad08dc432dd0df5bcf5cc7a00b61a72b580eb908"
     }
   }
 }
