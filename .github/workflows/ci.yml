@@ -37,6 +37,7 @@ jobs:
       matrix:
         working-dir:
           - frontend_omni
+          - frontend/omni
           - e2e_tests/tests_omni_full
           - e2e_tests/tests_omni_light
     steps:
@@ -96,6 +97,27 @@ jobs:
 
       - name: Run unit tests
         working-directory: frontend_omni
+        run: pnpm test
+
+  svelte-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        working-directory: frontend/omni
+        run: pnpm install
+
+      - name: Run unit tests
+        working-directory: frontend/omni
         run: pnpm test
 
   frontend-e2e:
