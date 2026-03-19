@@ -11,7 +11,7 @@ interface Props {
 	children: Snippet;
 }
 
-const { manifestPath = "/manifest.json", children }: Props = $props();
+const { manifestPath = "/modules.json", children }: Props = $props();
 
 // Reactive active modules — starts null until manifest is loaded
 let activeModulesImpl = $state<ActiveModulesImpl | null>(null);
@@ -36,10 +36,25 @@ const ready = fetchManifestJson(untrack(() => manifestPath)).then(
 		activeModulesImpl = new ActiveModulesImpl(loaded);
 	},
 );
+
+ready.catch((error) => {
+	console.error("Failed to load module manifest", {
+		manifestPath,
+		error,
+	});
+});
 </script>
 
 {#await ready}
 	<!-- Loading modules -->
 {:then}
 	{@render children()}
+{:catch error}
+	<div role="alert" data-testid="modules-provider-error">
+		Failed to load modules manifest ({manifestPath}). Check browser console for details.
+		{#if error instanceof Error && error.message}
+			<br />
+			Error: {error.message}
+		{/if}
+	</div>
 {/await}
