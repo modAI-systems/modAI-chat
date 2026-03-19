@@ -4,7 +4,6 @@ import type { Component } from "svelte";
 import { getModules } from "../module-system/index";
 
 const modules = getModules();
-const helloComponents = $derived(modules.getAll<Component>("HelloComponent"));
 const chatbotComponents = $derived(
 	modules.getAll<Component>("ChatbotComponent"),
 );
@@ -56,14 +55,6 @@ let currentPage = $state<"chat" | "settings">("chat");
 		<div class="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
 			<h1 class="text-4xl font-bold text-foreground">modAI</h1>
 			<p class="text-muted-foreground">Svelte · Vite · Tailwind · Module System</p>
-
-			{#each helloComponents as HelloComp}
-				<HelloComp />
-			{/each}
-
-			{#if helloComponents.length === 0}
-				<p class="text-sm text-muted-foreground">No modules loaded.</p>
-			{/if}
 		</div>
 	{/if}
 </main>
