@@ -1,5 +1,6 @@
 <script lang="ts">
-import { Chat } from "@ai-sdk/svelte";
+import { createOpenAI } from "@ai-sdk/openai";
+import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import {
 	llmProviderService,
 	type ProviderModel,
@@ -44,54 +45,100 @@ const providerGroups = $derived(
 	})),
 );
 
-const chat = new Chat({
-	api: "/api/chat",
-	body: {
-		get modelId() {
-			return selectedModelData?.modelId ?? "gpt-4o";
-		},
-		get baseURL() {
-			return selectedModelData?.providerBaseUrl ?? "";
-		},
-		get apiKey() {
-			return selectedModelData?.providerApiKey ?? "";
-		},
-	},
-});
+let messages = $state<UIMessage[]>([]);
+let chatStatus = $state<"ready" | "submitted" | "streaming">("ready");
 
 const isIdle = $derived(
-	chat.status !== "streaming" && chat.status !== "submitted",
+	chatStatus !== "streaming" && chatStatus !== "submitted",
 );
 const canChat = $derived(Boolean(selectedModelData) && isIdle);
 
-function handleSend(text: string) {
+async function handleSend(text: string) {
 	if (!selectedModelData) {
 		return;
 	}
 
-	chat.sendMessage(
-		{ text },
+	const userMessage: UIMessage = {
+		id: makeMessageId(),
+		role: "user",
+		parts: [{ type: "text", text }],
+	};
+	const assistantMessageId = makeMessageId();
+	const conversationForModel = [...messages, userMessage];
+	messages = [
+		...conversationForModel,
 		{
-			body: {
-				modelId: selectedModelData.modelId,
-				baseURL: selectedModelData.providerBaseUrl,
-				apiKey: selectedModelData.providerApiKey,
-			},
+			id: assistantMessageId,
+			role: "assistant",
+			parts: [{ type: "text", text: "" }],
 		},
-	);
+	];
+	chatStatus = "submitted";
+
+	try {
+		const provider = createOpenAI({
+			baseURL: trimTrailingSlash(selectedModelData.providerBaseUrl),
+			apiKey: selectedModelData.providerApiKey,
+		});
+
+		const result = streamText({
+			model: provider(selectedModelData.modelId),
+			messages: await convertToModelMessages(conversationForModel),
+		});
+
+		chatStatus = "streaming";
+		for await (const textPart of result.textStream) {
+			messages = messages.map((message) => {
+				if (message.id !== assistantMessageId || message.role !== "assistant") {
+					return message;
+				}
+				const previousText =
+					message.parts.find((part) => part.type === "text")?.text ?? "";
+				return {
+					...message,
+					parts: [{ type: "text", text: `${previousText}${textPart}` }],
+				};
+			});
+		}
+	} catch {
+		messages = messages.map((message) => {
+			if (message.id !== assistantMessageId || message.role !== "assistant") {
+				return message;
+			}
+			return {
+				...message,
+				parts: [
+					{
+						type: "text",
+						text: "Could not reach the selected provider. Check URL, API key, and CORS settings.",
+					},
+				],
+			};
+		});
+	} finally {
+		chatStatus = "ready";
+	}
+}
+
+function makeMessageId(): string {
+	return `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function trimTrailingSlash(url: string): string {
+	return url.endsWith("/") ? url.slice(0, -1) : url;
 }
 </script>
 
 <div class="relative flex size-full flex-col divide-y overflow-hidden">
 	<ChatConversationArea
-		messages={chat.messages}
-		status={chat.status}
+		{messages}
+		status={chatStatus}
 		{modelsLoading}
 		hasModels={availableModels.length > 0}
 		selectedModelName={selectedModelData?.modelName}
 	/>
 	<ChatInputPanel
-		messageCount={chat.messages.length}
+		messageCount={messages.length}
 		hasModels={availableModels.length > 0}
 		{canChat}
 		{isIdle}
