@@ -124,9 +124,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        working-dir:
-          - e2e_tests/tests_omni_full
-          - e2e_tests/tests_omni_light
+        include:
+          - working-dir: e2e_tests/tests_omni_full
+            frontend-dir: frontend_omni
+          - working-dir: e2e_tests/tests_omni_light
+            frontend-dir: frontend/omni
     steps:
       - uses: actions/checkout@v6
 
@@ -145,7 +147,7 @@ jobs:
         run: npm install -g pnpm
 
       - name: Install dependencies for frontend
-        working-directory: frontend_omni
+        working-directory: ${{ matrix.frontend-dir }}
         run: pnpm install
 
       - name: Install dependencies for tests
