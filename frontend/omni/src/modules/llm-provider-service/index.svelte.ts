@@ -16,7 +16,7 @@ export interface ProviderModel {
     providerApiKey: string;
     modelId: string;
     modelName: string;
-    /** Compound key used in the model selector: `${providerId}/${modelId}` */
+    /** Compound key used in the model selector: `${providerId}__${modelId}` */
     selectId: string;
 }
 
