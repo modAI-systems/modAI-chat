@@ -9,17 +9,16 @@ test.describe("Chat", () => {
         await page.evaluate(() => {
             localStorage.clear();
         });
-        // TODO: set url and api key for llmmock in browser local storage so that the provider is available for tests without needing to add it through the UI
         await page.evaluate(() => {
             localStorage.setItem(
-                "llmProviderService.providers",
+                "llm_providers",
                 JSON.stringify([
                     {
                         id: "llmmock",
                         name: "LLMMock",
                         type: "openai",
                         base_url: "http://localhost:3001",
-                        api_key: "your-secret-api-key",
+                        api_key: "",
                     },
                 ]),
             );
@@ -28,5 +27,21 @@ test.describe("Chat", () => {
 
     test("Chat responds", async ({ page }) => {
         await page.goto("/");
+        await page.getByRole("button", { name: "Providers" }).click();
+        await page
+            .getByRole("button", { name: "Check provider health" })
+            .click();
+        await expect(
+            page.getByRole("button", { name: "Check provider health" }),
+        ).toBeVisible();
+        await page.getByRole("button", { name: "Chat" }).click();
+        await expect(
+            page.getByRole("button", { name: "gpt-4o" }),
+        ).toBeVisible();
+        await page
+            .getByRole("textbox", { name: "Type a message..." })
+            .fill("hello");
+        await page.getByRole("button", { name: "Send" }).click();
+        await expect(page.getByText("hello").nth(1)).toBeVisible();
     });
 });

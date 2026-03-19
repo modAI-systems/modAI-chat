@@ -337,7 +337,7 @@ const canChat = $derived(availableModels.length > 0 && isIdle);
 									class="text-muted-foreground h-auto gap-1.5 px-2 py-1 text-xs"
 									{...props}
 								>
-									{selectedModelData?.name ?? "Select model"}
+									{selectedModelData?.modelName ?? "Select model"}
 									<ChevronDown class="size-3" />
 								</Button>
 							{/snippet}

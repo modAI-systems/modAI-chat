@@ -36,7 +36,7 @@ export default defineConfig({
             reuseExistingServer: !process.env.CI,
         },
         {
-            command: "docker container run --rm -p 3001:8000 -e LLMOCK_CORS_ALLOW_ORIGINS='http://localhost:4173' ghcr.io/modai-systems/llmock:latest",
+            command: "docker container run --rm --platform linux/amd64 -p 3001:8000 -e LLMOCK_CORS_ALLOW_ORIGINS='[\"http://localhost:4173\"]' ghcr.io/modai-systems/llmock:latest",
             url: "http://localhost:3001/health",
             reuseExistingServer: !process.env.CI,
             gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },

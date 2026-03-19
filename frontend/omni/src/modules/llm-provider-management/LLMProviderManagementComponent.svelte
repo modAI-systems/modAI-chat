@@ -1,5 +1,13 @@
 <script lang="ts">
-import { Loader2, PlusIcon, Settings2, Trash2 } from "lucide-svelte";
+import {
+	CircleCheck,
+	CircleX,
+	HeartPulse,
+	Loader2,
+	PlusIcon,
+	Settings2,
+	Trash2,
+} from "lucide-svelte";
 import {
 	llmProviderService,
 	type Provider,
@@ -21,6 +29,9 @@ let editingId = $state<string | null>(null);
 let editName = $state("");
 let editBaseUrl = $state("");
 let editApiKey = $state("");
+let healthByProviderId = $state<
+	Record<string, "idle" | "checking" | "ok" | "fail">
+>({});
 
 const providers = $derived(llmProviderService.providers);
 
@@ -77,6 +88,18 @@ function saveEdit(id: string) {
 function deleteProvider(id: string) {
 	llmProviderService.deleteProvider(id);
 	if (editingId === id) editingId = null;
+	const next = { ...healthByProviderId };
+	delete next[id];
+	healthByProviderId = next;
+}
+
+async function checkHealth(providerId: string) {
+	healthByProviderId = { ...healthByProviderId, [providerId]: "checking" };
+	const status = await llmProviderService.checkProviderHealth(providerId);
+	healthByProviderId = {
+		...healthByProviderId,
+		[providerId]: status === 200 ? "ok" : "fail",
+	};
 }
 </script>
 
@@ -92,6 +115,7 @@ function deleteProvider(id: string) {
 	{#if providers.length > 0}
 		<div class="flex flex-col gap-3">
 			{#each providers as provider (provider.id)}
+				{@const healthState = healthByProviderId[provider.id] ?? "idle"}
 				<Card.Root>
 					<Card.Content class="flex flex-col gap-3 p-4">
 						{#if editingId === provider.id}
@@ -121,6 +145,23 @@ function deleteProvider(id: string) {
 									</p>
 								</div>
 								<div class="flex gap-1">
+									<Button
+										variant="ghost"
+										size="sm"
+										class="size-8 p-0 {healthState === 'ok' ? 'text-green-600 hover:text-green-700' : ''} {healthState === 'fail' ? 'text-red-600 hover:text-red-700' : ''}"
+										title="Check provider health"
+										onclick={() => checkHealth(provider.id)}
+									>
+										{#if healthState === "checking"}
+											<Loader2 class="size-4 animate-spin" />
+										{:else if healthState === "ok"}
+											<CircleCheck class="size-4" />
+										{:else if healthState === "fail"}
+											<CircleX class="size-4" />
+										{:else}
+											<HeartPulse class="size-4" />
+										{/if}
+									</Button>
 									<Button
 										variant="ghost"
 										size="sm"
