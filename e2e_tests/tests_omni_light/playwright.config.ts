@@ -9,7 +9,7 @@ export default defineConfig({
     workers: process.env.CI ? 1 : undefined,
     reporter: [
         ["html", { open: "never" }], // Generate HTML report but don't auto-open
-        ["list"] // Also show results in terminal
+        ["list"], // Also show results in terminal
     ],
     use: {
         baseURL: "http://localhost:4173",
@@ -31,12 +31,14 @@ export default defineConfig({
     ],
     webServer: [
         {
-            command: "cd ../../frontend/omni && pnpm build && pnpm preview",
+            command:
+                "cd ../../frontend/omni && ln -sf public/modules.json && pnpm build && pnpm preview",
             url: "http://localhost:4173",
             reuseExistingServer: !process.env.CI,
         },
         {
-            command: "docker container run --rm --platform linux/amd64 -p 3001:8000 -e LLMOCK_CORS_ALLOW_ORIGINS='[\"http://localhost:4173\"]' ghcr.io/modai-systems/llmock:latest",
+            command:
+                "docker container run --rm --platform linux/amd64 -p 3001:8000 -e LLMOCK_CORS_ALLOW_ORIGINS='[\"http://localhost:4173\"]' ghcr.io/modai-systems/llmock:latest",
             url: "http://localhost:3001/health",
             reuseExistingServer: !process.env.CI,
             gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },

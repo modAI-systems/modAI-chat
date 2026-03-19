@@ -1,7 +1,5 @@
-import { expect, test } from "@playwright/test";
-import { ChatPage, LLMProvidersPage } from "./pages";
-
-const exact = { exact: true };
+import { test } from "@playwright/test";
+import { ChatPage } from "./pages";
 
 test.describe("Chat", () => {
     test.beforeEach(async ({ page }) => {
@@ -26,22 +24,12 @@ test.describe("Chat", () => {
     });
 
     test("Chat responds", async ({ page }) => {
-        await page.goto("/");
-        await page.getByRole("button", { name: "Providers" }).click();
-        await page
-            .getByRole("button", { name: "Check provider health" })
-            .click();
-        await expect(
-            page.getByRole("button", { name: "Check provider health" }),
-        ).toBeVisible();
-        await page.getByRole("button", { name: "Chat" }).click();
-        await expect(
-            page.getByRole("button", { name: "gpt-4o" }),
-        ).toBeVisible();
-        await page
-            .getByRole("textbox", { name: "Type a message..." })
-            .fill("hello");
-        await page.getByRole("button", { name: "Send" }).click();
-        await expect(page.getByText("hello").nth(1)).toBeVisible();
+        const chatPage = new ChatPage(page);
+
+        await chatPage.goto();
+        await chatPage.assertModelButtonVisible("gpt-4o");
+
+        await chatPage.sendMessage("hello");
+        await chatPage.assertMessageVisible("hello");
     });
 });
