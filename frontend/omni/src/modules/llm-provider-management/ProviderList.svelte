@@ -72,7 +72,7 @@ async function checkHealth(providerId: string) {
 	const status = await onCheckProviderHealth(providerId);
 	healthByProviderId = {
 		...healthByProviderId,
-		[providerId]: status === 200 ? "ok" : "fail",
+		[providerId]: status >= 200 && status < 300 ? "ok" : "fail",
 	};
 }
 </script>
