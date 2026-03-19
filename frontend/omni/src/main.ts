@@ -5,13 +5,13 @@ import App from "./App.svelte";
 const appRoot = document.getElementById("app");
 
 if (!appRoot) {
-    throw new Error(
-        'Failed to initialize app: missing root element with id "app".',
-    );
+	throw new Error(
+		'Failed to initialize app: missing root element with id "app".',
+	);
 }
 
 const app = mount(App, {
-    target: appRoot,
+	target: appRoot,
 });
 
 export default app;
