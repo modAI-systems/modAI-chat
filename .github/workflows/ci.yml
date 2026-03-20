@@ -3,9 +3,9 @@ name: CI
 on:
   push:
     branches:
-      - '**'
+      - "**"
     tags-ignore:
-      - '**'
+      - "**"
 
 jobs:
   backend-format:
@@ -121,6 +121,7 @@ jobs:
         run: pnpm test
 
   frontend-e2e:
+    name: frontend-e2e (${{ matrix.working-dir }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
