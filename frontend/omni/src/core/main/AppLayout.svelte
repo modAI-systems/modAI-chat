@@ -1,52 +1,80 @@
 <script lang="ts">
 import { MessageSquare } from "lucide-svelte";
 import type { Component } from "svelte";
+import Router from "svelte-spa-router";
 import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 import { getModules } from "../module-system/index";
+import ChatRoute from "./routes/ChatRoute.svelte";
+import ProvidersRoute from "./routes/ProvidersRoute.svelte";
+import ToolsRoute from "./routes/ToolsRoute.svelte";
 
 const modules = getModules();
 const chatbotComponents = $derived(
   modules.getAll<Component>("ChatbotComponent"),
 );
-const providerComponents = $derived(
-  modules.getAll<Component>("LLMProviderManagementComponent"),
-);
 const sidebarComponents = $derived(
 	modules.getAll<Component>("SidebarComponent"),
 );
 
-let currentPage = $state<"chat" | "providers" | "tools">("chat");
+const AppRoute = {
+	Chat: "/chat",
+	Providers: "/providers",
+	Tools: "/tools",
+} as const;
 
-function getPageFromHash(): "chat" | "providers" | "tools" {
-	if (typeof window === "undefined") {
-		return "chat";
+type AppRoute = (typeof AppRoute)[keyof typeof AppRoute];
+
+const routes = {
+	"/": ChatRoute,
+	[AppRoute.Chat]: ChatRoute,
+	[AppRoute.Providers]: ProvidersRoute,
+	[AppRoute.Tools]: ToolsRoute,
+	"*": ChatRoute,
+};
+
+let currentRoutePath = $state<AppRoute>(AppRoute.Chat);
+const isChatRouteActive = $derived(currentRoutePath === AppRoute.Chat);
+
+function parseRoutePath(path: string): AppRoute {
+	switch (path) {
+		case AppRoute.Providers:
+			return AppRoute.Providers;
+		case AppRoute.Tools:
+			return AppRoute.Tools;
+		default:
+			return AppRoute.Chat;
 	}
-
-	return window.location.hash === "#providers" ? "providers" : window.location.hash === "#tools" ? "tools" : "chat";
 }
 
-function setCurrentPage(page: "chat" | "providers" | "tools") {
-	currentPage = page;
+function getRoutePathFromHash() {
+	if (typeof window === "undefined") {
+		return AppRoute.Chat;
+	}
+
+	const hash = window.location.hash;
+	if (hash.startsWith("#/")) {
+		const routePath = hash.slice(1).split("?")[0] || AppRoute.Chat;
+		return parseRoutePath(routePath);
+	}
+
+	return AppRoute.Chat;
+}
+
+function setCurrentRoutePath(path: AppRoute) {
+	currentRoutePath = path;
 
 	if (typeof window === "undefined") {
 		return;
 	}
 
-	const nextHash = page === "providers" ? "#providers" : page === "tools" ? "#tools" : "#chat";
+	const nextHash = `#${path}`;
 	if (window.location.hash !== nextHash) {
 		window.location.hash = nextHash;
 	}
 }
 
 function handleHashChange() {
-	const nextPage = getPageFromHash();
-
-	if (nextPage === "providers" && providerComponents.length === 0) {
-		currentPage = "chat";
-		return;
-	}
-
-	currentPage = nextPage;
+	currentRoutePath = getRoutePathFromHash();
 }
 
 if (typeof window !== "undefined") {
@@ -67,8 +95,8 @@ if (typeof window !== "undefined") {
 					</div>
 					<nav class="flex items-center gap-1">
 						<button
-							class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors {currentPage === 'chat' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
-							onclick={() => setCurrentPage("chat")}
+							class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors {isChatRouteActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
+							onclick={() => setCurrentRoutePath(AppRoute.Chat)}
 						>
 							<MessageSquare class="size-4" />
 							Chat
@@ -79,19 +107,7 @@ if (typeof window !== "undefined") {
 					</nav>
 				</header>
 				<div class="flex-1 overflow-hidden">
-					{#if currentPage === "providers" && providerComponents.length > 0}
-						{#each providerComponents as ProviderComp}
-							<ProviderComp />
-						{/each}
-					{:else if currentPage === "tools" && providerComponents.length > 0}
-						{#each providerComponents as ProviderComp}
-							<ProviderComp />
-						{/each}
-					{:else}
-						{#each chatbotComponents as ChatbotComp}
-							<ChatbotComp />
-						{/each}
-					{/if}
+					<Router {routes} />
 				</div>
 			{:else}
 				<div class="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
