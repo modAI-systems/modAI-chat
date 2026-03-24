@@ -42,11 +42,11 @@
 				items: [
 					{
 						title: "Providers",
-						url: "#providers",
+						url: "#/providers",
 					},
 					{
 						title: "Tools",
-						url: "#tools",
+						url: "#/tools",
 					},
 				],
 			},
