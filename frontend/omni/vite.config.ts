@@ -16,6 +16,14 @@ export default defineConfig({
 			$lib: path.resolve(__dirname, "./src/lib"),
 		},
 	},
+	server: {
+		proxy: {
+			"/api": {
+				target: "http://localhost:8000",
+				changeOrigin: true,
+			},
+		},
+	},
 	test: {
 		globals: true,
 		environment: "happy-dom",
