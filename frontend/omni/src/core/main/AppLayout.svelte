@@ -1,5 +1,5 @@
 <script lang="ts">
-import { MessageSquare, Settings2 } from "lucide-svelte";
+import { MessageSquare } from "lucide-svelte";
 import type { Component } from "svelte";
 import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 import { getModules } from "../module-system/index";
@@ -16,7 +16,45 @@ const sidebarComponents = $derived(
 );
 
 let currentPage = $state<"chat" | "settings">("chat");
+
+function getPageFromHash(): "chat" | "settings" {
+	if (typeof window === "undefined") {
+		return "chat";
+	}
+
+	return window.location.hash === "#settings" ? "settings" : "chat";
+}
+
+function setCurrentPage(page: "chat" | "settings") {
+	currentPage = page;
+
+	if (typeof window === "undefined") {
+		return;
+	}
+
+	const nextHash = page === "settings" ? "#settings" : "#chat";
+	if (window.location.hash !== nextHash) {
+		window.location.hash = nextHash;
+	}
+}
+
+function handleHashChange() {
+	const nextPage = getPageFromHash();
+
+	if (nextPage === "settings" && providerComponents.length === 0) {
+		currentPage = "chat";
+		return;
+	}
+
+	currentPage = nextPage;
+}
+
+if (typeof window !== "undefined") {
+	handleHashChange();
+}
 </script>
+
+<svelte:window onhashchange={handleHashChange} />
 
 <Sidebar.Provider>
 	<div class="bg-background flex min-h-screen w-full flex-row overflow-hidden">
@@ -30,20 +68,11 @@ let currentPage = $state<"chat" | "settings">("chat");
 					<nav class="flex items-center gap-1">
 						<button
 							class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors {currentPage === 'chat' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
-							onclick={() => (currentPage = "chat")}
+							onclick={() => setCurrentPage("chat")}
 						>
 							<MessageSquare class="size-4" />
 							Chat
 						</button>
-						{#if providerComponents.length > 0}
-							<button
-								class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors {currentPage === 'settings' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
-								onclick={() => (currentPage = "settings")}
-							>
-								<Settings2 class="size-4" />
-								Providers
-							</button>
-						{/if}
 						{#if sidebarComponents.length > 0}
 							<Sidebar.Trigger />
 						{/if}
