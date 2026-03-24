@@ -20,6 +20,9 @@ COPY . .
 # Build the app
 RUN pnpm build
 
+# Ensure modules.json is not baked into the image
+RUN rm -f /app/dist/modules.json
+
 #################
 ## Final stage ##
 #################
@@ -30,10 +33,13 @@ WORKDIR /app
 # Copy built app from build stage
 COPY --from=build /app/dist /app
 
-# Copy Caddyfile
+# Copy other resources
 COPY resources/Caddyfile /etc/caddy/Caddyfile
+COPY resources/entrypoint.sh /entrypoint.sh
 
 EXPOSE 80
 EXPOSE 443
 
+# Create modules.json at runtime, then start Caddy
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]

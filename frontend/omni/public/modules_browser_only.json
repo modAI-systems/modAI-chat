@@ -1,0 +1,17 @@
+{
+  "version": "1.0.0",
+  "modules": [
+    {
+      "id": "chatbot",
+      "type": "ChatbotComponent",
+      "path": "@/modules/chatbot/ChatbotComponent",
+      "dependencies": []
+    },
+    {
+      "id": "llm-provider-management",
+      "type": "LLMProviderManagementComponent",
+      "path": "@/modules/llm-provider-management/LLMProviderManagementComponent",
+      "dependencies": []
+    }
+  ]
+}

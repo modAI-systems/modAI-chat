@@ -5,13 +5,13 @@ import { cn } from "$lib/utils.js";
 export type CommandRootApi = CommandPrimitive.Root;
 
 let {
-	api = $bindable(null),
-	ref = $bindable(null),
-	value = $bindable(""),
-	class: className,
-	...restProps
+  api = $bindable(null),
+  ref = $bindable(null),
+  value = $bindable(""),
+  class: className,
+  ...restProps
 }: CommandPrimitive.RootProps & {
-	api?: CommandRootApi | null;
+  api?: CommandRootApi | null;
 } = $props();
 </script>
 

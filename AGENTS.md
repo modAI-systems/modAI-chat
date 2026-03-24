@@ -9,8 +9,8 @@ This project is designed for AI-first development. All agents MUST follow these 
 ### 0. Context Loading (ALWAYS FIRST)
 - **RULE**: ALWAYS read project context before starting ANY task.
 - **PROCESS**:
-    1. Read `{frontend_omni|backend/omni}/docs/architecture/*.md` to understand frontend system design.
-    2. Read `{frontend_omni|backend/omni}/docs/learnings/*.md` to learn from past corrections.
+    1. Read `{frontend/omni|backend/omni}/docs/architecture/*.md` to understand frontend system design.
+    2. Read `{frontend/omni|backend/omni}/docs/learnings/*.md` to learn from past corrections.
     3. Check `.agents/skills/` for relevant technology skills.
 - **WHY**: These files contain critical knowledge from past work. Skipping them leads to repeated mistakes and inconsistent code.
 
@@ -25,14 +25,14 @@ This project is designed for AI-first development. All agents MUST follow these 
 ### 2. Architecture First
 - **RULE**: Architecture MUST be adapted/reviewed before coding starts.
 - **PROCESS**:
-    1. For any new feature/package, update `{frontend_omni|backend/omni}/docs/DECISIONS.md`.
+    1. For any new feature/package, update `{frontend/omni|backend/omni}/docs/DECISIONS.md`.
     2. Ensure the architecture aligns with the overall project goals.
 
 ### 3. Learning from Corrections
 - **RULE**: If the user corrects a mistake, update the instructions immediately.
 - **PROCESS**:
     1. Identify the root cause of the mistake.
-    2. Update `{frontend_omni|backend/omni}/docs/learnings/INSTRUCTION_UPDATES.md` with a new rule to prevent recurrence.
+    2. Update `{frontend/omni|backend/omni}/docs/learnings/INSTRUCTION_UPDATES.md` with a new rule to prevent recurrence.
     3. Append relevant rules to `AGENTS.md` if they are project-wide.
 
 ### 4. Test-Driven Completion
@@ -51,8 +51,8 @@ This project is designed for AI-first development. All agents MUST follow these 
 ### 6. Documentation Updates for API Changes (MANDATORY)
 - **RULE**: When adding, modifying, or deleting API endpoints, ALWAYS update documentation.
 - **PROCESS**:
-    1. Check `{frontend_omni|backend/omni}/README.md` for endpoint references and usage examples.
-    2. Check `{frontend_omni|backend/omni}/docs/architecture/*.md` for endpoint documentation.
+    1. Check `{frontend/omni|backend/omni}/README.md` for endpoint references and usage examples.
+    2. Check `{frontend/omni|backend/omni}/docs/architecture/*.md` for endpoint documentation.
     3. Check any other docs that reference API endpoints.
     4. Update all affected documentation before marking task as complete.
 
@@ -62,7 +62,7 @@ This project is designed for AI-first development. All agents MUST follow these 
 modAI-chat is a full-stack application with separate backend and frontend components:
 
 - **Backend**: Python FastAPI REST API with SQLModel persistence
-- **Frontend**: React TypeScript SPA with modular architecture
+- **Frontend**: Svelte TypeScript SPA with modular architecture
 - **E2E Tests**: Tests covering all different frontends with the (if needed) backend
 
 ## General Guidelines
@@ -73,7 +73,7 @@ modAI-chat is a full-stack application with separate backend and frontend compon
 - **Documentation**: Keep documentation concise; don't create additional docs unless requested
 - **Task Planning**: Create TODO items before starting work, prioritizing document reading first
 - **Function Order**: Public functions first, then protected, then private
-- **Top down functions**: The more specific functions get the further down in a file they should be. The entry point of a file (e.g. a React Compnent) should be on the top, subfunctions then underneeth.
+- **Top down functions**: The more specific functions get the further down in a file they should be. The entry point of a file (e.g. a Svelte Compnent) should be on the top, subfunctions then underneeth.
 - **Read Architecture first**: Determine if you the work is frontend or backend related and then read the corresponding arch document first.
 
 ## Coding Standards
@@ -88,7 +88,7 @@ modAI-chat is a full-stack application with separate backend and frontend compon
 - **Optional Types**: Use pipe operator `str | None` instead of `Optional[str]`
 - **Web Error Exposure**: Log full stack traces internally, return generic messages to Web responses to not leak details
 
-### React TypeScript
+### Svelte TypeScript
 
 - **Language**: Use TypeScript over JavaScript
 - **File Naming**:
@@ -142,7 +142,7 @@ Before any backend work, read relevant architecture documents:
 
 ### Environment Setup
 
-- **Location**: Work in `frontend_omni/` directory. When executing commands, switch to the frontend dir.
+- **Location**: Work in `frontend/omni/` directory. When executing commands, switch to the frontend dir.
 - **Package Manager**: Use `pnpm` (not npm)
 - **Start Dev Server**: `pnpm dev`
 - **Build**: `pnpm build`
@@ -150,11 +150,11 @@ Before any backend work, read relevant architecture documents:
 
 ### Architecture Reading Requirements
 
-- **Always read first**: `frontend_omni/architecture/core.md`
+- **Always read first**: `frontend/omni/architecture/core.md`
 
 ### Technology Stack
 
-- **Framework**: React with TypeScript
+- **Framework**: Svelte with TypeScript
 - **Styling**: TailwindCSS
 - **Build Tool**: Vite
 - **UI Components**: shadcn/ui (https://ui.shadcn.com/docs/components)
@@ -166,14 +166,14 @@ Before any backend work, read relevant architecture documents:
 - **i18n**: Always translate texts in the Frontend with i18next
 - **English**: English is always the fallback language in the code. No need for a own `en.json`
 - **Imports**: When you import something from another module group, never use relative imports but always full like `import { foo } from "@/modules/some-module"`. Imports within the same module group should be relative.
-- **React Compnents Functions**: Create `function ProviderItem({provider: Provider}) {` over `const renderProviderItem = (provider: Provider) => {`
+- **Svelte Compnents Functions**: Create `function ProviderItem({provider: Provider}) {` over `const renderProviderItem = (provider: Provider) => {`
 - **JSX Functions**: JSX should never have a render.. function, but always a proper component function. Compnent functions should never be nested in other functions but on top level
 - **pnpm dev**: You should never run `pnpm dev` because this is blocking. Use `pnpm build` instead always.
 
 ### Unit Testing
 
 ```bash
-cd frontend_omni
+cd frontend/omni
 pnpm test            # Run javascript unit tests (vitest)
 pnpm check           # Run linter
 ```
@@ -198,7 +198,7 @@ Layout:
 - `.pre-commit-config.yaml` — workspace root (empty, enables discovery)
 - `backend/omni/.pre-commit-config.yaml` — ruff format + ruff check
 - `backend/tools/dice-roller/.pre-commit-config.yaml` — ruff format + ruff check
-- `frontend_omni/.pre-commit-config.yaml` — biome check
+- `frontend/omni/.pre-commit-config.yaml` — biome check
 - `e2e_tests/tests_omni_full/.pre-commit-config.yaml` — biome check
 - `e2e_tests/tests_omni_light/.pre-commit-config.yaml` — biome check
 

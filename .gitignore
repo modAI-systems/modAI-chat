@@ -25,7 +25,7 @@ test-results/
 playwright-report/
 
 # Frontend generated
-frontend_omni/public/modules.json
+frontend/omni/public/modules.json
 
 # Editor directories and files
 .vscode/*

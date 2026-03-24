@@ -15,7 +15,7 @@ updates:
 
   - package-ecosystem: npm
     directories:
-      - '/frontend_omni'
+      - '/frontend/omni'
       - '/e2e_tests/tests_omni_full'
       - '/e2e_tests/tests_omni_light'
     schedule:

@@ -1,79 +1,79 @@
 <script lang="ts">
 import {
-	CircleCheck,
-	CircleX,
-	HeartPulse,
-	Loader2,
-	Settings2,
-	Trash2,
+  CircleCheck,
+  CircleX,
+  HeartPulse,
+  Loader2,
+  Settings2,
+  Trash2,
 } from "lucide-svelte";
 import type {
-	CreateProviderRequest,
-	Provider,
+  CreateProviderRequest,
+  Provider,
 } from "@/modules/llm-provider-service/index.svelte.ts";
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Card from "$lib/components/ui/card/index.js";
 import { Input } from "$lib/components/ui/input/index.js";
 
 let { providers, onUpdateProvider, onDeleteProvider, onCheckProviderHealth } =
-	$props<{
-		providers: Provider[];
-		onUpdateProvider: (
-			id: string,
-			data: Partial<CreateProviderRequest>,
-		) => void;
-		onDeleteProvider: (id: string) => void;
-		onCheckProviderHealth: (id: string) => Promise<number>;
-	}>();
+  $props<{
+    providers: Provider[];
+    onUpdateProvider: (
+      id: string,
+      data: Partial<CreateProviderRequest>,
+    ) => void;
+    onDeleteProvider: (id: string) => void;
+    onCheckProviderHealth: (id: string) => Promise<number>;
+  }>();
 
 let editingId = $state<string | null>(null);
 let editName = $state("");
 let editBaseUrl = $state("");
 let editApiKey = $state("");
 let healthByProviderId = $state<
-	Record<string, "idle" | "checking" | "ok" | "fail">
+  Record<string, "idle" | "checking" | "ok" | "fail">
 >({});
 
 function startEdit(provider: Provider) {
-	editingId = provider.id;
-	editName = provider.name;
-	editBaseUrl = provider.base_url;
-	editApiKey = provider.api_key;
+  editingId = provider.id;
+  editName = provider.name;
+  editBaseUrl = provider.base_url;
+  editApiKey = provider.api_key;
 }
 
 function cancelEdit() {
-	editingId = null;
+  editingId = null;
 }
 
 function saveEdit(id: string) {
-	try {
-		onUpdateProvider(id, {
-			name: editName,
-			base_url: editBaseUrl,
-			api_key: editApiKey,
-		});
-		editingId = null;
-	} catch (err) {
-		// Stay in edit mode so users can fix invalid input.
-		console.error(err);
-	}
+  try {
+    onUpdateProvider(id, {
+      name: editName,
+      base_url: editBaseUrl,
+      api_key: editApiKey,
+    });
+    editingId = null;
+  } catch (err) {
+    // Stay in edit mode so users can fix invalid input.
+    console.error(err);
+  }
 }
 
 function deleteProvider(id: string) {
-	onDeleteProvider(id);
-	if (editingId === id) editingId = null;
-	const next = { ...healthByProviderId };
-	delete next[id];
-	healthByProviderId = next;
+  onDeleteProvider(id);
+  if (editingId === id) editingId = null;
+  const next = { ...healthByProviderId };
+  delete next[id];
+  healthByProviderId = next;
 }
 
 async function checkHealth(providerId: string) {
-	healthByProviderId = { ...healthByProviderId, [providerId]: "checking" };
-	const status = await onCheckProviderHealth(providerId);
-	healthByProviderId = {
-		...healthByProviderId,
-		[providerId]: status >= 200 && status < 300 ? "ok" : "fail",
-	};
+  healthByProviderId = { ...healthByProviderId, [providerId]: "checking" };
+  const status = await onCheckProviderHealth(providerId);
+  healthByProviderId = {
+    ...healthByProviderId,
+    [providerId]: status >= 200 && status < 300 ? "ok" : "fail",
+  };
 }
 </script>
 

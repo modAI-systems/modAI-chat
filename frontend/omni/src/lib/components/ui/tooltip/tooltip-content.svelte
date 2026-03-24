@@ -6,17 +6,17 @@ import { cn } from "$lib/utils.js";
 import TooltipPortal from "./tooltip-portal.svelte";
 
 let {
-	ref = $bindable(null),
-	class: className,
-	sideOffset = 0,
-	side = "top",
-	children,
-	arrowClasses,
-	portalProps,
-	...restProps
+  ref = $bindable(null),
+  class: className,
+  sideOffset = 0,
+  side = "top",
+  children,
+  arrowClasses,
+  portalProps,
+  ...restProps
 }: TooltipPrimitive.ContentProps & {
-	arrowClasses?: string;
-	portalProps?: WithoutChildrenOrChild<ComponentProps<typeof TooltipPortal>>;
+  arrowClasses?: string;
+  portalProps?: WithoutChildrenOrChild<ComponentProps<typeof TooltipPortal>>;
 } = $props();
 </script>
 

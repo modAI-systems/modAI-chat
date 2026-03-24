@@ -6,31 +6,31 @@ import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
 import ChatMessageItem from "./ChatMessageItem.svelte";
 
 let {
-	messages,
-	status,
-	modelsLoading,
-	hasModels,
-	selectedModelName,
+  messages,
+  status,
+  modelsLoading,
+  hasModels,
+  selectedModelName,
 }: {
-	messages: UIMessage[];
-	status: string;
-	modelsLoading: boolean;
-	hasModels: boolean;
-	selectedModelName: string | undefined;
+  messages: UIMessage[];
+  status: string;
+  modelsLoading: boolean;
+  hasModels: boolean;
+  selectedModelName: string | undefined;
 } = $props();
 
 let conversationEl = $state<HTMLElement | null>(null);
 
 function scrollToBottom() {
-	if (conversationEl) {
-		conversationEl.scrollTop = conversationEl.scrollHeight;
-	}
+  if (conversationEl) {
+    conversationEl.scrollTop = conversationEl.scrollHeight;
+  }
 }
 
 $effect(() => {
-	// Access messages to track reactive changes (including streaming updates)
-	messages;
-	scrollToBottom();
+  // Access messages to track reactive changes (including streaming updates)
+  messages;
+  scrollToBottom();
 });
 </script>
 

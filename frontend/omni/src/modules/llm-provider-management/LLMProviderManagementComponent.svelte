@@ -3,8 +3,8 @@ import { AlertTriangle, ChevronDown } from "lucide-svelte";
 import AddProviderForm from "@/modules/llm-provider-management/AddProviderForm.svelte";
 import ProviderList from "@/modules/llm-provider-management/ProviderList.svelte";
 import {
-	type CreateProviderRequest,
-	llmProviderService,
+  type CreateProviderRequest,
+  llmProviderService,
 } from "@/modules/llm-provider-service/index.svelte.js";
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Card from "$lib/components/ui/card/index.js";
@@ -17,22 +17,22 @@ const providers = $derived(llmProviderService.providers);
 // ---------------------------------------------------------------------------
 
 function handleAddProvider(data: CreateProviderRequest) {
-	llmProviderService.createProvider(data);
+  llmProviderService.createProvider(data);
 }
 
 function handleUpdateProvider(
-	id: string,
-	data: Partial<CreateProviderRequest>,
+  id: string,
+  data: Partial<CreateProviderRequest>,
 ) {
-	llmProviderService.updateProvider(id, data);
+  llmProviderService.updateProvider(id, data);
 }
 
 function handleDeleteProvider(id: string) {
-	llmProviderService.deleteProvider(id);
+  llmProviderService.deleteProvider(id);
 }
 
 async function handleCheckProviderHealth(providerId: string): Promise<number> {
-	return llmProviderService.checkProviderHealth(providerId);
+  return llmProviderService.checkProviderHealth(providerId);
 }
 </script>
 
