@@ -13,9 +13,8 @@ Highly extendable AI Web Chat UI from the community for the community.
 
 ## ✨ Features
 
-* 🗨️ OpenAI Chat integration
-* 🧩 Modular architecture for easy extensibility
-
+- 🗨️ OpenAI Chat integration
+- 🧩 Modular architecture for easy extensibility
 
 ## 🏗️ Repository Structure
 
@@ -23,8 +22,8 @@ We try to keep the root of the repo slim and add things like `package.json` file
 
 **Folder hierarchy:**
 
-* **./backend/omni**: Contains the Python Backend code
-* **./frontend/omni**: Universal full fledged chat frontend
+- **./backend/omni**: Contains the Python Backend code
+- **./frontend/omni**: Universal full fledged chat frontend
 
 ## 🖥️ modAI Frontends
 
@@ -34,11 +33,13 @@ Why more than one frontend: because there are different use cases. e.g. one full
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.13+
 - Node.js 24+
 - UV package manager
 
 ### Backend Setup
+
 ```bash
 cd backend/omni
 uv sync
@@ -46,6 +47,7 @@ uv run uvicorn modai.main:app --reload
 ```
 
 ### Frontend Setup
+
 ```bash
 cd frontend/omni
 pnpm install
@@ -70,11 +72,11 @@ are happy if you also want to take over responsibility. The whole
 project is divided into different chunks with dedicated responsible
 persons.
 
-| Component | Overall responsibility |
-|-----------|-------------------|
-| frontend/omni  | @guenhter and maybe you? |
-| backend   | @guenhter and maybe you? |
-| CI/CD   | @guenhter and maybe you? |
+| Component     | Overall responsibility   |
+| ------------- | ------------------------ |
+| frontend/omni | @guenhter and maybe you? |
+| backend       | @guenhter and maybe you? |
+| CI/CD         | @guenhter and maybe you? |
 
 The responsibilities for frontend and backend are defined more granular in the respective `README.md` files.
 

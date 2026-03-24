@@ -20,6 +20,12 @@
       "type": "LLMProviderManagementComponent",
       "path": "@/modules/llm-provider-management/LLMProviderManagementComponent",
       "dependencies": []
+    },
+    {
+      "id": "app-sidebar",
+      "type": "SidebarComponent",
+      "path": "@/modules/sidebar/AppSidebarComponent",
+      "dependencies": []
     }
   ]
 }
