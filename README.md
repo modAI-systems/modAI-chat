@@ -13,9 +13,8 @@ Highly extendable AI Web Chat UI from the community for the community.
 
 ## ✨ Features
 
-* 🗨️ OpenAI Chat integration
-* 🧩 Modular architecture for easy extensibility
-
+- 🗨️ OpenAI Chat integration
+- 🧩 Modular architecture for easy extensibility
 
 ## 🏗️ Repository Structure
 
@@ -33,6 +32,11 @@ modAI-chat/
     └── tests_omni_light/  # Playwright E2E – light
 ```
 
+**Folder hierarchy:**
+
+- **./backend/omni**: Contains the Python Backend code
+- **./frontend/omni**: Universal full fledged chat frontend
+
 ## 🖥️ modAI Frontends
 
 In modAI there is not the one-and-only frontend but we (potentially) have more than one, or even transitioning from one to another (e.g. rewrite).
@@ -41,6 +45,7 @@ Why more than one frontend: because there are different use cases. e.g. one full
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.13+
 - Node.js 24+
 - UV package manager
@@ -48,14 +53,17 @@ Why more than one frontend: because there are different use cases. e.g. one full
 - Optional: [just](https://github.com/casey/just)
 
 ### NanoIDP Setup (Identity Provider)
+
 Start the lightweight local OIDC identity provider (runs on port 9000):
 
 ```bash
 docker compose -f resources/compose-files/compose-nanoidp.yaml up -d
 ```
+
 nanoidp Dashboard: http://localhost:9000
 
 ### Backend Setup
+
 ```bash
 cd backend/omni
 cp .env.sample .env   # pre-configured for NanoIDP; add your OPENAI_API_KEY
@@ -64,6 +72,7 @@ uv run uvicorn modai.main:app --reload
 ```
 
 ### Frontend Setup
+
 ```bash
 cd frontend/omni
 # Activate the full backend-integrated module configuration
@@ -93,11 +102,11 @@ are happy if you also want to take over responsibility. The whole
 project is divided into different chunks with dedicated responsible
 persons.
 
-| Component | Overall responsibility |
-|-----------|-------------------|
-| frontend/omni  | @guenhter and maybe you? |
-| backend   | @guenhter and maybe you? |
-| CI/CD   | @guenhter and maybe you? |
+| Component     | Overall responsibility   |
+| ------------- | ------------------------ |
+| frontend/omni | @guenhter and maybe you? |
+| backend       | @guenhter and maybe you? |
+| CI/CD         | @guenhter and maybe you? |
 
 The responsibilities for frontend and backend are defined more granular in the respective `README.md` files.
 
