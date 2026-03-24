@@ -28,9 +28,6 @@ let currentPage = $state<"chat" | "settings">("chat");
 						<p class="text-muted-foreground ml-3 text-sm">Svelte · Vite · Tailwind · AI SDK</p>
 					</div>
 					<nav class="flex items-center gap-1">
-						{#if sidebarComponents.length > 0}
-							<Sidebar.Trigger />
-						{/if}
 						<button
 							class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors {currentPage === 'chat' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
 							onclick={() => (currentPage = "chat")}
@@ -46,6 +43,9 @@ let currentPage = $state<"chat" | "settings">("chat");
 								<Settings2 class="size-4" />
 								Providers
 							</button>
+						{/if}
+						{#if sidebarComponents.length > 0}
+							<Sidebar.Trigger />
 						{/if}
 					</nav>
 				</header>
