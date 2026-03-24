@@ -1,22 +1,19 @@
-import type { ManifestEntry } from "./manifestJson";
+import type { ModuleEntry } from "./moduleJson";
 
 // ---------------------------------------------------------------------------
 // Auto-discovery — Vite import.meta.glob, lazy mode
 // ---------------------------------------------------------------------------
 
-// Scans src/modules/**/*.svelte and *.svelte.ts — every file its own async chunk.
-// Manifest paths follow the pattern "@/modules/<path-without-extension>".
-const globModules = import.meta.glob<{ default: unknown }>([
+// Scans src/modules/**/*.svelte — every file becomes its own async chunk.
+// Module paths follow the pattern "@/modules/<path-without-extension>".
+const globModules = import.meta.glob<{ default: unknown }>(
     "../../modules/**/*.svelte",
-    "../../modules/**/*.svelte.ts",
-]);
+);
 
 const componentRegistry: Record<string, () => Promise<unknown>> =
     Object.fromEntries(
         Object.entries(globModules).map(([key, factory]) => [
-            key
-                .replace("../../modules/", "@/modules/")
-                .replace(/\.svelte(\.ts)?$/, ""),
+            key.replace("../../modules/", "@/modules/").replace(".svelte", ""),
             () => factory().then((m) => m.default),
         ]),
     );
@@ -49,13 +46,13 @@ export interface ModuleRegistry {
 }
 
 /**
- * Builds a list of LoadedModules from manifest entries.
+ * Builds a list of LoadedModules from module entries.
  * Each module's JS chunk is fetched lazily via dynamic import.
  */
 export class JsonModuleRegistry implements ModuleRegistry {
-    private entries: ManifestEntry[];
+    private entries: ModuleEntry[];
 
-    constructor(entries: ManifestEntry[]) {
+    constructor(entries: ModuleEntry[]) {
         this.entries = entries;
     }
 
@@ -66,9 +63,7 @@ export class JsonModuleRegistry implements ModuleRegistry {
         return results.filter((m): m is LoadedModule => m !== null);
     }
 
-    private async loadModule(
-        entry: ManifestEntry,
-    ): Promise<LoadedModule | null> {
+    private async loadModule(entry: ModuleEntry): Promise<LoadedModule | null> {
         const factory = componentRegistry[entry.path];
         if (!factory) {
             console.warn(`Module "${entry.path}" not found in registry`, entry);
