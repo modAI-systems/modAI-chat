@@ -1,3 +1,2 @@
-frontend_omni/src/shadcn
-frontend_omni/src/modules/chat-layout/shadcn
+frontend/omni/src/lib
 package-lock.json

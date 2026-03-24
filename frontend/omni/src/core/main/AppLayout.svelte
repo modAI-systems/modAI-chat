@@ -5,10 +5,10 @@ import { getModules } from "../module-system/index";
 
 const modules = getModules();
 const chatbotComponents = $derived(
-	modules.getAll<Component>("ChatbotComponent"),
+  modules.getAll<Component>("ChatbotComponent"),
 );
 const providerComponents = $derived(
-	modules.getAll<Component>("LLMProviderManagementComponent"),
+  modules.getAll<Component>("LLMProviderManagementComponent"),
 );
 
 let currentPage = $state<"chat" | "settings">("chat");

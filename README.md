@@ -24,7 +24,7 @@ We try to keep the root of the repo slim and add things like `package.json` file
 **Folder hierarchy:**
 
 * **./backend/omni**: Contains the Python Backend code
-* **./frontend_omni**: Universal full fledged chat frontend
+* **./frontend/omni**: Universal full fledged chat frontend
 
 ## 🖥️ modAI Frontends
 
@@ -47,7 +47,7 @@ uv run uvicorn modai.main:app --reload
 
 ### Frontend Setup
 ```bash
-cd frontend_omni
+cd frontend/omni
 pnpm install
 pnpm dev
 ```
@@ -72,7 +72,7 @@ persons.
 
 | Component | Overall responsibility |
 |-----------|-------------------|
-| frontend_omni  | @guenhter and maybe you? |
+| frontend/omni  | @guenhter and maybe you? |
 | backend   | @guenhter and maybe you? |
 | CI/CD   | @guenhter and maybe you? |
 

@@ -5,14 +5,14 @@ import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
 import PopoverPortal from "./popover-portal.svelte";
 
 let {
-	ref = $bindable(null),
-	class: className,
-	sideOffset = 4,
-	align = "center",
-	portalProps,
-	...restProps
+  ref = $bindable(null),
+  class: className,
+  sideOffset = 4,
+  align = "center",
+  portalProps,
+  ...restProps
 }: PopoverPrimitive.ContentProps & {
-	portalProps?: WithoutChildrenOrChild<ComponentProps<typeof PopoverPortal>>;
+  portalProps?: WithoutChildrenOrChild<ComponentProps<typeof PopoverPortal>>;
 } = $props();
 </script>
 

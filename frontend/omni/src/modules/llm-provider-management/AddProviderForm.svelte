@@ -6,7 +6,7 @@ import * as Card from "$lib/components/ui/card/index.js";
 import { Input } from "$lib/components/ui/input/index.js";
 
 let { onAddProvider } = $props<{
-	onAddProvider: (data: CreateProviderRequest) => void;
+  onAddProvider: (data: CreateProviderRequest) => void;
 }>();
 
 let newProviderName = $state("");
@@ -16,24 +16,24 @@ let addProviderError = $state("");
 let addingProvider = $state(false);
 
 function handleAddProvider(e: SubmitEvent) {
-	e.preventDefault();
-	addProviderError = "";
-	addingProvider = true;
-	try {
-		onAddProvider({
-			name: newProviderName,
-			base_url: newProviderBaseUrl,
-			api_key: newProviderApiKey,
-		});
-		newProviderName = "";
-		newProviderBaseUrl = "";
-		newProviderApiKey = "";
-	} catch (err) {
-		addProviderError =
-			err instanceof Error ? err.message : "Failed to add provider";
-	} finally {
-		addingProvider = false;
-	}
+  e.preventDefault();
+  addProviderError = "";
+  addingProvider = true;
+  try {
+    onAddProvider({
+      name: newProviderName,
+      base_url: newProviderBaseUrl,
+      api_key: newProviderApiKey,
+    });
+    newProviderName = "";
+    newProviderBaseUrl = "";
+    newProviderApiKey = "";
+  } catch (err) {
+    addProviderError =
+      err instanceof Error ? err.message : "Failed to add provider";
+  } finally {
+    addingProvider = false;
+  }
 }
 </script>
 

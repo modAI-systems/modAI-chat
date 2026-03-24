@@ -15,7 +15,7 @@ jobs:
             context: backend/omni
             package: modai-chat-backend
           - name: frontend
-            context: frontend_omni
+            context: frontend/omni
             package: modai-chat-frontend
     permissions:
       contents: read

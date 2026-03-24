@@ -7,7 +7,7 @@ services:
 
   frontend:
     build:
-      context: ../../frontend_omni
+      context: ../../frontend/omni
       dockerfile: Dockerfile
     environment:
       - API_BACKEND_URL=http://backend:8080

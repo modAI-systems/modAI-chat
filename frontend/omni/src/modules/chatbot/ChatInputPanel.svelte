@@ -7,60 +7,60 @@ import * as Popover from "$lib/components/ui/popover/index.js";
 import { Textarea } from "$lib/components/ui/textarea/index.js";
 
 const suggestions = [
-	"What are the latest trends in AI?",
-	"How does machine learning work?",
-	"Explain quantum computing",
-	"Best practices for Svelte development",
-	"Tell me about TypeScript benefits",
-	"How to optimize database queries?",
-	"What is the difference between SQL and NoSQL?",
-	"Explain cloud computing basics",
+  "What are the latest trends in AI?",
+  "How does machine learning work?",
+  "Explain quantum computing",
+  "Best practices for Svelte development",
+  "Tell me about TypeScript benefits",
+  "How to optimize database queries?",
+  "What is the difference between SQL and NoSQL?",
+  "Explain cloud computing basics",
 ];
 
 let {
-	messageCount,
-	hasModels,
-	canChat,
-	isIdle,
-	providerGroups,
-	selectedModel = $bindable(),
-	selectedModelData,
-	onsend,
+  messageCount,
+  hasModels,
+  canChat,
+  isIdle,
+  providerGroups,
+  selectedModel = $bindable(),
+  selectedModelData,
+  onsend,
 }: {
-	messageCount: number;
-	hasModels: boolean;
-	canChat: boolean;
-	isIdle: boolean;
-	providerGroups: { name: string; models: ProviderModel[] }[];
-	selectedModel: string;
-	selectedModelData: ProviderModel | undefined;
-	onsend: (text: string) => void;
+  messageCount: number;
+  hasModels: boolean;
+  canChat: boolean;
+  isIdle: boolean;
+  providerGroups: { name: string; models: ProviderModel[] }[];
+  selectedModel: string;
+  selectedModelData: ProviderModel | undefined;
+  onsend: (text: string) => void;
 } = $props();
 
 let input = $state("");
 let modelSelectorOpen = $state(false);
 
 function handleSubmit(event: SubmitEvent) {
-	event.preventDefault();
-	sendMessage();
+  event.preventDefault();
+  sendMessage();
 }
 
 function handleKeydown(event: KeyboardEvent) {
-	if (event.key === "Enter" && !event.shiftKey) {
-		event.preventDefault();
-		sendMessage();
-	}
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+  }
 }
 
 function sendMessage() {
-	if (!input.trim()) return;
-	onsend(input);
-	input = "";
+  if (!input.trim()) return;
+  onsend(input);
+  input = "";
 }
 
 function handleModelSelect(selectId: string) {
-	selectedModel = selectId;
-	modelSelectorOpen = false;
+  selectedModel = selectId;
+  modelSelectorOpen = false;
 }
 </script>
 
