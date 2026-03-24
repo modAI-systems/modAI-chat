@@ -2,18 +2,18 @@
 import type { Snippet } from "svelte";
 import { setContext, untrack } from "svelte";
 import { ActiveModulesImpl, MODULES_KEY, type Modules } from "./index";
-import { fetchManifestJson } from "./manifestJson";
 import { activateModules } from "./moduleActivator";
+import { fetchModuleJson } from "./moduleJson";
 import { JsonModuleRegistry } from "./moduleRegistry";
 
 interface Props {
-  manifestPath?: string;
-  children: Snippet;
+	modulePath?: string;
+	children: Snippet;
 }
 
-const { manifestPath = "/modules.json", children }: Props = $props();
+const { modulePath = "/modules.json", children }: Props = $props();
 
-// Reactive active modules — starts null until manifest is loaded
+// Reactive active modules — starts null until module JSON is loaded
 let activeModulesImpl = $state<ActiveModulesImpl | null>(null);
 
 // Context object is set synchronously; methods delegate to reactive state
@@ -28,20 +28,18 @@ const modules: Modules = {
 
 setContext(MODULES_KEY, modules);
 
-// untrack: manifest path is intentionally captured once at mount time
-const ready = fetchManifestJson(untrack(() => manifestPath)).then(
-  async (json) => {
-    const registry = new JsonModuleRegistry(json.modules);
-    const loaded = await activateModules(registry, []);
-    activeModulesImpl = new ActiveModulesImpl(loaded);
-  },
-);
+// untrack: module path is intentionally captured once at mount time
+const ready = fetchModuleJson(untrack(() => modulePath)).then(async (json) => {
+	const registry = new JsonModuleRegistry(json.modules);
+	const loaded = await activateModules(registry, []);
+	activeModulesImpl = new ActiveModulesImpl(loaded);
+});
 
 ready.catch((error) => {
-  console.error("Failed to load module manifest", {
-    manifestPath,
-    error,
-  });
+	console.error("Failed to load modules JSON", {
+		modulePath,
+		error,
+	});
 });
 </script>
 
@@ -51,7 +49,7 @@ ready.catch((error) => {
 	{@render children()}
 {:catch error}
 	<div role="alert" data-testid="modules-provider-error">
-		Failed to load modules manifest ({manifestPath}). Check browser console for details.
+		Failed to load modules JSON ({modulePath}). Check browser console for details.
 		{#if error instanceof Error && error.message}
 			<br />
 			Error: {error.message}
