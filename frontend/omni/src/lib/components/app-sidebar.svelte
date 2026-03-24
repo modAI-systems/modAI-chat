@@ -34,15 +34,19 @@
 				plan: "Free",
 			},
 		],
-		navMain: [
+		settings: [
 			{
-				title: "Settings",
+				title: "LLM",
 				url: "#",
 				icon: Settings2Icon,
 				items: [
 					{
-						title: "LLM Providers",
-						url: "#settings",
+						title: "Providers",
+						url: "#providers",
+					},
+					{
+						title: "Tools",
+						url: "#tools",
 					},
 				],
 			},
@@ -68,7 +72,7 @@
 </script>
 
 <script lang="ts">
-	import NavMain from "./nav-main.svelte";
+	import NavMain from "./nav-settings.svelte";
 	import NavProjects from "./nav-projects.svelte";
 	import NavUser from "./nav-user.svelte";
 	import TeamSwitcher from "./team-switcher.svelte";
@@ -87,7 +91,7 @@
 		<TeamSwitcher teams={data.teams} />
 	</Sidebar.Header>
 	<Sidebar.Content>
-		<NavMain items={data.navMain} />
+		<NavMain items={data.settings} />
 		<NavProjects projects={data.projects} />
 	</Sidebar.Content>
 	<Sidebar.Footer>
