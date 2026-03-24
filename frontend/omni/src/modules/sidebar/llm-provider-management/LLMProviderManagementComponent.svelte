@@ -1,7 +1,7 @@
 <script lang="ts">
 import { AlertTriangle, ChevronDown } from "lucide-svelte";
-import AddProviderForm from "@/modules/llm-provider-management/AddProviderForm.svelte";
-import ProviderList from "@/modules/llm-provider-management/ProviderList.svelte";
+import AddProviderForm from "./AddProviderForm.svelte";
+import ProviderList from "./ProviderList.svelte";
 import {
   type CreateProviderRequest,
   llmProviderService,
