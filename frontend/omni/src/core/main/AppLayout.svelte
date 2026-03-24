@@ -15,24 +15,24 @@ const sidebarComponents = $derived(
 	modules.getAll<Component>("SidebarComponent"),
 );
 
-let currentPage = $state<"chat" | "settings">("chat");
+let currentPage = $state<"chat" | "providers" | "tools">("chat");
 
-function getPageFromHash(): "chat" | "settings" {
+function getPageFromHash(): "chat" | "providers" | "tools" {
 	if (typeof window === "undefined") {
 		return "chat";
 	}
 
-	return window.location.hash === "#settings" ? "settings" : "chat";
+	return window.location.hash === "#providers" ? "providers" : window.location.hash === "#tools" ? "tools" : "chat";
 }
 
-function setCurrentPage(page: "chat" | "settings") {
+function setCurrentPage(page: "chat" | "providers" | "tools") {
 	currentPage = page;
 
 	if (typeof window === "undefined") {
 		return;
 	}
 
-	const nextHash = page === "settings" ? "#settings" : "#chat";
+	const nextHash = page === "providers" ? "#providers" : page === "tools" ? "#tools" : "#chat";
 	if (window.location.hash !== nextHash) {
 		window.location.hash = nextHash;
 	}
@@ -41,7 +41,7 @@ function setCurrentPage(page: "chat" | "settings") {
 function handleHashChange() {
 	const nextPage = getPageFromHash();
 
-	if (nextPage === "settings" && providerComponents.length === 0) {
+	if (nextPage === "providers" && providerComponents.length === 0) {
 		currentPage = "chat";
 		return;
 	}
@@ -79,7 +79,11 @@ if (typeof window !== "undefined") {
 					</nav>
 				</header>
 				<div class="flex-1 overflow-hidden">
-					{#if currentPage === "settings" && providerComponents.length > 0}
+					{#if currentPage === "providers" && providerComponents.length > 0}
+						{#each providerComponents as ProviderComp}
+							<ProviderComp />
+						{/each}
+					{:else if currentPage === "tools" && providerComponents.length > 0}
 						{#each providerComponents as ProviderComp}
 							<ProviderComp />
 						{/each}
