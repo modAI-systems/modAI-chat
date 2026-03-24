@@ -119,6 +119,27 @@ async function handleSend(text: string) {
 function makeMessageId(): string {
   return `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
+
+function buildToolsParam():
+	| Record<
+			string,
+			{ description: string; parameters: ReturnType<typeof jsonSchema> }
+	  >
+	| undefined {
+	const selected = toolService.selectedTools;
+	if (selected.length === 0) return undefined;
+	const tools: Record<
+		string,
+		{ description: string; parameters: ReturnType<typeof jsonSchema> }
+	> = {};
+	for (const t of selected) {
+		tools[t.function.name] = {
+			description: t.function.description,
+			parameters: jsonSchema(t.function.parameters),
+		};
+	}
+	return tools;
+}
 </script>
 
 <div class="relative flex size-full flex-col divide-y overflow-hidden">
