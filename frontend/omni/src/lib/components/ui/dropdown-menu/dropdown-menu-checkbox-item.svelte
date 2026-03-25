@@ -6,14 +6,14 @@ import type { Snippet } from "svelte";
 import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
 
 let {
-  ref = $bindable(null),
-  checked = $bindable(false),
-  indeterminate = $bindable(false),
-  class: className,
-  children: childrenProp,
-  ...restProps
+    ref = $bindable(null),
+    checked = $bindable(false),
+    indeterminate = $bindable(false),
+    class: className,
+    children: childrenProp,
+    ...restProps
 }: WithoutChildrenOrChild<DropdownMenuPrimitive.CheckboxItemProps> & {
-  children?: Snippet;
+    children?: Snippet;
 } = $props();
 </script>
 

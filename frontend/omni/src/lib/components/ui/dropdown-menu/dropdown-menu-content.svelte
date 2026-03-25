@@ -5,16 +5,16 @@ import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
 import DropdownMenuPortal from "./dropdown-menu-portal.svelte";
 
 let {
-  ref = $bindable(null),
-  sideOffset = 4,
-  align = "start",
-  portalProps,
-  class: className,
-  ...restProps
+    ref = $bindable(null),
+    sideOffset = 4,
+    align = "start",
+    portalProps,
+    class: className,
+    ...restProps
 }: DropdownMenuPrimitive.ContentProps & {
-  portalProps?: WithoutChildrenOrChild<
-    ComponentProps<typeof DropdownMenuPortal>
-  >;
+    portalProps?: WithoutChildrenOrChild<
+        ComponentProps<typeof DropdownMenuPortal>
+    >;
 } = $props();
 </script>
 

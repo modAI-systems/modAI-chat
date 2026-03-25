@@ -12,7 +12,7 @@ import { Label } from "$lib/components/ui/label/index.js";
 import { Skeleton } from "$lib/components/ui/skeleton/index.js";
 
 $effect(() => {
-  toolService.fetchTools();
+    toolService.fetchTools();
 });
 
 const selectedCount = $derived(toolService.selectedToolNames.size);

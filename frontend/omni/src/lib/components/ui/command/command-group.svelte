@@ -3,14 +3,14 @@ import { Command as CommandPrimitive, useId } from "bits-ui";
 import { cn } from "$lib/utils.js";
 
 let {
-  ref = $bindable(null),
-  class: className,
-  children,
-  heading,
-  value,
-  ...restProps
+    ref = $bindable(null),
+    class: className,
+    children,
+    heading,
+    value,
+    ...restProps
 }: CommandPrimitive.GroupProps & {
-  heading?: string;
+    heading?: string;
 } = $props();
 </script>
 

@@ -4,13 +4,13 @@ import { cn, type WithElementRef } from "$lib/utils.js";
 import { useSidebar } from "./context.svelte.js";
 
 let {
-  ref = $bindable(null),
-  class: className,
-  children,
-  ...restProps
+    ref = $bindable(null),
+    class: className,
+    children,
+    ...restProps
 }: WithElementRef<
-  HTMLAttributes<HTMLButtonElement>,
-  HTMLButtonElement
+    HTMLAttributes<HTMLButtonElement>,
+    HTMLButtonElement
 > = $props();
 
 const sidebar = useSidebar();

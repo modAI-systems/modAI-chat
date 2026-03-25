@@ -2,7 +2,7 @@
 import { Dialog as DialogPrimitive } from "bits-ui";
 
 let { open = $bindable(false), ...restProps }: DialogPrimitive.RootProps =
-  $props();
+    $props();
 </script>
 
 <DialogPrimitive.Root bind:open {...restProps} />

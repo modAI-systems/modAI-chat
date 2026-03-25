@@ -6,12 +6,12 @@ import { cn } from "$lib/utils.js";
 import { useSidebar } from "./context.svelte.js";
 
 let {
-  ref = $bindable(null),
-  class: className,
-  onclick,
-  ...restProps
+    ref = $bindable(null),
+    class: className,
+    onclick,
+    ...restProps
 }: ComponentProps<typeof Button> & {
-  onclick?: (e: MouseEvent) => void;
+    onclick?: (e: MouseEvent) => void;
 } = $props();
 
 const sidebar = useSidebar();

@@ -7,22 +7,22 @@ import NavSettings from "./nav-settings.svelte";
 import NavUser from "./nav-user.svelte";
 
 let {
-  ref = $bindable(null),
-  collapsible = "icon",
-  items = [],
-  ...restProps
+    ref = $bindable(null),
+    collapsible = "icon",
+    items = [],
+    ...restProps
 }: ComponentProps<typeof Sidebar.Root> & { items?: SidebarItem[] } = $props();
 
 const navSettings = $derived([
-  {
-    title: "LLM",
-    url: "#",
-    icon: Settings2Icon,
-    items: items.map((item) => ({
-      title: item.title,
-      url: item.url,
-    })),
-  },
+    {
+        title: "LLM",
+        url: "#",
+        icon: Settings2Icon,
+        items: items.map((item) => ({
+            title: item.title,
+            url: item.url,
+        })),
+    },
 ]);
 </script>
 
