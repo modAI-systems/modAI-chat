@@ -19,7 +19,6 @@
     "lucide-svelte": "^0.577.0",
     "marked": "^17.0.4",
     "svelte": "^5.53.13",
-    "svelte-spa-router": "^5.0.0",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1"
   },

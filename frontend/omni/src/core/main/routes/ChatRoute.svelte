@@ -4,7 +4,7 @@ import { getModules } from "../../module-system/index";
 
 const modules = getModules();
 const chatbotComponents = $derived(
-	modules.getAll<Component>("ChatbotComponent"),
+  modules.getAll<Component>("ChatbotComponent"),
 );
 </script>
 

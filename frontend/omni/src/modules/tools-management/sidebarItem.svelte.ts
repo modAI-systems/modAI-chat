@@ -3,6 +3,6 @@ import type { SidebarItem } from "@/modules/sidebar/sidebarItem";
 
 export default {
     title: "Tools",
-    url: "#/tools",
+    url: "/tools",
     icon: WrenchIcon,
 } satisfies SidebarItem;

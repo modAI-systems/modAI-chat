@@ -1,7 +1,5 @@
 <script lang="ts">
 import { AlertTriangle, ChevronDown } from "lucide-svelte";
-import AddProviderForm from "./AddProviderForm.svelte";
-import ProviderList from "./ProviderList.svelte";
 import {
   type CreateProviderRequest,
   llmProviderService,
@@ -9,6 +7,8 @@ import {
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Card from "$lib/components/ui/card/index.js";
 import * as Collapsible from "$lib/components/ui/collapsible/index.js";
+import AddProviderForm from "./AddProviderForm.svelte";
+import ProviderList from "./ProviderList.svelte";
 
 const providers = $derived(llmProviderService.providers);
 

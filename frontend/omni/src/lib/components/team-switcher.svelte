@@ -1,17 +1,18 @@
 <script lang="ts">
-	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
-	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-	import { useSidebar } from "$lib/components/ui/sidebar/index.js";
-	import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
-	import PlusIcon from "@lucide/svelte/icons/plus";
+import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
+import PlusIcon from "@lucide/svelte/icons/plus";
+import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
+import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+import { useSidebar } from "$lib/components/ui/sidebar/index.js";
 
-	// This should be `Component` after @lucide/svelte updates types
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let { teams }: { teams: { name: string; logo: any; plan: string }[] } = $props();
-	const sidebar = useSidebar();
+// This should be `Component` after @lucide/svelte updates types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let { teams }: { teams: { name: string; logo: any; plan: string }[] } =
+  $props();
+const sidebar = useSidebar();
 
-	// svelte-ignore state_referenced_locally
-	let activeTeam = $state(teams[0]);
+// svelte-ignore state_referenced_locally
+let activeTeam = $state(teams[0]);
 </script>
 
 <Sidebar.Menu>

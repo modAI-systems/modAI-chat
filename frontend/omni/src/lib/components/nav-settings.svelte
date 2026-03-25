@@ -1,24 +1,25 @@
 <script lang="ts">
-	import * as Collapsible from "$lib/components/ui/collapsible/index.js";
-	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-	import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
+import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
+import { navigate } from "@/core/main/router.svelte";
+import * as Collapsible from "$lib/components/ui/collapsible/index.js";
+import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 
-	let {
-		items,
-	}: {
-		items: {
-			title: string;
-			url: string;
-			// this should be `Component` after @lucide/svelte updates types
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			icon?: any;
-			isActive?: boolean;
-			items?: {
-				title: string;
-				url: string;
-			}[];
-		}[];
-	} = $props();
+let {
+  items,
+}: {
+  items: {
+    title: string;
+    url: string;
+    // this should be `Component` after @lucide/svelte updates types
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    icon?: any;
+    isActive?: boolean;
+    items?: {
+      title: string;
+      url: string;
+    }[];
+  }[];
+} = $props();
 </script>
 
 <Sidebar.Group>
@@ -47,9 +48,9 @@
 									<Sidebar.MenuSubItem>
 										<Sidebar.MenuSubButton>
 											{#snippet child({ props })}
-												<a href={subItem.url} {...props}>
+												<button onclick={() => navigate(subItem.url)} {...props}>
 													<span>{subItem.title}</span>
-												</a>
+												</button>
 											{/snippet}
 										</Sidebar.MenuSubButton>
 									</Sidebar.MenuSubItem>
