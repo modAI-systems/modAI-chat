@@ -11,7 +11,7 @@ interface Props {
 	children: Snippet;
 }
 
-const { modulePath = "/modules.json", children }: Props = $props();
+const { modulePath = "/modules_with_backend.json", children }: Props = $props();
 
 // Reactive active modules — starts null until module JSON is loaded
 let activeModulesImpl = $state<ActiveModulesImpl | null>(null);
