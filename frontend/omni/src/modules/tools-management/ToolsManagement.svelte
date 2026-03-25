@@ -1,6 +1,6 @@
 <script lang="ts">
 import { RefreshCwIcon, WrenchIcon } from "lucide-svelte";
-import { toolService } from "./service/index.svelte.js";
+import { toolService } from "@/modules/tools-management-service/index.svelte.js";
 import { Badge } from "$lib/components/ui/badge/index.js";
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Card from "$lib/components/ui/card/index.js";
