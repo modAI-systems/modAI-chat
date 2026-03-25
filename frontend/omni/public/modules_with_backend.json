@@ -50,6 +50,12 @@
       "dependencies": []
     },
     {
+      "id": "llm-provider-sidebar-item",
+      "type": "SidebarItem",
+      "path": "@/modules/llm-provider-management/sidebarItem",
+      "dependencies": []
+    },
+    {
       "id": "tools-management-service",
       "type": "ToolsManagementService",
       "path": "@/modules/tools-management-service/openai",
@@ -60,6 +66,12 @@
       "type": "ToolsManagement",
       "path": "@/modules/tools-management/ToolsManagement",
       "dependencies": ["module:tools-management-service"]
+    },
+    {
+      "id": "tools-sidebar-item",
+      "type": "SidebarItem",
+      "path": "@/modules/tools-management/sidebarItem",
+      "dependencies": []
     },
     {
       "id": "app-sidebar",

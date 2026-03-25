@@ -32,6 +32,12 @@
       "dependencies": []
     },
     {
+      "id": "llm-provider-sidebar-item",
+      "type": "SidebarItem",
+      "path": "@/modules/llm-provider-management/sidebarItem",
+      "dependencies": []
+    },
+    {
       "id": "app-sidebar",
       "type": "SidebarComponent",
       "path": "@/modules/sidebar/Sidebar",
