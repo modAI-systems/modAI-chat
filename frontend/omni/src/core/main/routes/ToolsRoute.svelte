@@ -3,11 +3,11 @@ import type { Component } from "svelte";
 import { getModules } from "../../module-system/index";
 
 const modules = getModules();
-const toolsComponents = $derived(
-	modules.getAll<Component>("ToolsComponent"),
+const toolsManagement = $derived(
+	modules.getAll<Component>("ToolsManagement"),
 );
 </script>
 
-{#each toolsComponents as ToolsComp}
+{#each toolsManagement as ToolsComp}
 	<ToolsComp />
 {/each}
