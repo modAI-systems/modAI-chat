@@ -7,8 +7,8 @@ import { fetchModuleJson } from "./moduleJson";
 import { JsonModuleRegistry } from "./moduleRegistry";
 
 interface Props {
-  modulePath?: string;
-  children: Snippet;
+    modulePath?: string;
+    children: Snippet;
 }
 
 const { modulePath = "/modules_with_backend.json", children }: Props = $props();
@@ -18,28 +18,28 @@ let activeModulesImpl = $state<ActiveModulesImpl | null>(null);
 
 // Context object is set synchronously; methods delegate to reactive state
 const modules: Modules = {
-  getOne<T>(type: string): T | null {
-    return activeModulesImpl?.getOne<T>(type) ?? null;
-  },
-  getAll<T>(type: string): T[] {
-    return activeModulesImpl?.getAll<T>(type) ?? [];
-  },
+    getOne<T>(type: string): T | null {
+        return activeModulesImpl?.getOne<T>(type) ?? null;
+    },
+    getAll<T>(type: string): T[] {
+        return activeModulesImpl?.getAll<T>(type) ?? [];
+    },
 };
 
 setContext(MODULES_KEY, modules);
 
 // untrack: module path is intentionally captured once at mount time
 const ready = fetchModuleJson(untrack(() => modulePath)).then(async (json) => {
-  const registry = new JsonModuleRegistry(json.modules);
-  const loaded = await activateModules(registry, []);
-  activeModulesImpl = new ActiveModulesImpl(loaded);
+    const registry = new JsonModuleRegistry(json.modules);
+    const loaded = await activateModules(registry, []);
+    activeModulesImpl = new ActiveModulesImpl(loaded);
 });
 
 ready.catch((error) => {
-  console.error("Failed to load modules JSON", {
-    modulePath,
-    error,
-  });
+    console.error("Failed to load modules JSON", {
+        modulePath,
+        error,
+    });
 });
 </script>
 

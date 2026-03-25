@@ -4,12 +4,12 @@ import type { ComponentProps } from "svelte";
 import { cn } from "$lib/utils.js";
 
 let {
-  ref = $bindable(null),
-  class: className,
-  inset,
-  ...restProps
+    ref = $bindable(null),
+    class: className,
+    inset,
+    ...restProps
 }: ComponentProps<typeof DropdownMenuPrimitive.GroupHeading> & {
-  inset?: boolean;
+    inset?: boolean;
 } = $props();
 </script>
 

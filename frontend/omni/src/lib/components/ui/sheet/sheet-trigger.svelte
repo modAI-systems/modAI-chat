@@ -2,7 +2,7 @@
 import { Dialog as SheetPrimitive } from "bits-ui";
 
 let { ref = $bindable(null), ...restProps }: SheetPrimitive.TriggerProps =
-  $props();
+    $props();
 </script>
 
 <SheetPrimitive.Trigger bind:ref data-slot="sheet-trigger" {...restProps} />

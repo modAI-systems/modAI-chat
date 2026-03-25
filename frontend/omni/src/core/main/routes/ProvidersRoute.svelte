@@ -4,7 +4,7 @@ import { getModules } from "../../module-system/index";
 
 const modules = getModules();
 const providerComponents = $derived(
-  modules.getAll<Component>("LLMProviderManagement"),
+    modules.getAll<Component>("LLMProviderManagement"),
 );
 </script>
 

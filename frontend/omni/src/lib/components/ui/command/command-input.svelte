@@ -4,10 +4,10 @@ import { Command as CommandPrimitive } from "bits-ui";
 import { cn } from "$lib/utils.js";
 
 let {
-  ref = $bindable(null),
-  class: className,
-  value = $bindable(""),
-  ...restProps
+    ref = $bindable(null),
+    class: className,
+    value = $bindable(""),
+    ...restProps
 }: CommandPrimitive.InputProps = $props();
 </script>
 

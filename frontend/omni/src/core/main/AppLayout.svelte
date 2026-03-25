@@ -10,10 +10,10 @@ import ToolsRoute from "./routes/ToolsRoute.svelte";
 
 const modules = getModules();
 const chatbotComponents = $derived(
-  modules.getAll<Component>("ChatbotComponent"),
+    modules.getAll<Component>("ChatbotComponent"),
 );
 const sidebarComponents = $derived(
-  modules.getAll<Component>("SidebarComponent"),
+    modules.getAll<Component>("SidebarComponent"),
 );
 
 const currentRoute = $derived(getCurrentRoute());
