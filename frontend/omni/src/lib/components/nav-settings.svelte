@@ -1,5 +1,6 @@
 <script lang="ts">
 import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
+import type { Component } from "svelte";
 import { navigate } from "@/core/main/router.svelte";
 import * as Collapsible from "$lib/components/ui/collapsible/index.js";
 import * as Sidebar from "$lib/components/ui/sidebar/index.js";
@@ -10,9 +11,7 @@ let {
     items: {
         title: string;
         url: string;
-        // this should be `Component` after @lucide/svelte updates types
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        icon?: any;
+        icon?: Component;
         isActive?: boolean;
         items?: {
             title: string;
