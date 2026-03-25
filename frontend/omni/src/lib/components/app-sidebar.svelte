@@ -1,7 +1,10 @@
 <script lang="ts">
 import Settings2Icon from "@lucide/svelte/icons/settings-2";
 import type { ComponentProps } from "svelte";
-import type { SidebarSettingItem, SidebarUserItem } from "@/modules/sidebar/sidebarItem";
+import type {
+    SidebarSettingItem,
+    SidebarUserItem,
+} from "@/modules/sidebar/sidebarItem";
 import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 import NavSettings from "./nav-settings.svelte";
 import NavUser from "./nav-user.svelte";
@@ -12,7 +15,10 @@ let {
     settingItems = [],
     userItem = null,
     ...restProps
-}: ComponentProps<typeof Sidebar.Root> & { settingItems?: SidebarSettingItem[]; userItem?: SidebarUserItem | null } = $props();
+}: ComponentProps<typeof Sidebar.Root> & {
+    settingItems?: SidebarSettingItem[];
+    userItem?: SidebarUserItem | null;
+} = $props();
 
 const navSettings = $derived([
     {
