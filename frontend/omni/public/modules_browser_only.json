@@ -22,7 +22,7 @@
     {
       "id": "chatbot",
       "type": "ChatbotComponent",
-      "path": "@/modules/chatbot/ChatbotComponent",
+      "path": "@/modules/chat/Chat",
       "dependencies": [
         "module:chat-service"
       ]
