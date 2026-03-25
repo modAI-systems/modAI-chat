@@ -1,52 +1,37 @@
-<script lang="ts" module>
-	import Settings2Icon from "@lucide/svelte/icons/settings-2";
-
-	// This is sample data.
-	const data = {
-		user: {
-			name: "shadcn",
-			email: "m@example.com",
-			avatar: "/avatars/shadcn.jpg",
-		},
-		settings: [
-			{
-				title: "LLM",
-				url: "#",
-				icon: Settings2Icon,
-				items: [
-					{
-						title: "Providers",
-						url: "#/providers",
-					},
-					{
-						title: "Tools",
-						url: "#/tools",
-					},
-				],
-			},
-		],
-	};
-</script>
-
 <script lang="ts">
-	import NavMain from "./nav-settings.svelte";
+	import Settings2Icon from "@lucide/svelte/icons/settings-2";
+	import NavSettings from "./nav-settings.svelte";
 	import NavUser from "./nav-user.svelte";
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import type { ComponentProps } from "svelte";
+	import type { SidebarItem } from "@/modules/sidebar/sidebarItem";
 
 	let {
 		ref = $bindable(null),
 		collapsible = "icon",
+		items = [],
 		...restProps
-	}: ComponentProps<typeof Sidebar.Root> = $props();
+	}: ComponentProps<typeof Sidebar.Root> & { items?: SidebarItem[] } = $props();
+
+	const navSettings = $derived([
+		{
+			title: "LLM",
+			url: "#",
+			icon: Settings2Icon,
+			items: items.map((item) => ({
+				title: item.title,
+				url: item.url,
+			})),
+		},
+	]);
 </script>
 
 <Sidebar.Root bind:ref {collapsible} {...restProps}>
 	<Sidebar.Content>
-		<NavMain items={data.settings} />
+		<NavSettings items={navSettings} />
 	</Sidebar.Content>
 	<Sidebar.Footer>
-		<NavUser user={data.user} />
+		<NavUser user={{ name: "shadcn", email: "m@example.com", avatar: "/avatars/shadcn.jpg" }} />
 	</Sidebar.Footer>
 	<Sidebar.Rail />
 </Sidebar.Root>
