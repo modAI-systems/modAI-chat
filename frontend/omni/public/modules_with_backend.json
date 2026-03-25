@@ -15,20 +15,20 @@
     },
     {
       "id": "llm-provider-management",
-      "type": "LLMProviderManagementComponent",
-      "path": "@/modules/llm-provider-management/LLMProviderManagementComponent",
+      "type": "LLMProviderManagement",
+      "path": "@/modules/llm-provider-management/LLMProviderManagement",
       "dependencies": []
     },
     {
       "id": "tools",
-      "type": "ToolsComponent",
-      "path": "@/modules/tool-management/ToolsComponent",
+      "type": "ToolsManagement",
+      "path": "@/modules/tools-management/ToolsManagement",
       "dependencies": []
     },
     {
       "id": "app-sidebar",
       "type": "SidebarComponent",
-      "path": "@/modules/sidebar/AppSidebarComponent",
+      "path": "@/modules/sidebar/Sidebar",
       "dependencies": []
     }
   ]
