@@ -35,7 +35,11 @@
       "id": "chatbot",
       "type": "ChatbotComponent",
       "path": "@/modules/chat/Chat",
-      "dependencies": ["module:chat-service", "module:chat-conversation-area", "module:chat-input-panel"]
+      "dependencies": [
+        "module:chat-service",
+        "module:chat-conversation-area",
+        "module:chat-input-panel"
+      ]
     },
     {
       "id": "llm-provider-management",
@@ -45,8 +49,8 @@
     },
     {
       "id": "llm-provider-sidebar-item",
-      "type": "SidebarItem",
-      "path": "@/modules/llm-provider-management/sidebarItem",
+      "type": "SidebarSettingItem",
+      "path": "@/modules/llm-provider-management/sidebarSettingItem",
       "dependencies": []
     },
     {

@@ -87,7 +87,8 @@ The type of a module is also set in the `modules.json` but is usually defined so
 ### 4.4 Registering Modules
 
 To register and activate a module, it needs to be added to one place:
-* `modules*.json` to define the module and its dependencies
+
+- `modules*.json` to define the module and its dependencies
 
 > **Auto-discovery**: The module registry automatically discovers all `.svelte` files under `src/modules/**` via Vite's `import.meta.glob`. No manual entry in a TypeScript registry file is required — adding a file to the `modules/` directory and listing it in `modules*.json` is sufficient.
 
@@ -185,13 +186,16 @@ Defines the TypeScript interface and a `get*()` function that looks the service 
 import { getModules } from "@/core/module-system/index.js";
 
 export interface ChatService {
-    streamChat(model: ProviderModel, messages: UIMessage[]): AsyncGenerator<string>;
+  streamChat(
+    model: ProviderModel,
+    messages: UIMessage[],
+  ): AsyncGenerator<string>;
 }
 
 export function getChatService(): ChatService {
-    const service = getModules().getOne<ChatService>("ChatService");
-    if (!service) throw new Error("ChatService module not registered");
-    return service;
+  const service = getModules().getOne<ChatService>("ChatService");
+  if (!service) throw new Error("ChatService module not registered");
+  return service;
 }
 ```
 
@@ -234,6 +238,7 @@ Any module that depends on the service declares it as a `module:` dependency and
 ```
 
 The corresponding `modules*.json` entry adds the dependency:
+
 ```json
 { "id": "chatbot", "dependencies": ["module:chat-service"] }
 ```
@@ -296,7 +301,7 @@ Example:
 
 ### Sidebar Integration
 
-To integrate into the sidebar as top item, modules have to export a Svelte component of the following structure:
+To integrate into the sidebar as top item, modules have to export a component with class name `SidebarSettingItem` of the following structure
 
 ```svelte
 <script lang="ts">
