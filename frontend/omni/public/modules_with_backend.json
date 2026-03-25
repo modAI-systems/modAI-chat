@@ -20,10 +20,16 @@
       "dependencies": []
     },
     {
+      "id": "tools-management-service",
+      "type": "ToolsManagementService",
+      "path": "@/modules/tools-management-service/openai",
+      "dependencies": []
+    },
+    {
       "id": "tools",
       "type": "ToolsManagement",
       "path": "@/modules/tools-management/ToolsManagement",
-      "dependencies": []
+      "dependencies": ["module:tools-management-service"]
     },
     {
       "id": "app-sidebar",
