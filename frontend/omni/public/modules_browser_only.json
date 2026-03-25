@@ -30,13 +30,13 @@
     {
       "id": "llm-provider-management",
       "type": "LLMProviderManagementComponent",
-      "path": "@/modules/sidebar/llm-provider-management/LLMProviderManagementComponent",
+      "path": "@/modules/llm-provider-management/LLMProviderManagementComponent",
       "dependencies": []
     },
     {
       "id": "tools",
       "type": "ToolsComponent",
-      "path": "@/modules/sidebar/tool-management/ToolsComponent",
+      "path": "@/modules/tool-management/ToolsComponent",
       "dependencies": []
     },
     {
