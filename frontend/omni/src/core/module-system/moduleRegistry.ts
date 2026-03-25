@@ -4,16 +4,19 @@ import type { ManifestEntry } from "./manifestJson";
 // Auto-discovery — Vite import.meta.glob, lazy mode
 // ---------------------------------------------------------------------------
 
-// Scans src/modules/**/*.svelte — every file becomes its own async chunk.
+// Scans src/modules/**/*.svelte and *.svelte.ts — every file its own async chunk.
 // Manifest paths follow the pattern "@/modules/<path-without-extension>".
-const globModules = import.meta.glob<{ default: unknown }>(
+const globModules = import.meta.glob<{ default: unknown }>([
     "../../modules/**/*.svelte",
-);
+    "../../modules/**/*.svelte.ts",
+]);
 
 const componentRegistry: Record<string, () => Promise<unknown>> =
     Object.fromEntries(
         Object.entries(globModules).map(([key, factory]) => [
-            key.replace("../../modules/", "@/modules/").replace(".svelte", ""),
+            key
+                .replace("../../modules/", "@/modules/")
+                .replace(/\.svelte(\.ts)?$/, ""),
             () => factory().then((m) => m.default),
         ]),
     );

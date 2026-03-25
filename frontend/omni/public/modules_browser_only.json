@@ -2,10 +2,18 @@
   "version": "1.0.0",
   "modules": [
     {
+      "id": "chat-service",
+      "type": "ChatService",
+      "path": "@/modules/chat-service/openai",
+      "dependencies": []
+    },
+    {
       "id": "chatbot",
       "type": "ChatbotComponent",
       "path": "@/modules/chatbot/ChatbotComponent",
-      "dependencies": []
+      "dependencies": [
+        "module:chat-service"
+      ]
     },
     {
       "id": "llm-provider-management",

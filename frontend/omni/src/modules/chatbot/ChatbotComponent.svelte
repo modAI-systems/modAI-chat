@@ -1,10 +1,13 @@
 <script lang="ts">
-import { createOpenAI } from "@ai-sdk/openai";
-import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import type { UIMessage } from "ai";
+import { getChatService } from "@/modules/chat-service/index.svelte.js";
 import {
   llmProviderService,
   type ProviderModel,
 } from "@/modules/llm-provider-service/index.svelte.js";
+
+const chatService = getChatService();
+
 import ChatConversationArea from "./ChatConversationArea.svelte";
 import ChatInputPanel from "./ChatInputPanel.svelte";
 
@@ -76,18 +79,11 @@ async function handleSend(text: string) {
   chatStatus = "submitted";
 
   try {
-    const provider = createOpenAI({
-      baseURL: trimTrailingSlash(selectedModelData.providerBaseUrl),
-      apiKey: selectedModelData.providerApiKey,
-    });
-
-    const result = streamText({
-      model: provider(selectedModelData.modelId),
-      messages: await convertToModelMessages(conversationForModel),
-    });
-
     chatStatus = "streaming";
-    for await (const textPart of result.textStream) {
+    for await (const textPart of chatService.streamChat(
+      selectedModelData,
+      conversationForModel,
+    )) {
       messages = messages.map((message) => {
         if (message.id !== assistantMessageId || message.role !== "assistant") {
           return message;
@@ -122,10 +118,6 @@ async function handleSend(text: string) {
 
 function makeMessageId(): string {
   return `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-}
-
-function trimTrailingSlash(url: string): string {
-  return url.endsWith("/") ? url.slice(0, -1) : url;
 }
 </script>
 
