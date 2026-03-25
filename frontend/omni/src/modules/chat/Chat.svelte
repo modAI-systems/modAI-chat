@@ -5,8 +5,10 @@ import {
   llmProviderService,
   type ProviderModel,
 } from "@/modules/llm-provider-service/index.svelte.js";
+import { getToolService } from "@/modules/tools-management-service/index.svelte.js";
 
 const chatService = getChatService();
+const toolService = getToolService();
 
 import ChatConversationArea from "./ChatConversationArea.svelte";
 import ChatInputPanel from "./ChatInputPanel.svelte";
@@ -83,6 +85,7 @@ async function handleSend(text: string) {
     for await (const textPart of chatService.streamChat(
       selectedModelData,
       conversationForModel,
+      toolService.selectedTools,
     )) {
       messages = messages.map((message) => {
         if (message.id !== assistantMessageId || message.role !== "assistant") {
@@ -118,27 +121,6 @@ async function handleSend(text: string) {
 
 function makeMessageId(): string {
   return `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-}
-
-function buildToolsParam():
-	| Record<
-			string,
-			{ description: string; parameters: ReturnType<typeof jsonSchema> }
-	  >
-	| undefined {
-	const selected = toolService.selectedTools;
-	if (selected.length === 0) return undefined;
-	const tools: Record<
-		string,
-		{ description: string; parameters: ReturnType<typeof jsonSchema> }
-	> = {};
-	for (const t of selected) {
-		tools[t.function.name] = {
-			description: t.function.description,
-			parameters: jsonSchema(t.function.parameters),
-		};
-	}
-	return tools;
 }
 </script>
 
