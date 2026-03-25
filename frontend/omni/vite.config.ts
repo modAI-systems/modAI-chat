@@ -4,28 +4,23 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-	plugins: [tailwindcss(), svelte()],
-	server: {
-		proxy: {
-			"/api": "http://localhost:8000",
-		},
-	},
-	resolve: {
-		alias: {
-			"@": path.resolve(__dirname, "./src"),
-			$lib: path.resolve(__dirname, "./src/lib"),
-		},
-	},
-	server: {
-		proxy: {
-			"/api": {
-				target: "http://localhost:8000",
-				changeOrigin: true,
-			},
-		},
-	},
-	test: {
-		globals: true,
-		environment: "happy-dom",
-	},
+    plugins: [tailwindcss(), svelte()],
+    resolve: {
+        alias: {
+            "@": path.resolve(__dirname, "./src"),
+            $lib: path.resolve(__dirname, "./src/lib"),
+        },
+    },
+    server: {
+        proxy: {
+            "/api": {
+                target: "http://localhost:8000",
+                changeOrigin: true,
+            },
+        },
+    },
+    test: {
+        globals: true,
+        environment: "happy-dom",
+    },
 });
