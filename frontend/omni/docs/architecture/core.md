@@ -163,13 +163,87 @@ Also sub-groups like `src/[GROUP]/[GROUP]` can be done if needed.
 
 ### 6.2 Services
 
-As module group should stay lean (see previous section), it is a good practice to put services into an own module group named after its purpose + `-service` like `src/authenticatoin-service`.
+As module groups should stay lean (see previous section), it is a good practice to put services into their own module group named after their purpose + `-service`, e.g. `src/modules/chat-service`.
 
-### 6.3 Separete Interface from Implementation (aka `index.ts`)
+A service module group has the following structure:
 
-Some modules are ment to be used by others via a defined interface, like services. In such cases, it is a good practice to put the interface inside the module group in the `index.ts` file. This easens the import handling for dependent modules.
+```
+src/modules/my-service/
+  index.svelte.ts      ← public interface + getMyService() convenience hook
+  openai.svelte.ts     ← default implementation (export default new ...)
+  README.md            ← usage documentation
+  index.test.ts        ← tests for the implementation
+```
 
-Additionally, the interface should have a good api documentation to make the usage for others easier to understand.
+#### `index.svelte.ts` — interface & consumer hook
+
+Defines the TypeScript interface and a `get*()` function that looks the service up from the module system:
+
+```typescript
+// src/modules/chat-service/index.svelte.ts
+import { getModules } from "@/core/module-system/index.js";
+
+export interface ChatService {
+    streamChat(model: ProviderModel, messages: UIMessage[]): AsyncGenerator<string>;
+}
+
+export function getChatService(): ChatService {
+    const service = getModules().getOne<ChatService>("ChatService");
+    if (!service) throw new Error("ChatService module not registered");
+    return service;
+}
+```
+
+#### `*.svelte.ts` — implementation
+
+Contains the concrete implementation. The file **must use `export default`** to expose the service instance — that is what the module registry stores as the module's value:
+
+```typescript
+// src/modules/chat-service/openai.svelte.ts
+import type { ChatService } from "./index.svelte.js";
+
+class OpenAIChatService implements ChatService { ... }
+
+export default new OpenAIChatService();
+```
+
+#### Registration in `modules*.json`
+
+```json
+{
+  "id": "chat-service",
+  "type": "ChatService",
+  "path": "@/modules/chat-service/openai",
+  "dependencies": []
+}
+```
+
+The type string (`"ChatService"`) maps exactly to the string passed to `getOne<ChatService>("ChatService")`.
+
+#### Consuming a service
+
+Any module that depends on the service declares it as a `module:` dependency and retrieves it at initialisation time:
+
+```svelte
+<script lang="ts">
+  import { getChatService } from "@/modules/chat-service/index.svelte.js";
+
+  const chatService = getChatService();  // called at component init, not inside handlers
+</script>
+```
+
+The corresponding `modules*.json` entry adds the dependency:
+```json
+{ "id": "chatbot", "dependencies": ["module:chat-service"] }
+```
+
+This ensures the chatbot is only activated when a chat service is present.
+
+### 6.3 Separate Interface from Implementation (aka `index.svelte.ts`)
+
+Some modules are meant to be used by others via a defined interface, like services. In such cases, it is a good practice to put the interface inside the module group in the `index.svelte.ts` file. This eases the import handling for dependent modules.
+
+Additionally, the interface should have good API documentation to make usage easier for others to understand.
 
 ### 6.4 Module Group Documentation
 
