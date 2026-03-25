@@ -1,5 +1,7 @@
 <script lang="ts">
 import type { UIMessage } from "ai";
+import type { Component } from "svelte";
+import { getModules } from "@/core/module-system/index";
 import { getChatService } from "@/modules/chat-service/index.svelte.js";
 import {
   llmProviderService,
@@ -7,11 +9,12 @@ import {
 } from "@/modules/llm-provider-service/index.svelte.js";
 import { getToolService } from "@/modules/tools-management-service/index.svelte.js";
 
+const modules = getModules();
 const chatService = getChatService();
 const toolService = getToolService();
 
-import ChatConversationArea from "./ChatConversationArea.svelte";
-import ChatInputPanel from "./ChatInputPanel.svelte";
+const ChatConversationArea = modules.getOne<Component>("ChatConversationArea");
+const ChatInputPanel = modules.getOne<Component>("ChatInputPanel");
 
 let availableModels = $state<ProviderModel[]>([]);
 let modelsLoading = $state(false);
@@ -125,21 +128,25 @@ function makeMessageId(): string {
 </script>
 
 <div class="relative flex size-full flex-col divide-y overflow-hidden">
-	<ChatConversationArea
-		{messages}
-		status={chatStatus}
-		{modelsLoading}
-		hasModels={availableModels.length > 0}
-		selectedModelName={selectedModelData?.modelName}
-	/>
-	<ChatInputPanel
-		messageCount={messages.length}
-		hasModels={availableModels.length > 0}
-		{canChat}
-		{isIdle}
-		{providerGroups}
-		bind:selectedModel
-		{selectedModelData}
-		onsend={handleSend}
-	/>
+	{#if ChatConversationArea}
+		<ChatConversationArea
+			{messages}
+			status={chatStatus}
+			{modelsLoading}
+			hasModels={availableModels.length > 0}
+			selectedModelName={selectedModelData?.modelName}
+		/>
+	{/if}
+	{#if ChatInputPanel}
+		<ChatInputPanel
+			messageCount={messages.length}
+			hasModels={availableModels.length > 0}
+			{canChat}
+			{isIdle}
+			{providerGroups}
+			bind:selectedModel
+			{selectedModelData}
+			onsend={handleSend}
+		/>
+	{/if}
 </div>
