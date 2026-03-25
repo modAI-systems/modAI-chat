@@ -1,15 +1,10 @@
 {
   "version": 1,
   "skills": {
-    "rsbuild-best-practices": {
-      "source": "rstackjs/agent-skills",
+    "justfile": {
+      "source": "iloveitaly/ai-skills",
       "sourceType": "github",
-      "computedHash": "8d073de122a27fd2bd7fe5cb58323d8da757c92f6b29f08a165f98784ab5bf6d"
-    },
-    "rstest-best-practices": {
-      "source": "rstackjs/agent-skills",
-      "sourceType": "github",
-      "computedHash": "8ca3c141b9019509b9f1d43a2d1c14860507955907a9ec582a5e361e79c85296"
+      "computedHash": "ad4231ffae0ccb48e73494b818c5dd840832c8f55b637ab277b4241f32f8c82e"
     },
     "svelte5-best-practices": {
       "source": "ejirocodes/agent-skills",

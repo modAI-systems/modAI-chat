@@ -1,0 +1,24 @@
+# ModAI Frontend
+
+default:
+    @just --list
+
+# Start the development server
+start:
+    pnpm dev
+
+# Build for production
+build:
+    pnpm build
+
+# Run tests
+test:
+    pnpm test
+
+# Check code style and linting
+check:
+    pnpm check
+
+# Fix code style and linting issues
+check-write:
+    pnpm check:write

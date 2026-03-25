@@ -1,0 +1,18 @@
+# Dice Roller Tool
+
+default:
+    @just --list
+
+# Start the development server
+start:
+    uv run uvicorn main:app --port 8001
+
+# Check code style and linting
+check:
+    uv run ruff format --check .
+    uv run ruff check .
+
+# Fix code style and linting issues
+check-write:
+    uv run ruff format .
+    uv run ruff check --fix .

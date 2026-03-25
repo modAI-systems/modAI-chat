@@ -1,0 +1,22 @@
+# ModAI Backend
+
+default:
+    @just --list
+
+# Start the development server
+start:
+    uv run uvicorn modai.main:app
+
+# Run tests
+test:
+    uv run pytest
+
+# Check code style and linting
+check:
+    uv run ruff format --check src
+    uv run ruff check src
+
+# Fix code style and linting issues
+check-write:
+    uv run ruff format src
+    uv run ruff check --fix src

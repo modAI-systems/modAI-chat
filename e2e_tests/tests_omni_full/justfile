@@ -1,0 +1,16 @@
+# E2E Tests (with backend)
+
+default:
+    @just --list
+
+# Run e2e tests
+test:
+    pnpm test
+
+# Check code style and linting
+check:
+    pnpm check
+
+# Fix code style and linting issues
+check-write:
+    pnpm check:write
