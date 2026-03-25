@@ -32,12 +32,6 @@
       "dependencies": []
     },
     {
-      "id": "tools",
-      "type": "ToolsManagement",
-      "path": "@/modules/tools-management/ToolsManagement",
-      "dependencies": []
-    },
-    {
       "id": "app-sidebar",
       "type": "SidebarComponent",
       "path": "@/modules/sidebar/Sidebar",

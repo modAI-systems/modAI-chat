@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { toolService } from "./index.svelte";
+import type { ToolService } from "./index.svelte";
 
 describe("toolService", () => {
-    beforeEach(() => {
+    let toolService: ToolService;
+
+    beforeEach(async () => {
+        vi.resetModules();
+        const mod = await import("./openai.svelte.js");
+        toolService = mod.default;
         toolService.tools = [];
         toolService.selectedToolNames = new Set();
         toolService.loading = false;

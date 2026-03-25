@@ -1,4 +1,4 @@
-const LOCAL_STORAGE_KEY = "selected_tools";
+import { getModules } from "@/core/module-system/index.js";
 
 export interface OpenAIToolFunction {
     name: string;
@@ -12,88 +12,34 @@ export interface OpenAITool {
     function: OpenAIToolFunction;
 }
 
-class ToolService {
-    tools = $state<OpenAITool[]>([]);
-    selectedToolNames = $state<Set<string>>(new Set());
-    loading = $state(false);
-    error = $state<string | null>(null);
+/**
+ * The module type registered in modules*.json for the tool service.
+ * Used by consumers: getModules().getOne<ToolService>("ToolsManagementService")
+ */
+export const TOOL_SERVICE_TYPE = "ToolsManagementService";
 
-    constructor() {
-        this.#loadSelectionFromStorage();
-    }
-
-    get selectedTools(): OpenAITool[] {
-        return this.tools.filter((t) =>
-            this.selectedToolNames.has(t.function.name),
-        );
-    }
-
-    async fetchTools(): Promise<void> {
-        this.loading = true;
-        this.error = null;
-        try {
-            const response = await fetch("/api/tools");
-            if (!response.ok) {
-                throw new Error(`Failed to fetch tools: ${response.status}`);
-            }
-            const data = (await response.json()) as { tools: OpenAITool[] };
-            this.tools = data.tools;
-            // Remove selections for tools that no longer exist
-            const availableNames = new Set(
-                data.tools.map((t) => t.function.name),
-            );
-            const pruned = new Set(
-                [...this.selectedToolNames].filter((name) =>
-                    availableNames.has(name),
-                ),
-            );
-            if (pruned.size !== this.selectedToolNames.size) {
-                this.selectedToolNames = pruned;
-                this.#saveSelectionToStorage();
-            }
-        } catch (e) {
-            this.error =
-                e instanceof Error ? e.message : "Failed to fetch tools";
-            this.tools = [];
-        } finally {
-            this.loading = false;
-        }
-    }
-
-    toggleTool(name: string): void {
-        const next = new Set(this.selectedToolNames);
-        if (next.has(name)) {
-            next.delete(name);
-        } else {
-            next.add(name);
-        }
-        this.selectedToolNames = next;
-        this.#saveSelectionToStorage();
-    }
-
-    #loadSelectionFromStorage(): void {
-        try {
-            const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-            if (stored) {
-                this.selectedToolNames = new Set(
-                    JSON.parse(stored) as string[],
-                );
-            }
-        } catch {
-            this.selectedToolNames = new Set();
-        }
-    }
-
-    #saveSelectionToStorage(): void {
-        try {
-            localStorage.setItem(
-                LOCAL_STORAGE_KEY,
-                JSON.stringify([...this.selectedToolNames]),
-            );
-        } catch (e) {
-            console.error("Failed to save tool selection to localStorage:", e);
-        }
-    }
+/**
+ * Public interface for the tool management service.
+ * Implementations live in sibling files (e.g. default.svelte.ts).
+ */
+export interface ToolService {
+    tools: OpenAITool[];
+    selectedToolNames: Set<string>;
+    loading: boolean;
+    error: string | null;
+    readonly selectedTools: OpenAITool[];
+    fetchTools(): Promise<void>;
+    toggleTool(name: string): void;
 }
 
-export const toolService = new ToolService();
+/**
+ * Returns the active ToolService from the module system.
+ * Must be called at component initialisation time (top-level script).
+ */
+export function getToolService(): ToolService {
+    const service = getModules().getOne<ToolService>(TOOL_SERVICE_TYPE);
+    if (!service) {
+        throw new Error("ToolService module not registered");
+    }
+    return service;
+}
