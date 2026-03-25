@@ -38,8 +38,8 @@
     },
     {
       "id": "llm-provider-sidebar-item",
-      "type": "SidebarItem",
-      "path": "@/modules/llm-provider-management/sidebarItem",
+      "type": "SidebarSettingItem",
+      "path": "@/modules/llm-provider-management/sidebarSettingItem",
       "dependencies": []
     },
     {
@@ -56,8 +56,8 @@
     },
     {
       "id": "tools-sidebar-item",
-      "type": "SidebarItem",
-      "path": "@/modules/tools-management/sidebarItem",
+      "type": "SidebarSettingItem",
+      "path": "@/modules/tools-management/sidebarSettingItem",
       "dependencies": []
     },
     {

@@ -297,7 +297,7 @@ Example:
 
 ### Sidebar Integration
 
-To integrate into the sidebar as top item, modules have to export a component with class name `SidebarItem` of the following structure
+To integrate into the sidebar as top item, modules have to export a component with class name `SidebarSettingItem` of the following structure
 
 ```svelte
 <script lang="ts">
