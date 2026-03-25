@@ -41,7 +41,7 @@
       "id": "chatbot",
       "type": "ChatbotComponent",
       "path": "@/modules/chat/Chat",
-      "dependencies": ["module:chat-service"]
+      "dependencies": ["module:chat-service", "module:tools-management-service"]
     },
     {
       "id": "llm-provider-management",
