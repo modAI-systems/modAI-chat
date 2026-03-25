@@ -10,15 +10,25 @@
     {
       "id": "chatbot",
       "type": "ChatbotComponent",
-      "path": "@/modules/chatbot/ChatbotComponent",
-      "dependencies": [
-        "module:chat-service"
-      ]
+      "path": "@/modules/chat/Chat",
+      "dependencies": ["module:chat-service"]
     },
     {
       "id": "llm-provider-management",
       "type": "LLMProviderManagementComponent",
       "path": "@/modules/llm-provider-management/LLMProviderManagementComponent",
+      "dependencies": []
+    },
+    {
+      "id": "tools",
+      "type": "ToolsComponent",
+      "path": "@/modules/tool-management/ToolsComponent",
+      "dependencies": []
+    },
+    {
+      "id": "app-sidebar",
+      "type": "SidebarComponent",
+      "path": "@/modules/sidebar/AppSidebarComponent",
       "dependencies": []
     }
   ]
