@@ -8,10 +8,22 @@
       "dependencies": []
     },
     {
+      "id": "chat-conversation-area",
+      "type": "ChatConversationArea",
+      "path": "@/modules/chat/ChatConversationArea",
+      "dependencies": []
+    },
+    {
+      "id": "chat-input-panel",
+      "type": "ChatInputPanel",
+      "path": "@/modules/chat/ChatInputPanel",
+      "dependencies": []
+    },
+    {
       "id": "chatbot",
       "type": "ChatbotComponent",
       "path": "@/modules/chat/Chat",
-      "dependencies": ["module:chat-service"]
+      "dependencies": ["module:chat-service", "module:chat-conversation-area", "module:chat-input-panel"]
     },
     {
       "id": "llm-provider-management",
