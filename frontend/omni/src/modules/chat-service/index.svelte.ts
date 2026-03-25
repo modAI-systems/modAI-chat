@@ -3,7 +3,7 @@ import { getModules } from "@/core/module-system/index.js";
 import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.js";
 import type { OpenAITool } from "@/modules/tools-management-service/index.svelte.js";
 
-export type { ProviderModel, OpenAITool };
+export type { OpenAITool, ProviderModel };
 
 /**
  * The module type registered in modules*.json for the chat service.

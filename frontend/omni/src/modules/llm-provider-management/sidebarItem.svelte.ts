@@ -3,6 +3,6 @@ import type { SidebarItem } from "@/modules/sidebar/sidebarItem";
 
 export default {
     title: "Providers",
-    url: "#/providers",
+    url: "/providers",
     icon: Settings2Icon,
 } satisfies SidebarItem;

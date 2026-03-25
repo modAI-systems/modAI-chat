@@ -3,6 +3,7 @@ import { RefreshCwIcon, WrenchIcon } from "lucide-svelte";
 import { getToolService } from "@/modules/tools-management-service/index.svelte.js";
 
 const toolService = getToolService();
+
 import { Badge } from "$lib/components/ui/badge/index.js";
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Card from "$lib/components/ui/card/index.js";
@@ -11,7 +12,7 @@ import { Label } from "$lib/components/ui/label/index.js";
 import { Skeleton } from "$lib/components/ui/skeleton/index.js";
 
 $effect(() => {
-	toolService.fetchTools();
+  toolService.fetchTools();
 });
 
 const selectedCount = $derived(toolService.selectedToolNames.size);
