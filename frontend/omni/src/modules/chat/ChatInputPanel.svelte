@@ -1,5 +1,8 @@
 <script lang="ts">
-import { Check, ChevronDown, Loader2, SendIcon } from "lucide-svelte";
+import CheckIcon from "@lucide/svelte/icons/check";
+import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
+import Loader2Icon from "@lucide/svelte/icons/loader-circle";
+import SendIcon from "@lucide/svelte/icons/send";
 import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.ts";
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Command from "$lib/components/ui/command/index.js";
@@ -104,7 +107,7 @@ function handleModelSelect(selectId: string) {
 								{...props}
 							>
 								{selectedModelData?.modelName ?? "Select model"}
-								<ChevronDown class="size-3" />
+								<ChevronDownIcon class="size-3" />
 							</Button>
 						{/snippet}
 					</Popover.Trigger>
@@ -141,7 +144,7 @@ function handleModelSelect(selectId: string) {
 					class="gap-1.5"
 				>
 					{#if !isIdle}
-						<Loader2 class="size-3.5 animate-spin" />
+						<Loader2Icon class="size-3.5 animate-spin" />
 					{:else}
 						<SendIcon class="size-3.5" />
 					{/if}

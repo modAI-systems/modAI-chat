@@ -1,12 +1,10 @@
 <script lang="ts">
-import {
-    CircleCheck,
-    CircleX,
-    HeartPulse,
-    Loader2,
-    Settings2,
-    Trash2,
-} from "lucide-svelte";
+import CircleCheckIcon from "@lucide/svelte/icons/circle-check";
+import CircleXIcon from "@lucide/svelte/icons/circle-x";
+import HeartPulseIcon from "@lucide/svelte/icons/heart-pulse";
+import Loader2Icon from "@lucide/svelte/icons/loader-circle";
+import Settings2Icon from "@lucide/svelte/icons/settings-2";
+import Trash2Icon from "@lucide/svelte/icons/trash-2";
 import type {
     CreateProviderRequest,
     Provider,
@@ -118,13 +116,13 @@ async function checkHealth(providerId: string) {
 									onclick={() => checkHealth(provider.id)}
 								>
 									{#if healthState === "checking"}
-										<Loader2 class="size-4 animate-spin" />
+										<Loader2Icon class="size-4 animate-spin" />
 									{:else if healthState === "ok"}
-										<CircleCheck class="size-4" />
+										<CircleCheckIcon class="size-4" />
 									{:else if healthState === "fail"}
-										<CircleX class="size-4" />
+										<CircleXIcon class="size-4" />
 									{:else}
-										<HeartPulse class="size-4" />
+										<HeartPulseIcon class="size-4" />
 									{/if}
 								</Button>
 								<Button
@@ -133,7 +131,7 @@ async function checkHealth(providerId: string) {
 									class="size-8 p-0"
 									onclick={() => startEdit(provider)}
 								>
-									<Settings2 class="size-4" />
+									<Settings2Icon class="size-4" />
 								</Button>
 								<Button
 									variant="ghost"
@@ -141,7 +139,7 @@ async function checkHealth(providerId: string) {
 									class="text-destructive hover:text-destructive size-8 p-0"
 									onclick={() => deleteProvider(provider.id)}
 								>
-									<Trash2 class="size-4" />
+									<Trash2Icon class="size-4" />
 								</Button>
 							</div>
 						</div>

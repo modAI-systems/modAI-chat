@@ -1,5 +1,6 @@
 <script lang="ts">
-import { RefreshCwIcon, WrenchIcon } from "lucide-svelte";
+import RefreshCwIcon from "@lucide/svelte/icons/refresh-cw";
+import WrenchIcon from "@lucide/svelte/icons/wrench";
 import { getToolService } from "@/modules/tools-management-service/index.svelte.ts";
 
 const toolService = getToolService();
