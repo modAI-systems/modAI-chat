@@ -1,7 +1,7 @@
 import type { UIMessage } from "ai";
 import { getModules } from "@/core/module-system/index.js";
-import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.js";
-import type { OpenAITool } from "@/modules/tools-management-service/index.svelte.js";
+import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.ts";
+import type { OpenAITool } from "@/modules/tools-management-service/index.svelte.ts";
 
 export type { OpenAITool, ProviderModel };
 

@@ -6,7 +6,7 @@ describe("toolService", () => {
 
     beforeEach(async () => {
         vi.resetModules();
-        const mod = await import("./openai.svelte.js");
+        const mod = await import("./openai.svelte.ts");
         toolService = mod.default;
         toolService.tools = [];
         toolService.selectedToolNames = new Set();

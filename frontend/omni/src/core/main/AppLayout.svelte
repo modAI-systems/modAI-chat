@@ -1,8 +1,8 @@
 <script lang="ts">
 import type { Component } from "svelte";
-import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+import * as Sidebar from "$lib/components/ui/sidebar/index.ts";
 import { getModules } from "../module-system/index";
-import { ROUTE_TYPE, type RouteDefinition } from "./routeDefinition.svelte.js";
+import { ROUTE_TYPE, type RouteDefinition } from "./routeDefinition.svelte.ts";
 import { getCurrentPath, navigate } from "./router.svelte";
 
 const modules = getModules();
