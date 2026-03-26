@@ -21,10 +21,17 @@ Highly extendable AI Web Chat UI from the community for the community.
 
 We try to keep the root of the repo slim and add things like `package.json` file where it actually belongs to.
 
-**Folder hierarchy:**
-
-* **./backend/omni**: Contains the Python Backend code
-* **./frontend/omni**: Universal full fledged chat frontend
+```
+modAI-chat/
+├── backend/
+│   ├── omni/              # Python FastAPI backend
+│   └── tools/dice-roller/ # Example tool microservice
+├── frontend/
+│   └── omni/              # Svelte TypeScript SPA
+└── e2e_tests/
+    ├── tests_omni_full/   # Playwright E2E – full stack
+    └── tests_omni_light/  # Playwright E2E – light
+```
 
 ## 🖥️ modAI Frontends
 
@@ -37,10 +44,21 @@ Why more than one frontend: because there are different use cases. e.g. one full
 - Python 3.13+
 - Node.js 24+
 - UV package manager
+- Docker (for NanoIDP identity provider)
+- Optional: [just](https://github.com/casey/just)
+
+### NanoIDP Setup (Identity Provider)
+Start the lightweight local OIDC identity provider (runs on port 9000):
+
+```bash
+docker compose -f resources/compose-files/compose-nanoidp.yaml up -d
+```
+nanoidp Dashboard: http://localhost:9000
 
 ### Backend Setup
 ```bash
 cd backend/omni
+cp .env.sample .env   # pre-configured for NanoIDP; add your OPENAI_API_KEY
 uv sync
 uv run uvicorn modai.main:app --reload
 ```
@@ -48,11 +66,16 @@ uv run uvicorn modai.main:app --reload
 ### Frontend Setup
 ```bash
 cd frontend/omni
+# Activate the full backend-integrated module configuration
+ln -sf modules_with_backend.json public/modules.json
 pnpm install
 pnpm dev
 ```
 
 Browse to http://localhost:5173/
+
+User: `user1`
+Password: `password`
 
 ## 🤝 Contribution
 
