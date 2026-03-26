@@ -10,9 +10,9 @@
 
 - **Programming Language**: TypeScript
 - **UI Framework**: Svelte 5
-- **UI Components**: bits-ui component library
+- **UI Components**: Shadcn/ui
 - **Build Tool**: Vite
-- **State Management**: Svelte Context API (`setContext`/`getContext`) and Svelte 5 runes (`$state`, `$derived`, `$effect`)
+- **State Management**: Svelte 5 runes (`$state`, `$derived`, `$effect`) and Svelte context API
 
 ## 3. Architecture Overview
 
@@ -28,7 +28,7 @@ flowchart TD
     classDef component fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000000
 
     MainApp[Main App]:::module
-    ChatModule[Chat]:::module
+    ChatModule[Chatbot]:::module
     AuthModule[Auth]:::module
     Login[Login]:::module
     Button[Button]:::component
@@ -86,7 +86,10 @@ The type of a module is also set in the `modules.json` but is usually defined so
 
 ### 4.4 Registering Modules
 
-To register and activate a module, it only needs to be added to the `modules*.json`. There is **no manual registration step** in TypeScript — modules are auto-discovered at build time via Vite's `import.meta.glob` scanning all `src/modules/**/*.svelte` files.
+To register and activate a module, it needs to be added to one place:
+* `modules*.json` to define the module and its dependencies
+
+> **Auto-discovery**: The module registry automatically discovers all `.svelte` files under `src/modules/**` via Vite's `import.meta.glob`. No manual entry in a TypeScript registry file is required — adding a file to the `modules/` directory and listing it in `modules*.json` is sufficient.
 
 #### `modules*.json`
 
@@ -99,12 +102,10 @@ The registration of modules in the Modules is not defined by the `Modules` inter
     "version": "1.0.0",
     "modules": [
         {
-            "id": "aiChat",
+            "id": "chatbot",
             "type": "ChatbotComponent",
             "path": "@/modules/chatbot/ChatbotComponent",
-            "dependencies": [
-                "module:session"
-            ]
+            "dependencies": []
         },
         ...
     ]
@@ -131,13 +132,13 @@ This enables feature toggling and environment-specific module loading.
 ```svelte
 <!-- MyModule.svelte -->
 <script lang="ts">
-  // component logic
+  // component logic using Svelte 5 runes
 </script>
 
 <!-- template -->
 ```
 
-Modules are standard Svelte components. Because the module registry uses the default export of each `.svelte` file, every module file must contain exactly one component (Svelte's default). No extra export statement is needed.
+Modules must be the **default export** of a `.svelte` file to be usable by the module system. Svelte components are default-exported automatically — no explicit `export default` is needed.
 
 ## 5. Root Application
 
@@ -254,8 +255,9 @@ Template for the documentation
 ````markdown
 # Authentication Service
 
-Provides authentication backend communication for user management, including login, signup, and logout operations.
-No UI components availabe in this module group.
+Provides OIDC-based authentication via `oidc-client-ts`. Handles login (redirect to IDP),
+callback (PKCE code exchange), logout, and token management.
+No UI components available in this module group.
 
 ## Intended Usage
 
@@ -263,18 +265,15 @@ No UI components availabe in this module group.
 
 Example:
 
-Other modules can access authentication functionality through the `getAuthService` context function to perform user authentication operations.
+Other modules can access authentication functionality through the `getAuthService()` function or `authenticatedFetch` for API calls with Bearer tokens.
 
-```svelte
-<script lang="ts">
-  import { getAuthService } from "@/modules/authentication-service";
+```typescript
+import { getAuthService } from "@/modules/authentication-service";
 
-  const authService = getAuthService();
-
-  async function login() {
-    const response = await authService.login({ email, password });
-  }
-</script>
+const authService = getAuthService();
+...
+await authService.logout(); // Redirects to IDP logout
+...
 ```
 
 ## Intended Integration
@@ -297,22 +296,22 @@ Example:
 
 ### Sidebar Integration
 
-To integrate into the sidebar as top item, modules have to export a component with class name `SidebarItem` of the following structure
+To integrate into the sidebar as top item, modules have to export a Svelte component of the following structure:
 
 ```svelte
 <script lang="ts">
   import { Plus } from "lucide-svelte";
-  import { page } from "$app/stores";
+  // get current route from context if needed
 </script>
 
-<a href="/myroute" class="sidebar-menu-button" aria-current={$page.url.pathname === '/myroute' ? 'page' : undefined}>
-  <Plus />
+<a href="/myroute" class="sidebar-menu-button" class:active={$page.url.pathname === '/myroute'}>
+  <Plus class="size-4" />
   <span>Awesome</span>
 </a>
 ```
 
-This will create a new sidebar top item navigating to the `/myroute` when clicked.
-It is important to always have a icon + text in the sidebar item because when the sidebar is collapsed, only the icon will be displayed.
+This will create a new sidebar top item navigating to `/myroute` when clicked.
+It is important to always have an icon + text in the sidebar item because when the sidebar is collapsed, only the icon will be displayed.
 ````
 
 ### 6.5 Translations
