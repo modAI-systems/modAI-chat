@@ -301,22 +301,21 @@ Example:
 
 ### Sidebar Integration
 
-To integrate into the sidebar as top item, modules have to export a component with class name `SidebarSettingItem` of the following structure
+To integrate into the sidebar as a settings item, modules export a default object satisfying the `SidebarSettingItem` interface (`{ title, url, icon? }`) and register it with type `"SidebarSettingItem"`:
 
-```svelte
-<script lang="ts">
-  import { Plus } from "lucide-svelte";
-  // get current route from context if needed
-</script>
+```typescript
+// myModule/sidebarSettingItem.svelte.ts
+import Settings2Icon from "@lucide/svelte/icons/settings-2";
+import type { SidebarSettingItem } from "@/modules/sidebar/sidebarItem";
 
-<a href="/myroute" class="sidebar-menu-button" class:active={$page.url.pathname === '/myroute'}>
-  <Plus class="size-4" />
-  <span>Awesome</span>
-</a>
+export default {
+  title: "My Feature",
+  url: "/my-feature",
+  icon: Settings2Icon,
+} satisfies SidebarSettingItem;
 ```
 
-This will create a new sidebar top item navigating to `/myroute` when clicked.
-It is important to always have an icon + text in the sidebar item because when the sidebar is collapsed, only the icon will be displayed.
+The sidebar also supports a single **user item** displayed in the footer. To provide it, export a default object satisfying the `SidebarUserItem` interface (`{ name, email, avatar }`) and register it with type `"SidebarUserItem"`. Only one module should register this type (retrieved via `getOne`).
 ````
 
 ### 6.5 Translations
