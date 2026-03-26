@@ -125,7 +125,7 @@ function handleModelSelect(selectId: string) {
 											>
 												<span class="flex-1">{m.modelName}</span>
 												{#if selectedModel === m.selectId}
-													<Check class="size-4" />
+													<CheckIcon class="size-4" />
 												{/if}
 											</Command.Item>
 										{/each}
