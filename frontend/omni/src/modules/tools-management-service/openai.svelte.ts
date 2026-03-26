@@ -13,8 +13,8 @@ interface OpenAIToolResponse {
 const LOCAL_STORAGE_KEY = "selected_tools";
 
 class ToolServiceImpl implements ToolService {
-    tools = $state<Tool[]>([]);
-    selectedToolNames = $state<Set<string>>(new Set());
+    tools = $state.raw<Tool[]>([]);
+    selectedToolNames = $state.raw<Set<string>>(new Set());
     loading = $state(false);
     error = $state<string | null>(null);
 
@@ -37,7 +37,7 @@ class ToolServiceImpl implements ToolService {
             const data = (await response.json()) as {
                 tools: OpenAIToolResponse[];
             };
-            this.tools = data.tools.map(toTool);
+            this.tools = data.tools.filter(isValidTool).map(toTool);
             // Remove selections for tools that no longer exist
             const availableNames = new Set(this.tools.map((t) => t.name));
             const pruned = new Set(
@@ -102,4 +102,9 @@ function toTool(openAiTool: OpenAIToolResponse): Tool {
         description: openAiTool.function.description,
         parameters: openAiTool.function.parameters,
     };
+}
+
+function isValidTool(tool: OpenAIToolResponse): boolean {
+    const fn = tool.function;
+    return !!fn?.name && !!fn?.description && !!fn?.parameters;
 }

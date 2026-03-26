@@ -27,7 +27,7 @@ export interface CreateProviderRequest {
 }
 
 class LLMProviderService {
-    providers = $state<Provider[]>([]);
+    providers = $state.raw<Provider[]>([]);
 
     constructor() {
         this.#loadFromStorage();

@@ -16,7 +16,7 @@ const conversation = conversationService.createConversation();
 const ChatConversationArea = modules.getOne<Component>("ChatConversationArea");
 const ChatInputPanel = modules.getOne<Component>("ChatInputPanel");
 
-let availableModels = $state<ProviderModel[]>([]);
+let availableModels = $state.raw<ProviderModel[]>([]);
 let modelsLoading = $state(false);
 let selectedModel = $state("");
 

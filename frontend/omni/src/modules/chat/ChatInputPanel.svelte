@@ -116,9 +116,9 @@ function handleModelSelect(selectId: string) {
 							<Command.Input placeholder="Search models..." />
 							<Command.List>
 								<Command.Empty>No models found.</Command.Empty>
-								{#each providerGroups as group}
-									<Command.Group heading={group.name}>
-										{#each group.models as m}
+							{#each providerGroups as group (group.name)}
+								<Command.Group heading={group.name}>
+									{#each group.models as m (m.selectId)}
 											<Command.Item
 												onSelect={() => handleModelSelect(m.selectId)}
 												value={m.selectId}
