@@ -1,31 +1,27 @@
 import type { Component } from "svelte";
 
 /**
- * The module type registered in modules*.json for sidebar setting items.
- * Used by the Sidebar: getModules().getAll<SidebarSettingItem>("SidebarSettingItem")
+ * The module type registered in modules*.json for sidebar content items.
+ * Each content item is a Svelte component rendered in the sidebar content area.
+ * Used by the Sidebar: getModules().getAll<SidebarContentItem>("SidebarContentItem")
  */
-export const SIDEBAR_SETTING_ITEM_TYPE = "SidebarSettingItem";
+export const SIDEBAR_CONTENT_ITEM_TYPE = "SidebarContentItem";
 
 /**
- * Descriptor for a sidebar settings menu entry.
- * Each module that wants to appear in the sidebar settings registers one of these.
+ * A sidebar content item is a Svelte component rendered in the sidebar content area.
  */
-export interface SidebarSettingItem {
-    title: string;
-    url: string;
-    icon?: Component;
-}
+export type SidebarContentItem = Component;
 
 /**
- * The module type registered in modules*.json for the sidebar user item.
- * Used by the Sidebar: getModules().getOne<SidebarUserItem>("SidebarUserItem")
+ * The module type registered in modules*.json for the sidebar footer item.
+ * Used by the Sidebar: getModules().getOne<SidebarFooterItem>("SidebarFooterItem")
  */
-export const SIDEBAR_USER_ITEM_TYPE = "SidebarUserItem";
+export const SIDEBAR_FOOTER_ITEM_TYPE = "SidebarFooterItem";
 
 /**
- * Descriptor for the sidebar user entry displayed in the footer.
+ * Descriptor for the sidebar footer entry.
  */
-export interface SidebarUserItem {
+export interface SidebarFooterItem {
     name: string;
     email: string;
     avatar: string;

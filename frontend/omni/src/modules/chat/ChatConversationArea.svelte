@@ -1,8 +1,9 @@
 <script lang="ts">
+import BotIcon from "@lucide/svelte/icons/bot";
+import Loader2Icon from "@lucide/svelte/icons/loader-circle";
 import type { UIMessage } from "ai";
-import { BotIcon, Loader2 } from "lucide-svelte";
-import * as Avatar from "$lib/components/ui/avatar/index.js";
-import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
+import * as Avatar from "$lib/components/ui/avatar/index.ts";
+import { ScrollArea } from "$lib/components/ui/scroll-area/index.ts";
 import ChatMessageItem from "./ChatMessageItem.svelte";
 
 let {
@@ -39,7 +40,7 @@ $effect(() => {
 		{#if messages.length === 0}
 			{#if modelsLoading}
 				<div class="flex items-center justify-center gap-2 py-20">
-					<Loader2 class="text-muted-foreground size-6 animate-spin" />
+					<Loader2Icon class="text-muted-foreground size-6 animate-spin" />
 					<span class="text-muted-foreground text-sm">Loading models...</span>
 				</div>
 			{:else}
@@ -81,7 +82,7 @@ $effect(() => {
 					</Avatar.Fallback>
 				</Avatar.Root>
 				<div class="flex items-center gap-2 pt-1">
-					<Loader2 class="text-muted-foreground size-4 animate-spin" />
+					<Loader2Icon class="text-muted-foreground size-4 animate-spin" />
 					<span class="text-muted-foreground text-xs">
 						{status === "submitted" ? "Thinking..." : "Generating..."}
 					</span>

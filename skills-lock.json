@@ -6,6 +6,11 @@
       "sourceType": "github",
       "computedHash": "ad4231ffae0ccb48e73494b818c5dd840832c8f55b637ab277b4241f32f8c82e"
     },
+    "svelte-core-bestpractices": {
+      "source": "sveltejs/ai-tools",
+      "sourceType": "github",
+      "computedHash": "bec11e369679027edf9d4acbe6d9788f8da33dc14b48b874f231d3ba13705324"
+    },
     "svelte5-best-practices": {
       "source": "ejirocodes/agent-skills",
       "sourceType": "github",

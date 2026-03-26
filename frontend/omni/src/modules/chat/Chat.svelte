@@ -1,22 +1,22 @@
 <script lang="ts">
-import type { UIMessage } from "ai";
 import type { Component } from "svelte";
 import { getModules } from "@/core/module-system/index";
-import { getChatService } from "@/modules/chat-service/index.svelte.js";
+import { getConversationService } from "@/modules/conversation-service/index.svelte.ts";
 import {
     llmProviderService,
     type ProviderModel,
-} from "@/modules/llm-provider-service/index.svelte.js";
-import { getToolService } from "@/modules/tools-management-service/index.svelte.js";
+} from "@/modules/llm-provider-service/index.svelte.ts";
+import { getToolService } from "@/modules/tools-management-service/index.svelte.ts";
 
 const modules = getModules();
-const chatService = getChatService();
+const conversationService = getConversationService();
 const toolService = getToolService();
+const conversation = conversationService.createConversation();
 
 const ChatConversationArea = modules.getOne<Component>("ChatConversationArea");
 const ChatInputPanel = modules.getOne<Component>("ChatInputPanel");
 
-let availableModels = $state<ProviderModel[]>([]);
+let availableModels = $state.raw<ProviderModel[]>([]);
 let modelsLoading = $state(false);
 let selectedModel = $state("");
 
@@ -53,11 +53,8 @@ const providerGroups = $derived(
     })),
 );
 
-let messages = $state<UIMessage[]>([]);
-let chatStatus = $state<"ready" | "submitted" | "streaming">("ready");
-
 const isIdle = $derived(
-    chatStatus !== "streaming" && chatStatus !== "submitted",
+    conversation.status !== "streaming" && conversation.status !== "submitted",
 );
 const canChat = $derived(Boolean(selectedModelData) && isIdle);
 
@@ -65,82 +62,15 @@ async function handleSend(text: string) {
     if (!selectedModelData) {
         return;
     }
-
-    const userMessage: UIMessage = {
-        id: makeMessageId(),
-        role: "user",
-        parts: [{ type: "text", text }],
-    };
-    const assistantMessageId = makeMessageId();
-    const conversationForModel = [...messages, userMessage];
-    messages = [
-        ...conversationForModel,
-        {
-            id: assistantMessageId,
-            role: "assistant",
-            parts: [{ type: "text", text: "" }],
-        },
-    ];
-    chatStatus = "submitted";
-
-    try {
-        chatStatus = "streaming";
-        for await (const textPart of chatService.streamChat(
-            selectedModelData,
-            conversationForModel,
-            toolService.selectedTools,
-        )) {
-            messages = messages.map((message) => {
-                if (
-                    message.id !== assistantMessageId ||
-                    message.role !== "assistant"
-                ) {
-                    return message;
-                }
-                const previousText =
-                    message.parts.find((part) => part.type === "text")?.text ??
-                    "";
-                return {
-                    ...message,
-                    parts: [
-                        { type: "text", text: `${previousText}${textPart}` },
-                    ],
-                };
-            });
-        }
-    } catch {
-        messages = messages.map((message) => {
-            if (
-                message.id !== assistantMessageId ||
-                message.role !== "assistant"
-            ) {
-                return message;
-            }
-            return {
-                ...message,
-                parts: [
-                    {
-                        type: "text",
-                        text: "Could not reach the selected provider. Check URL, API key, and CORS settings.",
-                    },
-                ],
-            };
-        });
-    } finally {
-        chatStatus = "ready";
-    }
-}
-
-function makeMessageId(): string {
-    return `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    await conversation.send(text, selectedModelData, toolService.selectedTools);
 }
 </script>
 
 <div class="relative flex size-full flex-col divide-y overflow-hidden">
 	{#if ChatConversationArea}
 		<ChatConversationArea
-			{messages}
-			status={chatStatus}
+			messages={conversation.messages}
+			status={conversation.status}
 			{modelsLoading}
 			hasModels={availableModels.length > 0}
 			selectedModelName={selectedModelData?.modelName}
@@ -148,7 +78,7 @@ function makeMessageId(): string {
 	{/if}
 	{#if ChatInputPanel}
 		<ChatInputPanel
-			messageCount={messages.length}
+			messageCount={conversation.messages.length}
 			hasModels={availableModels.length > 0}
 			{canChat}
 			{isIdle}

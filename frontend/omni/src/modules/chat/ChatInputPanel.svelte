@@ -1,6 +1,9 @@
 <script lang="ts">
-import { Check, ChevronDown, Loader2, SendIcon } from "lucide-svelte";
-import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.js";
+import CheckIcon from "@lucide/svelte/icons/check";
+import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
+import Loader2Icon from "@lucide/svelte/icons/loader-circle";
+import SendIcon from "@lucide/svelte/icons/send";
+import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.ts";
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Command from "$lib/components/ui/command/index.js";
 import * as Popover from "$lib/components/ui/popover/index.js";
@@ -104,7 +107,7 @@ function handleModelSelect(selectId: string) {
 								{...props}
 							>
 								{selectedModelData?.modelName ?? "Select model"}
-								<ChevronDown class="size-3" />
+								<ChevronDownIcon class="size-3" />
 							</Button>
 						{/snippet}
 					</Popover.Trigger>
@@ -113,16 +116,16 @@ function handleModelSelect(selectId: string) {
 							<Command.Input placeholder="Search models..." />
 							<Command.List>
 								<Command.Empty>No models found.</Command.Empty>
-								{#each providerGroups as group}
-									<Command.Group heading={group.name}>
-										{#each group.models as m}
+							{#each providerGroups as group (group.name)}
+								<Command.Group heading={group.name}>
+									{#each group.models as m (m.selectId)}
 											<Command.Item
 												onSelect={() => handleModelSelect(m.selectId)}
 												value={m.selectId}
 											>
 												<span class="flex-1">{m.modelName}</span>
 												{#if selectedModel === m.selectId}
-													<Check class="size-4" />
+													<CheckIcon class="size-4" />
 												{/if}
 											</Command.Item>
 										{/each}
@@ -141,7 +144,7 @@ function handleModelSelect(selectId: string) {
 					class="gap-1.5"
 				>
 					{#if !isIdle}
-						<Loader2 class="size-3.5 animate-spin" />
+						<Loader2Icon class="size-3.5 animate-spin" />
 					{:else}
 						<SendIcon class="size-3.5" />
 					{/if}

@@ -10,7 +10,7 @@
 
 - **Programming Language**: TypeScript
 - **UI Framework**: Svelte 5
-- **UI Components**: bits-ui component library
+- **UI Components**: shadcn-svelte component library
 - **Build Tool**: Vite
 - **State Management**: Svelte Context API (`setContext`/`getContext`) and Svelte 5 runes (`$state`, `$derived`, `$effect`)
 
@@ -99,9 +99,9 @@ The registration of modules in the Modules is not defined by the `Modules` inter
     "version": "1.0.0",
     "modules": [
         {
-            "id": "aiChat",
-            "type": "ChatbotComponent",
-            "path": "@/modules/chatbot/ChatbotComponent",
+            "id": "chat",
+            "type": "Chat",
+            "path": "@/modules/chat/Chat",
             "dependencies": [
                 "module:session"
             ]
@@ -184,13 +184,16 @@ Defines the TypeScript interface and a `get*()` function that looks the service 
 import { getModules } from "@/core/module-system/index.js";
 
 export interface ChatService {
-    streamChat(model: ProviderModel, messages: UIMessage[]): AsyncGenerator<string>;
+  streamChat(
+    model: ProviderModel,
+    messages: UIMessage[],
+  ): AsyncGenerator<string>;
 }
 
 export function getChatService(): ChatService {
-    const service = getModules().getOne<ChatService>("ChatService");
-    if (!service) throw new Error("ChatService module not registered");
-    return service;
+  const service = getModules().getOne<ChatService>("ChatService");
+  if (!service) throw new Error("ChatService module not registered");
+  return service;
 }
 ```
 
@@ -233,8 +236,9 @@ Any module that depends on the service declares it as a `module:` dependency and
 ```
 
 The corresponding `modules*.json` entry adds the dependency:
+
 ```json
-{ "id": "chatbot", "dependencies": ["module:chat-service"] }
+{ "id": "chat", "dependencies": ["module:chat-service"] }
 ```
 
 This ensures the chatbot is only activated when a chat service is present.
@@ -297,22 +301,23 @@ Example:
 
 ### Sidebar Integration
 
-To integrate into the sidebar as top item, modules have to export a component with class name `SidebarSettingItem` of the following structure
+The sidebar renders Svelte component modules registered with type `"SidebarContentItem"`. Each content item is a Svelte component rendered directly inside the sidebar content area.
 
-```svelte
-<script lang="ts">
-  import { Plus } from "lucide-svelte";
-  import { page } from "$app/stores";
-</script>
+For example, the `sidebar-settings` module registers as a `SidebarContentItem` and provides the settings navigation group. To add an entry to the settings group, modules export a default object satisfying the `SidebarSettingItem` interface (`{ title, url, icon? }`) and register it with type `"SidebarSettingItem"`:
 
-<a href="/myroute" class="sidebar-menu-button" aria-current={$page.url.pathname === '/myroute' ? 'page' : undefined}>
-  <Plus />
-  <span>Awesome</span>
-</a>
+```typescript
+// myModule/sidebarSettingItem.svelte.ts
+import Settings2Icon from "@lucide/svelte/icons/settings-2";
+import type { SidebarSettingItem } from "@/modules/sidebar-settings/sidebarSettingItem";
+
+export default {
+  title: "My Feature",
+  url: "/my-feature",
+  icon: Settings2Icon,
+} satisfies SidebarSettingItem;
 ```
 
-This will create a new sidebar top item navigating to the `/myroute` when clicked.
-It is important to always have a icon + text in the sidebar item because when the sidebar is collapsed, only the icon will be displayed.
+The sidebar also supports a single **footer item** displayed in the footer. To provide it, export a default object satisfying the `SidebarFooterItem` interface (`{ name, email, avatar }`) and register it with type `"SidebarFooterItem"`. Only one module should register this type (retrieved via `getOne`).
 ````
 
 ### 6.5 Translations

@@ -6,15 +6,15 @@ import {
     tool,
     type UIMessage,
 } from "ai";
-import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.js";
-import type { OpenAITool } from "@/modules/tools-management-service/index.svelte.js";
-import type { ChatService } from "./index.svelte.js";
+import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.ts";
+import type { Tool } from "@/modules/tools-management-service/index.svelte.ts";
+import type { ChatService } from "./index.svelte.ts";
 
 class OpenAIChatService implements ChatService {
     async *streamChat(
         model: ProviderModel,
         messages: UIMessage[],
-        tools?: OpenAITool[],
+        tools?: Tool[],
     ): AsyncGenerator<string, void, unknown> {
         const openai = createOpenAI({
             baseURL: trimTrailingSlash(model.providerBaseUrl),
@@ -34,14 +34,14 @@ class OpenAIChatService implements ChatService {
 }
 
 function buildToolsParam(
-    tools?: OpenAITool[],
+    tools?: Tool[],
 ): Record<string, ReturnType<typeof tool>> | undefined {
     if (!tools || tools.length === 0) return undefined;
     const result: Record<string, ReturnType<typeof tool>> = {};
     for (const t of tools) {
-        result[t.function.name] = tool({
-            description: t.function.description,
-            inputSchema: jsonSchema(t.function.parameters),
+        result[t.name] = tool({
+            description: t.description,
+            inputSchema: jsonSchema(t.parameters),
         });
     }
     return result;
