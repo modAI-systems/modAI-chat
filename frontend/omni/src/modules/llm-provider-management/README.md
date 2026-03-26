@@ -8,4 +8,4 @@ This module group is consumed automatically via the module system. It depends on
 
 ## Intended Integration
 
-Registers an `AppRoute` via `route.svelte.ts` at `/providers`. A `SidebarSettingItem` is also registered to link to the providers page from the sidebar.
+Registers an `AppRoute` via `route.svelte.ts` at `/providers`. A `SidebarSettingItem` is also registered to appear in the sidebar settings group.

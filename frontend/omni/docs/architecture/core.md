@@ -301,12 +301,14 @@ Example:
 
 ### Sidebar Integration
 
-To integrate into the sidebar as a settings item, modules export a default object satisfying the `SidebarSettingItem` interface (`{ title, url, icon? }`) and register it with type `"SidebarSettingItem"`:
+The sidebar renders Svelte component modules registered with type `"SidebarContentItem"`. Each content item is a Svelte component rendered directly inside the sidebar content area.
+
+For example, the `sidebar-settings` module registers as a `SidebarContentItem` and provides the settings navigation group. To add an entry to the settings group, modules export a default object satisfying the `SidebarSettingItem` interface (`{ title, url, icon? }`) and register it with type `"SidebarSettingItem"`:
 
 ```typescript
 // myModule/sidebarSettingItem.svelte.ts
 import Settings2Icon from "@lucide/svelte/icons/settings-2";
-import type { SidebarSettingItem } from "@/modules/sidebar/sidebarItem";
+import type { SidebarSettingItem } from "@/modules/sidebar-settings/sidebarSettingItem";
 
 export default {
   title: "My Feature",
@@ -315,7 +317,7 @@ export default {
 } satisfies SidebarSettingItem;
 ```
 
-The sidebar also supports a single **user item** displayed in the footer. To provide it, export a default object satisfying the `SidebarUserItem` interface (`{ name, email, avatar }`) and register it with type `"SidebarUserItem"`. Only one module should register this type (retrieved via `getOne`).
+The sidebar also supports a single **footer item** displayed in the footer. To provide it, export a default object satisfying the `SidebarFooterItem` interface (`{ name, email, avatar }`) and register it with type `"SidebarFooterItem"`. Only one module should register this type (retrieved via `getOne`).
 ````
 
 ### 6.5 Translations
