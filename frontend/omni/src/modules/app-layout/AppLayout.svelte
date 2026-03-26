@@ -4,14 +4,11 @@ import type { Component } from "svelte";
 import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 import { getModules } from "../module-system/index";
 import { AppRoute, getCurrentRoute, navigate } from "./router.svelte";
-import ChatRoute from "./routes/ChatRoute.svelte";
-import ProvidersRoute from "./routes/ProvidersRoute.svelte";
-import ToolsRoute from "./routes/ToolsRoute.svelte";
 
 const modules = getModules();
-const chatbotComponents = $derived(
-    modules.getAll<Component>("ChatbotComponent"),
-);
+const chatRoute = $derived(modules.getOne<Component>("ChatRoute"));
+const providersRoute = $derived(modules.getOne<Component>("ProvidersRoute"));
+const toolsRoute = $derived(modules.getOne<Component>("ToolsRoute"));
 const sidebarComponents = $derived(
     modules.getAll<Component>("SidebarComponent"),
 );
@@ -23,7 +20,7 @@ const isChatRouteActive = $derived(currentRoute === AppRoute.Chat);
 <Sidebar.Provider>
 	<div class="bg-background flex min-h-screen w-full flex-row overflow-hidden">
 		<main class="flex min-h-screen min-w-0 flex-1 flex-col bg-background">
-			{#if chatbotComponents.length > 0}
+			{#if chatRoute}
 				<header class="flex items-center justify-between border-b px-6 py-3">
 					<div class="flex items-center">
 						<h1 class="text-xl font-bold tracking-tight">modAI</h1>
@@ -43,11 +40,14 @@ const isChatRouteActive = $derived(currentRoute === AppRoute.Chat);
 					</nav>
 				</header>
 				<div class="flex-1 overflow-hidden">
-					{#if currentRoute === AppRoute.Providers}
+					{#if currentRoute === AppRoute.Providers && providersRoute}
+						{@const ProvidersRoute = providersRoute}
 						<ProvidersRoute />
-					{:else if currentRoute === AppRoute.Tools}
+					{:else if currentRoute === AppRoute.Tools && toolsRoute}
+						{@const ToolsRoute = toolsRoute}
 						<ToolsRoute />
 					{:else}
+						{@const ChatRoute = chatRoute}
 						<ChatRoute />
 					{/if}
 				</div>

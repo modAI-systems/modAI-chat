@@ -10,7 +10,7 @@
 
 - **Programming Language**: TypeScript
 - **UI Framework**: Svelte 5
-- **UI Components**: Shadcn/ui
+- **UI Components**: shadcn-svelte component library
 - **Build Tool**: Vite
 - **State Management**: Svelte 5 runes (`$state`, `$derived`, `$effect`) and Svelte context API
 
@@ -103,10 +103,12 @@ The registration of modules in the Modules is not defined by the `Modules` inter
     "version": "1.0.0",
     "modules": [
         {
-            "id": "chatbot",
-            "type": "ChatbotComponent",
-            "path": "@/modules/chatbot/ChatbotComponent",
-            "dependencies": []
+            "id": "chat",
+            "type": "Chat",
+            "path": "@/modules/chat/Chat",
+            "dependencies": [
+                "module:session"
+            ]
         },
         ...
     ]
@@ -240,7 +242,7 @@ Any module that depends on the service declares it as a `module:` dependency and
 The corresponding `modules*.json` entry adds the dependency:
 
 ```json
-{ "id": "chatbot", "dependencies": ["module:chat-service"] }
+{ "id": "chat", "dependencies": ["module:chat-service"] }
 ```
 
 This ensures the chatbot is only activated when a chat service is present.
