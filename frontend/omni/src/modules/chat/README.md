@@ -4,7 +4,11 @@ Core chat UI providing the conversation area, message input with model selection
 
 ## Intended Usage
 
-Other modules typically don't consume chat components directly. The chat module is composed by the module system and rendered via `ChatRoute`.
+Other modules typically don't consume chat components directly. The chat module is composed by the module system and rendered via its route.
+
+## Intended Integration
+
+Registers an `AppRoute` via `route.svelte.ts` at `/chat` (default route). The route component (`ChatRoute.svelte`) renders all registered `Chat` modules.
 
 ## Sub-Module Integration
 

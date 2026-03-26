@@ -62,8 +62,8 @@
     },
     {
       "id": "chat-route",
-      "type": "ChatRoute",
-      "path": "@/modules/chat/ChatRoute",
+      "type": "AppRoute",
+      "path": "@/modules/chat/route",
       "dependencies": ["module:chat"]
     },
     {
@@ -74,8 +74,8 @@
     },
     {
       "id": "providers-route",
-      "type": "ProvidersRoute",
-      "path": "@/modules/llm-provider-management/ProvidersRoute",
+      "type": "AppRoute",
+      "path": "@/modules/llm-provider-management/route",
       "dependencies": ["module:llm-provider-management"]
     },
     {
@@ -98,8 +98,8 @@
     },
     {
       "id": "tools-route",
-      "type": "ToolsRoute",
-      "path": "@/modules/tools-management/ToolsRoute",
+      "type": "AppRoute",
+      "path": "@/modules/tools-management/route",
       "dependencies": ["module:tools"]
     },
     {
