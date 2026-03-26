@@ -6,9 +6,9 @@ import {
     tool,
     type UIMessage,
 } from "ai";
-import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.js";
-import type { OpenAITool } from "@/modules/tools-management-service/index.svelte.js";
-import type { ChatService } from "./index.svelte.js";
+import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.ts";
+import type { OpenAITool } from "@/modules/tools-management-service/index.svelte.ts";
+import type { ChatService } from "./index.svelte.ts";
 
 class OpenAIChatService implements ChatService {
     async *streamChat(

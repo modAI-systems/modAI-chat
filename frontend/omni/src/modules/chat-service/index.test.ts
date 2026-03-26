@@ -1,7 +1,7 @@
 import type { UIMessage } from "ai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.js";
-import type { ChatService } from "./index.svelte.js";
+import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.ts";
+import type { ChatService } from "./index.svelte.ts";
 
 vi.mock("@ai-sdk/openai", () => ({
     createOpenAI: vi.fn(),
@@ -37,7 +37,7 @@ describe("chatService", () => {
 
     beforeEach(async () => {
         vi.resetModules();
-        const mod = await import("./openai.svelte.js");
+        const mod = await import("./openai.svelte.ts");
         chatService = mod.default;
         vi.clearAllMocks();
     });

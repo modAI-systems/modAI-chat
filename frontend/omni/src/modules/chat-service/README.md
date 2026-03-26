@@ -9,8 +9,8 @@ Other modules retrieve the active chat service via `getChatService()` and call `
 
 ```svelte
 <script lang="ts">
-  import { getChatService } from "@/modules/chat-service/index.svelte.js";
-  import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.js";
+  import { getChatService } from "@/modules/chat-service/index.svelte.ts";
+  import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.ts";
   import type { UIMessage } from "ai";
 
   const chatService = getChatService();  // called at component init

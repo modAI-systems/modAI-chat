@@ -9,7 +9,7 @@ Other modules retrieve the provider service instance directly from the default e
 
 ```svelte
 <script lang="ts">
-  import llmProviderService from "@/modules/llm-provider-service/index.svelte.js";
+  import llmProviderService from "@/modules/llm-provider-service/index.svelte.ts";
 
   const models = await llmProviderService.fetchModels();
 </script>

@@ -1,4 +1,4 @@
-import type { OpenAITool, ToolService } from "./index.svelte.js";
+import type { OpenAITool, ToolService } from "./index.svelte.ts";
 
 const LOCAL_STORAGE_KEY = "selected_tools";
 

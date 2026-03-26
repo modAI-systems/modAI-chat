@@ -9,7 +9,7 @@ Other modules retrieve the tool service via `getToolService()` and use it to acc
 
 ```svelte
 <script lang="ts">
-  import { getToolService } from "@/modules/tools-management-service/index.svelte.js";
+  import { getToolService } from "@/modules/tools-management-service/index.svelte.ts";
 
   const toolService = getToolService();  // called at component init
 

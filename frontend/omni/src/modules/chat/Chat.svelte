@@ -2,12 +2,12 @@
 import type { UIMessage } from "ai";
 import type { Component } from "svelte";
 import { getModules } from "@/core/module-system/index";
-import { getChatService } from "@/modules/chat-service/index.svelte.js";
+import { getChatService } from "@/modules/chat-service/index.svelte.ts";
 import {
     llmProviderService,
     type ProviderModel,
-} from "@/modules/llm-provider-service/index.svelte.js";
-import { getToolService } from "@/modules/tools-management-service/index.svelte.js";
+} from "@/modules/llm-provider-service/index.svelte.ts";
+import { getToolService } from "@/modules/tools-management-service/index.svelte.ts";
 
 const modules = getModules();
 const chatService = getChatService();

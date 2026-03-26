@@ -3,7 +3,7 @@ import { AlertTriangle, ChevronDown } from "lucide-svelte";
 import {
     type CreateProviderRequest,
     llmProviderService,
-} from "@/modules/llm-provider-service/index.svelte.js";
+} from "@/modules/llm-provider-service/index.svelte.ts";
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Card from "$lib/components/ui/card/index.js";
 import * as Collapsible from "$lib/components/ui/collapsible/index.js";
