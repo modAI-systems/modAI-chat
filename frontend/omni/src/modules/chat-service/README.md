@@ -1,11 +1,11 @@
 # Chat Service
 
-Provides AI chat streaming functionality, abstracting the OpenAI-compatible API provider.
+Provides low-level AI chat streaming functionality, abstracting the provider-specific API.
 No UI components available in this module group.
 
 ## Intended Usage
 
-Other modules retrieve the active chat service via `getChatService()` and call `streamChat` to stream assistant responses.
+Typically consumed by the `conversation-service` rather than directly by UI modules. The conversation service handles message state; this service only streams text.
 
 ```svelte
 <script lang="ts">
@@ -23,14 +23,13 @@ Other modules retrieve the active chat service via `getChatService()` and call `
 </script>
 ```
 
-Modules that consume this service must declare a `module:chat-service` dependency in `modules*.json` so they only activate when a chat service is present.
-
 ## API
 
-### `chatService.streamChat(model, messages)`
+### `chatService.streamChat(model, messages, tools?)`
 
 - `model: ProviderModel` — the provider and model to use (from `llm-provider-service`)
 - `messages: UIMessage[]` — the conversation history to send
+- `tools?: Tool[]` — optional tools to make available to the model
 - Returns: `AsyncGenerator<string>` — yields text chunks as they stream in
 - Throws when the provider is unreachable or returns an error
 

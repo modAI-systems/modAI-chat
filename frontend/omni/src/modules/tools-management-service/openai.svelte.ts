@@ -1,9 +1,19 @@
-import type { OpenAITool, ToolService } from "./index.svelte.ts";
+import type { Tool, ToolService } from "./index.svelte.ts";
+
+interface OpenAIToolResponse {
+    type: "function";
+    function: {
+        name: string;
+        description: string;
+        parameters: Record<string, unknown>;
+        strict?: boolean;
+    };
+}
 
 const LOCAL_STORAGE_KEY = "selected_tools";
 
 class ToolServiceImpl implements ToolService {
-    tools = $state<OpenAITool[]>([]);
+    tools = $state<Tool[]>([]);
     selectedToolNames = $state<Set<string>>(new Set());
     loading = $state(false);
     error = $state<string | null>(null);
@@ -12,10 +22,8 @@ class ToolServiceImpl implements ToolService {
         this.#loadSelectionFromStorage();
     }
 
-    get selectedTools(): OpenAITool[] {
-        return this.tools.filter((t) =>
-            this.selectedToolNames.has(t.function.name),
-        );
+    get selectedTools(): Tool[] {
+        return this.tools.filter((t) => this.selectedToolNames.has(t.name));
     }
 
     async fetchTools(): Promise<void> {
@@ -26,12 +34,12 @@ class ToolServiceImpl implements ToolService {
             if (!response.ok) {
                 throw new Error(`Failed to fetch tools: ${response.status}`);
             }
-            const data = (await response.json()) as { tools: OpenAITool[] };
-            this.tools = data.tools;
+            const data = (await response.json()) as {
+                tools: OpenAIToolResponse[];
+            };
+            this.tools = data.tools.map(toTool);
             // Remove selections for tools that no longer exist
-            const availableNames = new Set(
-                data.tools.map((t) => t.function.name),
-            );
+            const availableNames = new Set(this.tools.map((t) => t.name));
             const pruned = new Set(
                 [...this.selectedToolNames].filter((name) =>
                     availableNames.has(name),
@@ -87,3 +95,11 @@ class ToolServiceImpl implements ToolService {
 }
 
 export default new ToolServiceImpl();
+
+function toTool(openAiTool: OpenAIToolResponse): Tool {
+    return {
+        name: openAiTool.function.name,
+        description: openAiTool.function.description,
+        parameters: openAiTool.function.parameters,
+    };
+}

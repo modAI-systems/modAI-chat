@@ -1,15 +1,9 @@
 import { getModules } from "@/core/module-system/index.js";
 
-export interface OpenAIToolFunction {
+export interface Tool {
     name: string;
     description: string;
     parameters: Record<string, unknown>;
-    strict?: boolean;
-}
-
-export interface OpenAITool {
-    type: "function";
-    function: OpenAIToolFunction;
 }
 
 /**
@@ -23,11 +17,11 @@ export const TOOL_SERVICE_TYPE = "ToolsManagementService";
  * Implementations live in sibling files (e.g. default.svelte.ts).
  */
 export interface ToolService {
-    tools: OpenAITool[];
+    tools: Tool[];
     selectedToolNames: Set<string>;
     loading: boolean;
     error: string | null;
-    readonly selectedTools: OpenAITool[];
+    readonly selectedTools: Tool[];
     fetchTools(): Promise<void>;
     toggleTool(name: string): void;
 }

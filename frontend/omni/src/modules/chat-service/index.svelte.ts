@@ -1,9 +1,9 @@
 import type { UIMessage } from "ai";
 import { getModules } from "@/core/module-system/index.js";
 import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.ts";
-import type { OpenAITool } from "@/modules/tools-management-service/index.svelte.ts";
+import type { Tool } from "@/modules/tools-management-service/index.svelte.ts";
 
-export type { OpenAITool, ProviderModel };
+export type { ProviderModel, Tool };
 
 /**
  * The module type registered in modules*.json for the chat service.
@@ -25,7 +25,7 @@ export interface ChatService {
     streamChat(
         model: ProviderModel,
         messages: UIMessage[],
-        tools?: OpenAITool[],
+        tools?: Tool[],
     ): AsyncGenerator<string, void, unknown>;
 }
 

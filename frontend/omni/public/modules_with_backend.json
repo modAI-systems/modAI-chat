@@ -8,6 +8,12 @@
       "dependencies": []
     },
     {
+      "id": "conversation-service",
+      "type": "ConversationService",
+      "path": "@/modules/conversation-service/openai",
+      "dependencies": ["module:chat-service"]
+    },
+    {
       "id": "chat-conversation-area",
       "type": "ChatConversationArea",
       "path": "@/modules/chat/ChatConversationArea",
@@ -24,7 +30,7 @@
       "type": "Chat",
       "path": "@/modules/chat/Chat",
       "dependencies": [
-        "module:chat-service",
+        "module:conversation-service",
         "module:tools-management-service",
         "module:chat-conversation-area",
         "module:chat-input-panel"
