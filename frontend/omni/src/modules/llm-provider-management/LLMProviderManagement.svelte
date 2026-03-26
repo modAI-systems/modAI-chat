@@ -1,5 +1,6 @@
 <script lang="ts">
-import { AlertTriangle, ChevronDown } from "lucide-svelte";
+import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
+import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
 import {
     type CreateProviderRequest,
     llmProviderService,
@@ -49,14 +50,14 @@ async function handleCheckProviderHealth(providerId: string): Promise<number> {
 			<Card.Header class="pb-2">
 				<div class="flex items-center justify-between gap-2">
 					<Card.Title class="flex items-center gap-2 text-sm">
-						<AlertTriangle class="size-4" />
+						<AlertTriangleIcon class="size-4" />
 						Browser-direct mode requires CORS on your provider
 					</Card.Title>
 					<Collapsible.Trigger asChild>
 						{#snippet child({ props })}
 							<Button variant="outline" size="sm" class="gap-1.5" {...props}>
 								Show setup
-								<ChevronDown class="size-3.5" />
+								<ChevronDownIcon class="size-3.5" />
 							</Button>
 						{/snippet}
 					</Collapsible.Trigger>
