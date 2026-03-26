@@ -20,8 +20,8 @@
       "dependencies": []
     },
     {
-      "id": "chatbot",
-      "type": "ChatbotComponent",
+      "id": "chat",
+      "type": "Chat",
       "path": "@/modules/chat/Chat",
       "dependencies": [
         "module:chat-service",
@@ -31,10 +31,22 @@
       ]
     },
     {
+      "id": "chat-route",
+      "type": "ChatRoute",
+      "path": "@/modules/chat/ChatRoute",
+      "dependencies": ["module:chat"]
+    },
+    {
       "id": "llm-provider-management",
       "type": "LLMProviderManagement",
       "path": "@/modules/llm-provider-management/LLMProviderManagement",
       "dependencies": []
+    },
+    {
+      "id": "providers-route",
+      "type": "ProvidersRoute",
+      "path": "@/modules/llm-provider-management/ProvidersRoute",
+      "dependencies": ["module:llm-provider-management"]
     },
     {
       "id": "llm-provider-sidebar-item",
@@ -53,6 +65,12 @@
       "type": "ToolsManagement",
       "path": "@/modules/tools-management/ToolsManagement",
       "dependencies": ["module:tools-management-service"]
+    },
+    {
+      "id": "tools-route",
+      "type": "ToolsRoute",
+      "path": "@/modules/tools-management/ToolsRoute",
+      "dependencies": ["module:tools"]
     },
     {
       "id": "tools-sidebar-item",
