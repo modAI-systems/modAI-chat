@@ -27,13 +27,10 @@ export interface ToolService {
 }
 
 /**
- * Returns the active ToolService from the module system.
+ * Returns the active ToolService from the module system, or null when
+ * the module is not registered (e.g. browser-only mode).
  * Must be called at component initialisation time (top-level script).
  */
-export function getToolService(): ToolService {
-    const service = getModules().getOne<ToolService>(TOOL_SERVICE_TYPE);
-    if (!service) {
-        throw new Error("ToolService module not registered");
-    }
-    return service;
+export function getToolService(): ToolService | null {
+    return getModules().getOne<ToolService>(TOOL_SERVICE_TYPE);
 }
