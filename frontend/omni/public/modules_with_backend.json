@@ -2,6 +2,36 @@
   "version": "1.0.0",
   "modules": [
     {
+      "id": "fetch-service",
+      "type": "FetchService",
+      "path": "@/modules/fetch-service/sessionFetchService",
+      "dependencies": []
+    },
+    {
+      "id": "session-service",
+      "type": "SessionService",
+      "path": "@/modules/session-service/sessionServiceImpl",
+      "dependencies": []
+    },
+    {
+      "id": "no-session-action",
+      "type": "NoSessionAction",
+      "path": "@/modules/session-service/loginRedirectAction",
+      "dependencies": []
+    },
+    {
+      "id": "app-layout-content",
+      "type": "AppLayoutContent",
+      "path": "@/modules/app-layout/AppLayout",
+      "dependencies": []
+    },
+    {
+      "id": "app-layout",
+      "type": "AppLayout",
+      "path": "@/modules/session-service/SessionGatedAppLayout",
+      "dependencies": ["module:session-service", "module:app-layout-content"]
+    },
+    {
       "id": "chat-service",
       "type": "ChatService",
       "path": "@/modules/chat-service/openai",

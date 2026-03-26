@@ -2,6 +2,18 @@
   "version": "1.0.0",
   "modules": [
     {
+      "id": "fetch-service",
+      "type": "FetchService",
+      "path": "@/modules/fetch-service/pureFetchService",
+      "dependencies": []
+    },
+    {
+      "id": "app-layout",
+      "type": "AppLayout",
+      "path": "@/modules/app-layout/AppLayout",
+      "dependencies": []
+    },
+    {
       "id": "chat-service",
       "type": "ChatService",
       "path": "@/modules/chat-service/openai",

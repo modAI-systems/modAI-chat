@@ -1,8 +1,8 @@
 <script lang="ts">
 import ModulesProvider from "../module-system/ModulesProvider.svelte";
-import AppLayout from "./AppLayout.svelte";
+import AppRoot from "./AppRoot.svelte";
 </script>
 
-<ModulesProvider>
-	<AppLayout />
+<ModulesProvider manifestPath="/modules.json">
+	<AppRoot />
 </ModulesProvider>

@@ -1,7 +1,7 @@
 <script lang="ts">
 import { MessageSquare, Settings2 } from "lucide-svelte";
 import type { Component } from "svelte";
-import { getModules } from "../module-system/index";
+import { getModules } from "@/core/module-system/index";
 
 const modules = getModules();
 const chatbotComponents = $derived(
