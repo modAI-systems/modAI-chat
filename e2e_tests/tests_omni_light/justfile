@@ -7,6 +7,10 @@ default:
 test:
     pnpm test
 
+# Run e2e tests in UI mode
+test-ui:
+    pnpm test:ui
+
 # Check code style and linting
 check:
     pnpm check

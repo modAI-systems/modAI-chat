@@ -51,3 +51,16 @@ def test_config_loader_env_var(tmp_path: Path, monkeypatch):
     loader = YamlConfigModule(ModuleDependencies(), {"config_path": str(config_file)})
     config = loader.get_config()
     assert config["custom"]["from_env"] == "env_value"
+
+
+def test_config_loader_unset_env_var_defaults_to_empty_string(
+    tmp_path: Path, monkeypatch
+):
+    """Test that unresolvable ${VAR} placeholders are replaced with an empty string."""
+    monkeypatch.delenv("UNSET_VAR", raising=False)
+    test_config = {"custom": {"from_env": "${UNSET_VAR}"}}
+    config_file = tmp_path / "config_unset_env.yaml"
+    config_file.write_text(yaml.dump(test_config))
+    loader = YamlConfigModule(ModuleDependencies(), {"config_path": str(config_file)})
+    config = loader.get_config()
+    assert config["custom"]["from_env"] == ""

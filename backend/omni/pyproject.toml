@@ -15,10 +15,13 @@ dependencies = [
     "strands-agents",
     "strands-agents-tools",
     "httpx>=0.28.1",
+    "itsdangerous>=2.2.0",
+    "authlib[httpx]>=1.6.9",
 ]
 
 [dependency-groups]
 dev = [
+    "cryptography>=46.0.5",
     "datamodel-code-generator[ruff]",
     "pytest",
     "pytest-asyncio",

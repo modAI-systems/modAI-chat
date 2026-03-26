@@ -5,15 +5,16 @@ export default defineConfig({
     testMatch: "*.spec.ts",
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
-    retries: process.env.CI ? 2 : 0,
-    workers: process.env.CI ? 1 : undefined,
+    workers: 1,
     reporter: [
         ["html", { open: "never" }], // Generate HTML report but don't auto-open
-        ["list"] // Also show results in terminal
+        ["list"], // Also show results in terminal
     ],
     use: {
         baseURL: "http://localhost:4173",
-        trace: "on-first-retry",
+        trace: 'retain-on-failure',
+		screenshot: 'only-on-failure',
+		video: 'off',
     },
     projects: [
         {
@@ -31,13 +32,21 @@ export default defineConfig({
     ],
     webServer: [
         {
-            command: "cd ../../frontend/omni && ln -sf modules_with_backend.json public/modules.json && pnpm build && pnpm preview",
-            url: "http://localhost:4173",
+            command: "bash scripts/start-nanoidp.sh",
+            url: "http://localhost:9000/api/health",
             reuseExistingServer: !process.env.CI,
+            gracefulShutdown: { signal: "SIGTERM", timeout: 10000 },
+            timeout: 60000,
         },
         {
-            command: "cd ../../backend/omni && rm -f *.db && uv run uvicorn modai.main:app",
+            command: "bash scripts/run-backend.sh",
             url: "http://localhost:8000/api/health",
+            reuseExistingServer: !process.env.CI,
+            timeout: 120000,
+        },
+        {
+            command: "bash scripts/run-frontend.sh",
+            url: "http://localhost:4173",
             reuseExistingServer: !process.env.CI,
         },
         {

@@ -29,7 +29,7 @@
       "id": "app-layout",
       "type": "AppLayout",
       "path": "@/modules/session-service/SessionGatedAppLayout",
-      "dependencies": ["module:session-service", "module:app-layout-content"]
+      "dependencies": ["module:session-service", "module:app-layout-content", "module:no-session-action"]
     },
     {
       "id": "chat-service",

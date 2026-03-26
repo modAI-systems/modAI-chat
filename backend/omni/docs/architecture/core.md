@@ -56,6 +56,12 @@ A module has one or more types. Each type has certain conditions and if a module
 
 That means if a module has e.g. a `router` attribute, it will be of the type `plain module` and `web module`.
 
+### Web Module Hooks
+
+Web modules can optionally implement additional hooks that the framework calls during startup:
+
+- **`configure_app(app: FastAPI)`**: Called *before* the module's router is registered. Use this to add Starlette/FastAPI middleware or any other app-level configuration that must be in place before routes are active. Example: `OIDCAuthModule` uses this to register `SessionMiddleware`.
+
 ### Bootstrap Modules
 
 Some modules are so called "bootstrap modules" because they are involved in the startup process before the actual module handling is available. For that reason, they are not configurable via the config as normal modules are.
@@ -168,25 +174,26 @@ modules:
   health:
     class: modai.modules.health.simple_health_module.SimpleHealthModule
     enabled: false
-  jwt_session:
-    class: modai.modules.session.jwt_session_module.JwtSessionModule
+  session:
+    class: modai.modules.authentication.oidc_session.OIDCSessionModule
     config:
-      jwt_secret: ${JWT_SECRET}
-      jwt_algorithm: "HS256"
-      jwt_expiration_hours: 24
-  authentication:
-    class: modai.modules.authentication.password_authentication_module.PasswordAuthenticationModule
+      session_secret: ${SESSION_SECRET}
     module_dependencies:
-      session: "jwt_session"
+      user_store: "user_store"
+  user:
+    class: modai.modules.user.simple_user_module.SimpleUserModule
+    module_dependencies:
+      session: "session"
+      user_store: "user_store"
 ```
 
 This sample config defines three modules
 
 1. health module: set to "disabled"
-1. jwt_session module: with some configs and one config using an envirnoment variable as value
-1. authentication module: with a requirement "session" module set to the module "jwt_session"
+1. session module: with a config using an environment variable as value and a dependency on `user_store`
+1. user module: with two module dependencies, both referencing other named modules
 
-The names ("health", "jwt_session", "authentication") have no deeper meaning within the application and can be freely named. It is advisable to give them understandable names for better readability.
+The names ("health", "session", "user") have no deeper meaning within the application and can be freely named. They are used as keys when referencing modules via `module_dependencies`. It is advisable to give them understandable names for better readability.
 
 
 ## 58 Design Decisions and Trade-offs
