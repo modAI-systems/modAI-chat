@@ -1,126 +1,95 @@
 import { expect, type Page } from "@playwright/test";
 
-const exact = { exact: true };
-
+/**
+ * Sets up an LLM provider via localStorage.
+ *
+ * The Svelte frontend stores providers client-side. This helper injects
+ * them directly without touching the UI, then reloads so the chatbot
+ * picks up the new providers on mount.
+ */
 export class LLMProvidersPage {
     constructor(private page: Page) {}
 
-    async goto() {
-        await this.page.goto("/settings/global/llm-providers");
+    async addProvider(name: string, baseUrl: string, _apiKey: string) {
+        await this.page.evaluate(
+            ({ name, baseUrl }: { name: string; baseUrl: string }) => {
+                const KEY = "llm_providers";
+                const existing = JSON.parse(
+                    localStorage.getItem(KEY) ?? "[]",
+                ) as Array<{
+                    id: string;
+                    name: string;
+                    base_url: string;
+                    api_key: string;
+                }>;
+                const newProvider = {
+                    id: `provider-${Date.now()}`,
+                    name,
+                    base_url: baseUrl,
+                    api_key: "",
+                };
+                localStorage.setItem(
+                    KEY,
+                    JSON.stringify([...existing, newProvider]),
+                );
+            },
+            { name, baseUrl },
+        );
+        // Reload so the Svelte reactive state picks up the localStorage change
+        await this.page.reload();
+        // Wait for the auth guard to finish (app becomes visible)
+        await this.page.waitForSelector("header", { timeout: 10000 });
     }
 
     async navigateTo() {
-        await this.page.getByText("Global Settings", exact).click();
-        await this.page.getByText("LLM Providers", exact).click();
-        await expect(this.page).toHaveURL("/settings/global/llm-providers");
-    }
-
-    async addProvider(name: string, baseUrl: string, apiKey: string) {
-        await this.page.getByText("Add Provider", exact).click();
-        if (name) await this.page.getByLabel("Provider Name", exact).fill(name);
-        if (baseUrl)
-            await this.page.getByLabel("Base URL", exact).fill(baseUrl);
-        if (apiKey) await this.page.getByLabel("API Key", exact).fill(apiKey);
-        await this.page.getByText("Create Provider", exact).click();
-    }
-
-    async assertProviderAddedSuccessfully(providerName: string) {
-        await this.assertSuccessfulAddedToast();
-        await this.assertProviderExists(providerName);
-    }
-
-    async assertSuccessfulAddedToast(): Promise<void> {
-        // waitForSelector also works if there are multiple toasts
-        await this.page.waitForSelector('text="Provider created successfully"');
-    }
-
-    async assertProviderExists(providerName: string, baseUrl?: string) {
-        await expect(this.page.getByText(providerName, exact)).toBeVisible();
-        if (baseUrl) {
-            await this.page.getByText(providerName, exact).click();
-            await expect(
-                this.page.locator(`input[value="${baseUrl}"]`),
-            ).toBeVisible();
-        }
-    }
-
-    async updateProvider(
-        providerName: string,
-        newName?: string,
-        baseUrl?: string,
-        apiKey?: string,
-    ) {
-        await this.page.getByText(providerName, exact).click();
-        if (newName)
-            await this.page.getByLabel("Provider Name", exact).fill(newName);
-        if (baseUrl)
-            await this.page.getByLabel("Base URL", exact).fill(baseUrl);
-        if (apiKey) await this.page.getByLabel("API Key", exact).fill(apiKey);
-        await this.page.getByText("Save", exact).click();
-    }
-
-    async deleteProvider(providerName: string, confirm: boolean = true) {
-        // Find the provider card and click the delete button within it
-        const providerCard = this.page
-            .locator("div")
-            .filter({ hasText: providerName })
-            .first();
-        await providerCard
-            .locator("button")
-            .filter({ has: this.page.locator(".lucide-trash2") })
+        // Click the Providers nav button in the header
+        await this.page
+            .getByRole("button", { name: "Providers", exact: true })
             .click();
-        if (confirm) {
-            await this.page
-                .getByRole("alertdialog")
-                .getByText("Yes", { exact: true })
-                .click();
-        } else {
-            await this.page
-                .getByRole("alertdialog")
-                .getByText("No", { exact: true })
-                .click();
-        }
-    }
-
-    async assertProviderNotExists(providerName: string) {
-        await expect(
-            this.page.getByText(providerName, exact),
-        ).not.toBeVisible();
     }
 }
 
-export class LoginPage {
+/**
+ * Page object for the NanoIDP login page.
+ *
+ * Automates the OIDC redirect login flow:
+ * 1. Navigate to the app (triggers redirect to NanoIDP via backend)
+ * 2. Enter username and password
+ * 3. Complete login (redirects back to app via /api/auth/callback)
+ */
+export class NanoIdpLoginPage {
     constructor(private page: Page) {}
 
-    async goto() {
-        await this.page.goto("/login");
-    }
+    /**
+     * Performs a full login flow through NanoIDP's login UI.
+     *
+     * Navigates to the app root which triggers the OIDC redirect to NanoIDP,
+     * fills in the login form, and waits for the redirect back to the app.
+     */
+    async login(username: string, password: string) {
+        // Navigate to app - this triggers redirect to backend /api/auth/login
+        // which redirects to NanoIDP authorize endpoint
+        await this.page.goto("/");
 
-    async login(email: string, password: string) {
-        await this.page.getByLabel("Email", exact).fill(email);
-        await this.page.getByLabel("Password", exact).fill(password);
-        await this.page.getByRole("button", { name: "Login" }).click();
-        // After login, user is redirected to /chat or / depending on the app configuration
-        await expect(this.page).not.toHaveURL("/login");
-    }
-}
+        // Wait for NanoIDP login page to load (on localhost:9000)
+        await this.page.waitForURL(/localhost:9000/, { timeout: 30000 });
 
-export class SignupPage {
-    constructor(private page: Page) {}
+        // Fill username and password (single-step form)
+        const usernameInput = this.page.locator("#username");
+        await usernameInput.waitFor({ state: "visible", timeout: 15000 });
+        await usernameInput.fill(username);
 
-    async goto() {
-        await this.page.goto("/register");
-    }
+        const passwordInput = this.page.locator("#password");
+        await passwordInput.waitFor({ state: "visible", timeout: 15000 });
+        await passwordInput.fill(password);
 
-    async signupUser(email: string, password: string, fullName?: string) {
-        if (fullName) {
-            await this.page
-                .getByLabel("Full Name (Optional)", exact)
-                .fill(fullName);
-        }
-        await this.page.getByLabel("Email", exact).fill(email);
-        await this.page.getByLabel("Password", exact).fill(password);
-        await this.page.getByRole("button", { name: "Create Account" }).click();
+        await this.page.getByRole("button", { name: /authorize/i }).click();
+
+        // Wait for backend callback to complete and redirect back to the frontend
+        await this.page.waitForURL(/localhost:4173/, { timeout: 30000 });
+
+        // Wait for the Svelte auth guard to finish checking session
+        await this.page.waitForSelector("header", { timeout: 15000 });
     }
 }
 
@@ -128,60 +97,70 @@ export class ChatPage {
     constructor(private page: Page) {}
 
     async goto(): Promise<void> {
-        await this.page.goto("/chat");
+        await this.page.goto("/");
+        // Wait for the Svelte auth guard to finish
+        await this.page.waitForSelector("header", { timeout: 10000 });
     }
 
     async navigateTo(): Promise<void> {
-        await this.page.getByText("Chat", exact).click();
-        await expect(this.page).toHaveURL("/chat");
-    }
-
-    async selectProvider(providerName: string): Promise<void> {
-        await this.page.getByText(providerName, exact).click();
-    }
-
-    async getLLMModelCount(): Promise<number> {
-        const selectTrigger = this.page.locator(
-            'button:has-text("Select LLM Model")',
-        );
-        await expect(selectTrigger).toBeEnabled({ timeout: 5000 });
-        await selectTrigger.click();
-        const options = this.page.locator('[role="option"]');
-        const count = await options.count();
-        // Close the dropdown by pressing Escape
-        await this.page.keyboard.press("Escape");
-        return count;
-    }
-
-    async assertLLMModelCount(expectedCount: number): Promise<void> {
-        const count = await this.getLLMModelCount();
-        expect(count).toBe(expectedCount);
+        await this.page
+            .getByRole("button", { name: "Chat", exact: true })
+            .click();
     }
 
     async selectFirstModel(): Promise<void> {
-        const selectTrigger = this.page.locator(
-            'button:has-text("Select LLM Model")',
-        );
-        await expect(selectTrigger).toBeEnabled({ timeout: 5000 });
-        await selectTrigger.click();
+        // Open the model selector popover and click the first option
+        const modelButton = this.page
+            .locator("button")
+            .filter({
+                hasText: /Select model|gpt-/i,
+            })
+            .first();
+        await expect(modelButton).toBeEnabled({ timeout: 10000 });
+        await modelButton.click();
+        // Click the first option in the popover/command list
         const firstOption = this.page.locator('[role="option"]').first();
+        await firstOption.waitFor({ state: "visible", timeout: 5000 });
         await firstOption.click();
     }
 
     async sendMessage(message: string): Promise<void> {
-        const input = this.page.getByPlaceholder(
-            "What would you like to know?",
-        );
+        const input = this.page.getByRole("textbox", {
+            name: "Type a message...",
+        });
         await input.fill(message);
-        await input.press("Enter");
+        await this.page.getByRole("button", { name: "Send" }).click();
     }
 
     async waitForResponse(): Promise<void> {
-        // Wait for the assistant message to appear
-        await this.page.waitForSelector(".is-assistant", { timeout: 10000 });
+        // Wait for an assistant message to appear
+        await this.page.waitForFunction(
+            () => {
+                const msgs = document.querySelectorAll(
+                    "[data-role='assistant']",
+                );
+                if (msgs.length > 0) return true;
+                // Fallback: look for any non-user message
+                const allMsgs = document.querySelectorAll("[data-message]");
+                return Array.from(allMsgs).some(
+                    (el) => el.getAttribute("data-role") === "assistant",
+                );
+            },
+            { timeout: 15000 },
+        );
     }
 
     async assertResponseExists(): Promise<void> {
-        await expect(this.page.locator(".is-assistant")).toBeVisible();
+        // Verify at least one assistant message is visible
+        const assistantMsg = this.page
+            .locator("[data-role='assistant']")
+            .first();
+        await expect(assistantMsg).toBeVisible({ timeout: 15000 });
+    }
+
+    async assertModelButtonVisible(modelName: string): Promise<void> {
+        await expect(
+            this.page.getByRole("button", { name: modelName }),
+        ).toBeVisible({ timeout: 10000 });
     }
 }

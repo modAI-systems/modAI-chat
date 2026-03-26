@@ -57,7 +57,7 @@ class InMemoryUserStore(UserStore):
             if user.email == email:
                 raise ValueError(f"Email '{email}' already exists")
 
-        user_id = self._generate_user_id()
+        user_id = additional_fields.get("id") or self._generate_user_id()
         now = datetime.now()
 
         user = User(

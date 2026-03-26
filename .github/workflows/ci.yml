@@ -102,8 +102,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        working-dir:
-          - e2e_tests/tests_omni_light
+        name:
+          - tests_omni_light
+          - tests_omni_full
     steps:
       - uses: actions/checkout@v6
 
@@ -125,14 +126,27 @@ jobs:
         working-directory: frontend/omni
         run: pnpm install
 
+      - name: Install dependencies for backend (full tests only)
+        if: matrix.name == 'tests_omni_full'
+        working-directory: backend/omni
+        run: uv sync --all-extras
+
       - name: Install dependencies for tests
-        working-directory: ${{ matrix.working-dir }}
+        working-directory: e2e_tests/${{ matrix.name }}
         run: pnpm install
 
       - name: Install Playwright browsers
-        working-directory: ${{ matrix.working-dir }}
+        working-directory: e2e_tests/${{ matrix.name }}
         run: pnpm playwright install --with-deps
 
       - name: Run Playwright tests
-        working-directory: ${{ matrix.working-dir }}
+        working-directory: e2e_tests/${{ matrix.name }}
         run: pnpm test
+
+      - name: Upload Test Results (traces, screenshots, videos)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.name }}
+          path: e2e_tests/${{ matrix.name }}/playwright-report
+          retention-days: 30

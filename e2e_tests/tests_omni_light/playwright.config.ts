@@ -5,15 +5,16 @@ export default defineConfig({
     testMatch: "*.spec.ts",
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
-    retries: process.env.CI ? 2 : 0,
-    workers: process.env.CI ? 1 : undefined,
+    workers: 1,
     reporter: [
         ["html", { open: "never" }], // Generate HTML report but don't auto-open
         ["list"], // Also show results in terminal
     ],
     use: {
         baseURL: "http://localhost:4173",
-        trace: "on-first-retry",
+        trace: 'retain-on-failure',
+		screenshot: 'only-on-failure',
+		video: 'off',
     },
     projects: [
         {

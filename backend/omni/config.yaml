@@ -30,7 +30,7 @@ modules:
       openai_provider: "openai_model_provider"
       session: "session"
   user_store:
-    class: modai.modules.user_store.sql_model_user_store.SQLAlchemyUserStore
+    class: modai.modules.user_store.sqlalchemy_user_store.SQLAlchemyUserStore
     config:
       database_url: "sqlite:///./user_store.db"
       echo: false
@@ -40,17 +40,27 @@ modules:
       database_url: "sqlite:///./user_settings.db"
       echo: false
   session:
-    class: modai.modules.session.jwt_session_module.JwtSessionModule
+    class: modai.modules.authentication.oidc_session.OIDCSessionModule
     config:
-      jwt_secret: ${JWT_SECRET}
-      jwt_algorithm: "HS256"
-      jwt_expiration_hours: 24
-      cookie_secure: false
-  authentication:
-    class: modai.modules.authentication.password_authentication_module.PasswordAuthenticationModule
+      session_secret: ${SESSION_SECRET}
+      # Optional: session_duration: 86400  # seconds, default 24 h
     module_dependencies:
-      session: "session"
       user_store: "user_store"
+  auth_oidc:
+    class: modai.modules.authentication.oidc_auth_module.OIDCAuthModule
+    config:
+      issuer: ${OIDC_ISSUER}
+      client_id: ${OIDC_CLIENT_ID}
+      client_secret: ${OIDC_CLIENT_SECRET}
+      redirect_uri: ${OIDC_REDIRECT_URI}
+      post_login_uri: ${OIDC_POST_LOGIN_URI}
+      post_logout_uri: ${OIDC_POST_LOGOUT_URI}
+      session_secret: ${SESSION_SECRET}
+      scopes: "openid profile email"
+      # Optional:
+      # session_duration: 86400   # seconds, default 24 h (should match session module)
+      # cookie_secure: false      # set true in production (HTTPS)
+      # cookie_samesite: "lax"
   user:
     class: modai.modules.user.simple_user_module.SimpleUserModule
     module_dependencies:

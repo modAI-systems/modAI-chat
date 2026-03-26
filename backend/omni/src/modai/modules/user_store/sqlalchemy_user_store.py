@@ -147,15 +147,14 @@ class SQLAlchemyUserStore(UserStore, PersistenceModule):
     ) -> User:
         with self._get_session() as session:
             # Check if email already exists
-            check_stmt = select(self.users_table).where(
+            existing_stmt = select(self.users_table).where(
                 self.users_table.c.email == email
             )
-            result = session.execute(check_stmt)
-            existing_user = result.fetchone()
-            if existing_user:
+            existing_result = session.execute(existing_stmt)
+            if existing_result.fetchone():
                 raise ValueError(f"Email '{email}' already exists")
 
-            user_id = self._generate_user_id()
+            user_id = additional_fields.get("id") or self._generate_user_id()
             now = datetime.now()
 
             insert_stmt = self.users_table.insert().values(
@@ -203,22 +202,29 @@ class SQLAlchemyUserStore(UserStore, PersistenceModule):
             )
             result = session.execute(check_stmt)
             existing_row = result.fetchone()
+
             if not existing_row:
                 return None
 
-            # Update user
-            updates["updated_at"] = datetime.now()
+            # Update fields
+            now = datetime.now()
+            updates["updated_at"] = now
+
             update_stmt = (
                 update(self.users_table)
                 .where(self.users_table.c.id == user_id)
                 .values(**updates)
             )
+
             session.execute(update_stmt)
             session.commit()
 
-            # Return updated user
-            result = session.execute(check_stmt)
-            updated_row = result.fetchone()
+            # Get updated user
+            updated_stmt = select(self.users_table).where(
+                self.users_table.c.id == user_id
+            )
+            updated_result = session.execute(updated_stmt)
+            updated_row = updated_result.fetchone()
             return self._row_to_user(updated_row)
 
     async def delete_user(self, user_id: str) -> None:
@@ -230,10 +236,10 @@ class SQLAlchemyUserStore(UserStore, PersistenceModule):
             session.execute(delete_creds_stmt)
 
             # Delete user-group relationships
-            delete_groups_stmt = delete(self.user_groups_table).where(
+            delete_user_groups_stmt = delete(self.user_groups_table).where(
                 self.user_groups_table.c.user_id == user_id
             )
-            session.execute(delete_groups_stmt)
+            session.execute(delete_user_groups_stmt)
 
             # Delete user
             delete_user_stmt = delete(self.users_table).where(
@@ -249,7 +255,7 @@ class SQLAlchemyUserStore(UserStore, PersistenceModule):
         offset: int | None = None,
     ) -> List[User]:
         with self._get_session() as session:
-            stmt = select(self.users_table)
+            stmt = select(self.users_table).order_by(self.users_table.c.created_at)
 
             if offset:
                 stmt = stmt.offset(offset)
@@ -269,12 +275,11 @@ class SQLAlchemyUserStore(UserStore, PersistenceModule):
     ) -> Group:
         with self._get_session() as session:
             # Check if group name already exists
-            check_stmt = select(self.groups_table).where(
+            existing_stmt = select(self.groups_table).where(
                 self.groups_table.c.name == name
             )
-            result = session.execute(check_stmt)
-            existing_group = result.fetchone()
-            if existing_group:
+            existing_result = session.execute(existing_stmt)
+            if existing_result.fetchone():
                 raise ValueError(f"Group name '{name}' already exists")
 
             group_id = self._generate_group_id()
@@ -325,22 +330,29 @@ class SQLAlchemyUserStore(UserStore, PersistenceModule):
             )
             result = session.execute(check_stmt)
             existing_row = result.fetchone()
+
             if not existing_row:
                 return None
 
-            # Update group
-            updates["updated_at"] = datetime.now()
+            # Update fields
+            now = datetime.now()
+            updates["updated_at"] = now
+
             update_stmt = (
                 update(self.groups_table)
                 .where(self.groups_table.c.id == group_id)
                 .values(**updates)
             )
+
             session.execute(update_stmt)
             session.commit()
 
-            # Return updated group
-            result = session.execute(check_stmt)
-            updated_row = result.fetchone()
+            # Get updated group
+            updated_stmt = select(self.groups_table).where(
+                self.groups_table.c.id == group_id
+            )
+            updated_result = session.execute(updated_stmt)
+            updated_row = updated_result.fetchone()
             return self._row_to_group(updated_row)
 
     async def delete_group(self, group_id: str) -> None:
@@ -365,7 +377,7 @@ class SQLAlchemyUserStore(UserStore, PersistenceModule):
         offset: int | None = None,
     ) -> List[Group]:
         with self._get_session() as session:
-            stmt = select(self.groups_table)
+            stmt = select(self.groups_table).order_by(self.groups_table.c.created_at)
 
             if offset:
                 stmt = stmt.offset(offset)
@@ -380,27 +392,25 @@ class SQLAlchemyUserStore(UserStore, PersistenceModule):
     async def add_user_to_group(self, user_id: str, group_id: str) -> None:
         with self._get_session() as session:
             # Verify user exists
-            user_check = select(self.users_table).where(
-                self.users_table.c.id == user_id
-            )
-            user_result = session.execute(user_check)
+            user_stmt = select(self.users_table).where(self.users_table.c.id == user_id)
+            user_result = session.execute(user_stmt)
             if not user_result.fetchone():
                 raise ValueError(f"User with ID '{user_id}' not found")
 
             # Verify group exists
-            group_check = select(self.groups_table).where(
+            group_stmt = select(self.groups_table).where(
                 self.groups_table.c.id == group_id
             )
-            group_result = session.execute(group_check)
+            group_result = session.execute(group_stmt)
             if not group_result.fetchone():
                 raise ValueError(f"Group with ID '{group_id}' not found")
 
             # Check if relationship already exists (idempotent)
-            existing_check = select(self.user_groups_table).where(
-                self.user_groups_table.c.user_id == user_id,
-                self.user_groups_table.c.group_id == group_id,
+            existing_stmt = select(self.user_groups_table).where(
+                (self.user_groups_table.c.user_id == user_id)
+                & (self.user_groups_table.c.group_id == group_id)
             )
-            existing_result = session.execute(existing_check)
+            existing_result = session.execute(existing_stmt)
             if existing_result.fetchone():
                 return  # Already in group
 
@@ -417,8 +427,8 @@ class SQLAlchemyUserStore(UserStore, PersistenceModule):
         with self._get_session() as session:
             # Find and delete relationship (idempotent)
             delete_stmt = delete(self.user_groups_table).where(
-                self.user_groups_table.c.user_id == user_id,
-                self.user_groups_table.c.group_id == group_id,
+                (self.user_groups_table.c.user_id == user_id)
+                & (self.user_groups_table.c.group_id == group_id)
             )
             session.execute(delete_stmt)
             session.commit()
@@ -432,6 +442,7 @@ class SQLAlchemyUserStore(UserStore, PersistenceModule):
                     self.groups_table.c.id == self.user_groups_table.c.group_id,
                 )
                 .where(self.user_groups_table.c.user_id == user_id)
+                .order_by(self.groups_table.c.name)
             )
 
             result = session.execute(stmt)
@@ -447,6 +458,7 @@ class SQLAlchemyUserStore(UserStore, PersistenceModule):
                     self.users_table.c.id == self.user_groups_table.c.user_id,
                 )
                 .where(self.user_groups_table.c.group_id == group_id)
+                .order_by(self.users_table.c.email)
             )
 
             result = session.execute(stmt)
@@ -457,21 +469,19 @@ class SQLAlchemyUserStore(UserStore, PersistenceModule):
     async def set_user_password(self, user_id: str, password_hash: str) -> None:
         with self._get_session() as session:
             # Verify user exists
-            user_check = select(self.users_table).where(
-                self.users_table.c.id == user_id
-            )
-            user_result = session.execute(user_check)
+            user_stmt = select(self.users_table).where(self.users_table.c.id == user_id)
+            user_result = session.execute(user_stmt)
             if not user_result.fetchone():
                 raise ValueError(f"User with ID '{user_id}' not found")
 
             now = datetime.now()
 
             # Check if credentials already exist
-            check_stmt = select(self.user_credentials_table).where(
+            existing_stmt = select(self.user_credentials_table).where(
                 self.user_credentials_table.c.user_id == user_id
             )
-            result = session.execute(check_stmt)
-            existing_creds = result.fetchone()
+            existing_result = session.execute(existing_stmt)
+            existing_creds = existing_result.fetchone()
 
             if existing_creds:
                 # Update existing credentials

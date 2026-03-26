@@ -46,7 +46,7 @@ class YamlConfigModule(StartupConfig):
                 match = ENV_VAR_PATTERN.match(obj)
                 if match:
                     var_name = match.group(1)
-                    return os.environ.get(var_name, obj)
+                    return os.environ.get(var_name, "")
                 return obj
             else:
                 return obj

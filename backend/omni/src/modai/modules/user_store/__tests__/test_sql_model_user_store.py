@@ -1,7 +1,7 @@
 import pytest
 
 from modai.module import ModuleDependencies
-from modai.modules.user_store.sql_model_user_store import SQLAlchemyUserStore
+from modai.modules.user_store.sqlalchemy_user_store import SQLAlchemyUserStore
 from modai.modules.user_store.__tests__.abstract_user_store_test import (
     AbstractUserStoreTestBase,
 )
