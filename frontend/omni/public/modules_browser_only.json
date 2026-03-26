@@ -72,6 +72,12 @@
       "dependencies": []
     },
     {
+      "id": "sidebar-settings",
+      "type": "SidebarContentItem",
+      "path": "@/modules/sidebar-settings/SidebarSettings",
+      "dependencies": []
+    },
+    {
       "id": "app-sidebar",
       "type": "SidebarComponent",
       "path": "@/modules/sidebar/Sidebar",

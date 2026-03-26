@@ -1,7 +1,6 @@
 # Sidebar
 
-Provides the application sidebar shell containing a settings navigation menu and an optional user profile footer.
-Dynamically composes its content from sub-modules registered via the module system.
+Provides the application sidebar shell. Dynamically composes its content from sub-modules registered via the module system.
 
 ## Intended Integration
 
@@ -9,21 +8,10 @@ The sidebar is registered as a `SidebarComponent` module and rendered by the roo
 
 ## Sub-Module Integration
 
-### Settings Items
+### Content Items
 
-To add an entry to the sidebar settings menu, register a module with type `"SidebarSettingItem"` that exports a default object satisfying the `SidebarSettingItem` interface:
+To add a section to the sidebar content area, register a Svelte component module with type `"SidebarContentItem"`. Each content item is a Svelte component rendered directly inside the sidebar content area.
 
-```typescript
-import Settings2Icon from "@lucide/svelte/icons/settings-2";
-import type { SidebarSettingItem } from "@/modules/sidebar/sidebarItem";
+### Footer Item
 
-export default {
-  title: "My Feature",
-  url: "/my-feature",
-  icon: Settings2Icon,
-} satisfies SidebarSettingItem;
-```
-
-### User Item
-
-To display a user profile in the sidebar footer, register a single module with type `"SidebarUserItem"` that exports a default object satisfying the `SidebarUserItem` interface (`{ name, email, avatar }`). Only one module should register this type.
+To display content in the sidebar footer, register a single module with type `"SidebarFooterItem"` that exports a default object satisfying the `SidebarFooterItem` interface (`{ name, email, avatar }`). Only one module should register this type.

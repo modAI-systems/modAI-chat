@@ -1,5 +1,5 @@
 import Settings2Icon from "@lucide/svelte/icons/settings-2";
-import type { SidebarSettingItem } from "@/modules/sidebar/sidebarItem";
+import type { SidebarSettingItem } from "@/modules/sidebar-settings/sidebarSettingItem";
 
 export default {
     title: "Providers",

@@ -8,4 +8,4 @@ This module group is consumed automatically via the module system. It depends on
 
 ## Intended Integration
 
-Registers an `AppRoute` via `route.svelte.ts` at `/tools`. A `SidebarSettingItem` is also registered to link to the tools page from the sidebar.
+Registers an `AppRoute` via `route.svelte.ts` at `/tools`. A `SidebarSettingItem` is also registered to appear in the sidebar settings group.
