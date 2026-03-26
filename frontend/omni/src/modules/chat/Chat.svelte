@@ -62,7 +62,7 @@ async function handleSend(text: string) {
     if (!selectedModelData) {
         return;
     }
-    await conversation.send(text, selectedModelData, toolService.selectedTools);
+    await conversation.send(text, selectedModelData, toolService?.selectedTools ?? []);
 }
 </script>
 
