@@ -47,7 +47,7 @@ let {
 									<Sidebar.MenuSubItem>
 										<Sidebar.MenuSubButton>
 											{#snippet child({ props })}
-												<button onclick={() => navigate(subItem.url)} {...props}>
+											<button onclick={() => navigate(subItem.url)} {...props}>
 													<span>{subItem.title}</span>
 												</button>
 											{/snippet}
