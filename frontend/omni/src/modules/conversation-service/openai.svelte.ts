@@ -11,7 +11,7 @@ import type {
 class OpenAIConversationService implements ConversationService {
     createConversation(): Conversation {
         const chatService = getChatService();
-        let messages = $state<UIMessage[]>([]);
+        let messages = $state.raw<UIMessage[]>([]);
         let status = $state<ChatStatus>("ready");
 
         async function send(

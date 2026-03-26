@@ -13,16 +13,20 @@ import { Button } from "$lib/components/ui/button/index.js";
 import * as Card from "$lib/components/ui/card/index.js";
 import { Input } from "$lib/components/ui/input/index.js";
 
-let { providers, onUpdateProvider, onDeleteProvider, onCheckProviderHealth } =
-    $props<{
-        providers: Provider[];
-        onUpdateProvider: (
-            id: string,
-            data: Partial<CreateProviderRequest>,
-        ) => void;
-        onDeleteProvider: (id: string) => void;
-        onCheckProviderHealth: (id: string) => Promise<number>;
-    }>();
+let {
+    providers,
+    onUpdateProvider,
+    onDeleteProvider,
+    onCheckProviderHealth,
+}: {
+    providers: Provider[];
+    onUpdateProvider: (
+        id: string,
+        data: Partial<CreateProviderRequest>,
+    ) => void;
+    onDeleteProvider: (id: string) => void;
+    onCheckProviderHealth: (id: string) => Promise<number>;
+} = $props();
 
 let editingId = $state<string | null>(null);
 let editName = $state("");
