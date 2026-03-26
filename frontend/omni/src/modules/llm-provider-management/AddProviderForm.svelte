@@ -1,13 +1,16 @@
 <script lang="ts">
-import { Loader2, PlusIcon } from "lucide-svelte";
-import type { CreateProviderRequest } from "@/modules/llm-provider-service/index.svelte.js";
+import Loader2Icon from "@lucide/svelte/icons/loader-circle";
+import PlusIcon from "@lucide/svelte/icons/plus";
+import type { CreateProviderRequest } from "@/modules/llm-provider-service/index.svelte.ts";
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Card from "$lib/components/ui/card/index.js";
 import { Input } from "$lib/components/ui/input/index.js";
 
-let { onAddProvider } = $props<{
+let {
+    onAddProvider,
+}: {
     onAddProvider: (data: CreateProviderRequest) => void;
-}>();
+} = $props();
 
 let newProviderName = $state("");
 let newProviderBaseUrl = $state("");
@@ -84,7 +87,7 @@ function handleAddProvider(e: SubmitEvent) {
 			{/if}
 			<Button type="submit" disabled={addingProvider}>
 				{#if addingProvider}
-					<Loader2 class="mr-2 size-4 animate-spin" />
+					<Loader2Icon class="mr-2 size-4 animate-spin" />
 				{/if}
 				Add Provider
 			</Button>

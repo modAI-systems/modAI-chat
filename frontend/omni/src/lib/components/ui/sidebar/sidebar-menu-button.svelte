@@ -36,7 +36,7 @@ export type SidebarMenuButtonSize = VariantProps<
 	import { mergeProps } from "bits-ui";
 	import type { ComponentProps, Snippet } from "svelte";
 	import type { HTMLAttributes } from "svelte/elements";
-	import { useSidebar } from "./context.svelte.js";
+	import { useSidebar } from "./context.svelte.ts";
 
 	let {
 		ref = $bindable(null),
@@ -65,7 +65,7 @@ export type SidebarMenuButtonSize = VariantProps<
 		"data-slot": "sidebar-menu-button",
 		"data-sidebar": "menu-button",
 		"data-size": size,
-		"data-active": isActive,
+		"data-active": isActive ? "" : undefined,
 		...restProps,
 	});
 </script>

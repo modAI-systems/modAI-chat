@@ -6,7 +6,7 @@ describe("toolService", () => {
 
     beforeEach(async () => {
         vi.resetModules();
-        const mod = await import("./openai.svelte.js");
+        const mod = await import("./openai.svelte.ts");
         toolService = mod.default;
         toolService.tools = [];
         toolService.selectedToolNames = new Set();
@@ -45,7 +45,13 @@ describe("toolService", () => {
             await toolService.fetchTools();
 
             expect(fetch).toHaveBeenCalledWith("/api/tools");
-            expect(toolService.tools).toEqual(mockTools.tools);
+            expect(toolService.tools).toEqual([
+                {
+                    name: "roll_dice",
+                    description: "Roll dice and return the results",
+                    parameters: { type: "object", properties: {} },
+                },
+            ]);
             expect(toolService.loading).toBe(false);
             expect(toolService.error).toBeNull();
         });
@@ -138,39 +144,28 @@ describe("toolService", () => {
         it("returns only tools whose names are in selectedToolNames", () => {
             toolService.tools = [
                 {
-                    type: "function",
-                    function: {
-                        name: "roll_dice",
-                        description: "Roll dice",
-                        parameters: { type: "object", properties: {} },
-                    },
+                    name: "roll_dice",
+                    description: "Roll dice",
+                    parameters: { type: "object", properties: {} },
                 },
                 {
-                    type: "function",
-                    function: {
-                        name: "search_web",
-                        description: "Search the web",
-                        parameters: { type: "object", properties: {} },
-                    },
+                    name: "search_web",
+                    description: "Search the web",
+                    parameters: { type: "object", properties: {} },
                 },
             ];
             toolService.selectedToolNames = new Set(["roll_dice"]);
 
             expect(toolService.selectedTools).toHaveLength(1);
-            expect(toolService.selectedTools[0].function.name).toBe(
-                "roll_dice",
-            );
+            expect(toolService.selectedTools[0].name).toBe("roll_dice");
         });
 
         it("returns empty array when nothing selected", () => {
             toolService.tools = [
                 {
-                    type: "function",
-                    function: {
-                        name: "roll_dice",
-                        description: "Roll dice",
-                        parameters: { type: "object", properties: {} },
-                    },
+                    name: "roll_dice",
+                    description: "Roll dice",
+                    parameters: { type: "object", properties: {} },
                 },
             ];
             toolService.selectedToolNames = new Set();

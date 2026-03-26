@@ -11,18 +11,18 @@ importers:
       '@ai-sdk/openai':
         specifier: ^3.0.41
         version: 3.0.41(zod@4.3.6)
-      '@ai-sdk/svelte':
-        specifier: ^4.0.116
-        version: 4.0.116(svelte@5.53.13)(zod@4.3.6)
+      '@lucide/svelte':
+        specifier: ^1.7.0
+        version: 1.7.0(svelte@5.53.13)
       ai:
         specifier: ^6.0.116
         version: 6.0.116(zod@4.3.6)
+      bits-ui:
+        specifier: ^2.16.3
+        version: 2.16.3(@internationalized/date@3.12.0)(svelte@5.53.13)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      lucide-svelte:
-        specifier: ^0.577.0
-        version: 0.577.0(svelte@5.53.13)
       marked:
         specifier: ^17.0.4
         version: 17.0.4
@@ -32,6 +32,9 @@ importers:
       tailwind-merge:
         specifier: ^3.5.0
         version: 3.5.0
+      tailwind-variants:
+        specifier: ^3.2.2
+        version: 3.2.2(tailwind-merge@3.5.0)(tailwindcss@4.2.1)
       tailwindcss:
         specifier: ^4.2.1
         version: 4.2.1
@@ -39,27 +42,15 @@ importers:
       '@biomejs/biome':
         specifier: ^2.4.7
         version: 2.4.7
-      '@internationalized/date':
-        specifier: ^3.12.0
-        version: 3.12.0
-      '@lucide/svelte':
-        specifier: ^1.0.1
-        version: 1.0.1(svelte@5.53.13)
       '@sveltejs/vite-plugin-svelte':
         specifier: ^5.0.3
         version: 5.1.1(svelte@5.53.13)(vite@6.4.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.31.1))
       '@tailwindcss/vite':
         specifier: ^4.2.1
         version: 4.2.1(vite@6.4.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.31.1))
-      bits-ui:
-        specifier: ^2.16.3
-        version: 2.16.3(@internationalized/date@3.12.0)(svelte@5.53.13)
       happy-dom:
         specifier: ^20.8.4
         version: 20.8.4
-      tailwind-variants:
-        specifier: ^3.2.2
-        version: 3.2.2(tailwind-merge@3.5.0)(tailwindcss@4.2.1)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -93,11 +84,6 @@ packages:
   '@ai-sdk/provider@3.0.8':
     resolution: {integrity: sha512-oGMAgGoQdBXbZqNG0Ze56CHjDZ1IDYOwGYxYjO5KLSlz5HiNQ9udIXsPZ61VWaHGZ5XW/jyjmr6t2xz2jGVwbQ==}
     engines: {node: '>=18'}
-
-  '@ai-sdk/svelte@4.0.116':
-    resolution: {integrity: sha512-b+LN9Yq4YRIG7xBr1/Lhp8wLbL6qQkSwpmoRLhyyG5l97DYHy5M7CWZP/CW8RofYl9OWUMZTekjvY9nJxDm5wQ==}
-    peerDependencies:
-      svelte: ^5.31.0
 
   '@biomejs/biome@2.4.7':
     resolution: {integrity: sha512-vXrgcmNGZ4lpdwZSpMf1hWw1aWS6B+SyeSYKTLrNsiUsAdSRN0J4d/7mF3ogJFbIwFFSOL3wT92Zzxia/d5/ng==}
@@ -336,8 +322,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@lucide/svelte@1.0.1':
-    resolution: {integrity: sha512-iIcE+CDaHtjVKT5UkpnBIRy1b51u29RHgQxrjy5SMTp/KyqbtNfzkWnmWpBoCWKs2RKiF/e8VW+z0dw+wpb4Rw==}
+  '@lucide/svelte@1.7.0':
+    resolution: {integrity: sha512-YytBKOUBGox7yWcykZnYxOkn5WpR5G1qYXLYXV/j1B79SOTTEKzB+s5yF5Rq9l9OkweDStNH2b4yTqfvhEhV8g==}
     peerDependencies:
       svelte: ^5
 
@@ -868,11 +854,6 @@ packages:
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
 
-  lucide-svelte@0.577.0:
-    resolution: {integrity: sha512-0i88o57KsaHWnc80J57fY99CWzlZsSdtH5kKjLUJa7z8dum/9/AbINNLzJ7NiRFUdOgMnfAmJt8jFbW2zeC5qQ==}
-    peerDependencies:
-      svelte: ^3 || ^4 || ^5.0.0-next.42
-
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
     hasBin: true
@@ -1144,14 +1125,6 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/svelte@4.0.116(svelte@5.53.13)(zod@4.3.6)':
-    dependencies:
-      '@ai-sdk/provider-utils': 4.0.19(zod@4.3.6)
-      ai: 6.0.116(zod@4.3.6)
-      svelte: 5.53.13
-    transitivePeerDependencies:
-      - zod
-
   '@biomejs/biome@2.4.7':
     optionalDependencies:
       '@biomejs/cli-darwin-arm64': 2.4.7
@@ -1299,7 +1272,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@lucide/svelte@1.0.1(svelte@5.53.13)':
+  '@lucide/svelte@1.7.0(svelte@5.53.13)':
     dependencies:
       svelte: 5.53.13
 
@@ -1744,10 +1717,6 @@ snapshots:
   locate-character@3.0.0: {}
 
   loupe@3.2.1: {}
-
-  lucide-svelte@0.577.0(svelte@5.53.13):
-    dependencies:
-      svelte: 5.53.13
 
   lz-string@1.5.0: {}
 

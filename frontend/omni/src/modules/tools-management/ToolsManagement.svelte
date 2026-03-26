@@ -1,6 +1,7 @@
 <script lang="ts">
-import { RefreshCwIcon, WrenchIcon } from "lucide-svelte";
-import { getToolService } from "@/modules/tools-management-service/index.svelte.js";
+import RefreshCwIcon from "@lucide/svelte/icons/refresh-cw";
+import WrenchIcon from "@lucide/svelte/icons/wrench";
+import { getToolService } from "@/modules/tools-management-service/index.svelte.ts";
 
 const toolService = getToolService();
 
@@ -74,20 +75,20 @@ const selectedCount = $derived(toolService.selectedToolNames.size);
 		</Card.Root>
 	{:else}
 		<div class="flex flex-col gap-3">
-			{#each toolService.tools as t (t.function.name)}
-				{@const isSelected = toolService.selectedToolNames.has(t.function.name)}
+			{#each toolService.tools as t (t.name)}
+				{@const isSelected = toolService.selectedToolNames.has(t.name)}
 				<Label
 					class="hover:bg-accent/50 flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors {isSelected ? 'border-primary bg-primary/5' : ''}"
 				>
 					<Checkbox
 						checked={isSelected}
-						onCheckedChange={() => toolService.toggleTool(t.function.name)}
+						onCheckedChange={() => toolService.toggleTool(t.name)}
 						class="mt-0.5"
 					/>
 					<div class="grid min-w-0 gap-1">
-						<p class="text-sm leading-none font-medium">{t.function.name}</p>
-						{#if t.function.description}
-							<p class="text-muted-foreground text-sm">{t.function.description}</p>
+						<p class="text-sm leading-none font-medium">{t.name}</p>
+						{#if t.description}
+							<p class="text-muted-foreground text-sm">{t.description}</p>
 						{/if}
 					</div>
 				</Label>

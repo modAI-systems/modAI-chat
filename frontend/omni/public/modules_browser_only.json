@@ -8,6 +8,12 @@
       "dependencies": []
     },
     {
+      "id": "conversation-service",
+      "type": "ConversationService",
+      "path": "@/modules/conversation-service/openai",
+      "dependencies": ["module:chat-service"]
+    },
+    {
       "id": "chat-conversation-area",
       "type": "ChatConversationArea",
       "path": "@/modules/chat/ChatConversationArea",
@@ -20,14 +26,20 @@
       "dependencies": []
     },
     {
-      "id": "chatbot",
-      "type": "ChatbotComponent",
+      "id": "chat",
+      "type": "Chat",
       "path": "@/modules/chat/Chat",
       "dependencies": [
-        "module:chat-service",
+        "module:conversation-service",
         "module:chat-conversation-area",
         "module:chat-input-panel"
       ]
+    },
+    {
+      "id": "chat-route",
+      "type": "AppRoute",
+      "path": "@/modules/chat/route",
+      "dependencies": ["module:chat"]
     },
     {
       "id": "llm-provider-management",
@@ -36,9 +48,21 @@
       "dependencies": []
     },
     {
+      "id": "providers-route",
+      "type": "AppRoute",
+      "path": "@/modules/llm-provider-management/route",
+      "dependencies": ["module:llm-provider-management"]
+    },
+    {
       "id": "llm-provider-sidebar-item",
       "type": "SidebarSettingItem",
       "path": "@/modules/llm-provider-management/sidebarSettingItem",
+      "dependencies": []
+    },
+    {
+      "id": "sidebar-settings",
+      "type": "SidebarContentItem",
+      "path": "@/modules/sidebar-settings/SidebarSettings",
       "dependencies": []
     },
     {

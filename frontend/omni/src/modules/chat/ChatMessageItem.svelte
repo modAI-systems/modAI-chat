@@ -1,6 +1,8 @@
 <script lang="ts">
+import BotIcon from "@lucide/svelte/icons/bot";
+import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
+import UserIcon from "@lucide/svelte/icons/user";
 import type { UIMessage } from "ai";
-import { BotIcon, ChevronDown, UserIcon } from "lucide-svelte";
 import { marked } from "marked";
 import * as Avatar from "$lib/components/ui/avatar/index.js";
 import { Badge } from "$lib/components/ui/badge/index.js";
@@ -84,7 +86,7 @@ function renderMarkdown(text: string): string {
 										class="text-muted-foreground h-auto gap-1.5 px-2 py-1 text-xs"
 										{...props}
 									>
-										<ChevronDown class="size-3" />
+										<ChevronDownIcon class="size-3" />
 										Reasoning
 									</Button>
 								{/snippet}
