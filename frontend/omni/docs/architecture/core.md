@@ -184,13 +184,16 @@ Defines the TypeScript interface and a `get*()` function that looks the service 
 import { getModules } from "@/core/module-system/index.js";
 
 export interface ChatService {
-    streamChat(model: ProviderModel, messages: UIMessage[]): AsyncGenerator<string>;
+  streamChat(
+    model: ProviderModel,
+    messages: UIMessage[],
+  ): AsyncGenerator<string>;
 }
 
 export function getChatService(): ChatService {
-    const service = getModules().getOne<ChatService>("ChatService");
-    if (!service) throw new Error("ChatService module not registered");
-    return service;
+  const service = getModules().getOne<ChatService>("ChatService");
+  if (!service) throw new Error("ChatService module not registered");
+  return service;
 }
 ```
 
@@ -233,6 +236,7 @@ Any module that depends on the service declares it as a `module:` dependency and
 ```
 
 The corresponding `modules*.json` entry adds the dependency:
+
 ```json
 { "id": "chatbot", "dependencies": ["module:chat-service"] }
 ```
@@ -297,22 +301,21 @@ Example:
 
 ### Sidebar Integration
 
-To integrate into the sidebar as top item, modules have to export a component with class name `SidebarSettingItem` of the following structure
+To integrate into the sidebar as a settings item, modules export a default object satisfying the `SidebarSettingItem` interface (`{ title, url, icon? }`) and register it with type `"SidebarSettingItem"`:
 
-```svelte
-<script lang="ts">
-  import { Plus } from "lucide-svelte";
-  import { page } from "$app/stores";
-</script>
+```typescript
+// myModule/sidebarSettingItem.svelte.ts
+import Settings2Icon from "@lucide/svelte/icons/settings-2";
+import type { SidebarSettingItem } from "@/modules/sidebar/sidebarItem";
 
-<a href="/myroute" class="sidebar-menu-button" aria-current={$page.url.pathname === '/myroute' ? 'page' : undefined}>
-  <Plus />
-  <span>Awesome</span>
-</a>
+export default {
+  title: "My Feature",
+  url: "/my-feature",
+  icon: Settings2Icon,
+} satisfies SidebarSettingItem;
 ```
 
-This will create a new sidebar top item navigating to the `/myroute` when clicked.
-It is important to always have a icon + text in the sidebar item because when the sidebar is collapsed, only the icon will be displayed.
+The sidebar also supports a single **user item** displayed in the footer. To provide it, export a default object satisfying the `SidebarUserItem` interface (`{ name, email, avatar }`) and register it with type `"SidebarUserItem"`. Only one module should register this type (retrieved via `getOne`).
 ````
 
 ### 6.5 Translations
