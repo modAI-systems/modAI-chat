@@ -69,10 +69,7 @@ async function handleCheckProviderHealth(providerId: string): Promise<number> {
 						This light frontend calls providers directly from the browser. If your provider does not allow your frontend origin, model loading, health checks, and chat will fail.
 					</p>
 					<p class="font-medium">llmock example:</p>
-					<pre class="overflow-x-auto rounded bg-amber-100/80 px-2 py-1 text-xs">docker run --rm -p 3002:8000 -e LLMOCK_CORS_ALLOW_ORIGINS='["http://localhost:5175"]' ghcr.io/modai-systems/llmock:latest</pre>
-					<p>
-						If you use another frontend port, add that origin too (for example: ["http://localhost:5175","http://localhost:4173"]).
-					</p>
+					<pre class="overflow-x-auto rounded bg-amber-100/80 px-2 py-1 text-xs">docker run --rm -p 3002:8000 -e LLMOCK_CORS_ALLOW_ORIGINS='["http://localhost:5173"]' ghcr.io/modai-systems/llmock:latest</pre>
 				</Card.Content>
 			</Collapsible.Content>
 		</Card.Root>
