@@ -54,6 +54,12 @@
       "dependencies": ["module:chat"]
     },
     {
+      "id": "fallback-route",
+      "type": "FallbackRoute",
+      "path": "@/modules/chat/route",
+      "dependencies": ["module:chat"]
+    },
+    {
       "id": "llm-provider-management",
       "type": "LLMProviderManagement",
       "path": "@/modules/llm-provider-management/LLMProviderManagement",

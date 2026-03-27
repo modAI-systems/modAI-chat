@@ -4,5 +4,4 @@ import ChatRoute from "./ChatRoute.svelte";
 export default {
     path: "/chat",
     component: ChatRoute,
-    isDefault: true,
 } satisfies RouteDefinition;

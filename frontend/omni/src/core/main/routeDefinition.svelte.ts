@@ -9,8 +9,7 @@ export interface RouteDefinition {
     path: string;
     /** Svelte component rendered when this route is active */
     component: Component;
-    /** If true, this route is used when no other route matches. Only one route should set this. */
-    isDefault?: boolean;
 }
 
 export const ROUTE_TYPE = "AppRoute";
+export const FALLBACK_ROUTE_TYPE = "FallbackRoute";
