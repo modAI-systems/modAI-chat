@@ -5,6 +5,8 @@ import { navigate } from "@/core/main/router.svelte.ts";
 import * as Collapsible from "$lib/components/ui/collapsible/index.js";
 import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 
+const sidebar = Sidebar.useSidebar();
+
 let {
     items,
 }: {
@@ -19,6 +21,13 @@ let {
         }[];
     }[];
 } = $props();
+
+function handleItemClick(url: string) {
+    navigate(url);
+    if (sidebar.isMobile) {
+        sidebar.setOpenMobile(false);
+    }
+}
 </script>
 
 <Sidebar.Group>
@@ -47,7 +56,7 @@ let {
 									<Sidebar.MenuSubItem>
 										<Sidebar.MenuSubButton>
 											{#snippet child({ props })}
-											<button onclick={() => navigate(subItem.url)} {...props}>
+											<button onclick={() => handleItemClick(subItem.url)} {...props}>
 													<span>{subItem.title}</span>
 												</button>
 											{/snippet}
