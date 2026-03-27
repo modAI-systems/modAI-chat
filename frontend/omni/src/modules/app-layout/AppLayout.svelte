@@ -27,33 +27,25 @@ $effect(() => {
 <Sidebar.Provider>
 	<div class="bg-background flex min-h-screen w-full flex-row overflow-hidden">
 		<main class="flex min-h-screen min-w-0 flex-1 flex-col bg-background">
-			{#if activeRoute}
-				<header class="flex items-center justify-between border-b px-6 py-3">
-					<div class="flex items-center">
-						<button class="cursor-pointer" onclick={() => defaultRoute && navigate(defaultRoute.path)}>
-							<h1 class="text-xl font-bold tracking-tight">modAI</h1>
-						</button>
-					</div>
-					<nav class="flex items-center gap-1">
-						{#if sidebarComponents.length > 0}
-							<Sidebar.Trigger />
-						{/if}
-					</nav>
-				</header>
-				<div class="flex-1 overflow-hidden">
-					{#if activeRoute}
-						{@const ActiveComponent = activeRoute.component}
-						<ActiveComponent />
+			<header class="flex items-center justify-between border-b px-6 py-3">
+				<div class="flex items-center">
+					<button class="cursor-pointer" onclick={() => defaultRoute && navigate(defaultRoute.path)}>
+						<h1 class="text-xl font-bold tracking-tight">modAI</h1>
+					</button>
+				</div>
+				<nav class="flex items-center gap-1">
+					{#if sidebarComponents.length > 0}
+						<Sidebar.Trigger />
 					{/if}
-				</div>
-			{:else}
-				<div class="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
-					<h1 class="text-4xl font-bold text-foreground">modAI</h1>
-					<p class="text-muted-foreground">No modules loaded</p>
-				</div>
-			{/if}
+				</nav>
+			</header>
+			<div class="flex-1 overflow-hidden">
+				{#if activeRoute}
+					{@const ActiveComponent = activeRoute.component}
+					<ActiveComponent />
+				{/if}
+			</div>
 		</main>
-
 		{#each sidebarComponents as SidebarComp}
 			<SidebarComp />
 		{/each}
