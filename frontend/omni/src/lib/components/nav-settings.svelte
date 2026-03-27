@@ -1,7 +1,7 @@
 <script lang="ts">
 import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
 import type { Component } from "svelte";
-import { navigate } from "@/core/main/router.svelte";
+import { navigate } from "@/core/main/router.svelte.ts";
 import * as Collapsible from "$lib/components/ui/collapsible/index.js";
 import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 
