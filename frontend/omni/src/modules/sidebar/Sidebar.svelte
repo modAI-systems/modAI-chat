@@ -12,9 +12,9 @@ const modules = getModules();
 const contentItems = $derived(
     modules.getAll<SidebarContentItem>(SIDEBAR_CONTENT_ITEM_TYPE),
 );
-const footerItem = $derived(
-    modules.getOne<SidebarFooterItem>(SIDEBAR_FOOTER_ITEM_TYPE),
+const footerItems = $derived(
+    modules.getAll<SidebarFooterItem>(SIDEBAR_FOOTER_ITEM_TYPE),
 );
 </script>
 
-<AppSidebar side="right" {contentItems} {footerItem} />
+<AppSidebar side="right" {contentItems} {footerItems} />

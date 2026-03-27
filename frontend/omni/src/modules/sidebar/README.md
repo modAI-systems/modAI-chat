@@ -14,4 +14,4 @@ To add a section to the sidebar content area, register a Svelte component module
 
 ### Footer Item
 
-To display content in the sidebar footer, register a single module with type `"SidebarFooterItem"` that exports a default object satisfying the `SidebarFooterItem` interface (`{ name, email, avatar }`). Only one module should register this type.
+To display content in the sidebar footer, register a Svelte component module with type `"SidebarFooterItem"`. The footer item is a Svelte component rendered directly inside the sidebar footer area. Only one module should register this type.

@@ -1,18 +1,16 @@
 <script lang="ts">
 import type { Component, ComponentProps } from "svelte";
-import type { SidebarFooterItem } from "@/modules/sidebar/sidebarItem";
 import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-import NavUser from "./nav-user.svelte";
 
 let {
     ref = $bindable(null),
     collapsible = "icon",
     contentItems = [],
-    footerItem = null,
+    footerItems = [],
     ...restProps
 }: ComponentProps<typeof Sidebar.Root> & {
     contentItems?: Component[];
-    footerItem?: SidebarFooterItem | null;
+    footerItems?: Component[];
 } = $props();
 </script>
 
@@ -22,9 +20,11 @@ let {
 			<ContentItem />
 		{/each}
 	</Sidebar.Content>
-	{#if footerItem}
+	{#if footerItems.length > 0}
 		<Sidebar.Footer>
-			<NavUser user={footerItem} />
+			{#each footerItems as FooterItem}
+				<FooterItem />
+			{/each}
 		</Sidebar.Footer>
 	{/if}
 	<Sidebar.Rail />

@@ -13,16 +13,13 @@ export const SIDEBAR_CONTENT_ITEM_TYPE = "SidebarContentItem";
 export type SidebarContentItem = Component;
 
 /**
- * The module type registered in modules*.json for the sidebar footer item.
- * Used by the Sidebar: getModules().getOne<SidebarFooterItem>("SidebarFooterItem")
+ * The module type registered in modules*.json for sidebar footer items.
+ * Each footer item is a Svelte component rendered in the sidebar footer area.
+ * Used by the Sidebar: getModules().getAll<SidebarFooterItem>("SidebarFooterItem")
  */
 export const SIDEBAR_FOOTER_ITEM_TYPE = "SidebarFooterItem";
 
 /**
- * Descriptor for the sidebar footer entry.
+ * A sidebar footer item is a Svelte component rendered in the sidebar footer area.
  */
-export interface SidebarFooterItem {
-    name: string;
-    email: string;
-    avatar: string;
-}
+export type SidebarFooterItem = Component;
