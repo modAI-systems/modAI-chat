@@ -1,9 +1,9 @@
 <script lang="ts">
 import type { Component } from "svelte";
 import * as Sidebar from "$lib/components/ui/sidebar/index.ts";
-import { getModules } from "../module-system/index";
-import Router from "./Router.svelte";
-import { navigateHome } from "./router.svelte.ts";
+import { getModules } from "@/core/module-system/index";
+import Router from "@/core/main/Router.svelte";
+import { navigateHome } from "@/core/main/router.svelte.ts";
 
 const modules = getModules();
 const sidebarComponents = $derived(
