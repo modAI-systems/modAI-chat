@@ -127,6 +127,18 @@
       "dependencies": []
     },
     {
+      "id": "user-service",
+      "type": "UserService",
+      "path": "@/modules/user-service/userServiceImpl",
+      "dependencies": []
+    },
+    {
+      "id": "user-menu",
+      "type": "SidebarFooterItem",
+      "path": "@/modules/user-menu/UserMenu",
+      "dependencies": ["module:user-service"]
+    },
+    {
       "id": "app-sidebar",
       "type": "SidebarComponent",
       "path": "@/modules/sidebar/Sidebar",

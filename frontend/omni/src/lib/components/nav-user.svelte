@@ -1,18 +1,25 @@
 <script lang="ts">
-import BadgeCheckIcon from "@lucide/svelte/icons/badge-check";
-import BellIcon from "@lucide/svelte/icons/bell";
 import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
-import CreditCardIcon from "@lucide/svelte/icons/credit-card";
 import LogOutIcon from "@lucide/svelte/icons/log-out";
-import SparklesIcon from "@lucide/svelte/icons/sparkles";
 import * as Avatar from "$lib/components/ui/avatar/index.js";
 import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
 import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 import { useSidebar } from "$lib/components/ui/sidebar/index.js";
 
-let { user }: { user: { name: string; email: string; avatar: string } } =
-    $props();
+let {
+    user,
+    onlogout,
+}: { user: { name: string; email: string }; onlogout: () => void } = $props();
 const sidebar = useSidebar();
+
+function initials(name: string): string {
+    return name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+}
 </script>
 
 <Sidebar.Menu>
@@ -26,8 +33,7 @@ const sidebar = useSidebar();
 						{...props}
 					>
 						<Avatar.Root class="size-8 rounded-lg">
-							<Avatar.Image src={user.avatar} alt={user.name} />
-							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
+							<Avatar.Fallback class="rounded-lg">{initials(user.name)}</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-start text-sm leading-tight">
 							<span class="truncate font-medium">{user.name}</span>
@@ -46,8 +52,7 @@ const sidebar = useSidebar();
 				<DropdownMenu.Label class="p-0 font-normal">
 					<div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
 						<Avatar.Root class="size-8 rounded-lg">
-							<Avatar.Image src={user.avatar} alt={user.name} />
-							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
+							<Avatar.Fallback class="rounded-lg">{initials(user.name)}</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-start text-sm leading-tight">
 							<span class="truncate font-medium">{user.name}</span>
@@ -56,29 +61,7 @@ const sidebar = useSidebar();
 					</div>
 				</DropdownMenu.Label>
 				<DropdownMenu.Separator />
-				<DropdownMenu.Group>
-					<DropdownMenu.Item>
-						<SparklesIcon />
-						Upgrade to Pro
-					</DropdownMenu.Item>
-				</DropdownMenu.Group>
-				<DropdownMenu.Separator />
-				<DropdownMenu.Group>
-					<DropdownMenu.Item>
-						<BadgeCheckIcon />
-						Account
-					</DropdownMenu.Item>
-					<DropdownMenu.Item>
-						<CreditCardIcon />
-						Billing
-					</DropdownMenu.Item>
-					<DropdownMenu.Item>
-						<BellIcon />
-						Notifications
-					</DropdownMenu.Item>
-				</DropdownMenu.Group>
-				<DropdownMenu.Separator />
-				<DropdownMenu.Item>
+				<DropdownMenu.Item onclick={onlogout}>
 					<LogOutIcon />
 					Log out
 				</DropdownMenu.Item>
