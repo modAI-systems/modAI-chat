@@ -1,82 +1,51 @@
+import type { Component } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.stubGlobal("window", {
-    location: { pathname: "/" },
-    addEventListener: vi.fn(),
-    history: { pushState: vi.fn() },
-});
+const mockNavigate = vi.fn();
 
-vi.stubGlobal("history", { pushState: vi.fn() });
+vi.mock("sv-router", () => ({
+    createRouter: vi.fn(() => ({
+        navigate: mockNavigate,
+    })),
+}));
+
+const DummyComponent = (() => {}) as unknown as Component;
 
 describe("router", () => {
     beforeEach(() => {
         vi.resetModules();
-        window.location.pathname = "/";
-        vi.mocked(history.pushState).mockClear();
+        mockNavigate.mockClear();
     });
 
     async function loadRouter() {
         return await import("./router.svelte.ts");
     }
 
-    it("initializes currentPath from window.location.pathname", async () => {
-        window.location.pathname = "/chat";
-        const { getCurrentPath } = await loadRouter();
+    it("navigate delegates to sv-router after init", async () => {
+        const { initRouter, navigate } = await loadRouter();
 
-        expect(getCurrentPath()).toBe("/chat");
-    });
-
-    it("defaults to '/' when pathname is empty", async () => {
-        window.location.pathname = "";
-        const { getCurrentPath } = await loadRouter();
-
-        expect(getCurrentPath()).toBe("/");
-    });
-
-    it("navigate updates path and calls pushState", async () => {
-        const { navigate, getCurrentPath } = await loadRouter();
-
-        navigate("/tools");
-
-        expect(getCurrentPath()).toBe("/tools");
-        expect(history.pushState).toHaveBeenCalledWith(null, "", "/tools");
-    });
-
-    it("navigate does nothing when path is the same", async () => {
-        window.location.pathname = "/chat";
-        const { navigate, getCurrentPath } = await loadRouter();
-
+        initRouter({ "/chat": DummyComponent });
         navigate("/chat");
 
-        expect(getCurrentPath()).toBe("/chat");
-        expect(history.pushState).not.toHaveBeenCalled();
-    });
-
-    it("registers a popstate listener", async () => {
-        await loadRouter();
-
-        expect(window.addEventListener).toHaveBeenCalledWith(
-            "popstate",
-            expect.any(Function),
-        );
+        expect(mockNavigate).toHaveBeenCalledWith("/chat");
     });
 
     it("navigateHome navigates to the home path set via setHomePath", async () => {
-        const { setHomePath, navigateHome, getCurrentPath } =
-            await loadRouter();
+        const { initRouter, setHomePath, navigateHome } = await loadRouter();
 
+        initRouter({ "/chat": DummyComponent });
         setHomePath("/chat");
         navigateHome();
 
-        expect(getCurrentPath()).toBe("/chat");
-        expect(history.pushState).toHaveBeenCalledWith(null, "", "/chat");
+        expect(mockNavigate).toHaveBeenCalledWith("/chat");
     });
 
     it("navigateHome defaults to / when no home path is set", async () => {
-        const { navigateHome } = await loadRouter();
+        const { initRouter, navigateHome } = await loadRouter();
 
+        initRouter({ "/": DummyComponent });
         navigateHome();
 
-        expect(history.pushState).not.toHaveBeenCalled();
+        expect(mockNavigate).toHaveBeenCalledWith("/");
     });
 });

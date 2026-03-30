@@ -13,11 +13,12 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.41",
-    "ai": "^6.0.116",
     "@lucide/svelte": "^1.7.0",
+    "ai": "^6.0.116",
     "bits-ui": "^2.16.3",
     "clsx": "^2.1.1",
     "marked": "^17.0.4",
+    "sv-router": "^0.15.0",
     "svelte": "^5.53.13",
     "tailwind-merge": "^3.5.0",
     "tailwind-variants": "^3.2.2",

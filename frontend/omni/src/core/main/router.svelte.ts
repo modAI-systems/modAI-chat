@@ -1,14 +1,16 @@
-let currentPath = $state(window.location.pathname || "/");
-let homePath = $state("/");
+import { createRouter } from "sv-router";
+import type { Component } from "svelte";
 
-export function getCurrentPath(): string {
-    return currentPath;
+let navigateFn: (path: string) => void;
+let homePath = "/";
+
+export function initRouter(routes: Record<string, Component>) {
+    const router = createRouter(routes);
+    navigateFn = router.navigate as unknown as (path: string) => void;
 }
 
 export function navigate(path: string) {
-    if (path === currentPath) return;
-    history.pushState(null, "", path);
-    currentPath = path;
+    navigateFn(path);
 }
 
 export function setHomePath(path: string) {
@@ -18,9 +20,3 @@ export function setHomePath(path: string) {
 export function navigateHome() {
     navigate(homePath);
 }
-
-function onPopState() {
-    currentPath = window.location.pathname || "/";
-}
-
-window.addEventListener("popstate", onPopState);
