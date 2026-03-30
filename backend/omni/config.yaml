@@ -72,6 +72,25 @@ modules:
       session: "session"
       user_settings_store: "user_settings_store"
 
+  credit_store:
+    class: modai.modules.credit_store.sqlalchemy_credit_store.SQLAlchemyCreditStore
+    config:
+      database_url: "sqlite:///./credits.db"
+      echo: false
+  credit:
+    class: modai.modules.credit.simple_credit_module.SimpleCreditModule
+    config:
+      tiers:
+        free:
+          monthly_allowance: 50
+        pro:
+          monthly_allowance: 500
+      renewal_period_days: 30
+      credit_to_eur: 0.02
+    module_dependencies:
+      credit_store: "credit_store"
+      session: "session"
+
   http_client:
     class: modai.modules.http_client.httpx_http_client_module.HttpxHttpClientModule
 

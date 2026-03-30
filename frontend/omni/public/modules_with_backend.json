@@ -29,7 +29,11 @@
       "id": "app-layout",
       "type": "AppLayout",
       "path": "@/modules/session-service/SessionGatedAppLayout",
-      "dependencies": ["module:session-service", "module:app-layout-content", "module:no-session-action"]
+      "dependencies": [
+        "module:session-service",
+        "module:app-layout-content",
+        "module:no-session-action"
+      ]
     },
     {
       "id": "chat-service",
@@ -125,6 +129,18 @@
       "type": "SidebarContentItem",
       "path": "@/modules/sidebar-settings/SidebarSettings",
       "dependencies": []
+    },
+    {
+      "id": "credit-service",
+      "type": "CreditService",
+      "path": "@/modules/credit-service/backendCreditService",
+      "dependencies": []
+    },
+    {
+      "id": "credit-sidebar",
+      "type": "SidebarContentItem",
+      "path": "@/modules/credit-account/CreditSidebarItem",
+      "dependencies": ["module:credit-service"]
     },
     {
       "id": "user-service",
