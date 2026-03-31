@@ -21,12 +21,12 @@ class SessionFetchService implements FetchService {
             const sessionService =
                 modules.getOne<SessionService>(SESSION_SERVICE_TYPE);
             if (sessionService) {
-                await sessionService.refresh();
-                if (!sessionService.isSessionActive()) {
+                await sessionService.refresh(modules);
+                if (!sessionService.isSessionActive(modules)) {
                     const noSessionAction = modules.getOne<NoSessionAction>(
                         NO_SESSION_ACTION_TYPE,
                     );
-                    noSessionAction?.execute();
+                    noSessionAction?.execute(modules);
                 }
             }
         }

@@ -16,9 +16,9 @@ const AppLayoutContent = modules.getOne<Component>("AppLayoutContent");
 let ready = $state(false);
 
 if (sessionService) {
-  sessionService.refresh().then(() => {
-    if (!sessionService.isSessionActive()) {
-      noSessionAction?.execute();
+  sessionService.refresh(modules).then(() => {
+    if (!sessionService.isSessionActive(modules)) {
+      noSessionAction?.execute(modules);
     } else {
       ready = true;
     }

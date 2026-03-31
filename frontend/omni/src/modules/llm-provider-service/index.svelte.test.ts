@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Modules } from "@/core/module-system/index.js";
 import { LocalStorageLLMProviderService } from "./localStorageLLMProviderService.svelte";
+
+const noModules = {} as Modules;
 
 describe("LocalStorageLLMProviderService", () => {
     let service: LocalStorageLLMProviderService;
@@ -11,7 +14,7 @@ describe("LocalStorageLLMProviderService", () => {
     });
 
     it("fetches models directly from each provider /models endpoint", async () => {
-        const provider = await service.createProvider({
+        const provider = await service.createProvider(noModules, {
             name: "provider-a",
             base_url: "https://example.test/",
             api_key: "secret",
@@ -28,7 +31,7 @@ describe("LocalStorageLLMProviderService", () => {
         );
         vi.stubGlobal("fetch", fetchMock);
 
-        const models = await service.fetchModels(provider);
+        const models = await service.fetchModels(noModules, provider);
 
         expect(fetchMock).toHaveBeenCalledWith("https://example.test/models", {
             headers: { Authorization: "Bearer secret" },
@@ -46,7 +49,7 @@ describe("LocalStorageLLMProviderService", () => {
     });
 
     it("returns empty array when provider /models endpoint is unreachable", async () => {
-        const provider = await service.createProvider({
+        const provider = await service.createProvider(noModules, {
             name: "provider-b",
             base_url: "https://unreachable.test",
             api_key: "",
@@ -56,7 +59,7 @@ describe("LocalStorageLLMProviderService", () => {
             vi.fn().mockRejectedValue(new Error("network failure")),
         );
 
-        const models = await service.fetchModels(provider);
+        const models = await service.fetchModels(noModules, provider);
 
         expect(models).toEqual([]);
     });

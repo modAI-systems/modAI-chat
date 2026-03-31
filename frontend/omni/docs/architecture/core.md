@@ -176,22 +176,18 @@ src/modules/my-service/
   index.test.ts        ← tests for the implementation
 ```
 
-#### `index.svelte.ts` — interface & consumer hook
+#### `index.svelte.ts` — interface definition
 
-Defines the TypeScript interface and a `get*()` function that looks the service up from the module system:
+Defines the TypeScript interface and exports the type constant:
 
 ```typescript
 // src/modules/chat-service/index.svelte.ts
-import { getModules } from "@/core/module-system/index.js";
+import type { Modules } from "@/core/module-system/index.js";
+
+export const CHAT_SERVICE_TYPE = "ChatService";
 
 export interface ChatService {
-    streamChat(model: ProviderModel, messages: UIMessage[]): AsyncGenerator<string>;
-}
-
-export function getChatService(): ChatService {
-    const service = getModules().getOne<ChatService>("ChatService");
-    if (!service) throw new Error("ChatService module not registered");
-    return service;
+    streamChat(modules: Modules, model: ProviderModel, messages: UIMessage[]): AsyncGenerator<string>;
 }
 ```
 
@@ -223,13 +219,19 @@ The type string (`"ChatService"`) maps exactly to the string passed to `getOne<C
 
 #### Consuming a service
 
-Any module that depends on the service declares it as a `module:` dependency and retrieves it at initialisation time:
+Any module that depends on the service declares it as a `module:` dependency and retrieves it at initialisation time via `getModules()`:
 
 ```svelte
 <script lang="ts">
-  import { getChatService } from "@/modules/chat-service/index.svelte.js";
+  import { getModules } from "@/core/module-system/index.js";
+  import { CHAT_SERVICE_TYPE, type ChatService } from "@/modules/chat-service/index.svelte.js";
 
-  const chatService = getChatService();  // called at component init, not inside handlers
+  const modules = getModules();  // called at component init
+  const chatService = modules.getOne<ChatService>(CHAT_SERVICE_TYPE);
+
+  async function sendMessage(...) {
+    for await (const chunk of chatService.streamChat(modules, model, messages)) { ... }
+  }
 </script>
 ```
 

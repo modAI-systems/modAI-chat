@@ -1,17 +1,22 @@
 <script lang="ts">
 import { AlertTriangle, ChevronDown } from "lucide-svelte";
+import { getModules } from "@/core/module-system/index.js";
 import AddProviderForm from "@/modules/llm-provider-management/AddProviderForm.svelte";
 import ProviderList from "@/modules/llm-provider-management/ProviderList.svelte";
 import {
   type CreateProviderRequest,
-  getLLMProviderService,
+  LLM_PROVIDER_SERVICE_TYPE,
+  type LLMProviderService,
   type Provider,
 } from "@/modules/llm-provider-service/index.svelte.js";
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Card from "$lib/components/ui/card/index.js";
 import * as Collapsible from "$lib/components/ui/collapsible/index.js";
 
-const llmProviderService = getLLMProviderService();
+const modules = getModules();
+const llmProviderService = modules.getOne<LLMProviderService>(
+  LLM_PROVIDER_SERVICE_TYPE,
+);
 let providers = $state<Provider[]>([]);
 
 $effect(() => {
@@ -19,7 +24,7 @@ $effect(() => {
 });
 
 async function refreshProviders() {
-  providers = await llmProviderService.fetchProviders();
+  providers = await llmProviderService.fetchProviders(modules);
 }
 
 // ---------------------------------------------------------------------------
@@ -27,7 +32,7 @@ async function refreshProviders() {
 // ---------------------------------------------------------------------------
 
 async function handleAddProvider(data: CreateProviderRequest) {
-  await llmProviderService.createProvider(data);
+  await llmProviderService.createProvider(modules, data);
   await refreshProviders();
 }
 
@@ -35,18 +40,18 @@ async function handleUpdateProvider(
   id: string,
   data: Partial<CreateProviderRequest>,
 ) {
-  await llmProviderService.updateProvider(id, data);
+  await llmProviderService.updateProvider(modules, id, data);
   await refreshProviders();
 }
 
 async function handleDeleteProvider(id: string) {
-  await llmProviderService.deleteProvider(id);
+  await llmProviderService.deleteProvider(modules, id);
   await refreshProviders();
 }
 
 async function handleCheckProviderHealth(provider: Provider): Promise<boolean> {
   try {
-    const models = await llmProviderService.fetchModels(provider);
+    const models = await llmProviderService.fetchModels(modules, provider);
     return models.length > 0;
   } catch {
     return false;

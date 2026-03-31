@@ -11,7 +11,7 @@
       "id": "session-service",
       "type": "SessionService",
       "path": "@/modules/session-service/sessionServiceImpl",
-      "dependencies": []
+      "dependencies": ["module:fetch-service"]
     },
     {
       "id": "no-session-action",
@@ -35,7 +35,7 @@
       "id": "llm-provider-service",
       "type": "LLMProviderService",
       "path": "@/modules/llm-provider-service/modaiBackendLLMProviderService",
-      "dependencies": []
+      "dependencies": ["module:fetch-service"]
     },
     {
       "id": "chat-service",

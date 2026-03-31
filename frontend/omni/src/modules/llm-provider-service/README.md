@@ -7,18 +7,17 @@ No UI components are available in this module group — see `llm-provider-manage
 
 ## Intended Usage
 
-Other modules retrieve the active service via `getLLMProviderService()`.
+Other modules retrieve the active service via `modules.getOne<LLMProviderService>(LLM_PROVIDER_SERVICE_TYPE)`.
 
 ```svelte
 <script lang="ts">
-  import { getLLMProviderService } from "@/modules/llm-provider-service/index.svelte.js";
+  import { getModules } from "@/core/module-system/index.js";
+  import { LLM_PROVIDER_SERVICE_TYPE, type LLMProviderService } from "@/modules/llm-provider-service/index.svelte.js";
 
-  const llmProviderService = getLLMProviderService(); // called at component init
+  const modules = getModules();  // called at component init
+  const llmProviderService = modules.getOne<LLMProviderService>(LLM_PROVIDER_SERVICE_TYPE);
 
-  // reactive: re-evaluates when provider list changes
-  const providers = $derived(llmProviderService.getProviders());
-
-  const models = await llmProviderService.fetchModels();
+  const models = await llmProviderService.fetchModels(modules);
 </script>
 ```
 

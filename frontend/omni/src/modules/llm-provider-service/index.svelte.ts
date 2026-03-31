@@ -1,4 +1,4 @@
-import { getModules } from "@/core/module-system/index.js";
+import type { Modules } from "@/core/module-system/index.js";
 
 export const LLM_PROVIDER_SERVICE_TYPE = "LLMProviderService";
 
@@ -33,27 +33,17 @@ export interface CreateProviderRequest {
  */
 export interface LLMProviderService {
     /** Returns all configured providers. */
-    fetchProviders(): Promise<Provider[]>;
+    fetchProviders(modules: Modules): Promise<Provider[]>;
     /** Fetch available models for the given provider. */
-    fetchModels(provider: Provider): Promise<ProviderModel[]>;
-    createProvider(data: CreateProviderRequest): Promise<Provider>;
+    fetchModels(modules: Modules, provider: Provider): Promise<ProviderModel[]>;
+    createProvider(
+        modules: Modules,
+        data: CreateProviderRequest,
+    ): Promise<Provider>;
     updateProvider(
+        modules: Modules,
         id: string,
         data: Partial<CreateProviderRequest>,
     ): Promise<Provider>;
-    deleteProvider(id: string): Promise<void>;
-}
-
-/**
- * Returns the active LLMProviderService from the module system.
- * Must be called at component initialisation time (top-level script).
- */
-export function getLLMProviderService(): LLMProviderService {
-    const service = getModules().getOne<LLMProviderService>(
-        LLM_PROVIDER_SERVICE_TYPE,
-    );
-    if (!service) {
-        throw new Error("LLMProviderService module not registered");
-    }
-    return service;
+    deleteProvider(modules: Modules, id: string): Promise<void>;
 }

@@ -5,18 +5,20 @@ No UI components available in this module group.
 
 ## Intended Usage
 
-Other modules retrieve the active chat service via `getChatService()` and call `streamChat` to stream assistant responses.
+Other modules retrieve the active chat service via `modules.getOne<ChatService>(CHAT_SERVICE_TYPE)` and call `streamChat` to stream assistant responses.
 
 ```svelte
 <script lang="ts">
-  import { getChatService } from "@/modules/chat-service/index.svelte.js";
+  import { getModules } from "@/core/module-system/index.js";
+  import { CHAT_SERVICE_TYPE, type ChatService } from "@/modules/chat-service/index.svelte.js";
   import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.js";
   import type { UIMessage } from "ai";
 
-  const chatService = getChatService();  // called at component init
+  const modules = getModules();  // called at component init
+  const chatService = modules.getOne<ChatService>(CHAT_SERVICE_TYPE);
 
   async function sendMessage(model: ProviderModel, messages: UIMessage[]) {
-    for await (const textPart of chatService.streamChat(model, messages)) {
+    for await (const textPart of chatService.streamChat(modules, model, messages)) {
       // handle each streamed text chunk
     }
   }
@@ -27,8 +29,9 @@ Modules that consume this service must declare a `module:chat-service` dependenc
 
 ## API
 
-### `chatService.streamChat(model, messages)`
+### `chatService.streamChat(modules, model, messages)`
 
+- `modules: Modules` — the module registry (passed from `getModules()` at component init)
 - `model: ProviderModel` — the provider and model to use (from `llm-provider-service`)
 - `messages: UIMessage[]` — the conversation history to send
 - Returns: `AsyncGenerator<string>` — yields text chunks as they stream in

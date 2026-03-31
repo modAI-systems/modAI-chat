@@ -1,16 +1,24 @@
 <script lang="ts">
 import type { UIMessage } from "ai";
-import { getChatService } from "@/modules/chat-service/index.svelte.js";
+import { getModules } from "@/core/module-system/index.js";
 import {
-  getLLMProviderService,
+  CHAT_SERVICE_TYPE,
+  type ChatService,
+} from "@/modules/chat-service/index.svelte.js";
+import {
+  LLM_PROVIDER_SERVICE_TYPE,
+  type LLMProviderService,
   type ProviderModel,
 } from "@/modules/llm-provider-service/index.svelte.js";
 import ChatConversationArea from "./ChatConversationArea.svelte";
 import ChatInputPanel from "./ChatInputPanel.svelte";
 import { modelSelectId } from "./utils.js";
 
-const chatService = getChatService();
-const llmProviderService = getLLMProviderService();
+const modules = getModules();
+const chatService = modules.getOne<ChatService>(CHAT_SERVICE_TYPE);
+const llmProviderService = modules.getOne<LLMProviderService>(
+  LLM_PROVIDER_SERVICE_TYPE,
+);
 
 let availableModels = $state<ProviderModel[]>([]);
 let modelsLoading = $state(false);
@@ -19,9 +27,9 @@ let selectedModel = $state("");
 async function loadModels() {
   modelsLoading = true;
   try {
-    const providers = await llmProviderService.fetchProviders();
+    const providers = await llmProviderService.fetchProviders(modules);
     const results = await Promise.allSettled(
-      providers.map((p) => llmProviderService.fetchModels(p)),
+      providers.map((p) => llmProviderService.fetchModels(modules, p)),
     );
     const models = results.flatMap((r) =>
       r.status === "fulfilled" ? r.value : [],
@@ -86,6 +94,7 @@ async function handleSend(text: string) {
   try {
     chatStatus = "streaming";
     for await (const textPart of chatService.streamChat(
+      modules,
       selectedModelData,
       conversationForModel,
     )) {
