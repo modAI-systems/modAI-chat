@@ -32,6 +32,12 @@
       "dependencies": ["module:session-service", "module:app-layout-content", "module:no-session-action"]
     },
     {
+      "id": "llm-provider-service",
+      "type": "LLMProviderService",
+      "path": "@/modules/llm-provider-service/localStorageLLMProviderService",
+      "dependencies": []
+    },
+    {
       "id": "chat-service",
       "type": "ChatService",
       "path": "@/modules/chat-service/openai",
@@ -42,14 +48,17 @@
       "type": "ChatbotComponent",
       "path": "@/modules/chatbot/ChatbotComponent",
       "dependencies": [
-        "module:chat-service"
+        "module:chat-service",
+        "module:llm-provider-service"
       ]
     },
     {
       "id": "llm-provider-management",
       "type": "LLMProviderManagementComponent",
       "path": "@/modules/llm-provider-management/LLMProviderManagementComponent",
-      "dependencies": []
+      "dependencies": [
+        "module:llm-provider-service"
+      ]
     }
   ]
 }

@@ -1,15 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { llmProviderService } from "./index.svelte";
+import { LocalStorageLLMProviderService } from "./localStorageLLMProviderService.svelte";
 
-describe("llmProviderService", () => {
+describe("LocalStorageLLMProviderService", () => {
+    let service: LocalStorageLLMProviderService;
+
     beforeEach(() => {
-        llmProviderService.providers = [];
-        localStorage.removeItem("llm_providers");
+        localStorage.clear();
+        service = new LocalStorageLLMProviderService();
         vi.restoreAllMocks();
     });
 
     it("fetches models directly from each provider /models endpoint", async () => {
-        const provider = llmProviderService.createProvider({
+        const provider = service.createProvider({
             name: "provider-a",
             base_url: "https://example.test/",
             api_key: "secret",
@@ -26,7 +28,7 @@ describe("llmProviderService", () => {
         );
         vi.stubGlobal("fetch", fetchMock);
 
-        const models = await llmProviderService.fetchModels();
+        const models = await service.fetchModels(provider);
 
         expect(fetchMock).toHaveBeenCalledWith("https://example.test/models", {
             headers: { Authorization: "Bearer secret" },
@@ -39,29 +41,23 @@ describe("llmProviderService", () => {
                 providerApiKey: "secret",
                 modelId: "gpt-4o-mini",
                 modelName: "gpt-4o-mini",
-                selectId: `${provider.id}__gpt-4o-mini`,
             },
         ]);
     });
 
-    it("checks provider health directly via provider /health endpoint", async () => {
-        const provider = llmProviderService.createProvider({
+    it("returns empty array when provider /models endpoint is unreachable", async () => {
+        const provider = service.createProvider({
             name: "provider-b",
-            base_url: "https://health.test",
-            api_key: "token",
+            base_url: "https://unreachable.test",
+            api_key: "",
         });
-        const fetchMock = vi.fn(
-            async () => new Response("ok", { status: 204 }),
-        );
-        vi.stubGlobal("fetch", fetchMock);
-
-        const status = await llmProviderService.checkProviderHealth(
-            provider.id,
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockRejectedValue(new Error("network failure")),
         );
 
-        expect(fetchMock).toHaveBeenCalledWith("https://health.test/health", {
-            headers: { Authorization: "Bearer token" },
-        });
-        expect(status).toBe(204);
+        const models = await service.fetchModels(provider);
+
+        expect(models).toEqual([]);
     });
 });

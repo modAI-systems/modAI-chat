@@ -5,6 +5,7 @@ import { Button } from "$lib/components/ui/button/index.js";
 import * as Command from "$lib/components/ui/command/index.js";
 import * as Popover from "$lib/components/ui/popover/index.js";
 import { Textarea } from "$lib/components/ui/textarea/index.js";
+import { modelSelectId } from "./utils.js";
 
 const suggestions = [
   "What are the latest trends in AI?",
@@ -117,11 +118,11 @@ function handleModelSelect(selectId: string) {
 									<Command.Group heading={group.name}>
 										{#each group.models as m}
 											<Command.Item
-												onSelect={() => handleModelSelect(m.selectId)}
-												value={m.selectId}
-											>
-												<span class="flex-1">{m.modelName}</span>
-												{#if selectedModel === m.selectId}
+											onSelect={() => handleModelSelect(modelSelectId(m))}
+											value={modelSelectId(m)}
+										>
+											<span class="flex-1">{m.modelName}</span>
+											{#if selectedModel === modelSelectId(m)}
 													<Check class="size-4" />
 												{/if}
 											</Command.Item>

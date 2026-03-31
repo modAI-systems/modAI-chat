@@ -2,14 +2,15 @@
 import type { UIMessage } from "ai";
 import { getChatService } from "@/modules/chat-service/index.svelte.js";
 import {
-  llmProviderService,
+  getLLMProviderService,
   type ProviderModel,
 } from "@/modules/llm-provider-service/index.svelte.js";
-
-const chatService = getChatService();
-
 import ChatConversationArea from "./ChatConversationArea.svelte";
 import ChatInputPanel from "./ChatInputPanel.svelte";
+import { modelSelectId } from "./utils.js";
+
+const chatService = getChatService();
+const llmProviderService = getLLMProviderService();
 
 let availableModels = $state<ProviderModel[]>([]);
 let modelsLoading = $state(false);
@@ -18,13 +19,19 @@ let selectedModel = $state("");
 async function loadModels() {
   modelsLoading = true;
   try {
-    const models = await llmProviderService.fetchModels();
+    const providers = llmProviderService.fetchProviders();
+    const results = await Promise.allSettled(
+      providers.map((p) => llmProviderService.fetchModels(p)),
+    );
+    const models = results.flatMap((r) =>
+      r.status === "fulfilled" ? r.value : [],
+    );
     availableModels = models;
     if (
       models.length > 0 &&
-      !models.find((m) => m.selectId === selectedModel)
+      !models.find((m) => modelSelectId(m) === selectedModel)
     ) {
-      selectedModel = models[0].selectId;
+      selectedModel = modelSelectId(models[0]);
     }
   } finally {
     modelsLoading = false;
@@ -32,13 +39,11 @@ async function loadModels() {
 }
 
 $effect(() => {
-  // Re-run when providers list changes
-  llmProviderService.providers.length;
   loadModels();
 });
 
 const selectedModelData = $derived(
-  availableModels.find((m) => m.selectId === selectedModel),
+  availableModels.find((m) => modelSelectId(m) === selectedModel),
 );
 
 const providerGroups = $derived(
