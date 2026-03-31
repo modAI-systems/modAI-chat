@@ -4,13 +4,19 @@ import AddProviderForm from "@/modules/llm-provider-management/AddProviderForm.s
 import ProviderList from "@/modules/llm-provider-management/ProviderList.svelte";
 import {
   type CreateProviderRequest,
-  llmProviderService,
+  getLLMProviderService,
+  type Provider,
 } from "@/modules/llm-provider-service/index.svelte.js";
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Card from "$lib/components/ui/card/index.js";
 import * as Collapsible from "$lib/components/ui/collapsible/index.js";
 
-const providers = $derived(llmProviderService.providers);
+const llmProviderService = getLLMProviderService();
+let providers = $state<Provider[]>(llmProviderService.fetchProviders());
+
+function refreshProviders() {
+  providers = llmProviderService.fetchProviders();
+}
 
 // ---------------------------------------------------------------------------
 // Handlers
@@ -18,6 +24,7 @@ const providers = $derived(llmProviderService.providers);
 
 function handleAddProvider(data: CreateProviderRequest) {
   llmProviderService.createProvider(data);
+  refreshProviders();
 }
 
 function handleUpdateProvider(
@@ -25,14 +32,21 @@ function handleUpdateProvider(
   data: Partial<CreateProviderRequest>,
 ) {
   llmProviderService.updateProvider(id, data);
+  refreshProviders();
 }
 
 function handleDeleteProvider(id: string) {
   llmProviderService.deleteProvider(id);
+  refreshProviders();
 }
 
-async function handleCheckProviderHealth(providerId: string): Promise<number> {
-  return llmProviderService.checkProviderHealth(providerId);
+async function handleCheckProviderHealth(provider: Provider): Promise<boolean> {
+  try {
+    const models = await llmProviderService.fetchModels(provider);
+    return models.length > 0;
+  } catch {
+    return false;
+  }
 }
 </script>
 

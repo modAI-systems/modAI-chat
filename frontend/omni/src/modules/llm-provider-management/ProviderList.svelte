@@ -23,7 +23,7 @@ let { providers, onUpdateProvider, onDeleteProvider, onCheckProviderHealth } =
       data: Partial<CreateProviderRequest>,
     ) => void;
     onDeleteProvider: (id: string) => void;
-    onCheckProviderHealth: (id: string) => Promise<number>;
+    onCheckProviderHealth: (provider: Provider) => Promise<boolean>;
   }>();
 
 let editingId = $state<string | null>(null);
@@ -67,12 +67,12 @@ function deleteProvider(id: string) {
   healthByProviderId = next;
 }
 
-async function checkHealth(providerId: string) {
-  healthByProviderId = { ...healthByProviderId, [providerId]: "checking" };
-  const status = await onCheckProviderHealth(providerId);
+async function checkHealth(provider: Provider) {
+  healthByProviderId = { ...healthByProviderId, [provider.id]: "checking" };
+  const healthy = await onCheckProviderHealth(provider);
   healthByProviderId = {
     ...healthByProviderId,
-    [providerId]: status >= 200 && status < 300 ? "ok" : "fail",
+    [provider.id]: healthy ? "ok" : "fail",
   };
 }
 </script>
@@ -115,7 +115,7 @@ async function checkHealth(providerId: string) {
 									size="sm"
 									class="size-8 p-0 {healthState === 'ok' ? 'text-green-600 hover:text-green-700' : ''} {healthState === 'fail' ? 'text-red-600 hover:text-red-700' : ''}"
 									title="Check provider health"
-									onclick={() => checkHealth(provider.id)}
+								onclick={() => checkHealth(provider)}
 								>
 									{#if healthState === "checking"}
 										<Loader2 class="size-4 animate-spin" />
