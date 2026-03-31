@@ -12,8 +12,6 @@ class SessionServiceImpl implements SessionService {
         try {
             const fetchService =
                 modules.getOne<FetchService>(FETCH_SERVICE_TYPE);
-            if (!fetchService)
-                throw new Error("FetchService module not registered");
             const response = await fetchService.fetch(
                 modules,
                 "/api/auth/session",

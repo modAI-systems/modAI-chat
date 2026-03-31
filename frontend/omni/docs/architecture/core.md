@@ -51,7 +51,7 @@ Without any modules, the frontend would be completely empty just containing an e
 The heart of the frontend is its modular system. It is defined in the `Modules` interface as:
 
 ```typescript
-getOne<T>(type: string): T | null;
+getOne<T>(type: string): T;
 getAll<T>(type: string): T[];
 ```
 
@@ -73,7 +73,7 @@ The most important functionality of the module system is to receive other module
 
 There are two ways to get a module:
 
-- `getOne`: receives a singleton module where only one of its kind should be registered (e.g. like a user service which should only be available once)
+- `getOne`: receives a singleton module where only one of its kind should be registered (e.g. like a user service which should only be available once). Throws an error if zero or more than one module of that type is registered.
 - `getAll`: receives all modules registered for the given kind, like all registered sidebar items, or all registered routes.
 
 ### 4.3 Module ID vs Module Type

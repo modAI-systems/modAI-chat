@@ -140,7 +140,6 @@ function fetchVia(
     init?: RequestInit,
 ): Promise<Response> {
     const fetchService = modules.getOne<FetchService>(FETCH_SERVICE_TYPE);
-    if (!fetchService) throw new Error("FetchService module not registered");
     return fetchService.fetch(modules, input, init);
 }
 

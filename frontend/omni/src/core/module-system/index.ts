@@ -10,9 +10,9 @@ export const MODULES_KEY = Symbol("modules");
 export interface Modules {
     /**
      * Get a single module of a specific type.
-     * Returns null if none or more than one module of that type is found.
+     * Throws if no module or more than one module of that type is registered.
      */
-    getOne<T>(type: string): T | null;
+    getOne<T>(type: string): T;
 
     /**
      * Get all modules registered under a specific type.
@@ -41,15 +41,15 @@ export class ActiveModulesImpl implements Modules {
         this.moduleMap = new Map(modules.map((m) => [m.id, m]));
     }
 
-    getOne<T>(type: string): T | null {
+    getOne<T>(type: string): T {
         const found = this.getAll<T>(type);
-        if (found.length > 1) {
-            console.warn(
-                `Multiple modules found with type "${type}", returning null.`,
-            );
-            return null;
+        if (found.length === 0) {
+            throw new Error(`No module found with type "${type}"`);
         }
-        return found.length === 1 ? found[0] : null;
+        if (found.length > 1) {
+            throw new Error(`Multiple modules found with type "${type}"`);
+        }
+        return found[0];
     }
 
     getAll<T>(type: string): T[] {

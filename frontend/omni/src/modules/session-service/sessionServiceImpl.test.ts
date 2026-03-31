@@ -9,10 +9,10 @@ function makeModules(fetchFn: typeof fetch): Modules {
         fetch: (_modules, input, init) => fetchFn(input, init),
     };
     return {
-        getOne: <T>(type: string): T | null => {
+        getOne: <T>(type: string): T => {
             if (type === FETCH_SERVICE_TYPE)
                 return fetchService as unknown as T;
-            return null;
+            throw new Error(`No module found with type "${type}"`);
         },
         getAll: <T>(_type: string): T[] => [],
     };

@@ -9,7 +9,11 @@ import {
 import pureFetchService from "./pureFetchService.svelte";
 import sessionFetchService from "./sessionFetchService.svelte";
 
-function makeModules(getOne: (type: string) => unknown = () => null): Modules {
+function makeModules(
+    getOne: (type: string) => unknown = (type) => {
+        throw new Error(`No module found with type "${type}"`);
+    },
+): Modules {
     return {
         getOne: vi.fn().mockImplementation(getOne),
         getAll: vi.fn().mockReturnValue([]),
@@ -64,7 +68,7 @@ describe("SessionFetchService", () => {
         return makeModules((type) => {
             if (type === SESSION_SERVICE_TYPE) return mockSessionService;
             if (type === NO_SESSION_ACTION_TYPE) return mockNoSessionAction;
-            return null;
+            throw new Error(`No module found with type "${type}"`);
         });
     }
 
@@ -146,14 +150,5 @@ describe("SessionFetchService", () => {
             "/api/data",
             expect.objectContaining({ credentials: "omit" }),
         );
-    });
-
-    it("does nothing when session service is not registered", async () => {
-        vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 401 }));
-        const modules = makeModules(() => null);
-
-        await sessionFetchService.fetch(modules, "/api/data");
-
-        expect(mockNoSessionAction.execute).not.toHaveBeenCalled();
     });
 });
