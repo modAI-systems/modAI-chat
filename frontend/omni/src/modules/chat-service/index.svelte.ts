@@ -1,12 +1,12 @@
 import type { UIMessage } from "ai";
-import { getModules } from "@/core/module-system/index.js";
+import type { Modules } from "@/core/module-system/index.js";
 import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.js";
 
 export type { ProviderModel };
 
 /**
  * The module type registered in modules*.json for the chat service.
- * Used by consumers: getModules().getOne<ChatService>("ChatService")
+ * Used by consumers: modules.getOne<ChatService>(CHAT_SERVICE_TYPE)
  */
 export const CHAT_SERVICE_TYPE = "ChatService";
 
@@ -22,19 +22,8 @@ export interface ChatService {
      * @throws When the provider is unreachable or returns an error.
      */
     streamChat(
+        modules: Modules,
         model: ProviderModel,
         messages: UIMessage[],
     ): AsyncGenerator<string, void, unknown>;
-}
-
-/**
- * Returns the active ChatService from the module system.
- * Must be called at component initialisation time (top-level script).
- */
-export function getChatService(): ChatService {
-    const service = getModules().getOne<ChatService>(CHAT_SERVICE_TYPE);
-    if (!service) {
-        throw new Error("ChatService module not registered");
-    }
-    return service;
 }
