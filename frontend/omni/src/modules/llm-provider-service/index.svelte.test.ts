@@ -11,7 +11,7 @@ describe("LocalStorageLLMProviderService", () => {
     });
 
     it("fetches models directly from each provider /models endpoint", async () => {
-        const provider = service.createProvider({
+        const provider = await service.createProvider({
             name: "provider-a",
             base_url: "https://example.test/",
             api_key: "secret",
@@ -46,7 +46,7 @@ describe("LocalStorageLLMProviderService", () => {
     });
 
     it("returns empty array when provider /models endpoint is unreachable", async () => {
-        const provider = service.createProvider({
+        const provider = await service.createProvider({
             name: "provider-b",
             base_url: "https://unreachable.test",
             api_key: "",

@@ -6,7 +6,7 @@ import * as Card from "$lib/components/ui/card/index.js";
 import { Input } from "$lib/components/ui/input/index.js";
 
 let { onAddProvider } = $props<{
-  onAddProvider: (data: CreateProviderRequest) => void;
+  onAddProvider: (data: CreateProviderRequest) => void | Promise<void>;
 }>();
 
 let newProviderName = $state("");
@@ -15,12 +15,12 @@ let newProviderApiKey = $state("");
 let addProviderError = $state("");
 let addingProvider = $state(false);
 
-function handleAddProvider(e: SubmitEvent) {
+async function handleAddProvider(e: SubmitEvent) {
   e.preventDefault();
   addProviderError = "";
   addingProvider = true;
   try {
-    onAddProvider({
+    await onAddProvider({
       name: newProviderName,
       base_url: newProviderBaseUrl,
       api_key: newProviderApiKey,

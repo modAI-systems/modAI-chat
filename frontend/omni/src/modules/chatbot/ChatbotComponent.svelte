@@ -19,7 +19,7 @@ let selectedModel = $state("");
 async function loadModels() {
   modelsLoading = true;
   try {
-    const providers = llmProviderService.fetchProviders();
+    const providers = await llmProviderService.fetchProviders();
     const results = await Promise.allSettled(
       providers.map((p) => llmProviderService.fetchModels(p)),
     );
