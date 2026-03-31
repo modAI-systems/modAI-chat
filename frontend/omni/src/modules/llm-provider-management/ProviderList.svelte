@@ -21,8 +21,8 @@ let { providers, onUpdateProvider, onDeleteProvider, onCheckProviderHealth } =
     onUpdateProvider: (
       id: string,
       data: Partial<CreateProviderRequest>,
-    ) => void;
-    onDeleteProvider: (id: string) => void;
+    ) => void | Promise<void>;
+    onDeleteProvider: (id: string) => void | Promise<void>;
     onCheckProviderHealth: (provider: Provider) => Promise<boolean>;
   }>();
 
@@ -41,13 +41,9 @@ function startEdit(provider: Provider) {
   editApiKey = provider.api_key;
 }
 
-function cancelEdit() {
-  editingId = null;
-}
-
-function saveEdit(id: string) {
+async function saveEdit(id: string) {
   try {
-    onUpdateProvider(id, {
+    await onUpdateProvider(id, {
       name: editName,
       base_url: editBaseUrl,
       api_key: editApiKey,
@@ -59,8 +55,12 @@ function saveEdit(id: string) {
   }
 }
 
-function deleteProvider(id: string) {
-  onDeleteProvider(id);
+function cancelEdit() {
+  editingId = null;
+}
+
+async function deleteProvider(id: string) {
+  await onDeleteProvider(id);
   if (editingId === id) editingId = null;
   const next = { ...healthByProviderId };
   delete next[id];

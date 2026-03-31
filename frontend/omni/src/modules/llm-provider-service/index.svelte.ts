@@ -33,12 +33,15 @@ export interface CreateProviderRequest {
  */
 export interface LLMProviderService {
     /** Returns all configured providers. */
-    fetchProviders(): Provider[];
+    fetchProviders(): Promise<Provider[]>;
     /** Fetch available models for the given provider. */
     fetchModels(provider: Provider): Promise<ProviderModel[]>;
-    createProvider(data: CreateProviderRequest): Provider;
-    updateProvider(id: string, data: Partial<CreateProviderRequest>): Provider;
-    deleteProvider(id: string): void;
+    createProvider(data: CreateProviderRequest): Promise<Provider>;
+    updateProvider(
+        id: string,
+        data: Partial<CreateProviderRequest>,
+    ): Promise<Provider>;
+    deleteProvider(id: string): Promise<void>;
 }
 
 /**

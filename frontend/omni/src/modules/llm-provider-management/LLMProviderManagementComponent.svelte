@@ -12,32 +12,36 @@ import * as Card from "$lib/components/ui/card/index.js";
 import * as Collapsible from "$lib/components/ui/collapsible/index.js";
 
 const llmProviderService = getLLMProviderService();
-let providers = $state<Provider[]>(llmProviderService.fetchProviders());
+let providers = $state<Provider[]>([]);
 
-function refreshProviders() {
-  providers = llmProviderService.fetchProviders();
+$effect(() => {
+  void refreshProviders();
+});
+
+async function refreshProviders() {
+  providers = await llmProviderService.fetchProviders();
 }
 
 // ---------------------------------------------------------------------------
 // Handlers
 // ---------------------------------------------------------------------------
 
-function handleAddProvider(data: CreateProviderRequest) {
-  llmProviderService.createProvider(data);
-  refreshProviders();
+async function handleAddProvider(data: CreateProviderRequest) {
+  await llmProviderService.createProvider(data);
+  await refreshProviders();
 }
 
-function handleUpdateProvider(
+async function handleUpdateProvider(
   id: string,
   data: Partial<CreateProviderRequest>,
 ) {
-  llmProviderService.updateProvider(id, data);
-  refreshProviders();
+  await llmProviderService.updateProvider(id, data);
+  await refreshProviders();
 }
 
-function handleDeleteProvider(id: string) {
-  llmProviderService.deleteProvider(id);
-  refreshProviders();
+async function handleDeleteProvider(id: string) {
+  await llmProviderService.deleteProvider(id);
+  await refreshProviders();
 }
 
 async function handleCheckProviderHealth(provider: Provider): Promise<boolean> {

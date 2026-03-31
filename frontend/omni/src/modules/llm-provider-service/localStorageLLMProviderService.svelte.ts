@@ -8,7 +8,7 @@ import type {
 const LOCAL_STORAGE_KEY = "llm_providers";
 
 export class LocalStorageLLMProviderService implements LLMProviderService {
-    fetchProviders(): Provider[] {
+    async fetchProviders(): Promise<Provider[]> {
         try {
             const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
             return stored ? (JSON.parse(stored) as Provider[]) : [];
@@ -57,8 +57,8 @@ export class LocalStorageLLMProviderService implements LLMProviderService {
         }
     }
 
-    createProvider(data: CreateProviderRequest): Provider {
-        const providers = this.fetchProviders();
+    async createProvider(data: CreateProviderRequest): Promise<Provider> {
+        const providers = await this.fetchProviders();
         if (providers.some((p) => p.name === data.name)) {
             throw new Error(`Provider '${data.name}' already exists`);
         }
@@ -75,8 +75,11 @@ export class LocalStorageLLMProviderService implements LLMProviderService {
         return provider;
     }
 
-    updateProvider(id: string, data: Partial<CreateProviderRequest>): Provider {
-        const providers = this.fetchProviders();
+    async updateProvider(
+        id: string,
+        data: Partial<CreateProviderRequest>,
+    ): Promise<Provider> {
+        const providers = await this.fetchProviders();
         const idx = providers.findIndex((p) => p.id === id);
         if (idx === -1) throw new Error(`Provider not found: ${id}`);
         if (
@@ -94,8 +97,8 @@ export class LocalStorageLLMProviderService implements LLMProviderService {
         return updated;
     }
 
-    deleteProvider(id: string): void {
-        this.#save(this.fetchProviders().filter((p) => p.id !== id));
+    async deleteProvider(id: string): Promise<void> {
+        this.#save((await this.fetchProviders()).filter((p) => p.id !== id));
     }
 }
 
