@@ -58,7 +58,7 @@ jobs:
         working-directory: ${{ matrix.working-dir }}
         run: pnpm check
 
-  backend-tests:
+  backend-unit-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -77,7 +77,7 @@ jobs:
         working-directory: backend/omni
         run: uv run pytest -v
 
-  frontend-unit:
+  frontend-unit-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -98,7 +98,7 @@ jobs:
         working-directory: frontend/omni
         run: pnpm test
 
-  frontend-e2e:
+  e2e-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
