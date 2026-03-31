@@ -18,8 +18,9 @@ let activeModulesImpl = $state<ActiveModulesImpl | null>(null);
 
 // Context object is set synchronously; methods delegate to reactive state
 const modules: Modules = {
-  getOne<T>(type: string): T | null {
-    return activeModulesImpl?.getOne<T>(type) ?? null;
+  getOne<T>(type: string): T {
+    if (!activeModulesImpl) throw new Error("Modules not yet loaded");
+    return activeModulesImpl.getOne<T>(type);
   },
   getAll<T>(type: string): T[] {
     return activeModulesImpl?.getAll<T>(type) ?? [];

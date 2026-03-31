@@ -17,7 +17,7 @@
       "id": "llm-provider-service",
       "type": "LLMProviderService",
       "path": "@/modules/llm-provider-service/localStorageLLMProviderService",
-      "dependencies": ["module:fetch-service"]
+      "dependencies": []
     },
     {
       "id": "chat-service",

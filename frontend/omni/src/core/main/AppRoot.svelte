@@ -5,6 +5,4 @@ import { getModules } from "../module-system/index";
 const Layout = getModules().getOne<Component>("AppLayout");
 </script>
 
-{#if Layout}
-	<Layout />
-{/if}
+<Layout />

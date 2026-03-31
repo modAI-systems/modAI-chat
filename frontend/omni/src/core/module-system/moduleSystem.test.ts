@@ -59,24 +59,23 @@ describe("ActiveModulesImpl", () => {
             expect(modules.getOne("Widget")).toBe(comp);
         });
 
-        it("returns null when no module matches", () => {
+        it("throws when no module matches", () => {
             const modules = new ActiveModulesImpl([mod("a", "Widget", {})]);
 
-            expect(modules.getOne("Unknown")).toBeNull();
+            expect(() => modules.getOne("Unknown")).toThrow(
+                'No module found with type "Unknown"',
+            );
         });
 
-        it("returns null and warns when multiple modules of the same type exist", () => {
-            const calls: unknown[][] = [];
-            const original = console.warn;
-            console.warn = (...args: unknown[]) => calls.push(args);
+        it("throws when multiple modules of the same type exist", () => {
             const modules = new ActiveModulesImpl([
                 mod("a", "Widget", {}),
                 mod("b", "Widget", {}),
             ]);
 
-            expect(modules.getOne("Widget")).toBeNull();
-            expect(calls).toHaveLength(1);
-            console.warn = original;
+            expect(() => modules.getOne("Widget")).toThrow(
+                'Multiple modules found with type "Widget"',
+            );
         });
     });
 });

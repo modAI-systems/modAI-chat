@@ -15,17 +15,15 @@ const AppLayoutContent = modules.getOne<Component>("AppLayoutContent");
 
 let ready = $state(false);
 
-if (sessionService) {
-  sessionService.refresh(modules).then(() => {
-    if (!sessionService.isSessionActive(modules)) {
-      noSessionAction?.execute(modules);
-    } else {
-      ready = true;
-    }
-  });
-}
+sessionService.refresh(modules).then(() => {
+  if (!sessionService.isSessionActive(modules)) {
+    noSessionAction.execute(modules);
+  } else {
+    ready = true;
+  }
+});
 </script>
 
-{#if ready && AppLayoutContent}
+{#if ready}
 	<AppLayoutContent />
 {/if}
