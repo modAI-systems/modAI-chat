@@ -2,14 +2,14 @@
 import { MessageSquare, Settings2 } from "lucide-svelte";
 import type { Component } from "svelte";
 import { getModuleDeps } from "@/core/module-system/index";
-import type { AppRouter } from "./appRouter.svelte.js";
+import { getAppRouter } from "./AppRouter.svelte";
 
 const deps = getModuleDeps("@/modules/app-layout/AppLayout");
 const chatComponents = $derived(deps.getAll<Component>("chat"));
 const providerComponents = $derived(
   deps.getAll<Component>("providerManagement"),
 );
-const appRouter = deps.getOne<AppRouter>("appRouter");
+const appRouter = getAppRouter();
 const { children } = $props();
 </script>
 
