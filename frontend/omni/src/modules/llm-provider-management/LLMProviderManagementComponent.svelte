@@ -1,22 +1,22 @@
 <script lang="ts">
 import { AlertTriangle, ChevronDown } from "lucide-svelte";
-import { getModules } from "@/core/module-system/index.js";
+import { getModuleDeps } from "@/core/module-system/index.js";
 import AddProviderForm from "@/modules/llm-provider-management/AddProviderForm.svelte";
 import ProviderList from "@/modules/llm-provider-management/ProviderList.svelte";
-import {
-  type CreateProviderRequest,
-  LLM_PROVIDER_SERVICE_TYPE,
-  type LLMProviderService,
-  type Provider,
+import type {
+  CreateProviderRequest,
+  LLMProviderService,
+  Provider,
 } from "@/modules/llm-provider-service/index.svelte.js";
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Card from "$lib/components/ui/card/index.js";
 import * as Collapsible from "$lib/components/ui/collapsible/index.js";
 
-const modules = getModules();
-const llmProviderService = modules.getOne<LLMProviderService>(
-  LLM_PROVIDER_SERVICE_TYPE,
+const deps = getModuleDeps(
+  "@/modules/llm-provider-management/LLMProviderManagementComponent",
 );
+const llmProviderService =
+  deps.getOne<LLMProviderService>("llmProviderService");
 let providers = $state<Provider[]>([]);
 
 $effect(() => {
@@ -24,7 +24,7 @@ $effect(() => {
 });
 
 async function refreshProviders() {
-  providers = await llmProviderService.fetchProviders(modules);
+  providers = await llmProviderService.fetchProviders();
 }
 
 // ---------------------------------------------------------------------------
@@ -32,7 +32,7 @@ async function refreshProviders() {
 // ---------------------------------------------------------------------------
 
 async function handleAddProvider(data: CreateProviderRequest) {
-  await llmProviderService.createProvider(modules, data);
+  await llmProviderService.createProvider(data);
   await refreshProviders();
 }
 
@@ -40,18 +40,18 @@ async function handleUpdateProvider(
   id: string,
   data: Partial<CreateProviderRequest>,
 ) {
-  await llmProviderService.updateProvider(modules, id, data);
+  await llmProviderService.updateProvider(id, data);
   await refreshProviders();
 }
 
 async function handleDeleteProvider(id: string) {
-  await llmProviderService.deleteProvider(modules, id);
+  await llmProviderService.deleteProvider(id);
   await refreshProviders();
 }
 
 async function handleCheckProviderHealth(provider: Provider): Promise<boolean> {
   try {
-    const models = await llmProviderService.fetchModels(modules, provider);
+    const models = await llmProviderService.fetchModels(provider);
     return models.length > 0;
   } catch {
     return false;

@@ -6,20 +6,22 @@ import type { ManifestEntry } from "./manifestJson";
 
 // Scans src/modules/**/*.svelte and *.svelte.ts — every file its own async chunk.
 // Manifest paths follow the pattern "@/modules/<path-without-extension>".
-const globModules = import.meta.glob<{ default: unknown }>([
+const globModules = import.meta.glob<Record<string, unknown>>([
     "../../modules/**/*.svelte",
     "../../modules/**/*.svelte.ts",
 ]);
 
-const componentRegistry: Record<string, () => Promise<unknown>> =
-    Object.fromEntries(
-        Object.entries(globModules).map(([key, factory]) => [
-            key
-                .replace("../../modules/", "@/modules/")
-                .replace(/\.svelte(\.ts)?$/, ""),
-            () => factory().then((m) => m.default),
-        ]),
-    );
+const componentRegistry: Record<
+    string,
+    () => Promise<Record<string, unknown>>
+> = Object.fromEntries(
+    Object.entries(globModules).map(([key, factory]) => [
+        key
+            .replace("../../modules/", "@/modules/")
+            .replace(/\.svelte(\.ts)?$/, ""),
+        () => factory(),
+    ]),
+);
 
 // ---------------------------------------------------------------------------
 // LoadedModule + ModuleRegistry
@@ -27,20 +29,23 @@ const componentRegistry: Record<string, () => Promise<unknown>> =
 
 export class LoadedModule {
     id: string;
-    type: string;
+    path: string;
     component: unknown;
-    dependencies: string[];
+    dependencySpec: Record<string, string | string[]>;
+    config: Record<string, unknown>;
 
     constructor(
         id: string,
-        type: string,
+        path: string,
         component: unknown,
-        dependencies: string[] = [],
+        dependencySpec: Record<string, string | string[]> = {},
+        config: Record<string, unknown> = {},
     ) {
         this.id = id;
-        this.type = type;
+        this.path = path;
         this.component = component;
-        this.dependencies = dependencies;
+        this.dependencySpec = dependencySpec;
+        this.config = config;
     }
 }
 
@@ -69,17 +74,47 @@ export class JsonModuleRegistry implements ModuleRegistry {
     private async loadModule(
         entry: ManifestEntry,
     ): Promise<LoadedModule | null> {
-        const factory = componentRegistry[entry.path];
+        const isFactory = entry.path.endsWith("/create");
+        const filePath = isFactory
+            ? entry.path.slice(0, -"/create".length)
+            : entry.path;
+
+        if (!filePath) {
+            return new LoadedModule(
+                entry.id,
+                filePath,
+                null,
+                entry.dependencies ?? {},
+            );
+        }
+        const factory = componentRegistry[filePath];
         if (!factory) {
-            console.warn(`Module "${entry.path}" not found in registry`, entry);
+            console.warn(`Module "${filePath}" not found in registry`, entry);
             return null;
         }
-        const component = await factory();
+        const moduleExports = await factory();
+
+        let component: unknown;
+        if (isFactory) {
+            const createFn = moduleExports.create;
+            if (typeof createFn !== "function") {
+                console.warn(
+                    `Module "${entry.id}" path ends with "/create" but no "create" export found`,
+                    entry,
+                );
+                return null;
+            }
+            component = createFn;
+        } else {
+            component = moduleExports.default;
+        }
+
         return new LoadedModule(
             entry.id,
-            entry.type,
+            entry.path,
             component,
-            entry.dependencies ?? [],
+            entry.dependencies ?? {},
+            entry.config ?? {},
         );
     }
 }

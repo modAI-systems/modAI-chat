@@ -1,21 +1,19 @@
-import type { Modules } from "@/core/module-system/index.js";
-import {
-    FETCH_SERVICE_TYPE,
-    type FetchService,
-} from "@/modules/fetch-service/index.svelte.js";
+import type { ModuleDependencies } from "@/core/module-system/index.js";
+import type { FetchService } from "@/modules/fetch-service/index.svelte.js";
 import type { SessionService } from "./index.svelte.js";
 
 class SessionServiceImpl implements SessionService {
+    readonly #fetchService: FetchService;
     #sessionActive = false;
 
-    async refresh(modules: Modules): Promise<void> {
+    constructor(fetchService: FetchService) {
+        this.#fetchService = fetchService;
+    }
+
+    async refresh(): Promise<void> {
         try {
-            const fetchService =
-                modules.getOne<FetchService>(FETCH_SERVICE_TYPE);
-            const response = await fetchService.fetch(
-                modules,
-                "/api/auth/session",
-            );
+            const response =
+                await this.#fetchService.fetch("/api/auth/session");
             const data = (await response.json()) as { authenticated: boolean };
             this.#sessionActive = data.authenticated;
         } catch {
@@ -23,9 +21,11 @@ class SessionServiceImpl implements SessionService {
         }
     }
 
-    isSessionActive(_modules: Modules): boolean {
+    isSessionActive(): boolean {
         return this.#sessionActive;
     }
 }
 
-export default new SessionServiceImpl();
+export function create(deps: ModuleDependencies): SessionService {
+    return new SessionServiceImpl(deps.getOne<FetchService>("fetchService"));
+}

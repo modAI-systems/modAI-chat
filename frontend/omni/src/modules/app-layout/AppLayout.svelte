@@ -1,14 +1,12 @@
 <script lang="ts">
 import { MessageSquare, Settings2 } from "lucide-svelte";
 import type { Component } from "svelte";
-import { getModules } from "@/core/module-system/index";
+import { getModuleDeps } from "@/core/module-system/index";
 
-const modules = getModules();
-const chatbotComponents = $derived(
-  modules.getAll<Component>("ChatbotComponent"),
-);
+const deps = getModuleDeps("@/modules/app-layout/AppLayout");
+const chatbotComponents = $derived(deps.getAll<Component>("chatbots"));
 const providerComponents = $derived(
-  modules.getAll<Component>("LLMProviderManagementComponent"),
+  deps.getAll<Component>("providerManagement"),
 );
 
 let currentPage = $state<"chat" | "settings">("chat");

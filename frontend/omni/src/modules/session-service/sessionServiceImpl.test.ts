@@ -1,20 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Modules } from "@/core/module-system/index.js";
+import type { ModuleDependencies } from "@/core/module-system/index.js";
 import type { FetchService } from "@/modules/fetch-service/index.svelte.js";
-import { FETCH_SERVICE_TYPE } from "@/modules/fetch-service/index.svelte.js";
-import sessionService from "./sessionServiceImpl.svelte";
+import { create } from "./sessionServiceImpl.svelte";
 
-function makeModules(fetchFn: typeof fetch): Modules {
+function makeDeps(fetchFn: typeof fetch): ModuleDependencies {
     const fetchService: FetchService = {
-        fetch: (_modules, input, init) => fetchFn(input, init),
+        fetch: (input, init) => fetchFn(input, init),
     };
     return {
-        getOne: <T>(type: string): T => {
-            if (type === FETCH_SERVICE_TYPE)
-                return fetchService as unknown as T;
-            throw new Error(`No module found with type "${type}"`);
+        getOne: <T>(name: string): T => {
+            if (name === "fetchService") return fetchService as unknown as T;
+            throw new Error(`Unknown dep "${name}"`);
         },
-        getAll: <T>(_type: string): T[] => [],
+        getAll: <T>(_name: string): T[] => [],
     };
 }
 
@@ -25,61 +23,60 @@ describe("sessionServiceImpl", () => {
 
     describe("refresh + isSessionActive", () => {
         it("marks session active when backend returns authenticated=true", async () => {
-            const modules = makeModules(
-                vi.fn(
-                    async () =>
-                        new Response(JSON.stringify({ authenticated: true }), {
-                            status: 200,
-                        }),
+            const service = create(
+                makeDeps(
+                    vi.fn(
+                        async () =>
+                            new Response(
+                                JSON.stringify({ authenticated: true }),
+                                {
+                                    status: 200,
+                                },
+                            ),
+                    ),
                 ),
             );
 
-            await sessionService.refresh(modules);
+            await service.refresh();
 
-            expect(sessionService.isSessionActive(modules)).toBe(true);
+            expect(service.isSessionActive()).toBe(true);
         });
 
         it("marks session inactive when backend returns authenticated=false", async () => {
-            const activeModules = makeModules(
-                vi.fn(
-                    async () =>
-                        new Response(JSON.stringify({ authenticated: true }), {
-                            status: 200,
-                        }),
+            const service = create(
+                makeDeps(
+                    vi.fn(
+                        async () =>
+                            new Response(
+                                JSON.stringify({ authenticated: false }),
+                                {
+                                    status: 200,
+                                },
+                            ),
+                    ),
                 ),
             );
-            await sessionService.refresh(activeModules); // set active first
 
-            const inactiveModules = makeModules(
-                vi.fn(
-                    async () =>
-                        new Response(JSON.stringify({ authenticated: false }), {
-                            status: 200,
-                        }),
-                ),
-            );
-            await sessionService.refresh(inactiveModules);
+            await service.refresh();
 
-            expect(sessionService.isSessionActive(inactiveModules)).toBe(false);
+            expect(service.isSessionActive()).toBe(false);
         });
 
         it("marks session inactive on network error", async () => {
-            const activeModules = makeModules(
-                vi.fn(
-                    async () =>
-                        new Response(JSON.stringify({ authenticated: true }), {
-                            status: 200,
-                        }),
-                ),
-            );
-            await sessionService.refresh(activeModules); // set active first
+            const fetchFn = vi
+                .fn()
+                .mockResolvedValueOnce(
+                    new Response(JSON.stringify({ authenticated: true }), {
+                        status: 200,
+                    }),
+                )
+                .mockRejectedValueOnce(new Error("network error"));
+            const service = create(makeDeps(fetchFn));
 
-            const errorModules = makeModules(
-                vi.fn().mockRejectedValue(new Error("network error")),
-            );
-            await sessionService.refresh(errorModules);
+            await service.refresh(); // set active
+            await service.refresh(); // network error
 
-            expect(sessionService.isSessionActive(errorModules)).toBe(false);
+            expect(service.isSessionActive()).toBe(false);
         });
 
         it("calls /api/auth/session via FetchService", async () => {
@@ -89,9 +86,9 @@ describe("sessionServiceImpl", () => {
                         status: 200,
                     }),
             );
-            const modules = makeModules(fetchFn);
+            const service = create(makeDeps(fetchFn));
 
-            await sessionService.refresh(modules);
+            await service.refresh();
 
             expect(fetchFn).toHaveBeenCalledWith(
                 "/api/auth/session",

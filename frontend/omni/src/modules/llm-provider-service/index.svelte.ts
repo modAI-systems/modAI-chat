@@ -1,7 +1,3 @@
-import type { Modules } from "@/core/module-system/index.js";
-
-export const LLM_PROVIDER_SERVICE_TYPE = "LLMProviderService";
-
 export interface Provider {
     id: string;
     name: string;
@@ -33,17 +29,13 @@ export interface CreateProviderRequest {
  */
 export interface LLMProviderService {
     /** Returns all configured providers. */
-    fetchProviders(modules: Modules): Promise<Provider[]>;
+    fetchProviders(): Promise<Provider[]>;
     /** Fetch available models for the given provider. */
-    fetchModels(modules: Modules, provider: Provider): Promise<ProviderModel[]>;
-    createProvider(
-        modules: Modules,
-        data: CreateProviderRequest,
-    ): Promise<Provider>;
+    fetchModels(provider: Provider): Promise<ProviderModel[]>;
+    createProvider(data: CreateProviderRequest): Promise<Provider>;
     updateProvider(
-        modules: Modules,
         id: string,
         data: Partial<CreateProviderRequest>,
     ): Promise<Provider>;
-    deleteProvider(modules: Modules, id: string): Promise<void>;
+    deleteProvider(id: string): Promise<void>;
 }
