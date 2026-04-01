@@ -1,17 +1,14 @@
 <script lang="ts">
 import { Router } from "sv-router";
-import type { Component } from "svelte";
 import { getModuleDeps } from "../../core/module-system/index";
-import type { AppRouter } from "./AppRouter.svelte.js";
+import AppRouter, { type RouterService } from "./AppRouter.svelte";
 
 const deps = getModuleDeps("@/modules/app-layout/AppRoot");
-const Layout = deps.getOne<Component>("layout");
-// Initialize AppRouter module before rendering the Router outlet.
-deps.getOne<AppRouter>("appRouter");
+const router = deps.getOne<RouterService>("appRouter");
 </script>
 
-<Layout>
+<AppRouter {router}>
 	<Router />
-</Layout>
+</AppRouter>
 
 

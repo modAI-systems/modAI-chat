@@ -6,15 +6,15 @@
       "type": "AppRoot",
       "path": "@/modules/app-layout/AppRoot",
       "dependencies": {
-        "module:layout": "app-layout",
         "module:appRouter": "app-router"
       }
     },
     {
       "id": "app-router",
       "type": "AppRouter",
-      "path": "@/modules/app-layout/appRouter/create",
+      "path": "@/modules/app-layout/AppRouter/create",
       "dependencies": {
+        "module:layout": "app-layout",
         "module:routes": ["chat-route", "providers-route"],
         "module:fallbackRoute": "chat-fallback-route"
       }
@@ -30,7 +30,6 @@
       "type": "AppLayout",
       "path": "@/modules/app-layout/AppLayout",
       "dependencies": {
-        "module:appRouter": "app-router",
         "module:chat": ["chat"],
         "module:providerManagement": ["llm-provider-management"]
       }

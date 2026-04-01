@@ -1,0 +1,51 @@
+<script module lang="ts">
+import { createRouter } from "sv-router";
+import type { Component } from "svelte";
+import { getContext } from "svelte";
+import type { ModuleDependencies } from "@/core/module-system";
+import type { RouteDefinition } from "./routeDefinition.svelte";
+
+export type RouterService = ReturnType<typeof createRouter>;
+
+export function getAppRouter(): RouterService {
+  return getContext<() => RouterService>(Symbol.for("modai.appRouter"))();
+}
+
+export function create(deps: ModuleDependencies): RouterService {
+  const routes = deps.getAll<RouteDefinition>("routes");
+  const fallbackRoute = deps.getOne<RouteDefinition>("fallbackRoute");
+  const layout = deps.getOne<Component>("layout");
+  const routeMap: Record<string, RouteDefinition["component"]> & {
+    layout: Component;
+  } = {
+    layout,
+  };
+
+  for (const routeDef of routes) {
+    routeMap[routeDef.path] = routeDef.component;
+  }
+
+  routeMap["*"] = fallbackRoute.component;
+  const routerService = createRouter(routeMap);
+
+  if (
+    typeof window !== "undefined" &&
+    window.location.pathname === "/" &&
+    fallbackRoute.path !== "/"
+  ) {
+    void routerService.navigate(fallbackRoute.path, { replace: true });
+  }
+
+  return routerService;
+}
+</script>
+
+<script lang="ts">
+import { type Snippet, setContext } from "svelte";
+
+const { router, children }: { router: RouterService; children?: Snippet } = $props();
+
+setContext(Symbol.for("modai.appRouter"), () => router);
+</script>
+
+{@render children?.()}
