@@ -7,7 +7,9 @@ import type {
     ProviderModel,
 } from "./index.svelte.js";
 
+const BACKEND_API_BASE = "/api";
 const API_BASE = "/api/models/providers/openai";
+const PROVIDER_TYPE = "openai";
 
 type BackendProvider = {
     id: string;
@@ -64,9 +66,9 @@ export class ModaiBackendLLMProviderService implements LLMProviderService {
         return data.data.map((model) => ({
             providerId: provider.id,
             providerName: provider.name,
-            providerBaseUrl: provider.base_url,
-            providerApiKey: provider.api_key,
-            modelId: model.id,
+            providerBaseUrl: BACKEND_API_BASE,
+            providerApiKey: "",
+            modelId: `${PROVIDER_TYPE}/${provider.name}/${model.id}`,
             modelName: model.id,
         }));
     }
