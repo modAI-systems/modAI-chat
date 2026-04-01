@@ -41,11 +41,12 @@ export function create(deps: ModuleDependencies): RouterService {
 </script>
 
 <script lang="ts">
-import { type Snippet, setContext } from "svelte";
+import { Router } from "sv-router";
+import { setContext } from "svelte";
 
-const { router, children }: { router: RouterService; children?: Snippet } = $props();
+const { router }: { router: RouterService } = $props();
 
 setContext(Symbol.for("modai.appRouter"), () => router);
 </script>
 
-{@render children?.()}
+<Router />
