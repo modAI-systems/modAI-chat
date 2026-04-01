@@ -16,7 +16,11 @@ export function create(deps: ModuleDependencies): AppRouter {
     routeMap["*"] = fallbackRoute.component;
     const router = createRouter(routeMap);
 
-    if (typeof window !== "undefined" && window.location.pathname === "/") {
+    if (
+        typeof window !== "undefined" &&
+        window.location.pathname === "/" &&
+        fallbackRoute.path !== "/"
+    ) {
         void router.navigate(fallbackRoute.path, { replace: true });
     }
 
