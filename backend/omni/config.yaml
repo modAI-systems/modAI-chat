@@ -105,3 +105,10 @@ modules:
     class: modai.modules.tools.tools_web_module.OpenAIToolsWebModule
     module_dependencies:
       tool_registry: tool_registry
+
+  full_reset:
+    class: modai.modules.reset.reset_web_module.ResetWebModule
+    module_dependencies:
+      model_provider_store: "model_provider_store"
+      user_store: "user_store"
+      user_settings_store: "user_settings_store"

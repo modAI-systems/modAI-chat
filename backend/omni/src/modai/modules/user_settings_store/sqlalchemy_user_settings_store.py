@@ -21,9 +21,10 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from modai.module import ModuleDependencies, PersistenceModule
 from modai.modules.user_settings_store.module import UserSettingsStore
+from modai.modules.reset.resettable import Resettable
 
 
-class SQLAlchemyUserSettingsStore(UserSettingsStore, PersistenceModule):
+class SQLAlchemyUserSettingsStore(UserSettingsStore, PersistenceModule, Resettable):
     """
     Pure SQLAlchemy implementation of the UserSettingsStore module.
 
@@ -245,6 +246,13 @@ class SQLAlchemyUserSettingsStore(UserSettingsStore, PersistenceModule):
             result = session.execute(statement)
             settings_record = result.fetchone()
             return settings_record is not None
+
+    # Resettable implementation
+    def reset(self) -> None:
+        """Delete all rows from the user_settings table."""
+        with self._get_session() as session:
+            session.execute(delete(self.user_settings_table))
+            session.commit()
 
     # Persistence Module implementation
     def migrate_data(self, software_version: str, previous_version: str | None) -> None:

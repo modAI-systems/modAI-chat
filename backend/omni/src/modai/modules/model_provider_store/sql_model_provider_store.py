@@ -24,9 +24,10 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from modai.module import ModuleDependencies, PersistenceModule
 from modai.modules.model_provider_store.module import ModelProviderStore, ModelProvider
+from modai.modules.reset.resettable import Resettable
 
 
-class SQLAlchemyModelProviderStore(ModelProviderStore, PersistenceModule):
+class SQLAlchemyModelProviderStore(ModelProviderStore, PersistenceModule, Resettable):
     """
     Pure SQLAlchemy implementation of the ModelProviderStore module.
 
@@ -217,6 +218,13 @@ class SQLAlchemyModelProviderStore(ModelProviderStore, PersistenceModule):
                 self.model_providers_table.c.id == provider_id
             )
             session.execute(delete_stmt)
+            session.commit()
+
+    # Resettable implementation
+    def reset(self) -> None:
+        """Delete all rows from the model_providers table."""
+        with self._get_session() as session:
+            session.execute(delete(self.model_providers_table))
             session.commit()
 
     # Persistence Module implementation
