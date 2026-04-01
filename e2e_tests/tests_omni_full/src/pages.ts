@@ -1,41 +1,45 @@
 import { expect, type Page } from "@playwright/test";
 
 /**
- * Sets up an LLM provider via localStorage.
+ * Sets up an LLM provider via the backend API.
  *
- * The Svelte frontend stores providers client-side. This helper injects
- * them directly without touching the UI, then reloads so the chatbot
- * picks up the new providers on mount.
+ * The backend stores providers server-side. This helper calls the API
+ * directly from the browser context (which has the session cookie) to
+ * create a provider, then reloads so the chatbot picks it up.
  */
 export class LLMProvidersPage {
     constructor(private page: Page) {}
 
-    async addProvider(name: string, baseUrl: string, _apiKey: string) {
+    async addProvider(name: string, baseUrl: string, apiKey: string) {
         await this.page.evaluate(
-            ({ name, baseUrl }: { name: string; baseUrl: string }) => {
-                const KEY = "llm_providers";
-                const existing = JSON.parse(
-                    localStorage.getItem(KEY) ?? "[]",
-                ) as Array<{
-                    id: string;
-                    name: string;
-                    base_url: string;
-                    api_key: string;
-                }>;
-                const newProvider = {
-                    id: `provider-${Date.now()}`,
-                    name,
-                    base_url: baseUrl,
-                    api_key: "",
-                };
-                localStorage.setItem(
-                    KEY,
-                    JSON.stringify([...existing, newProvider]),
-                );
+            async ({
+                name,
+                baseUrl,
+                apiKey,
+            }: {
+                name: string;
+                baseUrl: string;
+                apiKey: string;
+            }) => {
+                const response = await fetch("/api/models/providers/openai", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        name,
+                        base_url: baseUrl,
+                        api_key: apiKey,
+                    }),
+                });
+                if (!response.ok) {
+                    throw new Error(
+                        `Failed to create provider: ${response.status} ${response.statusText}`,
+                    );
+                }
             },
-            { name, baseUrl },
+            { name, baseUrl, apiKey },
         );
-        // Reload so the Svelte reactive state picks up the localStorage change
+        // Reload so the Svelte reactive state picks up the new provider
         await this.page.reload();
         // Wait for the auth guard to finish (app becomes visible)
         await this.page.waitForSelector("header", { timeout: 10000 });
@@ -132,35 +136,15 @@ export class ChatPage {
         await this.page.getByRole("button", { name: "Send" }).click();
     }
 
-    async waitForResponse(): Promise<void> {
-        // Wait for an assistant message to appear
-        await this.page.waitForFunction(
-            () => {
-                const msgs = document.querySelectorAll(
-                    "[data-role='assistant']",
-                );
-                if (msgs.length > 0) return true;
-                // Fallback: look for any non-user message
-                const allMsgs = document.querySelectorAll("[data-message]");
-                return Array.from(allMsgs).some(
-                    (el) => el.getAttribute("data-role") === "assistant",
-                );
-            },
-            { timeout: 15000 },
-        );
-    }
-
-    async assertResponseExists(): Promise<void> {
-        // Verify at least one assistant message is visible
-        const assistantMsg = this.page
-            .locator("[data-role='assistant']")
-            .first();
-        await expect(assistantMsg).toBeVisible({ timeout: 15000 });
-    }
-
     async assertModelButtonVisible(modelName: string): Promise<void> {
         await expect(
             this.page.getByRole("button", { name: modelName }),
         ).toBeVisible({ timeout: 10000 });
+    }
+
+    async assertMessageVisible(message: string): Promise<void> {
+        await expect(this.page.getByText(message).nth(1)).toBeVisible({
+            timeout: 15000,
+        });
     }
 }

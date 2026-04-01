@@ -10,6 +10,11 @@ export default defineConfig({
 			"/api": "http://localhost:8000",
 		},
 	},
+	preview: {
+		proxy: {
+			"/api": process.env.VITE_API_URL ?? "http://localhost:8000",
+		},
+	},
 	resolve: {
 		alias: {
 			"@": path.resolve(__dirname, "./src"),

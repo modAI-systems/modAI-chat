@@ -38,7 +38,9 @@
       "id": "chat-service",
       "type": "ChatService",
       "path": "@/modules/chat-service/openai/create",
-      "dependencies": {}
+      "dependencies": {
+        "module:fetchService": "fetch-service"
+      }
     },
     {
       "id": "chatbot",
