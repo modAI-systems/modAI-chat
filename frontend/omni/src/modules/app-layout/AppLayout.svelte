@@ -2,10 +2,10 @@
 import { MessageSquare, Settings2 } from "lucide-svelte";
 import type { Component } from "svelte";
 import { getModuleDeps } from "@/core/module-system/index";
-import type { AppRouter } from "./AppRouter.svelte.js";
+import type { AppRouter } from "./appRouter.svelte.js";
 
 const deps = getModuleDeps("@/modules/app-layout/AppLayout");
-const chatbotComponents = $derived(deps.getAll<Component>("chatbots"));
+const chatComponents = $derived(deps.getAll<Component>("chat"));
 const providerComponents = $derived(
   deps.getAll<Component>("providerManagement"),
 );
@@ -14,7 +14,7 @@ const { children } = $props();
 </script>
 
 <main class="flex min-h-screen flex-col bg-background">
-	{#if chatbotComponents.length > 0}
+	{#if chatComponents.length > 0}
 		<header class="flex items-center justify-between border-b px-6 py-3">
 			<div class="flex items-center">
 				<h1 class="text-xl font-bold tracking-tight">modAI</h1>

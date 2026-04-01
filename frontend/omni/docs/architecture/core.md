@@ -28,7 +28,7 @@ flowchart TD
     classDef component fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000000
 
     MainApp[Main App]:::module
-    ChatModule[Chatbot]:::module
+    ChatModule[Chat]:::module
     AuthModule[Auth]:::module
     Login[Login]:::module
     Button[Button]:::component
@@ -53,13 +53,13 @@ The heart of the frontend is its modular system. The central interfaces are:
 ```typescript
 // Scoped dependency accessor — returned per module
 interface ModuleDependencies {
-    getOne<T>(name: string): T;
-    getAll<T>(name: string): T[];
+  getOne<T>(name: string): T;
+  getAll<T>(name: string): T[];
 }
 
 // Top-level module registry
 interface Modules {
-    getModuleDependencies(path: string): ModuleDependencies;
+  getModuleDependencies(path: string): ModuleDependencies;
 }
 ```
 
@@ -68,10 +68,10 @@ interface Modules {
 Each module knows its own path (the `path` value in its `modules*.json` entry) and obtains its declared dependencies via `getModuleDeps(path)`:
 
 ```typescript
-const deps = getModuleDeps("@/modules/chatbot/ChatbotComponent");
+const deps = getModuleDeps("@/modules/chat/ChatComponent");
 
 const chatService = deps.getOne<ChatService>("chatService");
-const widgets     = deps.getAll<Component>("widgets");
+const widgets = deps.getAll<Component>("widgets");
 ```
 
 `getModuleDeps(path)` is a convenience wrapper around `getModules().getModuleDependencies(path)`. Both use Svelte's `getContext` internally and **must be called at component initialisation time** (top level of a `<script>` block), not inside event handlers or `$effect`.
@@ -82,7 +82,7 @@ const widgets     = deps.getAll<Component>("widgets");
 
 ```json
 {
-  "id": "chatbot",
+  "id": "chat",
   ...
   "dependencies": {
     "module:chatService":      "chat-service",
@@ -92,8 +92,8 @@ const widgets     = deps.getAll<Component>("widgets");
 ```
 
 ```typescript
-// Inside the chatbot component:
-const deps = getModuleDeps("@/modules/chatbot/ChatbotComponent");
+// Inside the chat component:
+const deps = getModuleDeps("@/modules/chat/ChatComponent");
 const chatService = deps.getOne<ChatService>("chatService");
 //                                            ^^^^^^^^^^^^ local alias from the JSON
 ```
@@ -119,13 +119,13 @@ To activate a module, add it to `modules*.json`.
 
 ```json
 {
-    "id": "chatbot",
-    "type": "ChatbotComponent",
-    "path": "@/modules/chatbot/ChatbotComponent",
-    "dependencies": {
-        "module:chatService":        "chat-service",
-        "module:llmProviderService": "llm-provider-service"
-    }
+  "id": "chat",
+  "type": "ChatComponent",
+  "path": "@/modules/chat/ChatComponent",
+  "dependencies": {
+    "module:chatService": "chat-service",
+    "module:llmProviderService": "llm-provider-service"
+  }
 }
 ```
 
@@ -145,12 +145,12 @@ If the `path` is not found in the module registry (e.g. it points outside `src/m
 
 ```json
 {
-    "id": "app-root",
-    "type": "AppRoot",
-    "path": "@/modules/app-layout/AppRoot",
-    "dependencies": {
-        "module:layout": "app-layout"
-    }
+  "id": "app-root",
+  "type": "AppRoot",
+  "path": "@/modules/app-layout/AppRoot",
+  "dependencies": {
+    "module:layout": "app-layout"
+  }
 }
 ```
 
@@ -185,22 +185,22 @@ import type { MyService } from "./index.svelte.js";
 import type { ModuleDependencies } from "@/core/module-system/index.js";
 
 export function create(
-    deps: ModuleDependencies,
-    config: Record<string, unknown>,
+  deps: ModuleDependencies,
+  config: Record<string, unknown>,
 ): MyService {
-    const db = deps.getOne<Database>("database");
-    return new MyServiceImpl(db, config.endpoint as string);
+  const db = deps.getOne<Database>("database");
+  return new MyServiceImpl(db, config.endpoint as string);
 }
 ```
 
 ```json
 {
-    "id": "my-service",
-    "type": "MyService",
-    "path": "@/modules/my-service/myServiceImpl",
-    "creationType": "serviceFactory",
-    "dependencies": { "module:database": "db" },
-    "config": { "endpoint": "/api/data" }
+  "id": "my-service",
+  "type": "MyService",
+  "path": "@/modules/my-service/myServiceImpl",
+  "creationType": "serviceFactory",
+  "dependencies": { "module:database": "db" },
+  "config": { "endpoint": "/api/data" }
 }
 ```
 
@@ -250,7 +250,11 @@ Defines the TypeScript interface:
 // src/modules/chat-service/index.svelte.ts
 
 export interface ChatService {
-    streamChat(deps: ModuleDependencies, model: ProviderModel, messages: UIMessage[]): AsyncGenerator<string>;
+  streamChat(
+    deps: ModuleDependencies,
+    model: ProviderModel,
+    messages: UIMessage[],
+  ): AsyncGenerator<string>;
 }
 ```
 
@@ -275,8 +279,11 @@ For services that need other modules or config at construction time, export a `c
 // src/modules/my-service/myServiceImpl.svelte.ts
 import type { ModuleDependencies } from "@/core/module-system/index.js";
 
-export function create(deps: ModuleDependencies, config: Record<string, unknown>): MyService {
-    return new MyServiceImpl(deps.getOne("database"), config.endpoint as string);
+export function create(
+  deps: ModuleDependencies,
+  config: Record<string, unknown>,
+): MyService {
+  return new MyServiceImpl(deps.getOne("database"), config.endpoint as string);
 }
 ```
 
@@ -297,7 +304,7 @@ A consumer module declares the service as a `module:` dependency in the manifest
 
 ```json
 {
-  "id": "chatbot",
+  "id": "chat",
   "dependencies": {
     "module:chatService": "chat-service"
   }
@@ -309,11 +316,11 @@ A consumer module declares the service as a `module:` dependency in the manifest
   import { getModuleDeps } from "@/core/module-system/index.js";
   import type { ChatService } from "@/modules/chat-service/index.svelte.js";
 
-  const chatService = getModuleDeps("@/modules/chatbot/ChatbotComponent").getOne<ChatService>("chatService");
+  const chatService = getModuleDeps("@/modules/chat/ChatComponent").getOne<ChatService>("chatService");
 </script>
 ```
 
-The chatbot is only activated once `chat-service` is present, and it can only see what it has declared — nothing more.
+The chat module is only activated once `chat-service` is present, and it can only see what it has declared — nothing more.
 
 ### 6.3 Separate Interface from Implementation (aka `index.svelte.ts`)
 
