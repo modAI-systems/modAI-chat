@@ -7,6 +7,7 @@ const deps = getModuleDeps("@/modules/session-service/SessionGatedAppLayout");
 const sessionService = deps.getOne<SessionService>("sessionService");
 const noSessionAction = deps.getOne<NoSessionAction>("noSessionAction");
 const AppLayoutContent = deps.getOne<Component>("appLayoutContent");
+const { children } = $props();
 
 let ready = $state(false);
 
@@ -20,5 +21,7 @@ sessionService.refresh().then(() => {
 </script>
 
 {#if ready}
-	<AppLayoutContent />
+  <AppLayoutContent>
+    {@render children?.()}
+  </AppLayoutContent>
 {/if}

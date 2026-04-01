@@ -6,7 +6,17 @@
       "type": "AppRoot",
       "path": "@/modules/app-layout/AppRoot",
       "dependencies": {
-        "module:layout": "app-layout"
+        "module:layout": "app-layout",
+        "module:appRouter": "app-router"
+      }
+    },
+    {
+      "id": "app-router",
+      "type": "AppRouter",
+      "path": "@/modules/app-layout/AppRouter/create",
+      "dependencies": {
+        "module:routes": ["chat-route", "providers-route"],
+        "module:fallbackRoute": "chat-fallback-route"
       }
     },
     {
@@ -20,12 +30,9 @@
       "type": "AppLayout",
       "path": "@/modules/app-layout/AppLayout",
       "dependencies": {
-        "module:chatbots": [
-          "chatbot"
-        ],
-        "module:providerManagement": [
-          "llm-provider-management"
-        ]
+        "module:appRouter": "app-router",
+        "module:chatbots": ["chatbot"],
+        "module:providerManagement": ["llm-provider-management"]
       }
     },
     {
@@ -52,11 +59,33 @@
       }
     },
     {
+      "id": "chat-route",
+      "type": "Route",
+      "path": "@/modules/chatbot/chatRouteDefinition/create",
+      "dependencies": {
+        "module:chatbots": ["chatbot"]
+      }
+    },
+    {
+      "id": "chat-fallback-route",
+      "type": "FallbackRoute",
+      "path": "@/modules/chatbot/chatFallbackRouteDefinition/create",
+      "dependencies": {}
+    },
+    {
       "id": "llm-provider-management",
       "type": "LLMProviderManagementComponent",
       "path": "@/modules/llm-provider-management/LLMProviderManagementComponent",
       "dependencies": {
         "module:llmProviderService": "llm-provider-service"
+      }
+    },
+    {
+      "id": "providers-route",
+      "type": "Route",
+      "path": "@/modules/llm-provider-management/providersRouteDefinition/create",
+      "dependencies": {
+        "module:providerManagement": ["llm-provider-management"]
       }
     }
   ]

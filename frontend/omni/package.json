@@ -18,6 +18,7 @@
     "clsx": "^2.1.1",
     "lucide-svelte": "^1.0.1",
     "marked": "^17.0.5",
+    "sv-router": "^0.15.0",
     "svelte": "^5.55.1",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.2"

@@ -2,14 +2,15 @@
 import { MessageSquare, Settings2 } from "lucide-svelte";
 import type { Component } from "svelte";
 import { getModuleDeps } from "@/core/module-system/index";
+import type { AppRouter } from "./AppRouter.svelte.js";
 
 const deps = getModuleDeps("@/modules/app-layout/AppLayout");
 const chatbotComponents = $derived(deps.getAll<Component>("chatbots"));
 const providerComponents = $derived(
   deps.getAll<Component>("providerManagement"),
 );
-
-let currentPage = $state<"chat" | "settings">("chat");
+const appRouter = deps.getOne<AppRouter>("appRouter");
+const { children } = $props();
 </script>
 
 <main class="flex min-h-screen flex-col bg-background">
@@ -21,16 +22,16 @@ let currentPage = $state<"chat" | "settings">("chat");
 			</div>
 			<nav class="flex gap-1">
 				<button
-					class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors {currentPage === 'chat' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
-					onclick={() => (currentPage = "chat")}
+					class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors {appRouter.isActive('/') ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
+					onclick={() => appRouter.navigate(appRouter.p("/"))}
 				>
 					<MessageSquare class="size-4" />
 					Chat
 				</button>
 				{#if providerComponents.length > 0}
 					<button
-						class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors {currentPage === 'settings' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
-						onclick={() => (currentPage = "settings")}
+						class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors {appRouter.isActive('/providers') ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
+						onclick={() => appRouter.navigate(appRouter.p("/providers"))}
 					>
 						<Settings2 class="size-4" />
 						Providers
@@ -39,15 +40,7 @@ let currentPage = $state<"chat" | "settings">("chat");
 			</nav>
 		</header>
 		<div class="flex-1 overflow-hidden">
-			{#if currentPage === "settings" && providerComponents.length > 0}
-				{#each providerComponents as ProviderComp}
-					<ProviderComp />
-				{/each}
-			{:else}
-				{#each chatbotComponents as ChatbotComp}
-					<ChatbotComp />
-				{/each}
-			{/if}
+			{@render children?.()}
 		</div>
 	{:else}
 		<div class="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
