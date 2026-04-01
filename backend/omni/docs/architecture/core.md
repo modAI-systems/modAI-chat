@@ -46,6 +46,21 @@ flowchart TD
 - **Configuration Access**: Modules receive their configuration through the constructor parameter
 - **Dependencies**: Modules can be dependent on other modules. Those dependencies are configured via the config file and passed through the constructor parameter
 
+### MANDATORY: module.py / implementation split
+
+**Every module folder MUST follow this two-file structure.**
+
+| File | Purpose | Rule |
+|---|---|---|
+| `module.py` | Abstract class | Inherits `ModaiModule` (and `ABC`). Registers all routes in `__init__`. Declares every endpoint as an `@abstractmethod`. No business logic. |
+| `<impl_name>.py` (e.g. `reset_web_module.py`) | Concrete class | Inherits the abstract class from `module.py`. Implements the abstract methods only. Contains the actual logic. This is the class referenced in `config.yaml`. |
+
+**Rules:**
+- `module.py` must **never** be concrete — it must always be `ABC`.
+- Route registration (`self.router.add_api_route(...)`) belongs in `module.py`, not in the impl.
+- The `config.yaml` entry **always** points to the implementation file, not to `module.py`.
+- Mixin interfaces (e.g. `Resettable`) that are not standalone modules may live in a separate file inside the module folder (e.g. `resettable.py`).
+
 ### Module Types
 
 A module has one or more types. Each type has certain conditions and if a module fulfills the condition it is automatiaclly of that type(s)

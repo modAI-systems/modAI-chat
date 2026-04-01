@@ -24,9 +24,10 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from modai.module import ModuleDependencies, PersistenceModule
 from modai.modules.user_store.module import UserStore, User, Group, UserCredentials
+from modai.modules.reset.resettable import Resettable
 
 
-class SQLAlchemyUserStore(UserStore, PersistenceModule):
+class SQLAlchemyUserStore(UserStore, PersistenceModule, Resettable):
     """
     Pure SQLAlchemy implementation of the UserStore module.
 
@@ -521,6 +522,16 @@ class SQLAlchemyUserStore(UserStore, PersistenceModule):
                 self.user_credentials_table.c.user_id == user_id
             )
             session.execute(delete_stmt)
+            session.commit()
+
+    # Resettable implementation
+    def reset(self) -> None:
+        """Delete all rows from all user-store tables (respecting FK order)."""
+        with self._get_session() as session:
+            session.execute(delete(self.user_credentials_table))
+            session.execute(delete(self.user_groups_table))
+            session.execute(delete(self.groups_table))
+            session.execute(delete(self.users_table))
             session.commit()
 
     # Persistence Module implementation

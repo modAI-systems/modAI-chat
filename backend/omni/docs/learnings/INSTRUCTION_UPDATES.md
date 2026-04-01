@@ -10,6 +10,14 @@ This file tracks corrections provided by the user to improve future performance.
 
 ---
 
+### 2026-04-01 - module.py / impl split is always required
+- **Mistake**: Collapsed `module.py` (ABC with route + abstract method) and the concrete impl into a single file.
+- **Correction**: `module.py` always defines the abstract class: it registers the route(s) in `__init__` and declares each endpoint as `@abstractmethod`. The impl file (e.g. `reset_web_module.py`) inherits the abstract class and only implements the abstract methods — no route registration there.
+- **New Rule**: Always split into `module.py` (abstract, route registration, abstract endpoint declarations) and a separate `<name>.py` impl. The `config.yaml` entry points to the impl, never to `module.py`.
+
+
+---
+
 ### 2026-03-04 - Test structure for StrandsAgentChatModule
 - **Mistake**: Tests imported and directly tested private/internal functions (e.g. `_resolve_request_tools`, `_parse_model`, `_extract_last_user_message`, `_create_http_tool`).
 - **Correction**: Tests should only exercise the public interface (`__init__`, `generate_response`). Private helpers are tested indirectly through those public methods.
