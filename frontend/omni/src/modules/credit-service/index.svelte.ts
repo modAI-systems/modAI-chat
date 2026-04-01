@@ -6,10 +6,11 @@ export interface CreditAccount {
     user_id: string;
     tier: string;
     tier_status: string;
-    tier_credits_available: number;
+    tier_credit_limit: number;
     tier_cost_eur: number;
-    topup_credits_available: number;
+    topup_credit_limit: number;
     topup_cost_eur: number;
+    euro_to_credit_ratio: number;
     period_start: string;
 }
 

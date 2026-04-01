@@ -5,10 +5,11 @@ const mockAccount = {
     user_id: "user-123",
     tier: "free",
     tier_status: "active",
-    tier_credits_available: 50,
+    tier_credit_limit: 50,
     tier_cost_eur: 0,
-    topup_credits_available: 0,
+    topup_credit_limit: 0,
     topup_cost_eur: 0,
+    euro_to_credit_ratio: 50,
     period_start: "2026-03-01T00:00:00",
 };
 

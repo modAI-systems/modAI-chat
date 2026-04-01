@@ -224,13 +224,24 @@ class SimpleCreditModule(CreditModule):
         return True
 
     def _to_response(self, account: CreditAccount) -> CreditAccountResponse:
+        tier_credit_limit = self.tier_allowances.get(account.tier, 0)
+        topup_consumed = (
+            round(account.topup_cost_eur / self.credit_to_eur)
+            if self.credit_to_eur > 0
+            else 0
+        )
+        topup_credit_limit = account.topup_credits_available + topup_consumed
+        euro_to_credit_ratio = (
+            1 / self.credit_to_eur if self.credit_to_eur > 0 else 0.0
+        )
         return CreditAccountResponse(
             user_id=account.user_id,
             tier=account.tier,
             tier_status=account.tier_status,
-            tier_credits_available=account.tier_credits_available,
+            tier_credit_limit=tier_credit_limit,
             tier_cost_eur=account.tier_cost_eur,
-            topup_credits_available=account.topup_credits_available,
+            topup_credit_limit=topup_credit_limit,
             topup_cost_eur=account.topup_cost_eur,
+            euro_to_credit_ratio=euro_to_credit_ratio,
             period_start=account.period_start.isoformat(),
         )

@@ -21,10 +21,11 @@ class CreditAccountResponse(BaseModel):
     user_id: str
     tier: str
     tier_status: str
-    tier_credits_available: int
+    tier_credit_limit: int
     tier_cost_eur: float
-    topup_credits_available: int
+    topup_credit_limit: int
     topup_cost_eur: float
+    euro_to_credit_ratio: float
     period_start: str
 
 

@@ -111,9 +111,9 @@ class TestSimpleCreditModule:
         assert result.user_id == "user-1"
         assert result.tier == "free"
         assert result.tier_status == "active"
-        assert result.tier_credits_available == 50
+        assert result.tier_credit_limit == 50
         assert result.tier_cost_eur == 0.0
-        assert result.topup_credits_available == 0
+        assert result.topup_credit_limit == 0
         assert result.topup_cost_eur == 0.0
 
     @pytest.mark.asyncio
@@ -225,7 +225,7 @@ class TestSimpleCreditModule:
 
         result = await module.add_topup(AddTopupRequest(amount=25), mock_request)
 
-        assert result.topup_credits_available == 25
+        assert result.topup_credit_limit == 25
         assert result.topup_cost_eur == 0.0
 
     @pytest.mark.asyncio
@@ -236,7 +236,7 @@ class TestSimpleCreditModule:
         await module.add_topup(AddTopupRequest(amount=25), mock_request)
         result = await module.add_topup(AddTopupRequest(amount=30), mock_request)
 
-        assert result.topup_credits_available == 55
+        assert result.topup_credit_limit == 55
 
     @pytest.mark.asyncio
     async def test_add_topup_invalid_amount(
@@ -261,7 +261,7 @@ class TestSimpleCreditModule:
 
         assert result.tier == "pro"
         assert result.tier_status == "active"
-        assert result.tier_credits_available == 500
+        assert result.tier_credit_limit == 500
         assert result.tier_cost_eur == 0.0
 
     @pytest.mark.asyncio
@@ -275,7 +275,7 @@ class TestSimpleCreditModule:
         result = await module.change_tier(ChangeTierRequest(tier="pro"), mock_request)
 
         assert result.tier == "pro"
-        assert result.topup_credits_available == 75
+        assert result.topup_credit_limit == 75
 
     @pytest.mark.asyncio
     async def test_change_tier_same_tier_noop(
@@ -288,7 +288,8 @@ class TestSimpleCreditModule:
 
         result = await module.change_tier(ChangeTierRequest(tier="free"), mock_request)
 
-        assert result.tier_credits_available == 40
+        # noop: credits not reset since tier didn't change
+        assert result.tier_credit_limit == 50
         assert result.tier_cost_eur == pytest.approx(0.20)
 
     @pytest.mark.asyncio
@@ -305,7 +306,7 @@ class TestSimpleCreditModule:
 
         assert result.tier == "pro"
         assert result.tier_status == "active"
-        assert result.tier_credits_available == 500
+        assert result.tier_credit_limit == 500
 
     @pytest.mark.asyncio
     async def test_change_tier_invalid(self, module, mock_session_module, mock_request):
@@ -328,7 +329,7 @@ class TestSimpleCreditModule:
         assert result.tier == "pro"
         assert result.tier_status == "cancelled"
         # Credits remain until period ends
-        assert result.tier_credits_available == 500
+        assert result.tier_credit_limit == 500
 
     @pytest.mark.asyncio
     async def test_cancel_free_tier_fails(
@@ -372,7 +373,7 @@ class TestSimpleCreditModule:
 
         result = await module.get_credits(mock_request)
 
-        assert result.tier_credits_available == 50
+        assert result.tier_credit_limit == 50
         assert result.tier_cost_eur == 0.0  # cost reset on renewal
 
     @pytest.mark.asyncio
@@ -391,8 +392,8 @@ class TestSimpleCreditModule:
 
         result = await module.get_credits(mock_request)
 
-        assert result.tier_credits_available == 50
-        assert result.topup_credits_available == 40
+        assert result.tier_credit_limit == 50
+        assert result.topup_credit_limit == 40
 
     @pytest.mark.asyncio
     async def test_cancelled_tier_drops_to_free_on_renewal(
@@ -414,9 +415,7 @@ class TestSimpleCreditModule:
 
         assert result.tier == "free"
         assert result.tier_status == "active"
-        assert result.tier_credits_available == 50
-
-    # --- Programmatic consume API ---
+        assert result.tier_credit_limit == 50
 
     @pytest.mark.asyncio
     async def test_programmatic_consume_success(
