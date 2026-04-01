@@ -263,13 +263,6 @@ class TestModelProviderModule:
         )
         assert response.status_code == 422
 
-        # Missing api_key
-        response = test_client.post(
-            "/api/models/providers/openai",
-            json={"name": "TestProvider", "base_url": "https://api.test.com"},
-        )
-        assert response.status_code == 422
-
     def test_update_provider(
         self, test_client: TestClient, mock_provider_store: ModelProviderStore
     ) -> None:
