@@ -13,12 +13,10 @@
     {
       "id": "app-router",
       "type": "AppRouter",
-      "path": "@/modules/app-layout/AppRouter/create",
+      "path": "@/modules/app-layout/appRouter/create",
       "dependencies": {
         "module:routes": ["chat-route", "providers-route"],
-        "module:fallbackRoute": "chat-fallback-route",
-        "module:chatbots": ["chatbot"],
-        "module:providerManagement": ["llm-provider-management"]
+        "module:fallbackRoute": "chat-fallback-route"
       }
     },
     {
@@ -56,7 +54,7 @@
       "path": "@/modules/app-layout/AppLayout",
       "dependencies": {
         "module:appRouter": "app-router",
-        "module:chatbots": ["chatbot"],
+        "module:chat": ["chat"],
         "module:providerManagement": ["llm-provider-management"]
       }
     },
@@ -87,9 +85,9 @@
       }
     },
     {
-      "id": "chatbot",
-      "type": "ChatbotComponent",
-      "path": "@/modules/chatbot/ChatbotComponent",
+      "id": "chat",
+      "type": "ChatComponent",
+      "path": "@/modules/chat/ChatComponent",
       "dependencies": {
         "module:chatService": "chat-service",
         "module:llmProviderService": "llm-provider-service"
@@ -98,15 +96,15 @@
     {
       "id": "chat-route",
       "type": "Route",
-      "path": "@/modules/chatbot/chatRouteDefinition/create",
+      "path": "@/modules/chat/chatRouteDefinition/create",
       "dependencies": {
-        "module:chatbots": ["chatbot"]
+        "module:chat": ["chat"]
       }
     },
     {
       "id": "chat-fallback-route",
       "type": "FallbackRoute",
-      "path": "@/modules/chatbot/chatFallbackRouteDefinition/create",
+      "path": "@/modules/chat/chatFallbackRouteDefinition/create",
       "dependencies": {}
     },
     {

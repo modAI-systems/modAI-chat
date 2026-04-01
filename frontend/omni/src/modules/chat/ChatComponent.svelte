@@ -10,7 +10,7 @@ import ChatConversationArea from "./ChatConversationArea.svelte";
 import ChatInputPanel from "./ChatInputPanel.svelte";
 import { modelSelectId } from "./utils.js";
 
-const deps = getModuleDeps("@/modules/chatbot/ChatbotComponent");
+const deps = getModuleDeps("@/modules/chat/ChatComponent");
 const chatService = deps.getOne<ChatService>("chatService");
 const llmProviderService =
   deps.getOne<LLMProviderService>("llmProviderService");
