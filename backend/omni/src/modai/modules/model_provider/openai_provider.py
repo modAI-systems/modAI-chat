@@ -157,11 +157,6 @@ class OpenAIProviderModule(ModelProviderModule):
 
         # Extract API key from provider properties
         api_key = provider.properties.get("api_key") if provider.properties else None
-        if not api_key:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Provider '{provider_id}' does not have an API key configured",
-            )
 
         try:
             # Create OpenAI client with the provider's API key and URL
