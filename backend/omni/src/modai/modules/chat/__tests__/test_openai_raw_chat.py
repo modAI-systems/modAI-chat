@@ -124,9 +124,12 @@ async def test_llm_generate_response():
     assert response_dict["status"]
     assert response_dict["output"]
     assert len(response_dict["output"]) > 0
-    assert response_dict["output"][0]["content"]
-    assert len(response_dict["output"][0]["content"]) > 0
-    output_text = response_dict["output"][0]["content"][0]["text"]
+    message_output = next(
+        o for o in response_dict["output"] if o.get("type") == "message"
+    )
+    assert message_output["content"]
+    assert len(message_output["content"]) > 0
+    output_text = message_output["content"][0]["text"]
     assert "Hello" in output_text
     assert response_dict["usage"]
     assert response_dict["usage"]["input_tokens"] > 0
@@ -227,9 +230,10 @@ async def test_chat_responses_api(openai_client: AsyncOpenAI, request):
     assert response.status
     assert response.output
     assert len(response.output) > 0
-    assert response.output[0].content
-    assert len(response.output[0].content) > 0
-    output_text = response.output[0].content[0].text
+    message_output = next(o for o in response.output if o.type == "message")
+    assert message_output.content
+    assert len(message_output.content) > 0
+    output_text = message_output.content[0].text
     assert "Hello" in output_text
     assert response.usage
     assert response.usage.input_tokens > 0
