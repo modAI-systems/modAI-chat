@@ -2,45 +2,60 @@
   "version": "1.0.0",
   "modules": [
     {
+      "id": "app-root",
+      "type": "AppRoot",
+      "path": "@/modules/app-layout/AppRoot",
+      "dependencies": {
+        "module:layout": "app-layout"
+      }
+    },
+    {
       "id": "fetch-service",
       "type": "FetchService",
-      "path": "@/modules/fetch-service/pureFetchService",
-      "dependencies": []
+      "path": "@/modules/fetch-service/pureFetchService/create",
+      "dependencies": {}
     },
     {
       "id": "app-layout",
       "type": "AppLayout",
       "path": "@/modules/app-layout/AppLayout",
-      "dependencies": []
+      "dependencies": {
+        "module:chatbots": [
+          "chatbot"
+        ],
+        "module:providerManagement": [
+          "llm-provider-management"
+        ]
+      }
     },
     {
       "id": "llm-provider-service",
       "type": "LLMProviderService",
-      "path": "@/modules/llm-provider-service/localStorageLLMProviderService",
-      "dependencies": []
+      "path": "@/modules/llm-provider-service/localStorageLLMProviderService/create",
+      "dependencies": {}
     },
     {
       "id": "chat-service",
       "type": "ChatService",
-      "path": "@/modules/chat-service/openai",
-      "dependencies": []
+      "path": "@/modules/chat-service/openai/create",
+      "dependencies": {}
     },
     {
       "id": "chatbot",
       "type": "ChatbotComponent",
       "path": "@/modules/chatbot/ChatbotComponent",
-      "dependencies": [
-        "module:chat-service",
-        "module:llm-provider-service"
-      ]
+      "dependencies": {
+        "module:chatService": "chat-service",
+        "module:llmProviderService": "llm-provider-service"
+      }
     },
     {
       "id": "llm-provider-management",
       "type": "LLMProviderManagementComponent",
       "path": "@/modules/llm-provider-management/LLMProviderManagementComponent",
-      "dependencies": [
-        "module:llm-provider-service"
-      ]
+      "dependencies": {
+        "module:llmProviderService": "llm-provider-service"
+      }
     }
   ]
 }

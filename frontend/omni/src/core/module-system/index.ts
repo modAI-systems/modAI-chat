@@ -1,23 +1,30 @@
 import { getContext } from "svelte";
-import type { LoadedModule } from "./moduleRegistry";
 
 export const MODULES_KEY = Symbol("modules");
+
+/**
+ * Scoped dependency accessor for a specific module.
+ * Only dependencies declared in that module's manifest entry are accessible.
+ */
+export interface ModuleDependencies {
+    /**
+     * Get a single module registered under the name.
+     * Throws if no module or more than one module of that name is registered.
+     */
+    getOne<T>(name: string): T;
+
+    /**
+     * Get all modules registered under a specific name.
+     */
+    getAll<T>(name: string): T[];
+}
 
 /**
  * Interface for interacting with the module system.
  * Use getModules() to access this from any child component.
  */
 export interface Modules {
-    /**
-     * Get a single module of a specific type.
-     * Throws if no module or more than one module of that type is registered.
-     */
-    getOne<T>(type: string): T;
-
-    /**
-     * Get all modules registered under a specific type.
-     */
-    getAll<T>(type: string): T[];
+    getModuleDependencies(path: string): ModuleDependencies;
 }
 
 /**
@@ -32,29 +39,10 @@ export function getModules(): Modules {
 }
 
 /**
- * Active module registry — implements the Modules interface over a resolved list.
+ * Convenience hook — returns the scoped dependencies for the given module path.
+ * Equivalent to getModules().getModuleDependencies(path).
+ * Pass the same path string used in modules*.json for this module.
  */
-export class ActiveModulesImpl implements Modules {
-    private moduleMap: Map<string, LoadedModule>;
-
-    constructor(modules: LoadedModule[]) {
-        this.moduleMap = new Map(modules.map((m) => [m.id, m]));
-    }
-
-    getOne<T>(type: string): T {
-        const found = this.getAll<T>(type);
-        if (found.length === 0) {
-            throw new Error(`No module found with type "${type}"`);
-        }
-        if (found.length > 1) {
-            throw new Error(`Multiple modules found with type "${type}"`);
-        }
-        return found[0];
-    }
-
-    getAll<T>(type: string): T[] {
-        return Array.from(this.moduleMap.values())
-            .filter((m) => m.type === type)
-            .map((m) => m.component as T);
-    }
+export function getModuleDeps(path: string): ModuleDependencies {
+    return getModules().getModuleDependencies(path);
 }

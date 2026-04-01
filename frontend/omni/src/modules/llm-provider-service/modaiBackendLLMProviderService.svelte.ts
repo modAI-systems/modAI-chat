@@ -1,8 +1,5 @@
-import type { Modules } from "@/core/module-system/index.js";
-import {
-    FETCH_SERVICE_TYPE,
-    type FetchService,
-} from "@/modules/fetch-service/index.svelte.js";
+import type { ModuleDependencies } from "@/core/module-system/index.js";
+import type { FetchService } from "@/modules/fetch-service/index.svelte.js";
 import type {
     CreateProviderRequest,
     LLMProviderService,
@@ -47,21 +44,21 @@ function mapProvider(p: BackendProvider): Provider {
 }
 
 export class ModaiBackendLLMProviderService implements LLMProviderService {
-    async fetchProviders(modules: Modules): Promise<Provider[]> {
-        const response = await fetchVia(modules, API_BASE);
+    readonly #fetchService: FetchService;
+
+    constructor(fetchService: FetchService) {
+        this.#fetchService = fetchService;
+    }
+
+    async fetchProviders(): Promise<Provider[]> {
+        const response = await this.#fetch(API_BASE);
         if (!response.ok) return [];
         const data = (await response.json()) as BackendProviderListResponse;
         return data.providers.map(mapProvider);
     }
 
-    async fetchModels(
-        modules: Modules,
-        provider: Provider,
-    ): Promise<ProviderModel[]> {
-        const response = await fetchVia(
-            modules,
-            `${API_BASE}/${provider.id}/models`,
-        );
+    async fetchModels(provider: Provider): Promise<ProviderModel[]> {
+        const response = await this.#fetch(`${API_BASE}/${provider.id}/models`);
         if (!response.ok) return [];
         const data = (await response.json()) as BackendModelsResponse;
         return data.data.map((model) => ({
@@ -74,11 +71,8 @@ export class ModaiBackendLLMProviderService implements LLMProviderService {
         }));
     }
 
-    async createProvider(
-        modules: Modules,
-        data: CreateProviderRequest,
-    ): Promise<Provider> {
-        const response = await fetchVia(modules, API_BASE, {
+    async createProvider(data: CreateProviderRequest): Promise<Provider> {
+        const response = await this.#fetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
@@ -93,11 +87,10 @@ export class ModaiBackendLLMProviderService implements LLMProviderService {
     }
 
     async updateProvider(
-        modules: Modules,
         id: string,
         data: Partial<CreateProviderRequest>,
     ): Promise<Provider> {
-        const getResponse = await fetchVia(modules, `${API_BASE}/${id}`);
+        const getResponse = await this.#fetch(`${API_BASE}/${id}`);
         if (!getResponse.ok) throw new Error(`Provider not found: ${id}`);
         const current = (await getResponse.json()) as BackendProvider;
 
@@ -108,7 +101,7 @@ export class ModaiBackendLLMProviderService implements LLMProviderService {
             properties: current.properties,
         };
 
-        const response = await fetchVia(modules, `${API_BASE}/${id}`, {
+        const response = await this.#fetch(`${API_BASE}/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(updateBody),
@@ -122,8 +115,8 @@ export class ModaiBackendLLMProviderService implements LLMProviderService {
         return mapProvider(updated);
     }
 
-    async deleteProvider(modules: Modules, id: string): Promise<void> {
-        const response = await fetchVia(modules, `${API_BASE}/${id}`, {
+    async deleteProvider(id: string): Promise<void> {
+        const response = await this.#fetch(`${API_BASE}/${id}`, {
             method: "DELETE",
         });
         if (!response.ok) {
@@ -132,15 +125,14 @@ export class ModaiBackendLLMProviderService implements LLMProviderService {
             );
         }
     }
+
+    #fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+        return this.#fetchService.fetch(input, init);
+    }
 }
 
-function fetchVia(
-    modules: Modules,
-    input: RequestInfo | URL,
-    init?: RequestInit,
-): Promise<Response> {
-    const fetchService = modules.getOne<FetchService>(FETCH_SERVICE_TYPE);
-    return fetchService.fetch(modules, input, init);
+export function create(deps: ModuleDependencies): LLMProviderService {
+    return new ModaiBackendLLMProviderService(
+        deps.getOne<FetchService>("fetchService"),
+    );
 }
-
-export default new ModaiBackendLLMProviderService();

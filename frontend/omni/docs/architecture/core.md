@@ -48,86 +48,121 @@ Without any modules, the frontend would be completely empty just containing an e
 
 ## 4. Module System
 
-The heart of the frontend is its modular system. It is defined in the `Modules` interface as:
+The heart of the frontend is its modular system. The central interfaces are:
 
 ```typescript
-getOne<T>(type: string): T;
-getAll<T>(type: string): T[];
-```
+// Scoped dependency accessor — returned per module
+interface ModuleDependencies {
+    getOne<T>(name: string): T;
+    getAll<T>(name: string): T[];
+}
 
-### 4.1 Getting the `Modules`
-
-In order to use the functions of the modules, it must be somehow received first. This is done with `getModules()` from any child component inside a `ModulesProvider`:
-
-```typescript
-const modules = getModules();
-
-modules.getAll<SomeComponent>(...)
-```
-
-`getModules()` uses Svelte's `getContext` internally. It must be called at component initialisation time (i.e. at the top level of a `<script>` block), not inside event handlers or `$effect`.
-
-### 4.2 Using the `Modules`
-
-The most important functionality of the module system is to receive other modules by their type. This is needed if a parent module wants to receive its child modules for rendering or if a user component needs to get the user service for backend interaction.
-
-There are two ways to get a module:
-
-- `getOne`: receives a singleton module where only one of its kind should be registered (e.g. like a user service which should only be available once). Throws an error if zero or more than one module of that type is registered.
-- `getAll`: receives all modules registered for the given kind, like all registered sidebar items, or all registered routes.
-
-### 4.3 Module ID vs Module Type
-
-Each registered module has a unique ID and is also registered as a certain type. e.g. each component for the sidebar will have a different ID, but they all have the same type.
-
-The ID of a module is usually defined in the `modules.json` (see next chapter).
-
-The type of a module is also set in the `modules.json` but is usually defined somewhere else: TBD
-
-### 4.4 Registering Modules
-
-To register and activate a module, it needs to be added to one place:
-* `modules*.json` to define the module and its dependencies
-
-> **Auto-discovery**: The module registry automatically discovers all `.svelte` files under `src/modules/**` via Vite's `import.meta.glob`. No manual entry in a TypeScript registry file is required — adding a file to the `modules/` directory and listing it in `modules*.json` is sufficient.
-
-#### `modules*.json`
-
-To activate a module, it needs to be added to the `modules*.json`:
-
-The registration of modules in the Modules is not defined by the `Modules` interface. The default implementation handles module registration with a `modules*.json` file (`modules_with_backend.json` and `modules_browser_only.json`; the two files are used to startup different versions — a full and a lite version) loaded at startup of the application. The json has the following structure:
-
-```json
-{
-    "version": "1.0.0",
-    "modules": [
-        {
-            "id": "chatbot",
-            "type": "ChatbotComponent",
-            "path": "@/modules/chatbot/ChatbotComponent",
-            "dependencies": []
-        },
-        ...
-    ]
+// Top-level module registry
+interface Modules {
+    getModuleDependencies(path: string): ModuleDependencies;
 }
 ```
 
-- **id** and **type**: see section _Module ID vs Module Type_
-- **path**: the component include path, relative to `src/modules/`, without the `.svelte` extension. The component to be used must be the default export of that file.
-- **dependencies**: a list of dependencies required for the module to operate. Dependencies starting with "module:" indicate module dependencies. If a module dependency is not available, the dependent module will not be loaded.
+### 4.1 Accessing Module Dependencies
+
+Each module knows its own path (the `path` value in its `modules*.json` entry) and obtains its declared dependencies via `getModuleDeps(path)`:
+
+```typescript
+const deps = getModuleDeps("@/modules/chatbot/ChatbotComponent");
+
+const chatService = deps.getOne<ChatService>("chatService");
+const widgets     = deps.getAll<Component>("widgets");
+```
+
+`getModuleDeps(path)` is a convenience wrapper around `getModules().getModuleDependencies(path)`. Both use Svelte's `getContext` internally and **must be called at component initialisation time** (top level of a `<script>` block), not inside event handlers or `$effect`.
+
+### 4.2 Dependency Names Are Local Aliases
+
+`getOne` and `getAll` accept the **local alias** declared in the `dependencies` map of that module's `modules*.json` entry — not a global type string. The `modules*.json` maps the alias to the actual module ID:
+
+```json
+{
+  "id": "chatbot",
+  ...
+  "dependencies": {
+    "module:chatService":      "chat-service",
+    "module:llmProviderService": "llm-provider-service"
+  }
+}
+```
+
+```typescript
+// Inside the chatbot component:
+const deps = getModuleDeps("@/modules/chatbot/ChatbotComponent");
+const chatService = deps.getOne<ChatService>("chatService");
+//                                            ^^^^^^^^^^^^ local alias from the JSON
+```
+
+This means a module cannot reach anything outside its declared dependencies, and the wiring is entirely controlled by the manifest — not by the component code.
+
+### 4.3 Module ID vs Module Type
+
+Each registered module has a unique **ID** and a **type**:
+
+- **ID**: unique identifier used _internally_ by the registry to resolve `dependencies` values. Never exposed to or used by the module itself.
+- **type**: semantic group label (e.g. `"ChatService"`) — currently informational; used for tooling and documentation
+
+Both are set in `modules*.json`.
+
+### 4.4 Registering Modules
+
+To activate a module, add it to `modules*.json`.
+
+> **Auto-discovery**: The module registry automatically discovers all `.svelte` and `.svelte.ts` files under `src/modules/**` via Vite's `import.meta.glob`. No manual TypeScript registry entry is required.
+
+#### `modules*.json` — regular module entry
+
+```json
+{
+    "id": "chatbot",
+    "type": "ChatbotComponent",
+    "path": "@/modules/chatbot/ChatbotComponent",
+    "dependencies": {
+        "module:chatService":        "chat-service",
+        "module:llmProviderService": "llm-provider-service"
+    }
+}
+```
+
+- **id**: unique module identifier
+- **type**: semantic group label
+- **path**: import path used as the module's lookup key for `getModuleDeps()` and, when found in the auto-discovery registry, for loading its component. Always required.
+- **dependencies**: object mapping local alias keys to module IDs. Keys use a prefix:
+  - `module:<alias>` — declares another module as a dependency; alias is the name used in `getOne`/`getAll`
+  - `flag:<name>` — module only activates if this runtime flag is present
+  - `flag:!<name>` — module only activates if this runtime flag is absent
+- **creationType** _(optional)_: `"raw"` (default) or `"serviceFactory"` — see section 4.6
+- **config** _(optional)_: static config object passed to `serviceFactory` modules
+
+#### Entries without a loadable component
+
+If the `path` is not found in the module registry (e.g. it points outside `src/modules/`, such as a core infrastructure file), the module is still registered with the path as its lookup key — it just has no component. No special flag is needed: this happens automatically:
+
+```json
+{
+    "id": "app-root",
+    "type": "AppRoot",
+    "path": "@/modules/app-layout/AppRoot",
+    "dependencies": {
+        "module:layout": "app-layout"
+    }
+}
+```
 
 #### Flag Dependencies
 
-Modules can also depend on runtime flags using the "flag:" prefix:
-
-- `"flag:foo"`: Module activates only if flag "foo" is present
-- `"flag:!foo"`: Module activates only if flag "foo" is absent
-- Multiple flags can be combined: `["flag:foo", "flag:bar"]` requires both flags
-- Mixed flags: `["flag:foo", "flag:!bar"]` requires foo present and bar absent
+- `"flag:beta": "description"` — activates only if flag `beta` is present
+- `"flag:!legacy": "description"` — activates only if flag `legacy` is absent
+- Multiple flag keys can be combined; all must be satisfied
 
 This enables feature toggling and environment-specific module loading.
 
-### 4.5 Exporting a Module
+### 4.5 Exporting a Module Component
 
 ```svelte
 <!-- MyModule.svelte -->
@@ -138,7 +173,38 @@ This enables feature toggling and environment-specific module loading.
 <!-- template -->
 ```
 
-Modules must be the **default export** of a `.svelte` file to be usable by the module system. Svelte components are default-exported automatically — no explicit `export default` is needed.
+Modules must be the **default export** of a `.svelte` file. Svelte components are default-exported automatically.
+
+### 4.6 Service Factory Modules
+
+When `creationType` is `"serviceFactory"`, the module file exports a named `create` function instead of a default instance. The module system calls it during activation, passing the module's already-resolved `ModuleDependencies` and the `config` object from the manifest:
+
+```typescript
+// src/modules/my-service/myServiceImpl.svelte.ts
+import type { MyService } from "./index.svelte.js";
+import type { ModuleDependencies } from "@/core/module-system/index.js";
+
+export function create(
+    deps: ModuleDependencies,
+    config: Record<string, unknown>,
+): MyService {
+    const db = deps.getOne<Database>("database");
+    return new MyServiceImpl(db, config.endpoint as string);
+}
+```
+
+```json
+{
+    "id": "my-service",
+    "type": "MyService",
+    "path": "@/modules/my-service/myServiceImpl",
+    "creationType": "serviceFactory",
+    "dependencies": { "module:database": "db" },
+    "config": { "endpoint": "/api/data" }
+}
+```
+
+No default export is needed. The created instance becomes the module's component value, accessible to consumers via `deps.getOne("myService")`.
 
 ## 5. Root Application
 
@@ -170,30 +236,27 @@ A service module group has the following structure:
 
 ```
 src/modules/my-service/
-  index.svelte.ts      ← public interface + getMyService() convenience hook
-  openai.svelte.ts     ← default implementation (export default new ...)
+  index.svelte.ts      ← public interface
+  openai.svelte.ts     ← default implementation (export default new ... OR export function create)
   README.md            ← usage documentation
   index.test.ts        ← tests for the implementation
 ```
 
 #### `index.svelte.ts` — interface definition
 
-Defines the TypeScript interface and exports the type constant:
+Defines the TypeScript interface:
 
 ```typescript
 // src/modules/chat-service/index.svelte.ts
-import type { Modules } from "@/core/module-system/index.js";
-
-export const CHAT_SERVICE_TYPE = "ChatService";
 
 export interface ChatService {
-    streamChat(modules: Modules, model: ProviderModel, messages: UIMessage[]): AsyncGenerator<string>;
+    streamChat(deps: ModuleDependencies, model: ProviderModel, messages: UIMessage[]): AsyncGenerator<string>;
 }
 ```
 
-#### `*.svelte.ts` — implementation
+#### `*.svelte.ts` — implementation (`raw`, default)
 
-Contains the concrete implementation. The file **must use `export default`** to expose the service instance — that is what the module registry stores as the module's value:
+For simple services without constructor-time dependencies, export a default instance:
 
 ```typescript
 // src/modules/chat-service/openai.svelte.ts
@@ -204,6 +267,19 @@ class OpenAIChatService implements ChatService { ... }
 export default new OpenAIChatService();
 ```
 
+#### `*.svelte.ts` — implementation (`serviceFactory`)
+
+For services that need other modules or config at construction time, export a `create` function:
+
+```typescript
+// src/modules/my-service/myServiceImpl.svelte.ts
+import type { ModuleDependencies } from "@/core/module-system/index.js";
+
+export function create(deps: ModuleDependencies, config: Record<string, unknown>): MyService {
+    return new MyServiceImpl(deps.getOne("database"), config.endpoint as string);
+}
+```
+
 #### Registration in `modules*.json`
 
 ```json
@@ -211,42 +287,39 @@ export default new OpenAIChatService();
   "id": "chat-service",
   "type": "ChatService",
   "path": "@/modules/chat-service/openai",
-  "dependencies": []
+  "dependencies": {}
 }
 ```
 
-The type string (`"ChatService"`) maps exactly to the string passed to `getOne<ChatService>("ChatService")`.
-
 #### Consuming a service
 
-Any module that depends on the service declares it as a `module:` dependency and retrieves it at initialisation time via `getModules()`:
+A consumer module declares the service as a `module:` dependency in the manifest and retrieves it by its local alias at initialisation time:
+
+```json
+{
+  "id": "chatbot",
+  "dependencies": {
+    "module:chatService": "chat-service"
+  }
+}
+```
 
 ```svelte
 <script lang="ts">
-  import { getModules } from "@/core/module-system/index.js";
-  import { CHAT_SERVICE_TYPE, type ChatService } from "@/modules/chat-service/index.svelte.js";
+  import { getModuleDeps } from "@/core/module-system/index.js";
+  import type { ChatService } from "@/modules/chat-service/index.svelte.js";
 
-  const modules = getModules();  // called at component init
-  const chatService = modules.getOne<ChatService>(CHAT_SERVICE_TYPE);
-
-  async function sendMessage(...) {
-    for await (const chunk of chatService.streamChat(modules, model, messages)) { ... }
-  }
+  const chatService = getModuleDeps("@/modules/chatbot/ChatbotComponent").getOne<ChatService>("chatService");
 </script>
 ```
 
-The corresponding `modules*.json` entry adds the dependency:
-```json
-{ "id": "chatbot", "dependencies": ["module:chat-service"] }
-```
-
-This ensures the chatbot is only activated when a chat service is present.
+The chatbot is only activated once `chat-service` is present, and it can only see what it has declared — nothing more.
 
 ### 6.3 Separate Interface from Implementation (aka `index.svelte.ts`)
 
-Some modules are meant to be used by others via a defined interface, like services. In such cases, it is a good practice to put the interface inside the module group in the `index.svelte.ts` file. This eases the import handling for dependent modules.
+Some modules are meant to be used by others via a defined interface, such as services. In such cases, put the interface in `index.svelte.ts` inside the module group. This keeps imports clean for consumers.
 
-Additionally, the interface should have good API documentation to make usage easier for others to understand.
+The interface file should contain good API documentation to make usage easier for others to understand. It does **not** need to export a type-constant string (the `"ChatService"` / `CHAT_SERVICE_TYPE` pattern is obsolete — consumers use their local alias from the manifest instead).
 
 ### 6.4 Module Group Documentation
 

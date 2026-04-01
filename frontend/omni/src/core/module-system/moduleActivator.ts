@@ -1,27 +1,38 @@
+import { ModuleDependenciesImpl } from "./activeModules";
+import type { ModuleDependencies } from "./index";
 import type { LoadedModule, ModuleRegistry } from "./moduleRegistry";
+
+type ServiceFactory = (
+    deps: ModuleDependencies,
+    config: Record<string, unknown>,
+) => unknown;
+
+function getReferencedModuleIds(module: LoadedModule): string[] {
+    return Object.entries(module.dependencySpec)
+        .filter(([key]) => key.startsWith("module:"))
+        .flatMap(([, value]) => (Array.isArray(value) ? value : [value]));
+}
 
 function getUnmetModuleDependencies(
     module: LoadedModule,
     activatedMap: Map<string, LoadedModule>,
 ): string[] {
-    return module.dependencies
-        .filter((dep) => dep.startsWith("module:"))
-        .map((dep) => dep.substring("module:".length))
-        .filter((depId) => !activatedMap.has(depId))
-        .map((depId) => `module:${depId}`);
+    return getReferencedModuleIds(module).filter(
+        (depId) => !activatedMap.has(depId),
+    );
 }
 
 function getUnmetFlagDependencies(
     module: LoadedModule,
     activeFlags: string[],
 ): string[] {
-    return module.dependencies
-        .filter((dep) => dep.startsWith("flag:"))
-        .map((dep) => {
-            const flagPart = dep.substring("flag:".length);
+    return Object.keys(module.dependencySpec)
+        .filter((key) => key.startsWith("flag:"))
+        .map((key) => {
+            const flagPart = key.substring("flag:".length);
             const isNegated = flagPart.startsWith("!");
             const flagName = isNegated ? flagPart.substring(1) : flagPart;
-            return { flagName, isNegated, original: dep };
+            return { flagName, isNegated, original: key };
         })
         .filter(({ flagName, isNegated }) =>
             isNegated
@@ -33,7 +44,8 @@ function getUnmetFlagDependencies(
 
 /**
  * Recursively resolve and activate modules whose dependencies are met.
- * Supports "module:<id>" and "flag:[!]<name>" dependency prefixes.
+ * Supports "module:<localName>" and "flag:[!]<name>" dependency keys.
+ * For serviceFactory modules, calls the create function during activation.
  */
 export async function activateModules(
     registry: ModuleRegistry,
@@ -51,6 +63,14 @@ export async function activateModules(
             const unmetFlags = getUnmetFlagDependencies(mod, activeFlags);
 
             if (unmetMods.length === 0 && unmetFlags.length === 0) {
+                if (mod.path.endsWith("/create")) {
+                    const deps = new ModuleDependenciesImpl(
+                        mod.dependencySpec,
+                        activatedMap,
+                    );
+                    const factory = mod.component as ServiceFactory;
+                    mod.component = factory(deps, mod.config);
+                }
                 activatedMap.set(mod.id, mod);
             } else {
                 stillRemaining.push(mod);

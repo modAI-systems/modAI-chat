@@ -5,9 +5,9 @@ export interface ManifestJson {
 
 export interface ManifestEntry {
     id: string;
-    type: string;
     path: string;
-    dependencies?: string[];
+    dependencies?: Record<string, string | string[]>;
+    config?: Record<string, unknown>;
 }
 
 export async function fetchManifestJson(path: string): Promise<ManifestJson> {

@@ -1,24 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Modules } from "@/core/module-system/index";
-import {
-    NO_SESSION_ACTION_TYPE,
-    type NoSessionAction,
-    SESSION_SERVICE_TYPE,
-    type SessionService,
+import type { ModuleDependencies } from "@/core/module-system/index";
+import type {
+    NoSessionAction,
+    SessionService,
 } from "@/modules/session-service/index.svelte";
-import pureFetchService from "./pureFetchService.svelte";
-import sessionFetchService from "./sessionFetchService.svelte";
-
-function makeModules(
-    getOne: (type: string) => unknown = (type) => {
-        throw new Error(`No module found with type "${type}"`);
-    },
-): Modules {
-    return {
-        getOne: vi.fn().mockImplementation(getOne),
-        getAll: vi.fn().mockReturnValue([]),
-    };
-}
+import { create as createPureFetchService } from "./pureFetchService.svelte";
+import { create as createSessionFetchService } from "./sessionFetchService.svelte";
 
 describe("PureFetchService", () => {
     beforeEach(() => {
@@ -33,10 +20,7 @@ describe("PureFetchService", () => {
         const mockResponse = new Response("ok", { status: 200 });
         vi.mocked(fetch).mockResolvedValue(mockResponse);
 
-        const response = await pureFetchService.fetch(
-            makeModules(),
-            "/api/test",
-        );
+        const response = await createPureFetchService().fetch("/api/test");
 
         expect(fetch).toHaveBeenCalledWith("/api/test", undefined);
         expect(response).toBe(mockResponse);
@@ -46,7 +30,7 @@ describe("PureFetchService", () => {
         vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 200 }));
         const init: RequestInit = { method: "POST", body: "data" };
 
-        await pureFetchService.fetch(makeModules(), "/api/test", init);
+        await createPureFetchService().fetch("/api/test", init);
 
         expect(fetch).toHaveBeenCalledWith("/api/test", init);
     });
@@ -61,15 +45,22 @@ describe("SessionFetchService", () => {
         execute: vi.fn(),
     };
 
-    function makeSessionModules(sessionActive = false): Modules {
+    function makeDeps(): ModuleDependencies {
+        return {
+            getOne: vi.fn().mockImplementation((name: string) => {
+                if (name === "sessionService") return mockSessionService;
+                if (name === "noSessionAction") return mockNoSessionAction;
+                throw new Error(`Unknown dep "${name}"`);
+            }),
+            getAll: vi.fn().mockReturnValue([]),
+        };
+    }
+
+    function makeService(sessionActive = false) {
         vi.mocked(mockSessionService.isSessionActive).mockReturnValue(
             sessionActive,
         );
-        return makeModules((type) => {
-            if (type === SESSION_SERVICE_TYPE) return mockSessionService;
-            if (type === NO_SESSION_ACTION_TYPE) return mockNoSessionAction;
-            throw new Error(`No module found with type "${type}"`);
-        });
+        return createSessionFetchService(makeDeps());
     }
 
     beforeEach(() => {
@@ -87,10 +78,7 @@ describe("SessionFetchService", () => {
         const mockResponse = new Response(null, { status: 200 });
         vi.mocked(fetch).mockResolvedValue(mockResponse);
 
-        const response = await sessionFetchService.fetch(
-            makeSessionModules(),
-            "/api/data",
-        );
+        const response = await makeService().fetch("/api/data");
 
         expect(response).toBe(mockResponse);
         expect(mockSessionService.refresh).not.toHaveBeenCalled();
@@ -99,7 +87,7 @@ describe("SessionFetchService", () => {
     it("does not interact with session service on non-401 error responses", async () => {
         vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 500 }));
 
-        await sessionFetchService.fetch(makeSessionModules(), "/api/data");
+        await makeService().fetch("/api/data");
 
         expect(mockSessionService.refresh).not.toHaveBeenCalled();
     });
@@ -107,7 +95,7 @@ describe("SessionFetchService", () => {
     it("calls session service refresh on 401", async () => {
         vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 401 }));
 
-        await sessionFetchService.fetch(makeSessionModules(), "/api/data");
+        await makeService().fetch("/api/data");
 
         expect(mockSessionService.refresh).toHaveBeenCalledOnce();
     });
@@ -115,7 +103,7 @@ describe("SessionFetchService", () => {
     it("executes no-session action when session is inactive after 401", async () => {
         vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 401 }));
 
-        await sessionFetchService.fetch(makeSessionModules(false), "/api/data");
+        await makeService(false).fetch("/api/data");
 
         expect(mockNoSessionAction.execute).toHaveBeenCalledOnce();
     });
@@ -123,7 +111,7 @@ describe("SessionFetchService", () => {
     it("does not execute no-session action when session is still active after 401", async () => {
         vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 401 }));
 
-        await sessionFetchService.fetch(makeSessionModules(true), "/api/data");
+        await makeService(true).fetch("/api/data");
 
         expect(mockNoSessionAction.execute).not.toHaveBeenCalled();
     });
@@ -131,7 +119,7 @@ describe("SessionFetchService", () => {
     it("includes credentials by default", async () => {
         vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 200 }));
 
-        await sessionFetchService.fetch(makeSessionModules(), "/api/data");
+        await makeService().fetch("/api/data");
 
         expect(fetch).toHaveBeenCalledWith(
             "/api/data",
@@ -142,9 +130,7 @@ describe("SessionFetchService", () => {
     it("allows caller to override credentials", async () => {
         vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 200 }));
 
-        await sessionFetchService.fetch(makeSessionModules(), "/api/data", {
-            credentials: "omit",
-        });
+        await makeService().fetch("/api/data", { credentials: "omit" });
 
         expect(fetch).toHaveBeenCalledWith(
             "/api/data",

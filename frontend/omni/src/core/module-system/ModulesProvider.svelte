@@ -1,7 +1,8 @@
 <script lang="ts">
 import type { Snippet } from "svelte";
 import { setContext, untrack } from "svelte";
-import { ActiveModulesImpl, MODULES_KEY, type Modules } from "./index";
+import { ActiveModulesImpl } from "./activeModules";
+import { MODULES_KEY, type Modules } from "./index";
 import { fetchManifestJson } from "./manifestJson";
 import { activateModules } from "./moduleActivator";
 import { JsonModuleRegistry } from "./moduleRegistry";
@@ -18,12 +19,9 @@ let activeModulesImpl = $state<ActiveModulesImpl | null>(null);
 
 // Context object is set synchronously; methods delegate to reactive state
 const modules: Modules = {
-  getOne<T>(type: string): T {
+  getModuleDependencies(path: string) {
     if (!activeModulesImpl) throw new Error("Modules not yet loaded");
-    return activeModulesImpl.getOne<T>(type);
-  },
-  getAll<T>(type: string): T[] {
-    return activeModulesImpl?.getAll<T>(type) ?? [];
+    return activeModulesImpl.getModuleDependencies(path);
   },
 };
 

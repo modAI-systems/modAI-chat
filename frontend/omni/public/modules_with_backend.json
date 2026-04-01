@@ -2,63 +2,95 @@
   "version": "1.0.0",
   "modules": [
     {
+      "id": "app-root",
+      "type": "AppRoot",
+      "path": "@/modules/app-layout/AppRoot",
+      "dependencies": {
+        "module:layout": "app-layout"
+      }
+    },
+    {
+      "id": "plain-fetch-service",
+      "type": "FetchService",
+      "path": "@/modules/fetch-service/pureFetchService/create",
+      "dependencies": {}
+    },
+    {
       "id": "fetch-service",
       "type": "FetchService",
-      "path": "@/modules/fetch-service/sessionFetchService",
-      "dependencies": []
+      "path": "@/modules/fetch-service/sessionFetchService/create",
+      "dependencies": {
+        "module:sessionService": "session-service",
+        "module:noSessionAction": "no-session-action"
+      }
     },
     {
       "id": "session-service",
       "type": "SessionService",
-      "path": "@/modules/session-service/sessionServiceImpl",
-      "dependencies": ["module:fetch-service"]
+      "path": "@/modules/session-service/sessionServiceImpl/create",
+      "dependencies": {
+        "module:fetchService": "plain-fetch-service"
+      }
     },
     {
       "id": "no-session-action",
       "type": "NoSessionAction",
-      "path": "@/modules/session-service/loginRedirectAction",
-      "dependencies": []
+      "path": "@/modules/session-service/loginRedirectAction/create",
+      "dependencies": {}
     },
     {
       "id": "app-layout-content",
       "type": "AppLayoutContent",
       "path": "@/modules/app-layout/AppLayout",
-      "dependencies": []
+      "dependencies": {
+        "module:chatbots": [
+          "chatbot"
+        ],
+        "module:providerManagement": [
+          "llm-provider-management"
+        ]
+      }
     },
     {
       "id": "app-layout",
       "type": "AppLayout",
       "path": "@/modules/session-service/SessionGatedAppLayout",
-      "dependencies": ["module:session-service", "module:app-layout-content", "module:no-session-action"]
+      "dependencies": {
+        "module:sessionService": "session-service",
+        "module:appLayoutContent": "app-layout-content",
+        "module:noSessionAction": "no-session-action"
+      }
     },
     {
       "id": "llm-provider-service",
       "type": "LLMProviderService",
-      "path": "@/modules/llm-provider-service/modaiBackendLLMProviderService",
-      "dependencies": ["module:fetch-service"]
+      "path": "@/modules/llm-provider-service/modaiBackendLLMProviderService/create",
+      "dependencies": {
+        "module:fetchService": "fetch-service"
+      }
     },
     {
       "id": "chat-service",
       "type": "ChatService",
-      "path": "@/modules/chat-service/openai",
-      "dependencies": []
+      "path": "@/modules/chat-service/openai/create",
+      "dependencies": {}
     },
     {
       "id": "chatbot",
       "type": "ChatbotComponent",
       "path": "@/modules/chatbot/ChatbotComponent",
-      "dependencies": [
-        "module:chat-service",
-        "module:llm-provider-service"
-      ]
+      "dependencies": {
+        "module:chatService": "chat-service",
+        "module:llmProviderService": "llm-provider-service"
+      }
     },
     {
       "id": "llm-provider-management",
       "type": "LLMProviderManagementComponent",
       "path": "@/modules/llm-provider-management/LLMProviderManagementComponent",
-      "dependencies": [
-        "module:llm-provider-service"
-      ]
+      "dependencies": {
+        "module:llmProviderService": "llm-provider-service"
+      }
     }
   ]
 }
