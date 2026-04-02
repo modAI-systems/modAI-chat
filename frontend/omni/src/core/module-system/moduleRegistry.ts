@@ -6,6 +6,7 @@ import type { ManifestEntry } from "./manifestJson";
 
 // Scans src/modules/**/*.svelte and *.svelte.ts — every file its own async chunk.
 // Manifest paths follow the pattern "@/modules/<path-without-extension>".
+// https://vite.dev/guide/features#glob-import
 const globModules = import.meta.glob<Record<string, unknown>>([
     "../../modules/**/*.svelte",
     "../../modules/**/*.svelte.ts",
@@ -15,11 +16,11 @@ const componentRegistry: Record<
     string,
     () => Promise<Record<string, unknown>>
 > = Object.fromEntries(
-    Object.entries(globModules).map(([key, factory]) => [
+    Object.entries(globModules).map(([key, importer]) => [
         key
             .replace("../../modules/", "@/modules/")
             .replace(/\.svelte(\.ts)?$/, ""),
-        () => factory(),
+        importer as () => Promise<Record<string, unknown>>,
     ]),
 );
 
