@@ -3,7 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
     testDir: ".",
     testMatch: "*.spec.ts",
-    fullyParallel: true,
+    fullyParallel: false,
     forbidOnly: !!process.env.CI,
     workers: 1,
     reporter: [
@@ -21,16 +21,14 @@ export default defineConfig({
             name: "chromium",
             use: { ...devices["Desktop Chrome"] },
         },
-        // Commment out for the time being until we have
-        // proper isolation of runs to avoid conflicts
-        // {
-        //     name: "firefox",
-        //     use: { ...devices["Desktop Firefox"] },
-        // },
-        // {
-        //     name: "webkit",
-        //     use: { ...devices["Desktop Safari"] },
-        // },
+        {
+            name: "firefox",
+            use: { ...devices["Desktop Firefox"] },
+        },
+        {
+            name: "webkit",
+            use: { ...devices["Desktop Safari"] },
+        },
     ],
     webServer: [
         {
