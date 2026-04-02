@@ -5,7 +5,9 @@ import { getContext } from "svelte";
 import type { ModuleDependencies } from "@/core/module-system";
 import type { RouteDefinition } from "./routeDefinition.svelte";
 
-export type RouterService = ReturnType<typeof createRouter>;
+export interface RouterService extends ReturnType<typeof createRouter> {
+  getRoutes(): RouteDefinition[];
+}
 
 export function getAppRouter(): RouterService {
   return getContext<() => RouterService>(Symbol.for("modai.appRouter"))();
@@ -26,7 +28,9 @@ export function create(deps: ModuleDependencies): RouterService {
   }
 
   routeMap["*"] = fallbackRoute.component;
-  return createRouter(routeMap);
+  const router = createRouter(routeMap) as RouterService;
+  router.getRoutes = () => routes;
+  return router;
 }
 </script>
 

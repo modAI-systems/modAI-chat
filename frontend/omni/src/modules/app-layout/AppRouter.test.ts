@@ -67,6 +67,7 @@ describe("AppRouter create", () => {
             "*": fallbackComponent,
         });
         expect(result).toBe(routerService);
+        expect(result.getRoutes()).toBe(routes);
         expect(navigate).not.toHaveBeenCalled();
     });
 });

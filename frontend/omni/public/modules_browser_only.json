@@ -29,10 +29,7 @@
       "id": "app-layout",
       "type": "AppLayout",
       "path": "@/modules/app-layout/AppLayout",
-      "dependencies": {
-        "module:chat": ["chat"],
-        "module:providerManagement": ["llm-provider-management"]
-      }
+      "dependencies": {}
     },
     {
       "id": "llm-provider-service",
