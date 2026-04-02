@@ -49,9 +49,9 @@
       "dependencies": {}
     },
     {
-      "id": "app-layout-content",
-      "type": "AppLayoutContent",
-      "path": "@/modules/app-layout/AppLayout",
+      "id": "sidebar-layout",
+      "type": "AppLayout",
+      "path": "@/modules/app-layout/SidebarLayout",
       "dependencies": {}
     },
     {
@@ -60,7 +60,7 @@
       "path": "@/modules/session-service/SessionGatedAppLayout",
       "dependencies": {
         "module:sessionService": "session-service",
-        "module:appLayoutContent": "app-layout-content",
+        "module:appLayout": "sidebar-layout",
         "module:noSessionAction": "no-session-action"
       }
     },
