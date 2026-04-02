@@ -16,7 +16,7 @@ Endpoints:
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from modai.module import ModuleDependencies
@@ -71,15 +71,6 @@ class OIDCSessionModule(SessionModule):
 
     # ── SessionModule interface ──────────────────────────────────────────
 
-    def start_new_session(
-        self,
-        request: Request,
-        response: Response,
-        user_id: str,
-        **kwargs: Any,
-    ) -> None:
-        """Not used externally. Sessions are created by OIDCAuthModule.callback."""
-
     def validate_session(self, request: Request) -> Session:
         """Decode the JWT session cookie and return a Session.
 
@@ -108,10 +99,6 @@ class OIDCSessionModule(SessionModule):
         }
 
         return Session(user_id=str(user_id), additional=additional)
-
-    def end_session(self, request: Request, response: Response) -> None:
-        """Delete the session cookie from the response."""
-        response.delete_cookie(COOKIE_NAME)
 
     # ── Web endpoints ────────────────────────────────────────────────────
 

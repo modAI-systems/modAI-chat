@@ -48,12 +48,6 @@ class MockSessionModule(SessionModule):
             raise HTTPException(status_code=401, detail="Not authenticated")
         return self.mock_session
 
-    def start_new_session(self, request, response, user_id: str, **kwargs):
-        pass
-
-    def end_session(self, request, response):
-        pass
-
 
 class TestSimpleUserSettingsModule:
     """Test the simple UserSettings module implementation"""
