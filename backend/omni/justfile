@@ -3,6 +3,10 @@
 default:
     @just --list
 
+# Install dependencies
+install:
+    uv sync
+
 # Start the development server
 start:
     uv run uvicorn modai.main:app

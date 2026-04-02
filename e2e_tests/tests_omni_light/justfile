@@ -3,6 +3,10 @@
 default:
     @just --list
 
+# Install dependencies
+install:
+    pnpm install
+
 # Run e2e tests
 test:
     pnpm test
