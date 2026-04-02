@@ -4,7 +4,6 @@ from openai import AsyncOpenAI, APIStatusError
 from modai.module import ModuleDependencies
 from .module import ChatLLMModule
 from openai.types.responses import (
-    ResponseCreateParams as OpenAICreateResponse,
     Response as OpenAIResponse,
     ResponseStreamEvent as OpenAIResponseStreamEvent,
 )
@@ -37,7 +36,7 @@ class OpenAILLMChatModule(ChatLLMModule):
             )
 
     async def generate_response(
-        self, request: Request, body_json: OpenAICreateResponse
+        self, request: Request, body_json: dict[str, Any]
     ) -> OpenAIResponse | AsyncGenerator[OpenAIResponseStreamEvent, None]:
         provider_name, actual_model = self._parse_model(body_json.get("model", ""))
         provider = await self._resolve_provider(request, provider_name)
@@ -79,7 +78,7 @@ class OpenAILLMChatModule(ChatLLMModule):
         )
 
     async def _generate_streaming_response(
-        self, client: AsyncOpenAI, body_json: OpenAICreateResponse
+        self, client: AsyncOpenAI, body_json: dict[str, Any]
     ) -> AsyncGenerator[OpenAIResponseStreamEvent, None]:
         """Generate a streaming response."""
         try:
@@ -96,7 +95,7 @@ class OpenAILLMChatModule(ChatLLMModule):
             raise e
 
     async def _generate_non_streaming_response(
-        self, client: AsyncOpenAI, body_json: OpenAICreateResponse
+        self, client: AsyncOpenAI, body_json: dict[str, Any]
     ) -> OpenAIResponse:
         """Generate a non-streaming response."""
         try:

@@ -30,6 +30,19 @@ test.describe("Chat", () => {
         await chatPage.assertModelButtonVisible("gpt-4o");
 
         await chatPage.sendMessage("hello");
-        await chatPage.assertMessageVisible("hello");
+        await chatPage.assertLastResponse("hello");
+    });
+
+    test("Chat handles multiple messages", async ({ page }) => {
+        const chatPage = new ChatPage(page);
+
+        await chatPage.goto();
+        await chatPage.assertModelButtonVisible("gpt-4o");
+
+        await chatPage.sendMessage("hello");
+        await chatPage.assertLastResponse("hello");
+
+        await chatPage.sendMessage("world");
+        await chatPage.assertLastResponse("world");
     });
 });

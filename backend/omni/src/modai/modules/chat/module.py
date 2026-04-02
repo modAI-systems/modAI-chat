@@ -12,9 +12,6 @@ from openai.types.responses import (
     Response as OpenAIResponse,
     ResponseStreamEvent as OpenAIResponseStreamEvent,
 )
-from openai.types.responses.response_create_params import (
-    ResponseCreateParams as OpenAICreateResponse,
-)
 
 
 class ChatWebModule(ModaiModule, ABC):
@@ -39,7 +36,7 @@ class ChatWebModule(ModaiModule, ABC):
     async def responses_endpoint(
         self,
         request: Request,
-        body_json: OpenAICreateResponse = Body(...),
+        body_json: dict[str, Any] = Body(...),
     ) -> OpenAIResponse | StreamingResponse:
         """
         Handles responses requests. Must be implemented by concrete implementations.
@@ -67,7 +64,7 @@ class ChatLLMModule(ModaiModule, ABC):
 
     @abstractmethod
     async def generate_response(
-        self, request: Request, body_json: OpenAICreateResponse
+        self, request: Request, body_json: dict[str, Any]
     ) -> OpenAIResponse | AsyncGenerator[OpenAIResponseStreamEvent, None]:
         """
         Generate a streaming or non-streaming chat response.
