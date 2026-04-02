@@ -14,7 +14,7 @@
       "type": "AppRouter",
       "path": "@/modules/app-layout/AppRouter/create",
       "dependencies": {
-        "module:layout": "app-layout",
+        "module:layout": "sidebar-layout",
         "module:routes": ["chat-route", "providers-route"],
         "module:fallbackRoute": "chat-fallback-route"
       }
@@ -26,9 +26,9 @@
       "dependencies": {}
     },
     {
-      "id": "app-layout",
+      "id": "sidebar-layout",
       "type": "AppLayout",
-      "path": "@/modules/app-layout/AppLayout",
+      "path": "@/modules/app-layout/SidebarLayout",
       "dependencies": {}
     },
     {

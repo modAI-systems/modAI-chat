@@ -6,7 +6,7 @@ import type { NoSessionAction, SessionService } from "./index.svelte.js";
 const deps = getModuleDeps("@/modules/session-service/SessionGatedAppLayout");
 const sessionService = deps.getOne<SessionService>("sessionService");
 const noSessionAction = deps.getOne<NoSessionAction>("noSessionAction");
-const AppLayoutContent = deps.getOne<Component>("appLayoutContent");
+const AppLayout = deps.getOne<Component>("appLayout");
 const { children } = $props();
 
 let ready = $state(false);
@@ -21,7 +21,7 @@ sessionService.refresh().then(() => {
 </script>
 
 {#if ready}
-  <AppLayoutContent>
+  <AppLayout>
     {@render children?.()}
-  </AppLayoutContent>
+  </AppLayout>
 {/if}
