@@ -139,6 +139,79 @@ async def test_llm_generate_response():
 
 @pytest.mark.skipif("OPENAI_API_KEY" not in os.environ, reason="OPENAI_API_KEY not set")
 @pytest.mark.asyncio
+async def test_llm_generate_response_multi_turn():
+    """Test multi-turn conversation via LLM module directly (non-streaming).
+
+    First turn establishes a response; the second turn includes the full
+    user-assistant-user history in the input field so the model can recall
+    context from the first turn.
+    """
+    from fastapi import Request
+    from unittest.mock import Mock
+    from modai.modules.model_provider.module import (
+        ModelProvidersListResponse,
+        ModelProviderResponse,
+    )
+
+    mock_provider_module = Mock()
+    mock_provider = ModelProviderResponse(
+        id="test_provider",
+        type="openai",
+        name="myopenai",
+        base_url=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+        api_key=os.environ["OPENAI_API_KEY"],
+        properties={},
+        created_at=None,
+        updated_at=None,
+    )
+    mock_provider_module.get_providers = AsyncMock(
+        return_value=ModelProvidersListResponse(
+            providers=[mock_provider],
+            total=1,
+            limit=None,
+            offset=None,
+        )
+    )
+
+    dependencies = ModuleDependencies({"llm_provider_module": mock_provider_module})
+    llm_module = OpenAILLMChatModule(dependencies=dependencies, config={})
+    request = Mock(spec=Request)
+    model = os.environ.get("OPENAI_MODEL", "gpt-5")
+
+    # First turn
+    first_body = {
+        "model": f"myopenai/{model}",
+        "input": [{"role": "user", "content": "Just echo the word 'Hello'"}],
+    }
+    first_result = await llm_module.generate_response(request, first_body)
+    first_dict = first_result.model_dump()
+    first_text = next(o for o in first_dict["output"] if o.get("type") == "message")[
+        "content"
+    ][0]["text"]
+    assert "Hello" in first_text
+
+    # Second turn: pass the full conversation history as user-assistant-user
+    second_body = {
+        "model": f"myopenai/{model}",
+        "input": [
+            {"role": "user", "content": "Just echo the word 'Hello'"},
+            {"role": "assistant", "content": first_text},
+            {
+                "role": "user",
+                "content": "What word did I ask you to echo? Reply with that word only.",
+            },
+        ],
+    }
+    second_result = await llm_module.generate_response(request, second_body)
+    second_dict = second_result.model_dump()
+    second_text = next(o for o in second_dict["output"] if o.get("type") == "message")[
+        "content"
+    ][0]["text"]
+    assert "Hello" in second_text
+
+
+@pytest.mark.skipif("OPENAI_API_KEY" not in os.environ, reason="OPENAI_API_KEY not set")
+@pytest.mark.asyncio
 async def test_llm_generate_response_streaming():
     """Test LLM generate_response method directly for streaming."""
     from fastapi import Request
@@ -208,6 +281,88 @@ async def test_llm_generate_response_streaming():
     assert "Hello" in full_content
 
 
+@pytest.mark.skipif("OPENAI_API_KEY" not in os.environ, reason="OPENAI_API_KEY not set")
+@pytest.mark.asyncio
+async def test_llm_generate_response_streaming_multi_turn():
+    """Test multi-turn conversation via LLM module directly (streaming second turn).
+
+    The first turn is non-streaming to get the assistant reply; the second turn
+    streams the full user-assistant-user history to continue the conversation.
+    """
+    from fastapi import Request
+    from unittest.mock import Mock
+    from modai.modules.model_provider.module import (
+        ModelProvidersListResponse,
+        ModelProviderResponse,
+    )
+
+    mock_provider_module = Mock()
+    mock_provider = ModelProviderResponse(
+        id="test_provider",
+        type="openai",
+        name="myopenai",
+        base_url=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+        api_key=os.environ["OPENAI_API_KEY"],
+        properties={},
+        created_at=None,
+        updated_at=None,
+    )
+    mock_provider_module.get_providers = AsyncMock(
+        return_value=ModelProvidersListResponse(
+            providers=[mock_provider],
+            total=1,
+            limit=None,
+            offset=None,
+        )
+    )
+
+    dependencies = ModuleDependencies({"llm_provider_module": mock_provider_module})
+    llm_module = OpenAILLMChatModule(dependencies=dependencies, config={})
+    request = Mock(spec=Request)
+    model = os.environ.get("OPENAI_MODEL", "gpt-5")
+
+    # First turn (non-streaming) to get the assistant reply
+    first_body = {
+        "model": f"myopenai/{model}",
+        "input": [{"role": "user", "content": "Just echo the word 'Hello'"}],
+    }
+    first_result = await llm_module.generate_response(request, first_body)
+    first_dict = first_result.model_dump()
+    first_text = next(o for o in first_dict["output"] if o.get("type") == "message")[
+        "content"
+    ][0]["text"]
+    assert "Hello" in first_text
+
+    # Second turn (streaming) with full user-assistant-user history
+    second_body = {
+        "model": f"myopenai/{model}",
+        "input": [
+            {"role": "user", "content": "Just echo the word 'Hello'"},
+            {"role": "assistant", "content": first_text},
+            {
+                "role": "user",
+                "content": "What word did I ask you to echo? Reply with that word only.",
+            },
+        ],
+        "stream": True,
+    }
+    result = await llm_module.generate_response(request, second_body)
+    assert hasattr(result, "__aiter__")
+
+    full_content = ""
+    async for event in result:
+        if (
+            hasattr(event, "type")
+            and event.type == "response.output_text.delta"
+            and hasattr(event, "delta")
+            and event.delta
+        ):
+            full_content += event.delta
+
+    assert len(full_content) > 0
+    assert "Hello" in full_content
+
+
 @pytest.mark.parametrize("openai_client", ["direct"], indirect=True)
 @pytest.mark.skipif("OPENAI_API_KEY" not in os.environ, reason="OPENAI_API_KEY not set")
 @pytest.mark.asyncio
@@ -266,6 +421,111 @@ async def test_chat_responses_api_streaming(openai_client: AsyncOpenAI, request)
     # Assertions
     assert len(full_content) > 0
     assert "Hello" in full_content
+
+
+@pytest.mark.parametrize("openai_client", ["direct"], indirect=True)
+@pytest.mark.skipif("OPENAI_API_KEY" not in os.environ, reason="OPENAI_API_KEY not set")
+@pytest.mark.asyncio
+async def test_chat_responses_api_multi_turn(openai_client: AsyncOpenAI, request):
+    """Test multi-turn conversation: post a first message, then a follow-up with
+    the full user-assistant-user history in the input field."""
+
+    request.node.callspec.params["openai_client"]
+    model = os.environ.get("OPENAI_MODEL", "gpt-5")
+
+    # First turn: ask the model to pick a number
+    first_response = await openai_client.responses.create(
+        model=model,
+        input=[
+            {
+                "role": "user",
+                "content": "Pick a number between 1 and 10 and remember it. Reply with only the number.",
+            }
+        ],
+    )
+
+    first_message = next(o for o in first_response.output if o.type == "message")
+    first_text = first_message.content[0].text.strip()
+    assert first_text
+
+    # Second turn: include the full conversation history as user-assistant-user
+    second_response = await openai_client.responses.create(
+        model=model,
+        input=[
+            {
+                "role": "user",
+                "content": "Pick a number between 1 and 10 and remember it. Reply with only the number.",
+            },
+            {"role": "assistant", "content": first_text},
+            {
+                "role": "user",
+                "content": "What number did you just pick? Reply with only the number.",
+            },
+        ],
+    )
+
+    assert second_response.id
+    second_message = next(o for o in second_response.output if o.type == "message")
+    second_text = second_message.content[0].text.strip()
+
+    # The model should recall the number from the conversation history
+    assert first_text in second_text
+
+
+@pytest.mark.parametrize("openai_client", ["direct"], indirect=True)
+@pytest.mark.skipif("OPENAI_API_KEY" not in os.environ, reason="OPENAI_API_KEY not set")
+@pytest.mark.asyncio
+async def test_chat_responses_api_streaming_multi_turn(
+    openai_client: AsyncOpenAI, request
+):
+    """Test multi-turn conversation via the OpenAI client (streaming second turn).
+
+    The first turn is non-streaming to capture the assistant reply; the second
+    turn streams the full user-assistant-user history to verify conversation
+    continuity.
+    """
+    request.node.callspec.params["openai_client"]
+    model = os.environ.get("OPENAI_MODEL", "gpt-5")
+
+    # First turn (non-streaming) to get the assistant reply
+    first_response = await openai_client.responses.create(
+        model=model,
+        input=[
+            {
+                "role": "user",
+                "content": "Pick a number between 1 and 10 and remember it. Reply with only the number.",
+            }
+        ],
+    )
+    first_message = next(o for o in first_response.output if o.type == "message")
+    first_text = first_message.content[0].text.strip()
+    assert first_text
+
+    # Second turn (streaming) with full user-assistant-user history
+    stream = await openai_client.responses.create(
+        model=model,
+        input=[
+            {
+                "role": "user",
+                "content": "Pick a number between 1 and 10 and remember it. Reply with only the number.",
+            },
+            {"role": "assistant", "content": first_text},
+            {
+                "role": "user",
+                "content": "What number did you just pick? Reply with only the number.",
+            },
+        ],
+        stream=True,
+    )
+
+    full_content = ""
+    async for event in stream:
+        if event.type == "response.output_text.delta" and event.delta:
+            full_content += event.delta
+
+    assert len(full_content) > 0
+    # The model should recall the number from the conversation history
+    assert first_text in full_content
 
 
 def _create_chat_mock_session_module():

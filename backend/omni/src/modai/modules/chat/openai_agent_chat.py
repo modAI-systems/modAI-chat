@@ -22,9 +22,6 @@ from openai.types.responses import (
     ResponseTextDeltaEvent,
     ResponseTextDoneEvent,
 )
-from openai.types.responses.response_create_params import (
-    ResponseCreateParams as OpenAICreateResponse,
-)
 from strands import Agent
 from strands.models import OpenAIModel
 from strands.tools.tools import PythonAgentTool
@@ -67,7 +64,7 @@ class StrandsAgentChatModule(ChatLLMModule):
         )
 
     async def generate_response(
-        self, request: Request, body_json: OpenAICreateResponse
+        self, request: Request, body_json: dict[str, Any]
     ) -> OpenAIResponse | AsyncGenerator[OpenAIResponseStreamEvent, None]:
         provider_name, actual_model = _parse_model(body_json.get("model", ""))
         provider = await self._resolve_provider(request, provider_name)
@@ -135,7 +132,7 @@ def _extract_additional_tool_properties(request: Request) -> dict[str, Any]:
 def _create_agent(
     provider: ModelProviderResponse,
     model_id: str,
-    body_json: OpenAICreateResponse,
+    body_json: dict[str, Any],
     tools: list[PythonAgentTool] | None = None,
 ) -> Agent:
     """Build a fresh Strands ``Agent`` for this request."""
@@ -159,7 +156,7 @@ def _create_agent(
 
 
 def _build_conversation_history(
-    body_json: OpenAICreateResponse,
+    body_json: dict[str, Any],
 ) -> list[dict[str, Any]]:
     """Convert the ``input`` field into Strands-style messages.
 
@@ -177,7 +174,7 @@ def _build_conversation_history(
     ]
 
 
-def _extract_last_user_message(body_json: OpenAICreateResponse) -> str:
+def _extract_last_user_message(body_json: dict[str, Any]) -> str:
     """Return the text of the last user message from ``input``."""
     input_data = body_json.get("input", "")
     if isinstance(input_data, str):
@@ -218,7 +215,7 @@ def _message_text(msg: Any) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _extract_tool_names(body_json: OpenAICreateResponse) -> list[str]:
+def _extract_tool_names(body_json: dict[str, Any]) -> list[str]:
     """Extract tool function names from the OpenAI-format request body."""
     tools = body_json.get("tools", [])
     names: list[str] = []
@@ -233,7 +230,7 @@ def _extract_tool_names(body_json: OpenAICreateResponse) -> list[str]:
 
 
 async def _resolve_request_tools(
-    body_json: OpenAICreateResponse,
+    body_json: dict[str, Any],
     tool_registry: ToolRegistryModule | None,
     additional_tool_properties: dict[str, Any] | None = None,
 ) -> list[PythonAgentTool]:

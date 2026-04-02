@@ -132,6 +132,7 @@ export class ChatPage {
         const input = this.page.getByRole("textbox", {
             name: "Type a message...",
         });
+        await expect(input).toBeEnabled({ timeout: 15000 });
         await input.fill(message);
         await this.page.getByRole("button", { name: "Send" }).click();
     }
@@ -142,9 +143,9 @@ export class ChatPage {
         ).toBeVisible({ timeout: 10000 });
     }
 
-    async assertMessageVisible(message: string): Promise<void> {
-        await expect(this.page.getByText(message).nth(1)).toBeVisible({
-            timeout: 15000,
-        });
+    async assertLastResponse(content: string): Promise<void> {
+        await expect(
+            this.page.locator(".bg-muted.rounded-2xl").last(),
+        ).toContainText(content, { timeout: 15000 });
     }
 }

@@ -2,8 +2,13 @@ import { test } from "@playwright/test";
 import { TEST_USER_PASSWORD, TEST_USERNAME } from "./fixtures";
 import { ChatPage, LLMProvidersPage, NanoIdpLoginPage } from "./pages";
 
+const BACKEND_URL = "http://localhost:8000";
+
 test.describe("Chat", () => {
     test.beforeEach(async ({ page }) => {
+        // Reset backend state before each test
+        await page.request.post(`${BACKEND_URL}/api/reset/full`);
+
         // Login via NanoIDP (navigates to / which triggers backend OIDC flow)
         const loginPage = new NanoIdpLoginPage(page);
         await loginPage.login(TEST_USERNAME, TEST_USER_PASSWORD);
@@ -20,16 +25,23 @@ test.describe("Chat", () => {
     test("should send a message and receive a response", async ({ page }) => {
         const chatPage = new ChatPage(page);
 
-        // Ensure chat tab is active
         await chatPage.navigateTo();
-
-        // Select first available model
         await chatPage.selectFirstModel();
 
-        // Send message
         await chatPage.sendMessage("Hi");
+        await chatPage.assertLastResponse("Hi");
+    });
 
-        // Wait for and assert response content is visible
-        await chatPage.assertMessageVisible("Hi");
+    test("should handle multiple messages", async ({ page }) => {
+        const chatPage = new ChatPage(page);
+
+        await chatPage.navigateTo();
+        await chatPage.selectFirstModel();
+
+        await chatPage.sendMessage("Hi");
+        await chatPage.assertLastResponse("Hi");
+
+        await chatPage.sendMessage("Hello again");
+        await chatPage.assertLastResponse("Hello again");
     });
 });

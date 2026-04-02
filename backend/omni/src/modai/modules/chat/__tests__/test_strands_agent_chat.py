@@ -16,7 +16,7 @@ import os
 import time
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, MagicMock, Mock
 
 import httpx as httpx_lib
 import openai
@@ -262,6 +262,41 @@ class TestNonStreamingHappyPath:
         assert isinstance(result, openai.types.responses.Response)
         assert result.status == "completed"
 
+    @pytest.mark.asyncio
+    async def test_multi_turn_uses_first_response_output(self, llmock_base_url):
+        """Post a first message, then send a second using the first response's output as history.
+
+        llmock MirrorStrategy echoes the last user message, so the second
+        response text should match the second user message.
+        """
+        module = _llmock_module(llmock_base_url)
+
+        # First turn
+        first_result = await module.generate_response(
+            _make_request(),
+            {"model": "myprovider/gpt-4o", "input": "First message"},
+        )
+        assert first_result.status == "completed"
+        first_text = first_result.output[0].content[0].text
+
+        # Second turn: build history from the first response
+        second_result = await module.generate_response(
+            _make_request(),
+            {
+                "model": "myprovider/gpt-4o",
+                "input": [
+                    {"role": "user", "content": "First message"},
+                    {"role": "assistant", "content": first_text},
+                    {"role": "user", "content": "Second message"},
+                ],
+            },
+        )
+
+        assert isinstance(second_result, openai.types.responses.Response)
+        assert second_result.status == "completed"
+        # MirrorStrategy echoes the last user message
+        assert "Second message" in second_result.output[0].content[0].text
+
 
 # ===================================================================
 # 3) Happy-path: streaming generate_response
@@ -316,6 +351,48 @@ class TestStreamingHappyPath:
         assert completed.response.status == "completed"
         assert len(completed.response.output) > 0
         assert completed.response.output[0].content[0].text != ""
+
+    @pytest.mark.asyncio
+    async def test_multi_turn_streaming_uses_first_response_output(
+        self, llmock_base_url
+    ):
+        """Post a first (non-streaming) message, then stream a second using the output as history.
+
+        The assembled stream text from the second turn should echo the second
+        user message (MirrorStrategy echoes the last user message).
+        """
+        module = _llmock_module(llmock_base_url)
+
+        # First turn (non-streaming) to get the assistant text
+        first_result = await module.generate_response(
+            _make_request(),
+            {"model": "myprovider/gpt-4o", "input": "First message"},
+        )
+        assert first_result.status == "completed"
+        first_text = first_result.output[0].content[0].text
+
+        # Second turn: streaming with conversation history
+        gen = await module.generate_response(
+            _make_request(),
+            {
+                "model": "myprovider/gpt-4o",
+                "input": [
+                    {"role": "user", "content": "First message"},
+                    {"role": "assistant", "content": first_text},
+                    {"role": "user", "content": "Second message"},
+                ],
+                "stream": True,
+            },
+        )
+
+        events = [e async for e in gen]
+        full_text = "".join(
+            e.delta
+            for e in events
+            if getattr(e, "type", None) == "response.output_text.delta"
+        )
+        assert "Second message" in full_text
+        assert events[-1].type == "response.completed"
 
 
 # ===================================================================
@@ -873,7 +950,112 @@ class TestToolErrors:
 
 
 # ===================================================================
-# 8) Integration tests (require OPENAI_API_KEY in .env)
+# 8) Full HTTP-stack: POST /api/responses with openai/<Provider>/<model>
+# ===================================================================
+
+
+class TestStreamingViaHTTPEndpoint:
+    """Stream a multi-turn request through the full web stack.
+
+    Exercises the POST /api/responses endpoint end-to-end with the exact
+    body shape the frontend sends: model ``'openai/Mock Provider/gpt-4o'``
+    and structured content items using ``input_text`` / ``output_text``
+    types.  ChatWebModule strips ``'openai/'`` and delegates to
+    StrandsAgentChatModule; llmock MirrorStrategy echoes the last user
+    message back.
+    """
+
+    def _build_app(self, llmock_base_url: str):
+        from fastapi import FastAPI
+
+        from modai.modules.chat.web_chat_router import ChatWebModule
+        from modai.modules.session.module import SessionModule
+
+        provider = _make_provider(
+            name="Mock Provider", base_url=llmock_base_url, api_key=LLMOCK_API_KEY
+        )
+        strands_module = StrandsAgentChatModule(
+            dependencies=_make_dependencies(
+                provider_module=_make_provider_module([provider])
+            ),
+            config={},
+        )
+
+        session = MagicMock(spec=SessionModule)
+        session.validate_session_for_http.return_value = None
+
+        mock_deps = Mock(spec=ModuleDependencies)
+        mock_deps.get_module.return_value = strands_module
+        mock_deps.modules = {"session": session}
+
+        web_module = ChatWebModule(
+            dependencies=mock_deps,
+            config={"clients": {"openai": "strands_module"}},
+        )
+
+        app = FastAPI()
+        app.include_router(web_module.router)
+        return app
+
+    @pytest.mark.asyncio
+    async def test_multi_turn_streaming_input_text_output_text_content(
+        self, llmock_base_url
+    ):
+        """Multi-turn streaming via POST /api/responses with input_text / output_text
+        content types and the full 'openai/Mock Provider/gpt-4o' model string.
+
+        MirrorStrategy echoes the last user message ('Hello again'), so the
+        assembled delta text must contain that phrase.
+        """
+        app = self._build_app(llmock_base_url)
+
+        body = {
+            "model": "openai/Mock Provider/gpt-4o",
+            "input": [
+                {
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": "Hi"}],
+                },
+                {
+                    "role": "assistant",
+                    "content": [{"type": "output_text", "text": "Hi"}],
+                },
+                {
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": "Hello again"}],
+                },
+            ],
+            "stream": True,
+        }
+
+        transport = httpx_lib.ASGITransport(app=app)
+        async with httpx_lib.AsyncClient(
+            transport=transport, base_url="http://test"
+        ) as client:
+            async with client.stream("POST", "/api/responses", json=body) as response:
+                assert response.status_code == 200
+                raw_lines = []
+                async for line in response.aiter_lines():
+                    raw_lines.append(line)
+
+        events = [
+            json.loads(line[6:]) for line in raw_lines if line.startswith("data: ")
+        ]
+
+        assert len(events) > 0
+        assert any(e.get("type") == "response.output_text.delta" for e in events)
+        assert events[-1]["type"] == "response.completed"
+
+        full_text = "".join(
+            e.get("delta", "")
+            for e in events
+            if e.get("type") == "response.output_text.delta"
+        )
+        assert "Hello again" in full_text
+
+
+# ===================================================================
+# 9) Integration tests (require OPENAI_API_KEY in .env)
 # ===================================================================
 
 
@@ -947,6 +1129,86 @@ class TestRealProviderIntegration:
 
         assert events[-1].type == "response.completed"
         assert events[-1].response.output[0].content[0].text == full_text
+
+    @pytest.mark.asyncio
+    async def test_non_streaming_multi_turn_integration(self):
+        """Multi-turn (non-streaming): first message establishes context; second builds on it.
+
+        The first turn asks the model to echo 'Hello'.  The second turn passes
+        that exchange as conversation history and asks the model to echo 'World'.
+        """
+        module = StrandsAgentChatModule(dependencies=self._real_deps(), config={})
+
+        # First turn
+        first_body = {
+            "model": self._real_model(),
+            "input": [{"role": "user", "content": "Just echo the word 'Hello'"}],
+        }
+        first_result = await module.generate_response(_make_request(), first_body)
+        assert isinstance(first_result, openai.types.responses.Response)
+        assert first_result.status == "completed"
+        first_text = first_result.output[0].content[0].text
+        assert "Hello" in first_text
+
+        # Second turn: include the first exchange as conversation history
+        second_body = {
+            "model": self._real_model(),
+            "input": [
+                {"role": "user", "content": "Just echo the word 'Hello'"},
+                {"role": "assistant", "content": first_text},
+                {"role": "user", "content": "Now echo the word 'World'"},
+            ],
+        }
+        second_result = await module.generate_response(_make_request(), second_body)
+        assert isinstance(second_result, openai.types.responses.Response)
+        assert second_result.status == "completed"
+        assert "World" in second_result.output[0].content[0].text
+
+    @pytest.mark.asyncio
+    async def test_streaming_multi_turn_integration(self):
+        """Multi-turn (streaming second turn): first message establishes context;
+        the second turn streams using that context.
+        """
+        module = StrandsAgentChatModule(dependencies=self._real_deps(), config={})
+
+        # First turn (non-streaming) to get the assistant text
+        first_result = await module.generate_response(
+            _make_request(),
+            {
+                "model": self._real_model(),
+                "input": [{"role": "user", "content": "Just echo the word 'Hello'"}],
+            },
+        )
+        assert first_result.status == "completed"
+        first_text = first_result.output[0].content[0].text
+        assert "Hello" in first_text
+
+        # Second turn: streaming with the first exchange in history
+        gen = await module.generate_response(
+            _make_request(),
+            {
+                "model": self._real_model(),
+                "input": [
+                    {"role": "user", "content": "Just echo the word 'Hello'"},
+                    {"role": "assistant", "content": first_text},
+                    {"role": "user", "content": "Now echo the word 'World'"},
+                ],
+                "stream": True,
+            },
+        )
+        assert hasattr(gen, "__aiter__")
+
+        events = []
+        async for event in gen:
+            events.append(event)
+
+        full_text = "".join(
+            e.delta
+            for e in events
+            if getattr(e, "type", None) == "response.output_text.delta"
+        )
+        assert "World" in full_text
+        assert events[-1].type == "response.completed"
 
 
 # ---------------------------------------------------------------------------

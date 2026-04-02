@@ -5,7 +5,6 @@ from modai.module import ModuleDependencies
 from .module import ChatLLMModule, ChatWebModule as ChatWebModuleBase
 from modai.modules.session.module import SessionModule
 import openai
-from openai.types.responses import ResponseCreateParams
 
 
 class ChatWebModule(ChatWebModuleBase):
@@ -34,7 +33,7 @@ class ChatWebModule(ChatWebModuleBase):
     async def responses_endpoint(
         self,
         request: Request,
-        body_json: ResponseCreateParams = Body(...),
+        body_json: dict[str, Any] = Body(...),
     ) -> openai.types.responses.Response | StreamingResponse:
         """
         Routes the chat request to the appropriate LLM module based on the model prefix.
