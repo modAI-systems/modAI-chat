@@ -15,7 +15,7 @@ def client():
 
     # Create a mock session module
     session_module = Mock(spec=SessionModule)
-    session_module.validate_session_for_http = MagicMock()  # Not async
+    session_module.validate_session = MagicMock()  # Not async
 
     # Create a mock user store module
     user_store = Mock(spec=UserStore)
@@ -85,7 +85,7 @@ def test_get_current_user_success(client):
     )
 
     # Configure mocks
-    session_module.validate_session_for_http.return_value = test_session
+    session_module.validate_session.return_value = test_session
     user_store.get_user_by_id.return_value = test_user
 
     # Call the endpoint
@@ -98,7 +98,7 @@ def test_get_current_user_success(client):
     assert response_data["full_name"] == "Test User"
 
     # Verify calls
-    session_module.validate_session_for_http.assert_called_once()
+    session_module.validate_session.assert_called_once()
     user_store.get_user_by_id.assert_called_once_with("user123")
 
 
@@ -110,7 +110,7 @@ def test_get_current_user_user_not_found(client):
     test_session = Session(user_id="user123", additional={})
 
     # Configure mocks
-    session_module.validate_session_for_http.return_value = test_session
+    session_module.validate_session.return_value = test_session
     user_store.get_user_by_id.return_value = None  # User not found
 
     # Call the endpoint
@@ -120,7 +120,7 @@ def test_get_current_user_user_not_found(client):
     assert response.json()["detail"] == "User not found"
 
     # Verify calls
-    session_module.validate_session_for_http.assert_called_once()
+    session_module.validate_session.assert_called_once()
     user_store.get_user_by_id.assert_called_once_with("user123")
 
 
@@ -131,7 +131,7 @@ def test_get_current_user_invalid_session(client):
     # Configure mocks to raise HTTPException for invalid session
     from fastapi import HTTPException
 
-    session_module.validate_session_for_http.side_effect = HTTPException(
+    session_module.validate_session.side_effect = HTTPException(
         status_code=401, detail="Missing, invalid or expired session"
     )
 
@@ -142,6 +142,6 @@ def test_get_current_user_invalid_session(client):
     assert response.json()["detail"] == "Missing, invalid or expired session"
 
     # Verify session validation was called
-    session_module.validate_session_for_http.assert_called_once()
+    session_module.validate_session.assert_called_once()
     # User store should not be called since session validation failed
     user_store.get_user_by_id.assert_not_called()

@@ -62,7 +62,7 @@ class TestModelProviderModule:
     def mock_session_module(self) -> SessionModule:
         """Create a mock session module that always validates successfully."""
         session_module = MagicMock(spec=SessionModule)
-        session_module.validate_session_for_http.return_value = Session(
+        session_module.validate_session.return_value = Session(
             user_id="test-user", additional={}
         )
         return session_module
@@ -430,7 +430,7 @@ class TestModelProviderModule:
 
         # Create a session module that always rejects
         rejecting_session = MagicMock(spec=SessionModule)
-        rejecting_session.validate_session_for_http.side_effect = HTTPException(
+        rejecting_session.validate_session.side_effect = HTTPException(
             status_code=401, detail="Missing, invalid or expired session"
         )
 

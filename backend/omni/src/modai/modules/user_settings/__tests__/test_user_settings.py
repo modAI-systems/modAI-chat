@@ -19,17 +19,10 @@ from modai.modules.user_settings.module import (
 from modai.modules.user_settings.simple_user_settings_module import (
     SimpleUserSettingsModule,
 )
-from modai.modules.session.module import SessionModule
+from modai.modules.session.module import SessionModule, Session
 from modai.modules.user_settings_store.inmemory_user_settings_store import (
     InMemoryUserSettingsStore,
 )
-
-
-class MockSession:
-    """Mock session object for testing"""
-
-    def __init__(self, user_id: str):
-        self.user_id = user_id
 
 
 class MockSessionModule(SessionModule):
@@ -39,11 +32,11 @@ class MockSessionModule(SessionModule):
         super().__init__(dependencies, config)
         self.mock_session = None
 
-    def set_mock_session(self, session: MockSession):
+    def set_mock_session(self, session: Session):
         """Set the session to be returned by validate_session"""
         self.mock_session = session
 
-    def validate_session(self, request: Request) -> MockSession:
+    def validate_session(self, request: Request) -> Session:
         if self.mock_session is None:
             raise HTTPException(status_code=401, detail="Not authenticated")
         return self.mock_session
@@ -120,7 +113,7 @@ class TestSimpleUserSettingsModule:
     ):
         """Test getting settings for user with no existing settings"""
         user_id = "test-user-123"
-        session = MockSession(user_id)
+        session = Session(user_id=user_id, additional={})
         module.session_module.set_mock_session(session)
 
         result = await module.get_user_settings(user_id, mock_request)
@@ -134,7 +127,7 @@ class TestSimpleUserSettingsModule:
     ):
         """Test user cannot access another user's settings"""
         user_id = "other-user-456"
-        session = MockSession("current-user-123")
+        session = Session(user_id="current-user-123", additional={})
         module.session_module.set_mock_session(session)
 
         with pytest.raises(HTTPException) as exc_info:
@@ -162,7 +155,7 @@ class TestSimpleUserSettingsModule:
     ):
         """Test updating settings for user with no existing settings"""
         user_id = "test-user-123"
-        session = MockSession(user_id)
+        session = Session(user_id=user_id, additional={})
         module.session_module.set_mock_session(session)
 
         settings_update = UserSettingsUpdateRequest(
@@ -187,7 +180,7 @@ class TestSimpleUserSettingsModule:
     ):
         """Test updating settings for user with existing settings (merge behavior)"""
         user_id = "test-user-123"
-        session = MockSession(user_id)
+        session = Session(user_id=user_id, additional={})
         module.session_module.set_mock_session(session)
 
         # First, create initial settings
@@ -221,7 +214,7 @@ class TestSimpleUserSettingsModule:
     ):
         """Test user cannot modify another user's settings"""
         user_id = "other-user-456"
-        session = MockSession("current-user-123")
+        session = Session(user_id="current-user-123", additional={})
         module.session_module.set_mock_session(session)
 
         settings_update = UserSettingsUpdateRequest(
@@ -256,7 +249,7 @@ class TestSimpleUserSettingsModule:
     ):
         """Test full flow: update settings then retrieve them"""
         user_id = "test-user-123"
-        session = MockSession(user_id)
+        session = Session(user_id=user_id, additional={})
         module.session_module.set_mock_session(session)
 
         # Update settings
@@ -284,7 +277,7 @@ class TestSimpleUserSettingsModule:
         """Test getting a specific setting type for user with no existing settings"""
         user_id = "test-user-123"
         module_name = "theme"
-        session = MockSession(user_id)
+        session = Session(user_id=user_id, additional={})
         module.session_module.set_mock_session(session)
 
         result = await module.get_user_setting_type(user_id, module_name, mock_request)
@@ -299,7 +292,7 @@ class TestSimpleUserSettingsModule:
         """Test getting a specific setting type for user with existing settings"""
         user_id = "test-user-123"
         module_name = "theme"
-        session = MockSession(user_id)
+        session = Session(user_id=user_id, additional={})
         module.session_module.set_mock_session(session)
 
         # First, create some settings
@@ -325,7 +318,7 @@ class TestSimpleUserSettingsModule:
         """Test getting a non-existent setting type returns empty settings"""
         user_id = "test-user-123"
         module_name = "nonexistent"
-        session = MockSession(user_id)
+        session = Session(user_id=user_id, additional={})
         module.session_module.set_mock_session(session)
 
         # First, create some settings
@@ -347,7 +340,7 @@ class TestSimpleUserSettingsModule:
         """Test user cannot access another user's specific setting type"""
         user_id = "other-user-456"
         module_name = "theme"
-        session = MockSession("current-user-123")
+        session = Session(user_id="current-user-123", additional={})
         module.session_module.set_mock_session(session)
 
         with pytest.raises(HTTPException) as exc_info:
@@ -363,7 +356,7 @@ class TestSimpleUserSettingsModule:
         """Test updating a specific setting type for user with no existing settings"""
         user_id = "test-user-123"
         module_name = "theme"
-        session = MockSession(user_id)
+        session = Session(user_id=user_id, additional={})
         module.session_module.set_mock_session(session)
 
         settings_update = UserSettingTypeUpdateRequest(
@@ -385,7 +378,7 @@ class TestSimpleUserSettingsModule:
         """Test updating a specific setting type for user with existing settings"""
         user_id = "test-user-123"
         module_name = "theme"
-        session = MockSession(user_id)
+        session = Session(user_id=user_id, additional={})
         module.session_module.set_mock_session(session)
 
         # First, create initial settings
@@ -421,7 +414,7 @@ class TestSimpleUserSettingsModule:
         """Test user cannot modify another user's specific setting type"""
         user_id = "other-user-456"
         module_name = "theme"
-        session = MockSession("current-user-123")
+        session = Session(user_id="current-user-123", additional={})
         module.session_module.set_mock_session(session)
 
         settings_update = UserSettingTypeUpdateRequest(settings={"mode": "dark"})
@@ -441,7 +434,7 @@ class TestSimpleUserSettingsModule:
         """Test full flow: update specific setting type then retrieve it"""
         user_id = "test-user-123"
         module_name = "notifications"
-        session = MockSession(user_id)
+        session = Session(user_id=user_id, additional={})
         module.session_module.set_mock_session(session)
 
         # Update specific setting type

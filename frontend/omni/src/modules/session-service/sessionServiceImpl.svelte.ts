@@ -14,8 +14,7 @@ class SessionServiceImpl implements SessionService {
         try {
             const response =
                 await this.#fetchService.fetch("/api/auth/session");
-            const data = (await response.json()) as { authenticated: boolean };
-            this.#sessionActive = data.authenticated;
+            this.#sessionActive = response.ok;
         } catch {
             this.#sessionActive = false;
         }

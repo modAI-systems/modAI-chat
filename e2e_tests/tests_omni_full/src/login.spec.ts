@@ -28,27 +28,23 @@ test.describe("Login", () => {
     test("should show app as unauthenticated before login", async ({
         page,
     }) => {
-        // Check /api/auth/session directly — should report unauthenticated
+        // Check /api/auth/session directly — should be unauthorized
         const response = await page.request.get(
             `${BACKEND_URL}/api/auth/session`,
         );
-        expect(response.ok()).toBe(true);
-        const body = await response.json();
-        expect(body.authenticated).toBe(false);
-        expect(body.user_id).toBeNull();
+        expect(response.status()).toBe(401);
     });
 
     test("should be authenticated after login", async ({ page }) => {
         const loginPage = new NanoIdpLoginPage(page);
         await loginPage.login(TEST_USERNAME, TEST_USER_PASSWORD);
 
-        // Session endpoint should now return authenticated (cookie is sent)
+        // Session endpoint should now return session payload (cookie is sent)
         const response = await page.request.get(
             `${BACKEND_URL}/api/auth/session`,
         );
         expect(response.ok()).toBe(true);
         const body = await response.json();
-        expect(body.authenticated).toBe(true);
         expect(body.user_id).toBeTruthy();
     });
 
@@ -70,11 +66,12 @@ test.describe("Login", () => {
         const loginPage = new NanoIdpLoginPage(page);
         await loginPage.login(TEST_USERNAME, TEST_USER_PASSWORD);
 
-        // Confirm we are authenticated
+        // Confirm we have a valid session
         const beforeLogout = await page.request.get(
             `${BACKEND_URL}/api/auth/session`,
         );
-        expect((await beforeLogout.json()).authenticated).toBe(true);
+        expect(beforeLogout.ok()).toBe(true);
+        expect((await beforeLogout.json()).user_id).toBeTruthy();
 
         // Fetch CSRF token (required for state-mutating requests)
         const csrfResponse = await page.request.get(
@@ -88,11 +85,11 @@ test.describe("Login", () => {
             headers: { "X-CSRF-Token": csrf_token },
         });
 
-        // Session should now be cleared
+        // Session should now be cleared (no cookie -> unauthorized)
         const afterLogout = await page.request.get(
             `${BACKEND_URL}/api/auth/session`,
         );
-        expect((await afterLogout.json()).authenticated).toBe(false);
+        expect(afterLogout.status()).toBe(401);
     });
 
     test.skip("should reject logout without CSRF token", async ({ page }) => {
