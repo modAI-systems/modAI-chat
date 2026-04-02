@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock
 
 from modai.module import ModuleDependencies
 from modai.modules.authentication._cookie import COOKIE_NAME
-from modai.modules.authentication.oidc_session import OIDCSessionModule
+from modai.modules.session.oidc_session import OIDCSessionModule
 from modai.modules.session.module import Session
 from modai.modules.user_store.module import User, UserStore
 
@@ -88,41 +88,7 @@ class TestValidateSession:
         assert session.additional["email"] == "u@test.com"
         assert session.additional["name"] == "Test"
 
-    def test_no_cookie_raises(self):
-        module = _build_module()
-        request = Mock()
-        request.cookies = {}
-
-        with pytest.raises(ValueError, match="No session cookie"):
-            module.validate_session(request)
-
-    def test_tampered_cookie_raises(self):
-        module = _build_module()
-        request = Mock()
-        request.cookies = {COOKIE_NAME: "garbage.token.here"}
-
-        with pytest.raises(ValueError):
-            module.validate_session(request)
-
-    def test_expired_cookie_raises(self):
-        module = _build_module()
-        cookie = _make_cookie(expires_delta=-60)
-        request = Mock()
-        request.cookies = {COOKIE_NAME: cookie}
-
-        with pytest.raises(ValueError, match="expired"):
-            module.validate_session(request)
-
-    def test_wrong_secret_raises(self):
-        module = _build_module()
-        cookie = _make_cookie(session_secret="other-secret")
-        request = Mock()
-        request.cookies = {COOKIE_NAME: cookie}
-
-        with pytest.raises(ValueError):
-            module.validate_session(request)
-
-    def test_validate_session_for_http_returns_401_on_failure(self):
+    def test_no_cookie_returns_401(self):
         from fastapi import HTTPException
 
         module = _build_module()
@@ -130,7 +96,42 @@ class TestValidateSession:
         request.cookies = {}
 
         with pytest.raises(HTTPException) as exc_info:
-            module.validate_session_for_http(request)
+            module.validate_session(request)
+        assert exc_info.value.status_code == 401
+
+    def test_tampered_cookie_returns_401(self):
+        from fastapi import HTTPException
+
+        module = _build_module()
+        request = Mock()
+        request.cookies = {COOKIE_NAME: "garbage.token.here"}
+
+        with pytest.raises(HTTPException) as exc_info:
+            module.validate_session(request)
+        assert exc_info.value.status_code == 401
+
+    def test_expired_cookie_returns_401(self):
+        from fastapi import HTTPException
+
+        module = _build_module()
+        cookie = _make_cookie(expires_delta=-60)
+        request = Mock()
+        request.cookies = {COOKIE_NAME: cookie}
+
+        with pytest.raises(HTTPException) as exc_info:
+            module.validate_session(request)
+        assert exc_info.value.status_code == 401
+
+    def test_wrong_secret_returns_401(self):
+        from fastapi import HTTPException
+
+        module = _build_module()
+        cookie = _make_cookie(session_secret="other-secret")
+        request = Mock()
+        request.cookies = {COOKIE_NAME: cookie}
+
+        with pytest.raises(HTTPException) as exc_info:
+            module.validate_session(request)
         assert exc_info.value.status_code == 401
 
     def test_optional_claims_included_when_present(self):
@@ -168,29 +169,24 @@ class TestSessionStatusEndpoint:
         resp = client.get("/api/auth/session")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["authenticated"] is True
         assert data["user_id"] == "user-1"
-        assert data["email"] == "u@test.com"
+        assert data["additional"]["email"] == "u@test.com"
 
-    def test_unauthenticated(self):
+    def test_unauthenticated_returns_401(self):
         module = _build_module()
         client = _build_client(module)
 
         resp = client.get("/api/auth/session")
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["authenticated"] is False
-        assert data["user_id"] is None
+        assert resp.status_code == 401
 
-    def test_expired_cookie_returns_unauthenticated(self):
+    def test_expired_cookie_returns_401(self):
         module = _build_module()
         client = _build_client(module)
 
         client.cookies.set(COOKIE_NAME, _make_cookie(expires_delta=-60))
 
         resp = client.get("/api/auth/session")
-        assert resp.status_code == 200
-        assert resp.json()["authenticated"] is False
+        assert resp.status_code == 401
 
 
 # ── /api/auth/userinfo ───────────────────────────────────────────────────────

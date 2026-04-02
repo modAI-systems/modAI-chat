@@ -31,7 +31,7 @@ class SimpleUserModule(UserModule):
         Performs JIT (Just-In-Time) provisioning if the user doesn't
         exist in the local store yet (e.g., first OIDC login).
         """
-        session = self.session_module.validate_session_for_http(request)
+        session = self.session_module.validate_session(request)
 
         # Try to get user from local store
         user = await self.user_store.get_user_by_id(session.user_id)

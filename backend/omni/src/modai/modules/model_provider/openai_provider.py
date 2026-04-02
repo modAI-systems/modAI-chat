@@ -58,7 +58,7 @@ class OpenAIProviderModule(ModelProviderModule):
         ),
     ) -> ModelProvidersListResponse:
         """Get all LLM providers with optional pagination"""
-        self.session_module.validate_session_for_http(request)
+        self.session_module.validate_session(request)
         providers = await self.provider_store.get_providers(limit=limit, offset=offset)
 
         # Convert to response models
@@ -75,7 +75,7 @@ class OpenAIProviderModule(ModelProviderModule):
         self, request: Request, provider_id: str
     ) -> ModelProviderResponse:
         """Get a specific LLM provider by ID"""
-        self.session_module.validate_session_for_http(request)
+        self.session_module.validate_session(request)
         provider = await self.provider_store.get_provider(provider_id)
         if not provider:
             raise HTTPException(
@@ -89,7 +89,7 @@ class OpenAIProviderModule(ModelProviderModule):
         self, request: Request, provider_data: ModelProviderCreateRequest
     ) -> ModelProviderResponse:
         """Create a new LLM provider"""
-        self.session_module.validate_session_for_http(request)
+        self.session_module.validate_session(request)
         try:
             # Merge api_key into properties for storage
             properties = (provider_data.properties or {}).copy()
@@ -117,7 +117,7 @@ class OpenAIProviderModule(ModelProviderModule):
         provider_data: ModelProviderCreateRequest,
     ) -> ModelProviderResponse:
         """Update an existing LLM provider"""
-        self.session_module.validate_session_for_http(request)
+        self.session_module.validate_session(request)
         try:
             # Merge api_key into properties for storage
             properties = (provider_data.properties or {}).copy()
@@ -146,7 +146,7 @@ class OpenAIProviderModule(ModelProviderModule):
 
     async def get_models(self, request: Request, provider_id: str) -> ModelResponse:
         """Get available models from a specific provider"""
-        self.session_module.validate_session_for_http(request)
+        self.session_module.validate_session(request)
         # Check if provider exists
         provider = await self.provider_store.get_provider(provider_id)
         if not provider:
@@ -187,7 +187,7 @@ class OpenAIProviderModule(ModelProviderModule):
 
     async def delete_provider(self, request: Request, provider_id: str) -> None:
         """Delete an LLM provider"""
-        self.session_module.validate_session_for_http(request)
+        self.session_module.validate_session(request)
         await self.provider_store.delete_provider(provider_id)
         # Return 204 No Content for successful deletion (idempotent)
         return None

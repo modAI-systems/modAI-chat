@@ -81,7 +81,7 @@ class CentralModelProviderRouter(ModaiModule):
         Returns:
             ModelProvidersAllResponse with providers list and pagination info
         """
-        self.session_module.validate_session_for_http(request)
+        self.session_module.validate_session(request)
 
         all_providers = []
 
@@ -129,7 +129,7 @@ class CentralModelProviderRouter(ModaiModule):
         Returns:
             ModelsListResponse with all available models
         """
-        self.session_module.validate_session_for_http(request)
+        self.session_module.validate_session(request)
 
         all_models = []
 

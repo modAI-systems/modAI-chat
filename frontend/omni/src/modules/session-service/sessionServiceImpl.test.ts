@@ -22,17 +22,14 @@ describe("sessionServiceImpl", () => {
     });
 
     describe("refresh + isSessionActive", () => {
-        it("marks session active when backend returns authenticated=true", async () => {
+        it("marks session active when backend returns 200", async () => {
             const service = create(
                 makeDeps(
                     vi.fn(
                         async () =>
-                            new Response(
-                                JSON.stringify({ authenticated: true }),
-                                {
-                                    status: 200,
-                                },
-                            ),
+                            new Response(JSON.stringify({ user_id: "admin" }), {
+                                status: 200,
+                            }),
                     ),
                 ),
             );
@@ -42,17 +39,12 @@ describe("sessionServiceImpl", () => {
             expect(service.isSessionActive()).toBe(true);
         });
 
-        it("marks session inactive when backend returns authenticated=false", async () => {
+        it("marks session inactive when backend returns 401", async () => {
             const service = create(
                 makeDeps(
                     vi.fn(
                         async () =>
-                            new Response(
-                                JSON.stringify({ authenticated: false }),
-                                {
-                                    status: 200,
-                                },
-                            ),
+                            new Response("Unauthorized", { status: 401 }),
                     ),
                 ),
             );
@@ -66,7 +58,7 @@ describe("sessionServiceImpl", () => {
             const fetchFn = vi
                 .fn()
                 .mockResolvedValueOnce(
-                    new Response(JSON.stringify({ authenticated: true }), {
+                    new Response(JSON.stringify({ user_id: "admin" }), {
                         status: 200,
                     }),
                 )
@@ -82,7 +74,7 @@ describe("sessionServiceImpl", () => {
         it("calls /api/auth/session via FetchService", async () => {
             const fetchFn = vi.fn(
                 async () =>
-                    new Response(JSON.stringify({ authenticated: true }), {
+                    new Response(JSON.stringify({ user_id: "admin" }), {
                         status: 200,
                     }),
             );
