@@ -190,7 +190,7 @@ modules:
     class: modai.modules.health.simple_health_module.SimpleHealthModule
     enabled: false
   session:
-    class: modai.modules.authentication.oidc_session.OIDCSessionModule
+        class: modai.modules.session.oidc_session.OIDCSessionModule
     config:
       session_secret: ${SESSION_SECRET}
     module_dependencies:

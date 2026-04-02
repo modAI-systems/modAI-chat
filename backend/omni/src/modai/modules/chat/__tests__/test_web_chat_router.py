@@ -50,7 +50,7 @@ load_dotenv(find_dotenv(str(working_dir / ".env")))
 def _create_chat_mock_session_module():
     """Create a mock session module that validates successfully."""
     session_module = MagicMock(spec=SessionModule)
-    session_module.validate_session_for_http.return_value = Session(
+    session_module.validate_session.return_value = Session(
         user_id="test-user", additional={}
     )
     return session_module
@@ -156,7 +156,7 @@ def test_responses_endpoint_rejects_unauthenticated_request():
     )
 
     rejecting_session = MagicMock(spec=SessionModule)
-    rejecting_session.validate_session_for_http.side_effect = HTTPException(
+    rejecting_session.validate_session.side_effect = HTTPException(
         status_code=401, detail="Missing, invalid or expired session"
     )
 

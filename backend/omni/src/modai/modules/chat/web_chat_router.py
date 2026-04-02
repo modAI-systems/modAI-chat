@@ -38,7 +38,7 @@ class ChatWebModule(ChatWebModuleBase):
         """
         Routes the chat request to the appropriate LLM module based on the model prefix.
         """
-        self.session_module.validate_session_for_http(request)
+        self.session_module.validate_session(request)
 
         model = body_json.get("model", "")
 

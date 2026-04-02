@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
-from fastapi import Request
+from fastapi import APIRouter, Request
 from modai.module import ModaiModule, ModuleDependencies
 
 
@@ -21,13 +21,19 @@ class Session:
 
 class SessionModule(ModaiModule, ABC):
     """
-    Module Declaration for: Session (Regular Module)
-    Handles session validation operations.
+    Module Declaration for: Session (Web Module)
+    Handles session validation operations and exposes the current session endpoint.
     """
 
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
         super().__init__(dependencies, config)
         self.logger = logging.getLogger(__name__)
+        self.router = APIRouter()
+        self.router.add_api_route(
+            "/api/auth/session",
+            self.validate_session,
+            methods=["GET"],
+        )
 
     @abstractmethod
     def validate_session(
@@ -35,35 +41,12 @@ class SessionModule(ModaiModule, ABC):
         request: Request,
     ) -> Session:
         """
-        Validates and decodes a session.
+        Endpoint handler and validator for the current session.
 
         Returns:
-            The active valid session
+            The active valid session information
 
         Raises:
-            If session is invalid or expired
+            HTTPException if session is missing, invalid or expired
         """
         pass
-
-    def validate_session_for_http(
-        self,
-        request: Request,
-    ) -> Session:
-        """
-        Helper function which wraps the #validate_session method for HTTP request handling.
-
-        Returns:
-            The active valid session
-
-        Raises:
-            An HTTPException if session is invalid or expired
-        """
-        try:
-            return self.validate_session(request)
-        except Exception as e:
-            self.logger.error("Session validation failed: %s", str(e))
-            from fastapi import HTTPException
-
-            raise HTTPException(
-                status_code=401, detail="Missing, invalid or expired session"
-            ) from e

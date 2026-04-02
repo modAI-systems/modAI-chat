@@ -125,13 +125,13 @@ auth_oidc:
 - User info retrieval with JIT provisioning
 
 **API Endpoints**:
-- `GET /api/auth/session` - Returns session status (200 OK, always succeeds)
+- `GET /api/auth/session` - Returns the active session (200 OK) or 401 if missing/invalid/expired
 - `GET /api/auth/userinfo` - Returns user info with JIT provisioning (200 OK / 401 / 404)
 
 **Configuration**:
 ```yaml
 session:
-  class: modai.modules.authentication.oidc_session.OIDCSessionModule
+    class: modai.modules.session.oidc_session.OIDCSessionModule
   config:
     session_secret: ${SESSION_SECRET}   # Secret for verifying session cookies
     # Optional:
@@ -154,23 +154,16 @@ def validate_session(self, request: Request) -> Session:
         (email, name, email_verified)
 
     Raises:
-        ValueError if no cookie, invalid signature, or JWT expired
-    """
-
-def validate_session_for_http(self, request: Request) -> Session:
-    """
-    Same as validate_session but raises HTTPException(401) on failure.
+        HTTPException(401) if no cookie, invalid signature, or JWT expired
     """
 ```
 
 **Data Models**:
 
-Session status:
+Session endpoint:
 ```json
 // GET /api/auth/session (200 OK)
-{"authenticated": true, "user_id": "user-id", "email": "user@example.com"}
-// or
-{"authenticated": false, "user_id": null, "email": null}
+{"user_id": "user-id", "additional": {"email": "user@example.com", "name": "John Doe"}}
 ```
 
 Userinfo:
@@ -237,7 +230,7 @@ class SomeWebModule(ModaiModule):
 
     async def get_some(self, request: Request):
         # 1. Validate session (raises 401 if cookie session is missing/invalid)
-        session = self.session_module.validate_session_for_http(request)
+        session = self.session_module.validate_session(request)
 
         # 2. Process request (session.user_id contains the OIDC sub claim)
         return {"data": "protected content", "user": session.user_id}
@@ -253,7 +246,7 @@ sequenceDiagram
 
     Browser->>Frontend: Navigate to app
     Frontend->>Backend: GET /api/auth/session
-    Backend->>Frontend: {authenticated: false}
+    Backend->>Frontend: 401 if not authenticated
     Frontend->>Backend: GET /api/auth/login
     Backend->>Browser: 302 Redirect to IDP /authorize
     Browser->>IDP: Show login page

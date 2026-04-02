@@ -40,7 +40,7 @@ modules:
       database_url: "sqlite:///./user_settings.db"
       echo: false
   session:
-    class: modai.modules.authentication.oidc_session.OIDCSessionModule
+    class: modai.modules.session.oidc_session.OIDCSessionModule
     config:
       session_secret: ${SESSION_SECRET}
       # Optional: session_duration: 86400  # seconds, default 24 h
