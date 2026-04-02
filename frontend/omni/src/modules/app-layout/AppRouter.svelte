@@ -26,17 +26,7 @@ export function create(deps: ModuleDependencies): RouterService {
   }
 
   routeMap["*"] = fallbackRoute.component;
-  const routerService = createRouter(routeMap);
-
-  if (
-    typeof window !== "undefined" &&
-    window.location.pathname === "/" &&
-    fallbackRoute.path !== "/"
-  ) {
-    void routerService.navigate(fallbackRoute.path, { replace: true });
-  }
-
-  return routerService;
+  return createRouter(routeMap);
 }
 </script>
 
