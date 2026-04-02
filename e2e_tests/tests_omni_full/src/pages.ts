@@ -100,8 +100,8 @@ export class NanoIdpLoginPage {
 export class ChatPage {
     constructor(private page: Page) {}
 
-    async goto(): Promise<void> {
-        await this.page.goto("/");
+    async goto(path = "/"): Promise<void> {
+        await this.page.goto(path);
         // Wait for the Svelte auth guard to finish
         await this.page.waitForSelector("header", { timeout: 10000 });
     }
