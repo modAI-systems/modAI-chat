@@ -29,7 +29,9 @@
       "id": "sidebar-layout",
       "type": "AppLayout",
       "path": "@/modules/app-layout/SidebarLayout",
-      "dependencies": {}
+      "dependencies": {
+        "module:sidebarTopItems": ["chat-navigation-item", "providers-navigation-item"]
+      }
     },
     {
       "id": "llm-provider-service",
@@ -55,6 +57,12 @@
       }
     },
     {
+      "id": "chat-navigation-item",
+      "type": "SidebarTopItem",
+      "path": "@/modules/chat/chatNavigationItem",
+      "dependencies": {}
+    },
+    {
       "id": "chat-route",
       "type": "Route",
       "path": "@/modules/chat/chatRouteDefinition/create",
@@ -75,6 +83,12 @@
       "dependencies": {
         "module:llmProviderService": "llm-provider-service"
       }
+    },
+    {
+      "id": "providers-navigation-item",
+      "type": "SidebarTopItem",
+      "path": "@/modules/llm-provider-management/providersNavigationItem",
+      "dependencies": {}
     },
     {
       "id": "providers-route",

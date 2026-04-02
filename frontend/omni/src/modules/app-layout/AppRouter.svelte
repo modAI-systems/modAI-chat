@@ -1,11 +1,11 @@
 <script module lang="ts">
-import { createRouter } from "sv-router";
+import { createRouter, type RouterApi, type Routes } from "sv-router";
 import type { Component } from "svelte";
 import { getContext } from "svelte";
 import type { ModuleDependencies } from "@/core/module-system";
 import type { RouteDefinition } from "./routeDefinition.svelte";
 
-export interface RouterService extends ReturnType<typeof createRouter> {
+export interface RouterService extends RouterApi<Routes> {
   getRoutes(): RouteDefinition[];
 }
 
