@@ -1,45 +1,56 @@
 import { describe, expect, it } from "vitest";
-import { ActiveModulesImpl, ModuleDependenciesImpl } from "./activeModules";
+import { ComponentResolver } from "./componentResolver";
 import type { ModuleDependencies } from "./index";
-import { activateModules } from "./moduleActivator";
-import { LoadedModule, type ModuleRegistry } from "./moduleRegistry";
+import { resolveManifestDependencies } from "./manifestDependencyResolver";
+import type { ManifestEntry } from "./manifestJson";
+import { ActiveModulesImpl, ModuleDependenciesImpl } from "./module";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function mod(
+function entry(
     id: string,
     path: string = `@/test/${id}`,
-    component: unknown = {},
-    dependencySpec: Record<string, string | string[]> = {},
+    dependencies: Record<string, string | string[]> = {},
     config: Record<string, unknown> = {},
-): LoadedModule {
-    return new LoadedModule(id, path, component, dependencySpec, config);
+): ManifestEntry {
+    return { id, path, dependencies, config };
 }
 
-function registry(modules: LoadedModule[]): ModuleRegistry {
-    return { getAll: async () => modules };
-}
+const stubDeps: ModuleDependencies = {
+    getOne<T>(): T {
+        return undefined as unknown as T;
+    },
+    getAll<T>(): T[] {
+        return [];
+    },
+};
 
 // ---------------------------------------------------------------------------
 // ModuleDependenciesImpl
 // ---------------------------------------------------------------------------
 
 describe("ModuleDependenciesImpl", () => {
-    function buildModuleMap(
-        modules: LoadedModule[],
-    ): Map<string, LoadedModule> {
-        return new Map(modules.map((m) => [m.id, m]));
-    }
-
     describe("getOne", () => {
         it("returns the component for a single-value dependency", () => {
             const comp = { name: "ServiceA" };
-            const moduleMap = buildModuleMap([mod("svc-a", undefined, comp)]);
+            const serviceEntry = entry("svc-a", "@/test/svc-a");
+            const consumerEntry = entry("consumer", "@/test/consumer", {
+                "module:myService": "svc-a",
+            });
+            const allModules = new Map<ManifestEntry, ModuleDependencies>();
+            const resolver = ComponentResolver.fromExports({
+                "@/test/svc-a": { default: comp },
+            });
+            allModules.set(
+                serviceEntry,
+                new ModuleDependenciesImpl(serviceEntry, allModules, resolver),
+            );
             const deps = new ModuleDependenciesImpl(
-                { "module:myService": "svc-a" },
-                moduleMap,
+                consumerEntry,
+                allModules,
+                resolver,
             );
 
             expect(deps.getOne("myService")).toBe(comp);
@@ -47,19 +58,34 @@ describe("ModuleDependenciesImpl", () => {
 
         it("returns the component for an array dependency with one element", () => {
             const comp = { name: "only" };
-            const moduleMap = buildModuleMap([
-                mod("only-mod", undefined, comp),
-            ]);
+            const onlyEntry = entry("only-mod", "@/test/only-mod");
+            const consumerEntry = entry("consumer", "@/test/consumer", {
+                "module:single": ["only-mod"],
+            });
+            const allModules = new Map<ManifestEntry, ModuleDependencies>();
+            const resolver = ComponentResolver.fromExports({
+                "@/test/only-mod": { default: comp },
+            });
+            allModules.set(
+                onlyEntry,
+                new ModuleDependenciesImpl(onlyEntry, allModules, resolver),
+            );
             const deps = new ModuleDependenciesImpl(
-                { "module:single": ["only-mod"] },
-                moduleMap,
+                consumerEntry,
+                allModules,
+                resolver,
             );
 
             expect(deps.getOne("single")).toBe(comp);
         });
 
         it("throws when dependency name is not declared", () => {
-            const deps = new ModuleDependenciesImpl({}, new Map());
+            const consumerEntry = entry("consumer", "@/test/consumer");
+            const deps = new ModuleDependenciesImpl(
+                consumerEntry,
+                new Map(),
+                ComponentResolver.fromExports({}),
+            );
 
             expect(() => deps.getOne("unknown")).toThrow(
                 'Dependency "unknown" is not declared',
@@ -67,10 +93,28 @@ describe("ModuleDependenciesImpl", () => {
         });
 
         it("throws when dependency maps to multiple modules", () => {
-            const moduleMap = buildModuleMap([mod("a"), mod("b")]);
+            const entryA = entry("a", "@/test/a");
+            const entryB = entry("b", "@/test/b");
+            const consumerEntry = entry("consumer", "@/test/consumer", {
+                "module:multi": ["a", "b"],
+            });
+            const allModules = new Map<ManifestEntry, ModuleDependencies>();
+            const resolver = ComponentResolver.fromExports({
+                "@/test/a": { default: {} },
+                "@/test/b": { default: {} },
+            });
+            allModules.set(
+                entryA,
+                new ModuleDependenciesImpl(entryA, allModules, resolver),
+            );
+            allModules.set(
+                entryB,
+                new ModuleDependenciesImpl(entryB, allModules, resolver),
+            );
             const deps = new ModuleDependenciesImpl(
-                { "module:multi": ["a", "b"] },
-                moduleMap,
+                consumerEntry,
+                allModules,
+                resolver,
             );
 
             expect(() => deps.getOne("multi")).toThrow(
@@ -79,9 +123,13 @@ describe("ModuleDependenciesImpl", () => {
         });
 
         it("throws when referenced module is not in active modules", () => {
+            const consumerEntry = entry("consumer", "@/test/consumer", {
+                "module:missing": ["nonexistent"],
+            });
             const deps = new ModuleDependenciesImpl(
-                { "module:missing": "nonexistent" },
+                consumerEntry,
                 new Map(),
+                ComponentResolver.fromExports({}),
             );
 
             expect(() => deps.getOne("missing")).toThrow(
@@ -94,13 +142,28 @@ describe("ModuleDependenciesImpl", () => {
         it("returns all components for an array dependency", () => {
             const compA = { name: "A" };
             const compB = { name: "B" };
-            const moduleMap = buildModuleMap([
-                mod("a", undefined, compA),
-                mod("b", undefined, compB),
-            ]);
+            const entryA = entry("a", "@/test/a");
+            const entryB = entry("b", "@/test/b");
+            const consumerEntry = entry("consumer", "@/test/consumer", {
+                "module:widgets": ["a", "b"],
+            });
+            const allModules = new Map<ManifestEntry, ModuleDependencies>();
+            const resolver = ComponentResolver.fromExports({
+                "@/test/a": { default: compA },
+                "@/test/b": { default: compB },
+            });
+            allModules.set(
+                entryA,
+                new ModuleDependenciesImpl(entryA, allModules, resolver),
+            );
+            allModules.set(
+                entryB,
+                new ModuleDependenciesImpl(entryB, allModules, resolver),
+            );
             const deps = new ModuleDependenciesImpl(
-                { "module:widgets": ["a", "b"] },
-                moduleMap,
+                consumerEntry,
+                allModules,
+                resolver,
             );
 
             expect(deps.getAll("widgets")).toEqual([compA, compB]);
@@ -108,17 +171,34 @@ describe("ModuleDependenciesImpl", () => {
 
         it("wraps a single-value dependency in an array", () => {
             const comp = { name: "only" };
-            const moduleMap = buildModuleMap([mod("svc", undefined, comp)]);
+            const serviceEntry = entry("svc", "@/test/svc");
+            const consumerEntry = entry("consumer", "@/test/consumer", {
+                "module:service": ["svc"],
+            });
+            const allModules = new Map<ManifestEntry, ModuleDependencies>();
+            const resolver = ComponentResolver.fromExports({
+                "@/test/svc": { default: comp },
+            });
+            allModules.set(
+                serviceEntry,
+                new ModuleDependenciesImpl(serviceEntry, allModules, resolver),
+            );
             const deps = new ModuleDependenciesImpl(
-                { "module:service": "svc" },
-                moduleMap,
+                consumerEntry,
+                allModules,
+                resolver,
             );
 
             expect(deps.getAll("service")).toEqual([comp]);
         });
 
         it("throws when dependency name is not declared", () => {
-            const deps = new ModuleDependenciesImpl({}, new Map());
+            const consumerEntry = entry("consumer", "@/test/consumer");
+            const deps = new ModuleDependenciesImpl(
+                consumerEntry,
+                new Map(),
+                ComponentResolver.fromExports({}),
+            );
 
             expect(() => deps.getAll("nope")).toThrow(
                 'Dependency "nope" is not declared',
@@ -128,29 +208,229 @@ describe("ModuleDependenciesImpl", () => {
 });
 
 // ---------------------------------------------------------------------------
-// ActiveModulesImpl — getModuleDependencies
+// ComponentResolver
+// ---------------------------------------------------------------------------
+
+describe("ComponentResolver", () => {
+    it("buildUpCache only caches paths of referenced dependencies", async () => {
+        let importCalls = 0;
+        const component = { name: "Widget" };
+        const widgetEntry = entry("widget", "@/modules/widget/Widget", {});
+        const consumerEntry = entry("consumer", "@/modules/consumer", {
+            "module:widget": "widget",
+        });
+        const resolver = await ComponentResolver.buildUpCache(
+            [widgetEntry, consumerEntry],
+            {
+                "@/modules/widget/Widget": async () => {
+                    importCalls += 1;
+                    return { default: component };
+                },
+            },
+        );
+
+        expect(importCalls).toBe(1);
+        expect(resolver.getComponent("@/modules/widget/Widget", stubDeps)).toBe(
+            component,
+        );
+    });
+
+    it("buildUpCache does not cache unreferenced entries", async () => {
+        let importCalls = 0;
+        const unreferencedEntry = entry(
+            "unreferenced",
+            "@/modules/unused/Widget",
+        );
+        const consumerEntry = entry("consumer", "@/modules/consumer", {});
+        await ComponentResolver.buildUpCache(
+            [unreferencedEntry, consumerEntry],
+            {
+                "@/modules/unused/Widget": async () => {
+                    importCalls += 1;
+                    return { default: {} };
+                },
+            },
+        );
+
+        expect(importCalls).toBe(0);
+    });
+
+    it("buildUpCache fetches factory base path (strips /create) for referenced entries", async () => {
+        let importCalls = 0;
+        const svcEntry = entry("svc", "@/modules/svc/create");
+        const consumerEntry = entry("consumer", "@/modules/consumer", {
+            "module:service": "svc",
+        });
+        const resolver = await ComponentResolver.buildUpCache(
+            [svcEntry, consumerEntry],
+            {
+                "@/modules/svc": async () => {
+                    importCalls += 1;
+                    return { create: () => ({ ready: true }) };
+                },
+            },
+        );
+
+        expect(importCalls).toBe(1);
+        expect(resolver.getComponent("@/modules/svc/create", stubDeps)).toEqual(
+            { ready: true },
+        );
+    });
+
+    it("buildUpCache deduplicates referenced paths when multiple entries reference the same dependency", async () => {
+        let importCalls = 0;
+        const widgetEntry = entry("widget", "@/modules/shared");
+        const consumer1 = entry("c1", "@/modules/c1", {
+            "module:widget": "widget",
+        });
+        const consumer2 = entry("c2", "@/modules/c2", {
+            "module:widget": "widget",
+        });
+        await ComponentResolver.buildUpCache(
+            [widgetEntry, consumer1, consumer2],
+            {
+                "@/modules/shared": async () => {
+                    importCalls += 1;
+                    return { default: {} };
+                },
+            },
+        );
+
+        expect(importCalls).toBe(1);
+    });
+
+    it("getComponent returns default export for regular module", () => {
+        const comp = { name: "Comp" };
+        const resolver = ComponentResolver.fromExports({
+            "@/test/comp": { default: comp },
+        });
+
+        expect(resolver.getComponent("@/test/comp", stubDeps)).toBe(comp);
+    });
+
+    it("getComponent calls create() fresh on each call for factory paths", () => {
+        let callCount = 0;
+        const resolver = ComponentResolver.fromExports({
+            "@/test/svc": {
+                create: (
+                    _deps: ModuleDependencies,
+                    config: Record<string, unknown>,
+                ) => {
+                    callCount += 1;
+                    return { callCount, config };
+                },
+            },
+        });
+
+        const first = resolver.getComponent("@/test/svc/create", stubDeps, {
+            x: 1,
+        });
+        const second = resolver.getComponent("@/test/svc/create", stubDeps, {
+            x: 2,
+        });
+
+        expect(callCount).toBe(2);
+        expect(first).toEqual({ callCount: 1, config: { x: 1 } });
+        expect(second).toEqual({ callCount: 2, config: { x: 2 } });
+    });
+
+    it("getComponent passes deps to create()", () => {
+        const service = { name: "my-service" };
+        const deps: ModuleDependencies = {
+            getOne<T>(): T {
+                return service as unknown as T;
+            },
+            getAll<T>(): T[] {
+                return [];
+            },
+        };
+        const resolver = ComponentResolver.fromExports({
+            "@/test/consumer": {
+                create: (d: ModuleDependencies) => ({
+                    svc: d.getOne("anything"),
+                }),
+            },
+        });
+
+        expect(resolver.getComponent("@/test/consumer/create", deps)).toEqual({
+            svc: service,
+        });
+    });
+
+    it("getComponent returns null when the path is not in cache", () => {
+        const resolver = ComponentResolver.fromExports({});
+
+        expect(resolver.getComponent("@/test/missing", stubDeps)).toBeNull();
+    });
+
+    it("getComponent warns and returns null when factory has no create export", () => {
+        const warns: unknown[][] = [];
+        const original = console.warn;
+        console.warn = (...args: unknown[]) => warns.push(args);
+
+        const resolver = ComponentResolver.fromExports({
+            "@/test/bad": { default: {} },
+        });
+        const result = resolver.getComponent("@/test/bad/create", stubDeps);
+
+        console.warn = original;
+
+        expect(result).toBeNull();
+        expect(warns).toHaveLength(1);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// ActiveModulesImpl
 // ---------------------------------------------------------------------------
 
 describe("ActiveModulesImpl", () => {
+    it("resolves dependency components end-to-end", () => {
+        const serviceEntry = entry("svc", "@/modules/svc");
+        const consumerEntry = entry("consumer", "@/modules/consumer", {
+            "module:service": "svc",
+        });
+        const resolver = ComponentResolver.fromExports({
+            "@/modules/svc": { default: { name: "svc" } },
+            "@/modules/consumer": { default: { name: "consumer" } },
+        });
+        const activeEntries = resolveManifestDependencies(
+            [consumerEntry, serviceEntry],
+            [],
+        );
+        const modules = new ActiveModulesImpl(activeEntries, resolver);
+
+        expect(
+            modules
+                .getModuleDependencies("@/modules/consumer")
+                .getOne<{ name: string }>("service"),
+        ).toEqual({ name: "svc" });
+    });
+
     it("returns ModuleDependencies for a registered module", () => {
         const svcComp = { name: "svc" };
-        const modules = new ActiveModulesImpl([
-            mod("svc", "@/modules/svc", svcComp),
-            mod(
-                "consumer",
-
-                "@/modules/consumer",
-                {},
-                { "module:myService": "svc" },
-            ),
-        ]);
+        const svcEntry = entry("svc", "@/modules/svc");
+        const consumerEntry = entry("consumer", "@/modules/consumer", {
+            "module:myService": ["svc"],
+        });
+        const resolver = ComponentResolver.fromExports({
+            "@/modules/svc": { default: svcComp },
+            "@/modules/consumer": { default: {} },
+        });
+        const modules = new ActiveModulesImpl(
+            [svcEntry, consumerEntry],
+            resolver,
+        );
 
         const deps = modules.getModuleDependencies("@/modules/consumer");
         expect(deps.getOne("myService")).toBe(svcComp);
     });
 
     it("throws when path is not found", () => {
-        const modules = new ActiveModulesImpl([]);
+        const modules = new ActiveModulesImpl(
+            [],
+            ComponentResolver.fromExports({}),
+        );
 
         expect(() =>
             modules.getModuleDependencies("@/modules/missing"),
@@ -160,17 +440,20 @@ describe("ActiveModulesImpl", () => {
     it("returns dependencies that resolve across modules", () => {
         const widgetA = { name: "A" };
         const widgetB = { name: "B" };
-        const modules = new ActiveModulesImpl([
-            mod("wa", "@/modules/wa", widgetA),
-            mod("wb", "@/modules/wb", widgetB),
-            mod(
-                "layout",
-
-                "@/modules/layout",
-                {},
-                { "module:widgets": ["wa", "wb"] },
-            ),
-        ]);
+        const entryA = entry("wa", "@/modules/wa");
+        const entryB = entry("wb", "@/modules/wb");
+        const layoutEntry = entry("layout", "@/modules/layout", {
+            "module:widgets": ["wa", "wb"],
+        });
+        const resolver = ComponentResolver.fromExports({
+            "@/modules/wa": { default: widgetA },
+            "@/modules/wb": { default: widgetB },
+            "@/modules/layout": { default: {} },
+        });
+        const modules = new ActiveModulesImpl(
+            [entryA, entryB, layoutEntry],
+            resolver,
+        );
 
         const deps = modules.getModuleDependencies("@/modules/layout");
         expect(deps.getAll("widgets")).toEqual([widgetA, widgetB]);
@@ -178,297 +461,173 @@ describe("ActiveModulesImpl", () => {
 });
 
 // ---------------------------------------------------------------------------
-// activateModules — dependency resolution
+// resolveManifestDependencies
 // ---------------------------------------------------------------------------
 
-describe("activateModules", () => {
-    it("activates modules with no dependencies", async () => {
-        const a = mod("a");
-        const b = mod("b");
+describe("resolveManifestDependencies", () => {
+    it("activates modules with no dependencies", () => {
+        const a = entry("a");
+        const b = entry("b");
 
-        const result = await activateModules(registry([a, b]), []);
+        const result = resolveManifestDependencies([a, b], []);
 
-        expect(result.map((m) => m.id)).toEqual(
+        expect(result.map((e) => e.id)).toEqual(
             expect.arrayContaining(["a", "b"]),
         );
     });
 
-    it("activates a module once its module dependency is satisfied", async () => {
-        const service = mod("svc");
-        const consumer = mod(
-            "consumer",
+    it("activates a module once its module dependency is satisfied", () => {
+        const service = entry("svc");
+        const consumer = entry("consumer", "@/test/consumer", {
+            "module:service": "svc",
+        });
 
-            undefined,
-            {},
-            {
-                "module:service": "svc",
-            },
-        );
+        const result = resolveManifestDependencies([consumer, service], []);
 
-        const result = await activateModules(registry([consumer, service]), []);
-
-        expect(result.map((m) => m.id)).toEqual(
+        expect(result.map((e) => e.id)).toEqual(
             expect.arrayContaining(["svc", "consumer"]),
         );
     });
 
-    it("does not activate a module with an unmet module dependency", async () => {
-        const consumer = mod(
-            "consumer",
+    it("does not activate a module with an unmet module dependency", () => {
+        const consumer = entry("consumer", "@/test/consumer", {
+            "module:service": "missing",
+        });
 
-            undefined,
-            {},
-            {
-                "module:service": "missing",
-            },
-        );
+        const result = resolveManifestDependencies([consumer], []);
 
-        const result = await activateModules(registry([consumer]), []);
-
-        expect(result.map((m) => m.id)).not.toContain("consumer");
+        expect(result.map((e) => e.id)).not.toContain("consumer");
     });
 
-    it("activates a module when required flag is present", async () => {
-        const flagged = mod(
-            "flagged",
+    it("activates a module when required flag is present", () => {
+        const flagged = entry("flagged", "@/test/flagged", {
+            "flag:beta": "Requires beta flag",
+        });
 
-            undefined,
-            {},
-            {
-                "flag:beta": "Requires beta flag",
-            },
-        );
+        const result = resolveManifestDependencies([flagged], ["beta"]);
 
-        const result = await activateModules(registry([flagged]), ["beta"]);
-
-        expect(result.map((m) => m.id)).toContain("flagged");
+        expect(result.map((e) => e.id)).toContain("flagged");
     });
 
-    it("does not activate a module when required flag is absent", async () => {
-        const flagged = mod(
-            "flagged",
+    it("does not activate a module when required flag is absent", () => {
+        const flagged = entry("flagged", "@/test/flagged", {
+            "flag:beta": "Requires beta flag",
+        });
 
-            undefined,
-            {},
-            {
-                "flag:beta": "Requires beta flag",
-            },
-        );
+        const result = resolveManifestDependencies([flagged], []);
 
-        const result = await activateModules(registry([flagged]), []);
-
-        expect(result.map((m) => m.id)).not.toContain("flagged");
+        expect(result.map((e) => e.id)).not.toContain("flagged");
     });
 
-    it("does not activate a module when a negated flag is present", async () => {
-        const flagged = mod(
-            "flagged",
+    it("does not activate a module when a negated flag is present", () => {
+        const flagged = entry("flagged", "@/test/flagged", {
+            "flag:!legacy": "Notforlegacymode",
+        });
 
-            undefined,
-            {},
-            {
-                "flag:!legacy": "Not for legacy mode",
-            },
-        );
+        const result = resolveManifestDependencies([flagged], ["legacy"]);
 
-        const result = await activateModules(registry([flagged]), ["legacy"]);
-
-        expect(result.map((m) => m.id)).not.toContain("flagged");
+        expect(result.map((e) => e.id)).not.toContain("flagged");
     });
 
-    it("activates a module when a negated flag is absent", async () => {
-        const flagged = mod(
-            "flagged",
+    it("activates a module when a negated flag is absent", () => {
+        const flagged = entry("flagged", "@/test/flagged", {
+            "flag:!legacy": "Notforlegacymode",
+        });
 
-            undefined,
-            {},
-            {
-                "flag:!legacy": "Not for legacy mode",
-            },
-        );
+        const result = resolveManifestDependencies([flagged], []);
 
-        const result = await activateModules(registry([flagged]), []);
-
-        expect(result.map((m) => m.id)).toContain("flagged");
+        expect(result.map((e) => e.id)).toContain("flagged");
     });
 
-    it("resolves a chain of module dependencies in the correct order", async () => {
-        const a = mod("a");
-        const b = mod("b", undefined, {}, { "module:dep": "a" });
-        const c = mod("c", undefined, {}, { "module:dep": "b" });
+    it("resolves a chain of module dependencies in the correct order", () => {
+        const a = entry("a");
+        const b = entry("b", "@/test/b", { "module:dep": "a" });
+        const c = entry("c", "@/test/c", { "module:dep": "b" });
 
-        const result = await activateModules(registry([c, b, a]), []);
+        const result = resolveManifestDependencies([c, b, a], []);
 
-        expect(result.map((m) => m.id)).toEqual(
+        expect(result.map((e) => e.id)).toEqual(
             expect.arrayContaining(["a", "b", "c"]),
         );
     });
 
-    it("warns and skips modules with circular/unresolvable dependencies", async () => {
+    it("warns and skips modules with circular/unresolvable dependencies", () => {
         const calls: unknown[][] = [];
         const original = console.warn;
         console.warn = (...args: unknown[]) => calls.push(args);
-        const a = mod("a", undefined, {}, { "module:dep": "b" });
-        const b = mod("b", undefined, {}, { "module:dep": "a" });
+        const a = entry("a", "@/test/a", { "module:dep": "b" });
+        const b = entry("b", "@/test/b", { "module:dep": "a" });
 
-        const result = await activateModules(registry([a, b]), []);
+        const result = resolveManifestDependencies([a, b], []);
 
-        expect(result).toHaveLength(0);
+        expect(result.length).toBe(0);
         expect(calls).toHaveLength(1);
         console.warn = original;
     });
 
-    it("resolves array dependencies requiring all referenced modules", async () => {
-        const widgetA = mod("wa");
-        const widgetB = mod("wb");
-        const layout = mod(
-            "layout",
+    it("resolves array dependencies requiring all referenced modules", () => {
+        const widgetA = entry("wa");
+        const widgetB = entry("wb");
+        const layout = entry("layout", "@/test/layout", {
+            "module:widgets": ["wa", "wb"],
+        });
 
-            undefined,
-            {},
-            {
-                "module:widgets": ["wa", "wb"],
-            },
-        );
-
-        const result = await activateModules(
-            registry([layout, widgetA, widgetB]),
+        const result = resolveManifestDependencies(
+            [layout, widgetA, widgetB],
             [],
         );
 
-        expect(result.map((m) => m.id)).toEqual(
+        expect(result.map((e) => e.id)).toEqual(
             expect.arrayContaining(["wa", "wb", "layout"]),
         );
     });
 
-    it("does not activate a module when one of its array dependency values is missing", async () => {
-        const widgetA = mod("wa");
-        const layout = mod(
-            "layout",
+    it("does not activate a module when one of its array dependency values is missing", () => {
+        const widgetA = entry("wa");
+        const layout = entry("layout", "@/test/layout", {
+            "module:widgets": ["wa", "missing"],
+        });
 
-            undefined,
-            {},
-            {
-                "module:widgets": ["wa", "missing"],
-            },
-        );
+        const result = resolveManifestDependencies([layout, widgetA], []);
 
-        const result = await activateModules(registry([layout, widgetA]), []);
-
-        expect(result.map((m) => m.id)).not.toContain("layout");
+        expect(result.map((e) => e.id)).not.toContain("layout");
     });
 
-    it("activates modules with mixed module and flag dependencies", async () => {
-        const service = mod("svc");
-        const consumer = mod(
-            "consumer",
+    it("activates modules with mixed module and flag dependencies", () => {
+        const service = entry("svc");
+        const consumer = entry("consumer", "@/test/consumer", {
+            "module:service": "svc",
+            "flag:enabled": "Feature flag",
+        });
 
-            undefined,
-            {},
-            {
-                "module:service": "svc",
-                "flag:enabled": "Feature flag",
-            },
+        const result = resolveManifestDependencies(
+            [consumer, service],
+            ["enabled"],
         );
 
-        const result = await activateModules(registry([consumer, service]), [
-            "enabled",
-        ]);
-
-        expect(result.map((m) => m.id)).toEqual(
+        expect(result.map((e) => e.id)).toEqual(
             expect.arrayContaining(["svc", "consumer"]),
         );
     });
 
-    it("does not activate when flag is unmet even if module deps are met", async () => {
-        const service = mod("svc");
-        const consumer = mod(
-            "consumer",
-
-            undefined,
-            {},
-            {
-                "module:service": "svc",
-                "flag:enabled": "Feature flag",
-            },
-        );
-
-        const result = await activateModules(registry([consumer, service]), []);
-
-        expect(result.map((m) => m.id)).not.toContain("consumer");
-    });
-});
-
-// ---------------------------------------------------------------------------
-// activateModules — serviceFactory
-// ---------------------------------------------------------------------------
-
-describe("activateModules — serviceFactory", () => {
-    it("calls the create function for serviceFactory modules", async () => {
-        const createFn = (
-            _deps: ModuleDependencies,
-            config: Record<string, unknown>,
-        ) => ({
-            created: true,
-            greeting: config.greeting,
+    it("does not activate when flag is unmet even if module deps are met", () => {
+        const service = entry("svc");
+        const consumer = entry("consumer", "@/test/consumer", {
+            "module:service": "svc",
+            "flag:enabled": "Feature flag",
         });
 
-        const factory = mod(
-            "my-service",
-            "@/test/my-service/create",
-            createFn,
-            {},
-            { greeting: "hello" },
-        );
+        const result = resolveManifestDependencies([consumer, service], []);
 
-        const result = await activateModules(registry([factory]), []);
-
-        expect(result).toHaveLength(1);
-        expect(result[0].component).toEqual({
-            created: true,
-            greeting: "hello",
-        });
+        expect(result.map((e) => e.id)).not.toContain("consumer");
     });
 
-    it("passes resolved ModuleDependencies to the create function", async () => {
-        const dbComp = { query: () => "data" };
-        const db = mod("db", undefined, dbComp);
+    it("returns entries in activation order (dependencies before dependants)", () => {
+        const a = entry("a");
+        const b = entry("b", "@/test/b", { "module:dep": "a" });
 
-        let capturedDeps: ModuleDependencies | null = null;
-        const createFn = (
-            deps: ModuleDependencies,
-            _config: Record<string, unknown>,
-        ) => {
-            capturedDeps = deps;
-            return { service: true, db: deps.getOne("database") };
-        };
+        const result = resolveManifestDependencies([b, a], []);
 
-        const svc = mod("svc", "@/test/svc/create", createFn, {
-            "module:database": "db",
-        });
-
-        const result = await activateModules(registry([svc, db]), []);
-
-        expect(result).toHaveLength(2);
-        const svcModule = result.find((m) => m.id === "svc");
-        expect(svcModule?.component).toEqual({ service: true, db: dbComp });
-        expect(capturedDeps).not.toBeNull();
-    });
-
-    it("does not activate a serviceFactory module until its dependencies are met", async () => {
-        const createFn = (deps: ModuleDependencies) => ({
-            dep: deps.getOne("needed"),
-        });
-
-        const factory = mod("svc", "@/test/svc/create", createFn, {
-            "module:needed": "dep-mod",
-        });
-        const dep = mod("dep-mod", undefined, { value: 42 });
-
-        const result = await activateModules(registry([factory, dep]), []);
-
-        expect(result).toHaveLength(2);
-        const svcModule = result.find((m) => m.id === "svc");
-        expect(svcModule?.component).toEqual({ dep: { value: 42 } });
+        expect(result.map((e) => e.id)).toEqual(["a", "b"]);
     });
 });

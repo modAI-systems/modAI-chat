@@ -1,11 +1,11 @@
 <script lang="ts">
 import type { Snippet } from "svelte";
 import { setContext, untrack } from "svelte";
-import { ActiveModulesImpl } from "./activeModules";
+import { ComponentResolver } from "./componentResolver";
 import { MODULES_KEY, type Modules } from "./index";
+import { resolveManifestDependencies } from "./manifestDependencyResolver";
 import { fetchManifestJson } from "./manifestJson";
-import { activateModules } from "./moduleActivator";
-import { JsonModuleRegistry } from "./moduleRegistry";
+import { ActiveModulesImpl } from "./module";
 
 interface Props {
   manifestPath?: string;
@@ -30,9 +30,10 @@ setContext(MODULES_KEY, modules);
 // untrack: manifest path is intentionally captured once at mount time
 const ready = fetchManifestJson(untrack(() => manifestPath)).then(
   async (json) => {
-    const registry = new JsonModuleRegistry(json.modules);
-    const loaded = await activateModules(registry, []);
-    activeModulesImpl = new ActiveModulesImpl(loaded);
+    const activeEntries = resolveManifestDependencies(json.modules, []);
+    const componentResolver =
+      await ComponentResolver.buildUpCache(activeEntries);
+    activeModulesImpl = new ActiveModulesImpl(activeEntries, componentResolver);
   },
 );
 
