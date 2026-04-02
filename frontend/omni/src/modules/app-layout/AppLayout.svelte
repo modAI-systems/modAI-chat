@@ -1,47 +1,48 @@
 <script lang="ts">
-import { MessageSquare, Settings2 } from "lucide-svelte";
-import type { Component } from "svelte";
-import { getModuleDeps } from "@/core/module-system/index";
+import {
+  AppSidebarLayout,
+  AppSidebarNavigation,
+  type SidebarNavigationItem,
+} from "@/lib/components/layout";
 import { getAppRouter } from "./AppRouter.svelte";
+import type { RouteDefinition } from "./routeDefinition.svelte";
 
-const deps = getModuleDeps("@/modules/app-layout/AppLayout");
-const chatComponents = $derived(deps.getAll<Component>("chat"));
-const providerComponents = $derived(
-  deps.getAll<Component>("providerManagement"),
-);
 const appRouter = getAppRouter();
+const routes = $derived(appRouter.getRoutes() as RouteDefinition[]);
+const navigationItems = $derived(
+  routes
+    .filter(
+      (
+        route,
+      ): route is RouteDefinition & {
+        navigation: NonNullable<RouteDefinition["navigation"]>;
+      } => route.navigation !== undefined,
+    )
+    .map(
+      (route) =>
+        ({
+          path: route.path,
+          label: route.navigation.label,
+          icon: route.navigation.icon,
+        }) satisfies SidebarNavigationItem,
+    ),
+);
 const { children } = $props();
 </script>
 
 <main class="flex min-h-screen flex-col bg-background">
-	{#if chatComponents.length > 0}
-		<header class="flex items-center justify-between border-b px-6 py-3">
-			<div class="flex items-center">
-				<h1 class="text-xl font-bold tracking-tight">modAI</h1>
-				<p class="text-muted-foreground ml-3 text-sm">Svelte · Vite · Tailwind · AI SDK</p>
-			</div>
-			<nav class="flex gap-1">
-				<button
-					class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors {appRouter.isActive('/') ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
-					onclick={() => appRouter.navigate(appRouter.p("/"))}
-				>
-					<MessageSquare class="size-4" />
-					Chat
-				</button>
-				{#if providerComponents.length > 0}
-					<button
-						class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors {appRouter.isActive('/providers') ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
-						onclick={() => appRouter.navigate(appRouter.p("/providers"))}
-					>
-						<Settings2 class="size-4" />
-						Providers
-					</button>
-				{/if}
-			</nav>
-		</header>
-		<div class="flex-1 overflow-hidden">
+	{#if navigationItems.length > 0}
+		<AppSidebarLayout>
+			{#snippet sidebar()}
+				<AppSidebarNavigation
+					items={navigationItems}
+					isActive={(path) => appRouter.isActive(path)}
+					onNavigate={(path) => appRouter.navigate(appRouter.p(path))}
+				/>
+			{/snippet}
+
 			{@render children?.()}
-		</div>
+		</AppSidebarLayout>
 	{:else}
 		<div class="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
 			<h1 class="text-4xl font-bold text-foreground">modAI</h1>

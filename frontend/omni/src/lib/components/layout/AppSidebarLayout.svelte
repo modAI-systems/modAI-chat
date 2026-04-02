@@ -1,0 +1,41 @@
+<script lang="ts">
+import type { Snippet } from "svelte";
+import { PanelLeft } from "lucide-svelte";
+import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+
+let {
+    sidebar,
+    children,
+}: {
+    sidebar?: Snippet;
+    children?: Snippet;
+} = $props();
+</script>
+
+<Sidebar.Provider>
+    <Sidebar.Root>
+        <Sidebar.Header class="border-b border-sidebar-border/60 px-3 py-2">
+            <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold tracking-tight">modAI</p>
+                    <p class="truncate text-xs text-sidebar-foreground/70">Modular AI Workspace</p>
+                </div>
+                <Sidebar.Trigger class="md:hidden" aria-label="Toggle navigation">
+                    <PanelLeft class="size-4" />
+                </Sidebar.Trigger>
+            </div>
+        </Sidebar.Header>
+        <Sidebar.Content class="px-2 py-3">
+            {@render sidebar?.()}
+        </Sidebar.Content>
+    </Sidebar.Root>
+
+    <Sidebar.Inset>
+        <header class="border-b bg-background/80 px-4 py-2 backdrop-blur md:px-6">
+            <Sidebar.Trigger aria-label="Toggle navigation" />
+        </header>
+        <div class="flex-1 overflow-hidden">
+            {@render children?.()}
+        </div>
+    </Sidebar.Inset>
+</Sidebar.Provider>
