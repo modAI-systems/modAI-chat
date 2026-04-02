@@ -10,20 +10,25 @@ export interface SidebarNavigationItem {
 
 let {
     items,
-    isActive,
     onNavigate,
 }: {
     items: SidebarNavigationItem[];
-    isActive: (path: string) => boolean;
     onNavigate: (path: string) => void;
 } = $props();
+
+let hoveredPath: string | null = $state(null);
 </script>
 
 <Sidebar.Menu>
     {#each items as item (item.path)}
         <Sidebar.MenuItem>
             <Sidebar.MenuButton
-                isActive={isActive(item.path)}
+                isActive={false}
+                class={hoveredPath === item.path 
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                    : "bg-transparent text-sidebar-foreground data-[active=false]:bg-transparent data-[active=false]:text-sidebar-foreground"}
+                onmouseenter={() => (hoveredPath = item.path)}
+                onmouseleave={() => (hoveredPath = null)}
                 onclick={() => onNavigate(item.path)}
             >
                 <item.icon />
