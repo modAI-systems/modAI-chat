@@ -36,7 +36,6 @@ const { children } = $props();
 			{#snippet sidebar()}
 				<AppSidebarNavigation
 					items={navigationItems}
-					isActive={(path) => appRouter.isActive(path)}
 					onNavigate={(path) => appRouter.navigate(appRouter.p(path))}
 				/>
 			{/snippet}
