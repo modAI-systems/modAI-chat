@@ -1,7 +1,6 @@
 """
 Session Module: Provides session management handling capabilities.
-- Session creation and validation
-- Session data management
+- Session validation
 - Session-based user identification
 """
 
@@ -10,7 +9,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
-from fastapi import Request, Response
+from fastapi import Request
 from modai.module import ModaiModule, ModuleDependencies
 
 
@@ -23,29 +22,12 @@ class Session:
 class SessionModule(ModaiModule, ABC):
     """
     Module Declaration for: Session (Regular Module)
-    Handles session management operations.
+    Handles session validation operations.
     """
 
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
         super().__init__(dependencies, config)
         self.logger = logging.getLogger(__name__)
-
-    @abstractmethod
-    def start_new_session(
-        self,
-        request: Request,
-        response: Response,
-        user_id: str,
-        **kwargs,
-    ):
-        """
-        Creates a session for the given user and applies it to the response.
-
-        Args:
-            user_id: Unique identifier for the user
-            **kwargs: Additional data to include in the session
-        """
-        pass
 
     @abstractmethod
     def validate_session(
@@ -60,17 +42,6 @@ class SessionModule(ModaiModule, ABC):
 
         Raises:
             If session is invalid or expired
-        """
-        pass
-
-    @abstractmethod
-    def end_session(
-        self,
-        request: Request,
-        response: Response,
-    ):
-        """
-        Ends the session by invalidating the session.
         """
         pass
 
