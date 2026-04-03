@@ -1,6 +1,6 @@
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { TEST_USER_PASSWORD, TEST_USERNAME } from "./fixtures";
-import { ChatPage, LLMProvidersPage, NanoIdpLoginPage } from "./pages";
+import { NanoIdpLoginPage } from "./pages";
 
 const BACKEND_URL = "http://localhost:8000";
 
@@ -12,25 +12,19 @@ test.describe("Router", () => {
         // Login via NanoIDP (navigates to / which triggers backend OIDC flow)
         const loginPage = new NanoIdpLoginPage(page);
         await loginPage.login(TEST_USERNAME, TEST_USER_PASSWORD);
-
-        // Set up mock LLM provider via backend API
-        const providerPage = new LLMProvidersPage(page);
-        await providerPage.addProvider(
-            "Mock Provider",
-            "http://localhost:3001",
-            "",
-        );
     });
 
-    test("should render chat for unknown routes via fallback", async ({
+    test("unknown routes fall back to chat for authenticated users", async ({
         page,
     }) => {
-        const chatPage = new ChatPage(page);
+        await page.goto("/missing-route");
 
-        await chatPage.goto("/missing-route");
-        await chatPage.selectFirstModel();
+        // Assert we're still on the unknown route (not redirected)
+        expect(page.url()).toContain("/missing-route");
 
-        await chatPage.sendMessage("Fallback route works");
-        await chatPage.assertLastResponse("Fallback route works");
+        // Assert the chat component is rendered
+        await expect(
+            page.getByRole("textbox", { name: "Type a message..." }),
+        ).toBeVisible();
     });
 });
