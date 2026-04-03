@@ -7,6 +7,7 @@ import type {
 } from "@/modules/tools-service/index.svelte.js";
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Card from "$lib/components/ui/card/index.js";
+import * as Switch from "$lib/components/ui/switch/index.js";
 
 const deps = getModuleDeps(
   "@/modules/tools-management/ToolsManagementComponent",
@@ -77,6 +78,7 @@ async function handleToggle(name: string) {
 	{:else}
 		<div class="grid gap-3">
 			{#each availableTools as tool}
+				{@const selected = isSelected(tool.function.name)}
 				<Card.Root>
 					<Card.Header class="pb-3">
 						<div class="flex items-start justify-between gap-3">
@@ -86,13 +88,17 @@ async function handleToggle(name: string) {
 									{tool.function.description ?? "No description available."}
 								</Card.Description>
 							</div>
-							<Button
-								variant={isSelected(tool.function.name) ? "default" : "outline"}
-								size="sm"
-								onclick={() => handleToggle(tool.function.name)}
-							>
-								{isSelected(tool.function.name) ? "Enabled" : "Enable"}
-							</Button>
+							<div class="flex items-center gap-2">
+								<span class="text-muted-foreground text-xs">
+									{selected ? "Enabled" : "Disabled"}
+								</span>
+								<Switch.Root
+									checked={selected}
+									onCheckedChange={() => handleToggle(tool.function.name)}
+									aria-label={`Toggle tool ${tool.function.name}`}
+									class="border-border data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted [&_[data-slot=switch-thumb]]:translate-x-0 [&_[data-slot=switch-thumb]]:bg-background data-[state=checked]:[&_[data-slot=switch-thumb]]:translate-x-[calc(100%-2px)]"
+								/>
+							</div>
 						</div>
 					</Card.Header>
 				</Card.Root>
