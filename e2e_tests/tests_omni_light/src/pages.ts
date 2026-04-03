@@ -5,8 +5,8 @@ const exact = { exact: true };
 export class ChatPage {
     constructor(private page: Page) {}
 
-    async goto(path = "/"): Promise<void> {
-        await this.page.goto(path);
+    async goto(): Promise<void> {
+        await this.page.goto("/");
     }
 
     async navigateTo(): Promise<void> {

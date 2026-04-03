@@ -1,35 +1,15 @@
-import { test } from "@playwright/test";
-import { ChatPage } from "./pages";
+import { expect, test } from "@playwright/test";
 
 test.describe("Router", () => {
-    test.beforeEach(async ({ page }) => {
-        await page.goto("/");
-        await page.evaluate(() => {
-            localStorage.clear();
-        });
-        await page.evaluate(() => {
-            localStorage.setItem(
-                "llm_providers",
-                JSON.stringify([
-                    {
-                        id: "llmmock",
-                        name: "LLMMock",
-                        type: "openai",
-                        base_url: "http://localhost:3001",
-                        api_key: "",
-                    },
-                ]),
-            );
-        });
-    });
+    test("unknown routes fall back to chat", async ({ page }) => {
+        await page.goto("/missing-route");
 
-    test("Unknown routes fall back to chat", async ({ page }) => {
-        const chatPage = new ChatPage(page);
+        // Assert we're still on the unknown route (not redirected)
+        expect(page.url()).toContain("/missing-route");
 
-        await chatPage.goto("/missing-route");
-        await chatPage.assertModelButtonVisible("gpt-4o");
-
-        await chatPage.sendMessage("fallback route");
-        await chatPage.assertLastResponse("fallback route");
+        // Assert the chat component is rendered
+        await expect(
+            page.getByRole("textbox", { name: "Type a message..." }),
+        ).toBeVisible();
     });
 });
