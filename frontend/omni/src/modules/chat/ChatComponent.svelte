@@ -6,6 +6,10 @@ import type {
   LLMProviderService,
   ProviderModel,
 } from "@/modules/llm-provider-service/index.svelte.js";
+import type {
+  OpenAIFunctionTool,
+  ToolsService,
+} from "@/modules/tools-service/index.svelte.js";
 import ChatConversationArea from "./ChatConversationArea.svelte";
 import ChatInputPanel from "./ChatInputPanel.svelte";
 import { modelSelectId } from "./utils.js";
@@ -14,8 +18,11 @@ const deps = getModuleDeps("@/modules/chat/ChatComponent");
 const chatService = deps.getOne<ChatService>("chatService");
 const llmProviderService =
   deps.getOne<LLMProviderService>("llmProviderService");
+const toolsService = deps.getOne<ToolsService>("toolsService");
 
 let availableModels = $state<ProviderModel[]>([]);
+let availableTools = $state<OpenAIFunctionTool[]>([]);
+let selectedToolNames = $state<string[]>([]);
 let modelsLoading = $state(false);
 let selectedModel = $state("");
 
@@ -44,6 +51,22 @@ async function loadModels() {
 $effect(() => {
   loadModels();
 });
+
+$effect(() => {
+  void loadTools();
+});
+
+async function loadTools() {
+  const [tools, selectedNames] = await Promise.all([
+    toolsService.fetchAvailableTools(),
+    toolsService.fetchSelectedToolNames(),
+  ]);
+
+  availableTools = tools;
+  selectedToolNames = selectedNames.filter((name) =>
+    tools.some((tool) => tool.function.name === name),
+  );
+}
 
 const selectedModelData = $derived(
   availableModels.find((m) => modelSelectId(m) === selectedModel),
@@ -88,9 +111,13 @@ async function handleSend(text: string) {
 
   try {
     chatStatus = "streaming";
+    const selectedTools = availableTools.filter((tool) =>
+      selectedToolNames.includes(tool.function.name),
+    );
     for await (const textPart of chatService.streamChat(
       selectedModelData,
       conversationForModel,
+      selectedTools,
     )) {
       messages = messages.map((message) => {
         if (message.id !== assistantMessageId || message.role !== "assistant") {
