@@ -1,5 +1,6 @@
 import type { UIMessage } from "ai";
 import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.js";
+import type { OpenAIFunctionTool } from "@/modules/tools-service/index.svelte.js";
 
 export type { ProviderModel };
 
@@ -13,5 +14,6 @@ export interface ChatService {
     streamChat(
         model: ProviderModel,
         messages: UIMessage[],
+        tools?: OpenAIFunctionTool[],
     ): AsyncGenerator<string, void, unknown>;
 }

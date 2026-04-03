@@ -4,8 +4,12 @@ import SidebarMenuNavigationItem from "@/modules/main-app-sidebar-based/lib/Side
 import { CHAT_PATH } from "./chatRouteDefinition.svelte";
 </script>
 
+{#snippet icon()}
+	<MessageSquare />
+{/snippet}
+
 <SidebarMenuNavigationItem
 	label="Chat"
 	path={CHAT_PATH}
-	icon={MessageSquare}
+	{icon}
 />

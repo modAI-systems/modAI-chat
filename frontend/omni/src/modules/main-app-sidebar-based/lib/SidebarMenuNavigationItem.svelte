@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { Component } from "svelte";
+import type { Snippet } from "svelte";
 import { getRouterApi } from "@/modules/router/index.svelte";
 import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 
@@ -8,11 +8,11 @@ const router = getRouterApi();
 let {
   label,
   path,
-  icon: Icon,
+  icon,
 }: {
   label: string;
   path: `/${string}`;
-  icon: Component;
+  icon: Snippet;
 } = $props();
 </script>
 
@@ -22,7 +22,7 @@ let {
         class="data-[active=false]:bg-transparent data-[active=false]:text-sidebar-foreground data-[active=false]:hover:bg-sidebar-accent data-[active=false]:hover:text-sidebar-accent-foreground data-[active=false]:focus-visible:bg-sidebar-accent data-[active=false]:focus-visible:text-sidebar-accent-foreground"
         onclick={() => router.navigate(path)}
     >
-        <Icon />
+      {@render icon()}
         <span>{label}</span>
     </Sidebar.MenuButton>
 </Sidebar.MenuItem>
