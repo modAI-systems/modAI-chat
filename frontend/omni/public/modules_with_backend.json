@@ -4,20 +4,42 @@
     {
       "id": "app-root",
       "type": "AppRoot",
-      "path": "@/modules/app-layout/AppRoot",
+      "path": "@/core/main/AppRoot",
       "dependencies": {
-        "module:appRouter": "app-router"
+        "module:mainApp": "main-app-session-gated"
       }
     },
     {
-      "id": "app-router",
-      "type": "AppRouter",
-      "path": "@/modules/app-layout/AppRouter/create",
+      "id": "main-app-session-gated",
+      "type": "AppLayout",
+      "path": "@/modules/session-service/SessionGatedAppLayout",
       "dependencies": {
-        "module:layout": "app-layout",
-        "module:routes": ["chat-route", "providers-route"],
-        "module:fallbackRoute": "chat-fallback-route"
+        "module:sessionService": "session-service",
+        "module:noSessionAction": "no-session-action",
+        "module:wrappedApp": "routing-main"
       }
+    },
+    {
+      "id": "routing-main",
+      "type": "MainApp",
+      "path": "@/modules/router/AppRouter",
+      "dependencies": {
+        "module:routes": ["chat-route", "providers-route", "chat-fallback-route", "sidebar-layout-route"]
+      }
+    },
+    {
+      "id": "sidebar-layout",
+      "type": "MainApp",
+      "path": "@/modules/main-app-sidebar-based/MainApp",
+      "dependencies": {
+        "module:sidebarTopItems": ["chat-navigation-item", "providers-navigation-item"]
+      }
+    },
+    {
+      "id": "sidebar-layout-route",
+      "type": "Routes",
+      "path": "@/modules/main-app-sidebar-based/layoutRouteDefinition/create",
+      "dependencies": {}
     },
     {
       "id": "plain-fetch-service",
@@ -47,24 +69,6 @@
       "type": "NoSessionAction",
       "path": "@/modules/session-service/loginRedirectAction/create",
       "dependencies": {}
-    },
-    {
-      "id": "sidebar-layout",
-      "type": "AppLayout",
-      "path": "@/modules/app-layout/SidebarLayout",
-      "dependencies": {
-        "module:sidebarTopItems": ["chat-navigation-item", "providers-navigation-item"]
-      }
-    },
-    {
-      "id": "app-layout",
-      "type": "AppLayout",
-      "path": "@/modules/session-service/SessionGatedAppLayout",
-      "dependencies": {
-        "module:sessionService": "session-service",
-        "module:appLayout": "sidebar-layout",
-        "module:noSessionAction": "no-session-action"
-      }
     },
     {
       "id": "llm-provider-service",
@@ -109,7 +113,9 @@
       "id": "chat-fallback-route",
       "type": "FallbackRoute",
       "path": "@/modules/chat/chatFallbackRouteDefinition/create",
-      "dependencies": {}
+      "dependencies": {
+        "module:chat": ["chat"]
+      }
     },
     {
       "id": "llm-provider-management",

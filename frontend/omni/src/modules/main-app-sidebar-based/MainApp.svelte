@@ -1,24 +1,27 @@
 <script lang="ts">
 import type { Component } from "svelte";
 import { getModuleDeps } from "@/core/module-system";
-import { AppSidebarLayout } from "@/lib/components/layout";
+import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+import SidebarLayout from "./SidebarLayout.svelte";
 
-const deps = getModuleDeps("@/modules/app-layout/SidebarLayout");
+const deps = getModuleDeps("@/modules/main-app-sidebar-based/MainApp");
 const sidebarTopItems = $derived(deps.getAll<Component>("sidebarTopItems"));
 const { children } = $props();
 </script>
 
 <main class="flex min-h-screen flex-col bg-background">
 	{#if sidebarTopItems.length > 0}
-		<AppSidebarLayout>
+		<SidebarLayout>
 			{#snippet sidebar()}
-				{#each sidebarTopItems as SidebarTopItem, index (index)}
-					<SidebarTopItem />
-				{/each}
+				<Sidebar.Menu>
+					{#each sidebarTopItems as SidebarTopItem, index (index)}
+						<SidebarTopItem />
+					{/each}
+				</Sidebar.Menu>
 			{/snippet}
 
 			{@render children?.()}
-		</AppSidebarLayout>
+		</SidebarLayout>
 	{:else}
 		<div class="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
 			<h1 class="text-4xl font-bold text-foreground">modAI</h1>

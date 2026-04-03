@@ -1,9 +1,8 @@
-import type { RouteDefinition } from "@/modules/app-layout/routeDefinition.svelte";
-import ChatRoute from "./ChatRoute.svelte";
+import type { Routes } from "../router/index.svelte";
+import ChatFallbackRedirectRoute from "./ChatFallbackRedirectRoute.svelte";
 
-export function create(): RouteDefinition {
+export function create(): Routes {
     return {
-        path: "/",
-        component: ChatRoute,
+        "*": ChatFallbackRedirectRoute,
     };
 }
