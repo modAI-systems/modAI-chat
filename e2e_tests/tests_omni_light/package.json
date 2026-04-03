@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test:all": "playwright test",
     "test": "playwright test",
+    "test:mobile": "playwright test --project=mobile-chrome --project=mobile-safari",
     "test:debug": "playwright test --debug",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
