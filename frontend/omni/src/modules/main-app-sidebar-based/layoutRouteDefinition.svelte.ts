@@ -1,10 +1,8 @@
 import type { Routes } from "../router/index.svelte";
-import ChatRoute from "./ChatRoute.svelte";
-
-export const CHAT_PATH = "/chat";
+import MainApp from "./MainApp.svelte";
 
 export function create(): Routes {
     return {
-        [CHAT_PATH]: ChatRoute,
+        layout: MainApp,
     };
 }

@@ -69,7 +69,6 @@ export class ComponentResolver {
                     return;
                 }
                 pathToExports.set(path, await importer());
-                console.log(`Pre-cached module "${path}"`);
             }),
         );
 

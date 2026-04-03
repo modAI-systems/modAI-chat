@@ -4,34 +4,38 @@
     {
       "id": "app-root",
       "type": "AppRoot",
-      "path": "@/modules/app-layout/AppRoot",
+      "path": "@/core/main/AppRoot",
       "dependencies": {
-        "module:appRouter": "app-router"
+        "module:mainApp": "routing-main"
       }
     },
     {
-      "id": "app-router",
-      "type": "AppRouter",
-      "path": "@/modules/app-layout/AppRouter/create",
+      "id": "routing-main",
+      "type": "MainApp",
+      "path": "@/modules/router/AppRouter",
       "dependencies": {
-        "module:layout": "sidebar-layout",
-        "module:routes": ["chat-route", "providers-route"],
-        "module:fallbackRoute": "chat-fallback-route"
+        "module:routes": ["chat-route", "providers-route", "chat-fallback-route", "sidebar-layout-route"]
       }
+    },
+    {
+      "id": "sidebar-layout",
+      "type": "MainApp",
+      "path": "@/modules/main-app-sidebar-based/MainApp",
+      "dependencies": {
+        "module:sidebarTopItems": ["chat-navigation-item", "providers-navigation-item"]
+      }
+    },
+    {
+      "id": "sidebar-layout-route",
+      "type": "Routes",
+      "path": "@/modules/main-app-sidebar-based/layoutRouteDefinition/create",
+      "dependencies": {}
     },
     {
       "id": "fetch-service",
       "type": "FetchService",
       "path": "@/modules/fetch-service/pureFetchService/create",
       "dependencies": {}
-    },
-    {
-      "id": "sidebar-layout",
-      "type": "AppLayout",
-      "path": "@/modules/app-layout/SidebarLayout",
-      "dependencies": {
-        "module:sidebarTopItems": ["chat-navigation-item", "providers-navigation-item"]
-      }
     },
     {
       "id": "llm-provider-service",
@@ -74,7 +78,9 @@
       "id": "chat-fallback-route",
       "type": "FallbackRoute",
       "path": "@/modules/chat/chatFallbackRouteDefinition/create",
-      "dependencies": {}
+      "dependencies": {
+        "module:chat": ["chat"]
+      }
     },
     {
       "id": "llm-provider-management",

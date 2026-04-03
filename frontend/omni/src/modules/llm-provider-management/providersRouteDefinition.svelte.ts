@@ -1,11 +1,10 @@
-import type { RouteDefinition } from "@/modules/app-layout/routeDefinition.svelte";
+import type { Routes } from "../router/index.svelte";
 import ProvidersRoute from "./ProvidersRoute.svelte";
 
 export const PROVIDERS_PATH = "/providers";
 
-export function create(): RouteDefinition {
+export function create(): Routes {
     return {
-        path: PROVIDERS_PATH,
-        component: ProvidersRoute,
+        [PROVIDERS_PATH]: ProvidersRoute,
     };
 }

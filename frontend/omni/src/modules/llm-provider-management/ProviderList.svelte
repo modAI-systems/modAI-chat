@@ -10,7 +10,7 @@ import {
 import type {
   CreateProviderRequest,
   Provider,
-} from "@/modules/llm-provider-service/index.svelte.ts";
+} from "@/modules/llm-provider-service/index.svelte";
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Card from "$lib/components/ui/card/index.js";
 import { Input } from "$lib/components/ui/input/index.js";

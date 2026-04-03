@@ -147,9 +147,9 @@ If the `path` is not found in the module registry (e.g. it points outside `src/m
 {
   "id": "app-root",
   "type": "AppRoot",
-  "path": "@/modules/app-layout/AppRoot",
+  "path": "@/modules/main-app-sidebar-based/AppRoot",
   "dependencies": {
-    "module:layout": "app-layout"
+    "module:layout": "main-app-sidebar-based"
   }
 }
 ```
@@ -215,6 +215,8 @@ The root application itself only defines a main layout looking like this:
 No actual components like Login, Chat, Authentication or the like are used in the root application directly. This is all done by modules. Instead, the root application uses the module system to allow other modules very flexible integration within the main layout. The root app supports (via the module system):
 
 - **Routing**: Define module specific routes. Routed components are displayed in the main area.
+
+Feature modules contribute partial `sv-router` route maps instead of `{ path, component }` tuples. The router deep-merges shared path branches so multiple modules can extend the same subtree independently.
 - **Sidebar**: Integrate into the main application sidebar
 - **Context**: Allow other modules to register context providers which will be installed at a global level and therefore making state available throughout the whole application
 
