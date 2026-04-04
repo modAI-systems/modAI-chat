@@ -216,16 +216,18 @@ def _message_text(msg: Any) -> str:
 
 
 def _extract_tool_names(body_json: dict[str, Any]) -> list[str]:
-    """Extract tool function names from the OpenAI-format request body."""
+    """Extract tool function names from the OpenAI Responses API request body.
+
+    Expects the flat Responses API format: {type: "function", name: "..."}
+    """
     tools = body_json.get("tools", [])
     names: list[str] = []
     for tool in tools:
-        if isinstance(tool, dict) and tool.get("type") == "function":
-            fn = tool.get("function", {})
-            if isinstance(fn, dict):
-                name = fn.get("name")
-                if name:
-                    names.append(name)
+        if not isinstance(tool, dict) or tool.get("type") != "function":
+            continue
+        name = tool.get("name")
+        if name:
+            names.append(name)
     return names
 
 
