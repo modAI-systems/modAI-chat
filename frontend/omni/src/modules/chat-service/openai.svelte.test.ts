@@ -11,11 +11,15 @@ vi.mock("@ai-sdk/openai", () => ({
     createOpenAI: (...args: unknown[]) => createOpenAIMock(...args),
 }));
 
-vi.mock("ai", () => ({
-    streamText: (...args: unknown[]) => streamTextMock(...args),
-    convertToModelMessages: (...args: unknown[]) =>
-        convertToModelMessagesMock(...args),
-}));
+vi.mock("ai", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("ai")>();
+    return {
+        ...actual,
+        streamText: (...args: unknown[]) => streamTextMock(...args),
+        convertToModelMessages: (...args: unknown[]) =>
+            convertToModelMessagesMock(...args),
+    };
+});
 
 describe("OpenAIChatService", () => {
     const model: ProviderModel = {
@@ -27,53 +31,33 @@ describe("OpenAIChatService", () => {
         modelName: "model",
     };
 
+    const fetchService: FetchService = {
+        fetch: vi
+            .fn()
+            .mockResolvedValue(
+                new Response(JSON.stringify({}), { status: 200 }),
+            ),
+    };
+
     beforeEach(() => {
         vi.restoreAllMocks();
         createOpenAIMock.mockReset();
         streamTextMock.mockReset();
         convertToModelMessagesMock.mockReset();
         convertToModelMessagesMock.mockResolvedValue([]);
+
+        createOpenAIMock.mockReturnValue((modelId: string) => ({ modelId }));
+        streamTextMock.mockReturnValue({
+            textStream: (async function* () {
+                yield "ok";
+            })(),
+        });
     });
 
-    it("adds selected tools to /responses request body", async () => {
-        const fetchService: FetchService = {
-            fetch: vi
-                .fn()
-                .mockResolvedValue(
-                    new Response(JSON.stringify({}), { status: 200 }),
-                ),
-        };
-
-        createOpenAIMock.mockImplementation(
-            (config: { fetch: FetchService["fetch"] }) => {
-                return (modelId: string) => ({ modelId, fetch: config.fetch });
-            },
-        );
-
-        streamTextMock.mockImplementation(
-            ({
-                model: openaiModel,
-            }: {
-                model: { fetch: FetchService["fetch"] };
-            }) => ({
-                textStream: (async function* () {
-                    await openaiModel.fetch("/api/responses", {
-                        method: "POST",
-                        body: JSON.stringify({
-                            model: "provider/model",
-                            input: [],
-                        }),
-                    });
-                    yield "ok";
-                })(),
-            }),
-        );
-
+    it("passes tools to streamText when tools are provided", async () => {
         const service = create({
             getOne<T>(name: string): T {
-                if (name === "fetchService") {
-                    return fetchService as T;
-                }
+                if (name === "fetchService") return fetchService as T;
                 throw new Error(`Unknown dependency: ${name}`);
             },
             getAll<T>(): T[] {
@@ -90,6 +74,11 @@ describe("OpenAIChatService", () => {
                     type: "function",
                     function: {
                         name: "calculate",
+                        description: "A calculator",
+                        parameters: {
+                            type: "object",
+                            properties: { x: { type: "number" } },
+                        },
                     },
                 },
             ],
@@ -98,59 +87,17 @@ describe("OpenAIChatService", () => {
         }
 
         expect(chunks).toEqual(["ok"]);
-        expect(fetchService.fetch).toHaveBeenCalledTimes(1);
 
-        const [, request] = vi.mocked(fetchService.fetch).mock.calls[0];
-        const body = JSON.parse(String(request?.body));
-        expect(body.tools).toEqual([
-            {
-                type: "function",
-                function: {
-                    name: "calculate",
-                },
-            },
-        ]);
+        const streamTextArgs = streamTextMock.mock.calls[0][0];
+        expect(streamTextArgs.tools).toBeDefined();
+        expect(Object.keys(streamTextArgs.tools)).toEqual(["calculate"]);
+        expect(streamTextArgs.tools.calculate.description).toBe("A calculator");
     });
 
-    it("keeps request unchanged when no tools are selected", async () => {
-        const fetchService: FetchService = {
-            fetch: vi
-                .fn()
-                .mockResolvedValue(
-                    new Response(JSON.stringify({}), { status: 200 }),
-                ),
-        };
-
-        createOpenAIMock.mockImplementation(
-            (config: { fetch: FetchService["fetch"] }) => {
-                return (modelId: string) => ({ modelId, fetch: config.fetch });
-            },
-        );
-
-        streamTextMock.mockImplementation(
-            ({
-                model: openaiModel,
-            }: {
-                model: { fetch: FetchService["fetch"] };
-            }) => ({
-                textStream: (async function* () {
-                    await openaiModel.fetch("/api/responses", {
-                        method: "POST",
-                        body: JSON.stringify({
-                            model: "provider/model",
-                            input: [],
-                        }),
-                    });
-                    yield "ok";
-                })(),
-            }),
-        );
-
+    it("does not pass tools to streamText when no tools are provided", async () => {
         const service = create({
             getOne<T>(name: string): T {
-                if (name === "fetchService") {
-                    return fetchService as T;
-                }
+                if (name === "fetchService") return fetchService as T;
                 throw new Error(`Unknown dependency: ${name}`);
             },
             getAll<T>(): T[] {
@@ -161,8 +108,7 @@ describe("OpenAIChatService", () => {
         for await (const _chunk of service.streamChat(model, [])) {
         }
 
-        const [, request] = vi.mocked(fetchService.fetch).mock.calls[0];
-        const body = JSON.parse(String(request?.body));
-        expect(body.tools).toBeUndefined();
+        const streamTextArgs = streamTextMock.mock.calls[0][0];
+        expect(streamTextArgs.tools).toBeUndefined();
     });
 });
