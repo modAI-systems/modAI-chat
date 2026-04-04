@@ -12,7 +12,7 @@ test.describe("Login", () => {
 
         // The auth guard calls /api/auth/session → unauthenticated
         // → redirect to /api/auth/login → NanoIDP authorize endpoint on port 9000
-        await page.waitForURL(/localhost:9000/, { timeout: 15000 });
+        await page.waitForURL(/localhost:9000/, { timeout: 10000 });
         await expect(page).toHaveURL(/localhost:9000/);
     });
 
