@@ -146,10 +146,10 @@ export class ChatPage {
         await this.page.getByRole("button", { name: "Send" }).click();
     }
 
-    async assertLastResponse(content: string): Promise<void> {
+    async assertLastResponse(content: string, timeout = 5000): Promise<void> {
         await expect(
             this.page.locator(".bg-muted.rounded-2xl").last(),
-        ).toContainText(content, { timeout: 5000 });
+        ).toContainText(content, { timeout });
     }
 }
 
@@ -199,6 +199,27 @@ export class Sidebar {
 
         if (!wasOpen) {
             await this.close();
+        }
+    }
+}
+
+export class ToolsManagementPage {
+    constructor(private page: Page) {}
+
+    async navigateTo(): Promise<void> {
+        const sidebar = new Sidebar(this.page);
+        await sidebar.navigateTo("Tools");
+        await expect(this.page).toHaveURL("/tools");
+    }
+
+    async enableTool(toolName: string): Promise<void> {
+        const toggle = this.page.getByLabel(`Toggle tool ${toolName}`, {
+            exact: true,
+        });
+        await toggle.waitFor({ state: "visible", timeout: 10000 });
+        const isChecked = await toggle.getAttribute("data-state");
+        if (isChecked !== "checked") {
+            await toggle.click();
         }
     }
 }

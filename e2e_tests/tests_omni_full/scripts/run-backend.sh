@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
 ROOT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 BACKEND_DIR="$ROOT_DIR/backend/omni"
 
