@@ -1,6 +1,11 @@
 import { test } from "@playwright/test";
 import { TEST_USER_PASSWORD, TEST_USERNAME } from "./fixtures";
-import { ChatPage, LLMProvidersPage, NanoIdpLoginPage } from "./pages";
+import {
+    ChatPage,
+    LLMProvidersPage,
+    NanoIdpLoginPage,
+    ToolsManagementPage,
+} from "./pages";
 
 const BACKEND_URL = "http://localhost:8000";
 
@@ -46,5 +51,26 @@ test.describe("Chat", () => {
 
         await chatPage.sendMessage("Hello again");
         await chatPage.assertLastResponse("Hello again");
+    });
+
+    test("should call dice-roller tool and return result", async ({ page }) => {
+        // Enable the dice-roller tool via the Tools management page
+        const toolsPage = new ToolsManagementPage(page);
+        await toolsPage.navigateTo();
+        await toolsPage.enableTool("roll_dice");
+
+        const chatPage = new ChatPage(page);
+        await chatPage.navigateTo();
+        await chatPage.selectFirstModel();
+
+        // llmock trigger: "call tool '<name>' with '<json>'" causes it to return
+        // a tool_call response. The backend Strands agent then calls the
+        // dice-roller microservice (port 8001) and sends the result back.
+        // LLMock responds with "last tool call result is <json>" after the agent
+        // sends the tool result back.
+        await chatPage.sendMessage(
+            "call tool 'roll_dice' with '{\"count\": 1, \"sides\": 6}'",
+        );
+        await chatPage.assertLastResponse("last tool call result is", 20000);
     });
 });

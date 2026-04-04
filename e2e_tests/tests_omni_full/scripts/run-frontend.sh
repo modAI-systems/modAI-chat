@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
 ROOT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 FRONTEND_DIR="$ROOT_DIR/frontend/omni"
 

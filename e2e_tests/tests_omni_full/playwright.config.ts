@@ -41,6 +41,7 @@ export default defineConfig({
     ],
     webServer: [
         {
+            name: "NanoIDP",
             command: "bash scripts/start-nanoidp.sh",
             url: "http://localhost:9000/api/health",
             reuseExistingServer: !process.env.CI,
@@ -48,19 +49,29 @@ export default defineConfig({
             timeout: 60000,
         },
         {
+            name: "Backend",
             command: "bash scripts/run-backend.sh",
             url: "http://localhost:8000/api/health",
             reuseExistingServer: !process.env.CI,
             timeout: 120000,
         },
         {
+            name: "Frontend",
             command: "bash scripts/run-frontend.sh",
             url: "http://localhost:4173",
             reuseExistingServer: !process.env.CI,
         },
         {
-            command: "docker container run --rm -p 3001:8000 ghcr.io/modai-systems/llmock:latest",
+            name: "LLMock",
+            command: "docker container run --rm -p 3001:8000 -e LLMOCK_DEBUG=true ghcr.io/modai-systems/llmock:latest",
             url: "http://localhost:3001/health",
+            reuseExistingServer: !process.env.CI,
+            gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },
+        },
+        {
+            name: "Dice Roller",
+            command: "bash scripts/run-dice-roller.sh",
+            url: "http://localhost:8001/openapi.json",
             reuseExistingServer: !process.env.CI,
             gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },
         },

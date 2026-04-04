@@ -41,11 +41,13 @@ export default defineConfig({
     ],
     webServer: [
         {
+            name: "Frontend",
             command: "cd ../../frontend/omni && ln -sf modules_browser_only.json public/modules.json && pnpm build && pnpm preview",
             url: "http://localhost:4173",
             reuseExistingServer: !process.env.CI,
         },
         {
+            name: "LLMock",
             command:
                 "docker container run --rm --platform linux/amd64 -p 3001:8000 -e LLMOCK_CORS_ALLOW_ORIGINS='[\"http://localhost:4173\"]' ghcr.io/modai-systems/llmock:latest",
             url: "http://localhost:3001/health",
