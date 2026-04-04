@@ -20,6 +20,9 @@ test.describe("Chat", () => {
             "http://localhost:3001",
             "",
         );
+        await page
+            .getByText("How can I help you today?")
+            .waitFor({ state: "visible", timeout: 20000 });
     });
 
     test("should send a message and receive a response", async ({ page }) => {

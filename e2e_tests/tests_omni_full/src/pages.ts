@@ -1,5 +1,14 @@
 import { expect, type Page } from "@playwright/test";
 
+export class General {
+    constructor(private page: Page) {}
+
+    async isMobile(): Promise<boolean> {
+        const viewport = this.page.viewportSize();
+        return viewport !== null && viewport.width < 768;
+    }
+}
+
 /**
  * Sets up an LLM provider via the backend API.
  *
@@ -80,11 +89,11 @@ export class NanoIdpLoginPage {
 
         // Fill username and password (single-step form)
         const usernameInput = this.page.locator("#username");
-        await usernameInput.waitFor({ state: "visible", timeout: 15000 });
+        await usernameInput.waitFor({ state: "visible", timeout: 5000 });
         await usernameInput.fill(username);
 
         const passwordInput = this.page.locator("#password");
-        await passwordInput.waitFor({ state: "visible", timeout: 15000 });
+        await passwordInput.waitFor({ state: "visible", timeout: 5000 });
         await passwordInput.fill(password);
 
         await this.page.getByRole("button", { name: /authorize/i }).click();
@@ -93,7 +102,7 @@ export class NanoIdpLoginPage {
         await this.page.waitForURL(/localhost:4173/, { timeout: 30000 });
 
         // Wait for the Svelte auth guard to finish checking session
-        await this.page.waitForSelector("header", { timeout: 15000 });
+        await this.page.waitForSelector("header", { timeout: 5000 });
     }
 }
 
@@ -107,9 +116,9 @@ export class ChatPage {
     }
 
     async navigateTo(): Promise<void> {
-        await this.page
-            .getByRole("button", { name: "Chat", exact: true })
-            .click();
+        const sidebar = new Sidebar(this.page);
+        await sidebar.navigateTo("Chat");
+        await expect(this.page).toHaveURL("/chat");
     }
 
     async selectFirstModel(): Promise<void> {
@@ -132,20 +141,64 @@ export class ChatPage {
         const input = this.page.getByRole("textbox", {
             name: "Type a message...",
         });
-        await expect(input).toBeEnabled({ timeout: 15000 });
+        await expect(input).toBeEnabled({ timeout: 5000 });
         await input.fill(message);
         await this.page.getByRole("button", { name: "Send" }).click();
-    }
-
-    async assertModelButtonVisible(modelName: string): Promise<void> {
-        await expect(
-            this.page.getByRole("button", { name: modelName }),
-        ).toBeVisible({ timeout: 10000 });
     }
 
     async assertLastResponse(content: string): Promise<void> {
         await expect(
             this.page.locator(".bg-muted.rounded-2xl").last(),
-        ).toContainText(content, { timeout: 15000 });
+        ).toContainText(content, { timeout: 5000 });
+    }
+}
+
+export class Sidebar {
+    constructor(private page: Page) {}
+
+    async isOpen(): Promise<boolean> {
+        const general = new General(this.page);
+        if (await general.isMobile()) {
+            // Mobile: sidebar renders as a Sheet — only present in DOM when open
+            return (
+                (await this.page.locator('[data-mobile="true"]').count()) > 0
+            );
+        }
+        // Desktop: outer sidebar div carries data-state
+        const state = await this.page
+            .locator('[data-slot="sidebar"]')
+            .getAttribute("data-state");
+        return state === "expanded";
+    }
+
+    async open(): Promise<void> {
+        if (!(await this.isOpen())) {
+            await this.page
+                .getByRole("button", { name: "Toggle navigation", exact: true })
+                .first()
+                .click();
+        }
+    }
+
+    async close(): Promise<void> {
+        if (await this.isOpen()) {
+            await this.page
+                .getByRole("button", { name: "Toggle navigation", exact: true })
+                .last()
+                .click();
+        }
+    }
+
+    async navigateTo(sidebarItem: string): Promise<void> {
+        const wasOpen = await this.isOpen();
+
+        await this.open();
+        await this.page
+            .getByRole("button", { name: sidebarItem, exact: true })
+            .click();
+
+        if (!wasOpen) {
+            await this.close();
+        }
     }
 }

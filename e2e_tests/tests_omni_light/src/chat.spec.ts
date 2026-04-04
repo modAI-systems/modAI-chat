@@ -3,7 +3,7 @@ import { ChatPage } from "./pages";
 
 test.describe("Chat", () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto("/");
+        await page.goto("/chat");
         await page.evaluate(() => {
             localStorage.clear();
         });
@@ -21,13 +21,16 @@ test.describe("Chat", () => {
                 ]),
             );
         });
+        await page.goto("/chat");
+        await page
+            .getByText("How can I help you today?")
+            .waitFor({ state: "visible", timeout: 20000 });
     });
 
     test("Chat responds", async ({ page }) => {
         const chatPage = new ChatPage(page);
-
-        await chatPage.goto();
-        await chatPage.assertModelButtonVisible("gpt-4o");
+        await chatPage.navigateTo();
+        await chatPage.selectFirstModel();
 
         await chatPage.sendMessage("hello");
         await chatPage.assertLastResponse("hello");
@@ -36,8 +39,8 @@ test.describe("Chat", () => {
     test("Chat handles multiple messages", async ({ page }) => {
         const chatPage = new ChatPage(page);
 
-        await chatPage.goto();
-        await chatPage.assertModelButtonVisible("gpt-4o");
+        await chatPage.navigateTo();
+        await chatPage.selectFirstModel();
 
         await chatPage.sendMessage("hello");
         await chatPage.assertLastResponse("hello");

@@ -4,8 +4,8 @@ test.describe("Router", () => {
     test("unknown routes fall back to chat", async ({ page }) => {
         await page.goto("/missing-route");
 
-        // Assert we're still on the unknown route (not redirected)
-        expect(page.url()).toContain("/missing-route");
+        // Redirected to fallback route
+        await page.waitForURL("/chat", { timeout: 5000 });
 
         // Assert the chat component is rendered
         await expect(
