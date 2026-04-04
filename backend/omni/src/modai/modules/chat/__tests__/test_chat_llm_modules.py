@@ -549,13 +549,11 @@ class TestRawToolCalling:
 # 4) Agentic loop  (StrandsAgentChatModule only)
 # ===================================================================
 
-# Tools in the format StrandsAgentChatModule's _extract_tool_names expects:
-# nested under a "function" key (Chat Completions-compatible format).
-# The tool definition sent to the LLM is sourced from the tool registry,
-# not from body_json["tools"] directly.
+# Tools in Responses API format ({type, name}).
+# The actual tool definition passed to the LLM comes from the tool registry.
 _AGENTIC_CALCULATE_TOOL: dict[str, Any] = {
     "type": "function",
-    "function": {"name": "calculate"},
+    "name": "calculate",
 }
 
 
@@ -815,7 +813,7 @@ class TestToolErrors:
             "model": agentic_factory.model,
             "input": "Hi",
             "tools": [
-                {"type": "function", "function": {"name": "nonexistent_tool"}},
+                {"type": "function", "name": "nonexistent_tool"},
             ],
         }
         result = await module.generate_response(_make_request(), body)
@@ -847,7 +845,7 @@ class TestToolErrors:
             "model": agentic_factory.model,
             "input": "Hi",
             "tools": [
-                {"type": "function", "function": {"name": "broken_tool"}},
+                {"type": "function", "name": "broken_tool"},
             ],
         }
         result = await module.generate_response(_make_request(), body)
@@ -866,7 +864,7 @@ class TestToolErrors:
             "model": agentic_factory.model,
             "input": "Hi",
             "tools": [
-                {"type": "function", "function": {"name": "calculate"}},
+                {"type": "function", "name": "calculate"},
             ],
         }
         with pytest.raises(RuntimeError, match="Registry unavailable"):
@@ -894,7 +892,7 @@ class TestToolErrors:
         body = {
             "model": agentic_factory.model,
             "input": "call tool 'calculate' with '{}'",
-            "tools": [{"type": "function", "function": {"name": "calculate"}}],
+            "tools": [{"type": "function", "name": "calculate"}],
         }
         result = await module.generate_response(_make_request(), body)
         assert result.status == "completed"
@@ -922,7 +920,7 @@ class TestToolErrors:
         body = {
             "model": agentic_factory.model,
             "input": "call tool 'calculate' with '{\"expression\": \"2+2\"}'",
-            "tools": [{"type": "function", "function": {"name": "calculate"}}],
+            "tools": [{"type": "function", "name": "calculate"}],
         }
         result = await module.generate_response(_make_request(), body)
         assert result.status == "completed"
@@ -951,8 +949,8 @@ class TestToolErrors:
             "model": agentic_factory.model,
             "input": "Do stuff",
             "tools": [
-                {"type": "function", "function": {"name": "calculate"}},
-                {"type": "function", "function": {"name": "missing_tool"}},
+                {"type": "function", "name": "calculate"},
+                {"type": "function", "name": "missing_tool"},
             ],
         }
         result = await module.generate_response(_make_request(), body)
