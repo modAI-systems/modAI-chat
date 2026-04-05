@@ -52,7 +52,7 @@ function convertToAiSdkTools(openAiTools: OpenAIFunctionTool[]) {
             t.function.name,
             tool({
                 description: t.function.description,
-                parameters: jsonSchema(
+                inputSchema: jsonSchema(
                     (t.function.parameters ?? {
                         type: "object",
                         properties: {},
