@@ -140,6 +140,17 @@ Before any backend work, read relevant architecture documents:
 - **NO WHITEBOX TESTING — Behavior Testing Only**: Only test the public interface of a module/class/endpoint. NEVER import or directly call functions prefixed with `_`. NEVER assert on internal instance attributes or private state. Private/internal logic is tested indirectly through the public API. If you feel the need to test a private function directly, it is a signal that the public API test coverage is insufficient — fix the public tests instead.
 - **Coverage targets**: Happy paths (e.g. streaming, non-streaming, tool calling) AND error paths (e.g. connection errors, timeouts, invalid input, unavailable dependencies) — all exercised through the public API only.
 
+### Module README (MANDATORY)
+
+Every module folder under `backend/omni/src/modai/modules/<module>/` MUST contain a `README.md`. Keep it up to date whenever you:
+- Add a new module folder
+- Add a new implementation file to an existing module
+- Change config options of any implementation
+
+**Required content**:
+1. **Interface section** — briefly describe the abstract module (`module.py`): module type, endpoints it registers, and the public contract for callers.
+2. **One section per implementation** — class name used in `config.yaml`, one-sentence purpose, and the **full** `config.yaml` snippet with every supported key (required and optional), including `module_dependencies`.
+
 ### Persistence
 
 - **Dictionary Storage**: Use SQLAlchemy's `JSON` type for dictionary fields
