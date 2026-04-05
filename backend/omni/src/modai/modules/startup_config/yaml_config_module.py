@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -10,6 +11,7 @@ from modai.modules.startup_config.module import StartupConfig
 
 logger = logging.getLogger(__name__)
 
+_ENV_VAR_PATTERN = re.compile(r"^\${([A-Za-z_][A-Za-z0-9_]*)}$")
 
 ## This is a boostrap Module meaning that it is not changable via the usual
 ## module loading mechanism and must not follow a few rules like the
@@ -33,33 +35,136 @@ class YamlConfigModule(StartupConfig):
             )
 
     def get_config(self) -> dict[str, Any]:
-        import re
-
-        ENV_VAR_PATTERN = re.compile(r"^\${([A-Za-z_][A-Za-z0-9_]*)}$")
-
-        def resolve_env_vars(obj):
-            if isinstance(obj, dict):
-                return {k: resolve_env_vars(v) for k, v in obj.items()}
-            elif isinstance(obj, list):
-                return [resolve_env_vars(i) for i in obj]
-            elif isinstance(obj, str):
-                match = ENV_VAR_PATTERN.match(obj)
-                if match:
-                    var_name = match.group(1)
-                    return os.environ.get(var_name, "")
-                return obj
-            else:
-                return obj
-
         try:
-            with open(self.config.get("config_path"), "r") as file:
-                config = yaml.safe_load(file)
-                if config is None:
-                    raise ValueError(
-                        f"Config file is empty or invalid: {self.config.get('config_path')}"
-                    )
-                config = resolve_env_vars(config)
-                return config
+            config_path = Path(self.config.get("config_path"))
+            return self._load_config(config_path)
         except Exception as e:
             logger.error(f"Error loading config file: {e}")
             raise
+
+    def _load_config(self, config_path: Path) -> dict[str, Any]:
+        """Load the root config and apply its includes.
+
+        ## Load order
+
+        Only the root config file may contain ``includes``. Includes are
+        processed left-to-right first, then the root config itself is applied
+        last:
+
+        1. The first include's modules are loaded.
+        2. Each subsequent include is applied in order, top-to-bottom.
+           Later includes overwrite earlier ones on ``merge`` collisions.
+        3. The root config's own modules are applied last and always win
+           (highest priority). The ``collision_strategy`` on a root module
+           controls how it merges with an already-loaded module from an include.
+
+        Example: root → [A, B]
+
+            A modules     (loaded 1st)
+            B modules     (loaded 2nd — overwrites A on collision)
+            root modules  (loaded last — highest precedence, always wins)
+
+        Nested includes (includes inside an included file) are intentionally
+        **not** supported. This keeps the include mechanism simple and avoids
+        hard-to-debug problems that arise from transitive dependency chains and
+        non-obvious load orders.
+        """
+        root_config = self._load_yaml_file(config_path)
+        includes = root_config.pop("includes", [])
+
+        # Apply includes top-to-bottom; later includes overwrite earlier ones.
+        accumulated_modules: dict[str, Any] = {}
+        for include in includes:
+            include_path = config_path.parent / include["path"]
+            included_config = self._load_yaml_file(include_path)
+            if "includes" in included_config:
+                raise ValueError(
+                    f"Nested includes are not supported. "
+                    f"'{include_path}' contains an 'includes' key. "
+                    "Only the root config file may use 'includes'."
+                )
+            accumulated_modules = self._apply_config(
+                accumulated_modules, included_config.get("modules") or {}
+            )
+
+        # Root is applied last — always wins.
+        root_modules = self._apply_config(
+            accumulated_modules, root_config.get("modules") or {}
+        )
+        return {"modules": root_modules}
+
+    def _load_yaml_file(self, path: Path) -> dict[str, Any]:
+        with open(path, "r") as file:
+            config = yaml.safe_load(file)
+            if config is None:
+                raise ValueError(f"Config file is empty or invalid: {path}")
+            return _resolve_env_vars(config)
+
+    def _apply_config(
+        self, base_modules: dict[str, Any], new_modules: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Merge *config_modules* onto *base_modules* and return the result.
+
+        * Modules present only in *base_modules* are kept as-is.
+        * Modules present only in *config_modules* are added unconditionally.
+        * On a name collision the ``collision_strategy`` field on the **incoming**
+          (*config_modules*) entry decides:
+
+          - ``replace`` – the incoming entry completely replaces the existing one.
+          - ``merge`` *(default)* – deep-merged; base-only keys are preserved,
+            shared keys are overwritten by the incoming value, nested dicts
+            recurse with the same rule.
+
+        Because the root config's modules are always passed last (see
+        ``_load_config``), they act as the final incoming and always win.
+        """
+        result = dict(base_modules)
+
+        for name, cfg in new_modules.items():
+            cfg = cfg or {}
+            if name not in result:
+                result[name] = cfg
+            else:
+                strategy = cfg.get("collision_strategy", "merge")
+                if strategy == "replace":
+                    result[name] = cfg
+                else:
+                    result[name] = _deep_merge(result[name] or {}, cfg)
+
+        # Strip the parsing-only key from every module in the result.
+        for cfg in result.values():
+            if isinstance(cfg, dict):
+                cfg.pop("collision_strategy", None)
+
+        return result
+
+
+def _resolve_env_vars(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {k: _resolve_env_vars(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_resolve_env_vars(i) for i in obj]
+    elif isinstance(obj, str):
+        match = _ENV_VAR_PATTERN.match(obj)
+        if match:
+            return os.environ.get(match.group(1), "")
+        return obj
+    else:
+        return obj
+
+
+def _deep_merge(base: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any]:
+    """Return a new dict with *incoming* merged into *base*.
+
+    - Keys present only in *base* are preserved (nothing is removed).
+    - Keys present only in *incoming* are added.
+    - When both sides share a key: if both values are dicts, the merge recurses;
+      otherwise the *incoming* value overwrites the base value.
+    """
+    result = dict(base)
+    for key, value in incoming.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = _deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result

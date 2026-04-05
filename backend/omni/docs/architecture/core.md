@@ -30,10 +30,72 @@ flowchart TD
 
 ### Startup Flow
 1. **Program Start**: Core system initialization begins
-2. **Config Loading**: Reading the config file
+2. **Config Loading**: Reading the config file (see *Config File Format* below)
 3. **Module Loading**: All modules specified in the config are instantiated
 4. **Register Web Modules**: All loaded web modules are registered in the REST Server
 5. **Server Ready**: All REST endpoints from web modules are registered and server is ready to accept requests
+
+
+### Config File Format
+
+The config file is a YAML file with a `modules` key and an optional `includes` key.
+
+```yaml
+includes:
+  - path: ./extra-modules.yaml   # relative to this config file
+  - path: ./another.yaml
+
+modules:
+  health:
+    class: modai.modules.health.simple_health_module.SimpleHealthModule
+  my_module:
+    class: modai.modules.example.ExampleModule
+    collision_strategy: merge   # optional, see below
+    config:
+      some_key: some_value
+```
+
+#### `includes` — multi-file configs
+
+Only the **root config file** may contain `includes`. Included files must not contain
+`includes` themselves — nested includes are intentionally not supported.
+
+> **Why no nesting?** Nested includes create transitive dependency chains and
+> non-obvious load orders that are hard to debug.
+
+Paths are resolved relative to the root config file. Includes are processed
+top-to-bottom.
+
+##### Load order
+
+Includes are processed top-to-bottom first, then the root config itself is applied
+last. **Root modules always win** because they are the final incoming value.
+
+1. The first include's modules are loaded.
+2. Each subsequent include is applied top-to-bottom. Later includes overwrite earlier ones on collision.
+3. The root config's own modules are applied last — highest priority.
+
+Example: root → [A, B]
+
+```
+A modules     (loaded 1st)
+B modules     (loaded 2nd — overwrites A on collision)
+root modules  (loaded last — highest precedence, always wins)
+```
+
+##### `collision_strategy` — handling duplicate module names
+
+When the same module name appears in multiple config files, the
+`collision_strategy` field on the **incoming** (later-loaded) module decides what
+happens. Because root modules are always applied last as incoming, setting
+`collision_strategy` on a **root module** controls how it interacts with a module
+already loaded from an include.
+
+| Value | Behaviour |
+|---|---|
+| `merge` *(default)* | Deep-merges the incoming module into the existing one. Keys present only in the base (earlier-loaded) module are preserved. When the same key exists in both, the **incoming value wins**. Nested dicts are merged recursively with the same rule. |
+| `replace` | The incoming module definition **completely replaces** the existing one. |
+
 
 
 ## 4. Module Organization
