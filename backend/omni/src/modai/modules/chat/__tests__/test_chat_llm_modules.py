@@ -550,7 +550,8 @@ class TestRawToolCalling:
 # ===================================================================
 
 # Tools in Responses API format ({type, name}).
-# The actual tool definition passed to the LLM comes from the tool registry.
+# The client is responsible for the full spec; description and parameters
+# may be omitted, in which case the LLM sees empty values.
 _AGENTIC_CALCULATE_TOOL: dict[str, Any] = {
     "type": "function",
     "name": "calculate",
@@ -805,7 +806,13 @@ class TestToolErrors:
     async def test_unknown_tool_is_silently_skipped(
         self, agentic_factory: ModuleFactory
     ):
-        """A tool name not found in the registry is skipped; response still succeeds."""
+        """A tool unavailable in the registry returns an error result; agent still completes.
+
+        The tool spec from the client is registered with Strands regardless of
+        registry availability.  When the LLM calls the tool and the registry
+        cannot find it, the handler returns a graceful error result and the
+        agent continues to a final text response.
+        """
         registry = Mock()
         registry.get_tool_by_name = AsyncMock(return_value=None)
         module = agentic_factory.create(tool_registry=registry)
@@ -853,8 +860,15 @@ class TestToolErrors:
         assert result.status == "completed"
 
     @pytest.mark.asyncio
-    async def test_tool_registry_error_propagates(self, agentic_factory: ModuleFactory):
-        """If the tool registry raises, the error propagates."""
+    async def test_tool_registry_error_handled_gracefully(
+        self, agentic_factory: ModuleFactory
+    ):
+        """A registry error during tool execution is handled gracefully; agent completes.
+
+        The registry is only queried lazily when the LLM actually invokes a
+        tool.  Strands catches handler exceptions and returns a tool error
+        result so the agent can continue to a final text response.
+        """
         registry = Mock()
         registry.get_tool_by_name = AsyncMock(
             side_effect=RuntimeError("Registry unavailable")
@@ -862,13 +876,14 @@ class TestToolErrors:
         module = agentic_factory.create(tool_registry=registry)
         body = {
             "model": agentic_factory.model,
-            "input": "Hi",
+            "input": "call tool 'calculate' with '{\"expression\": \"1+1\"}'",
             "tools": [
                 {"type": "function", "name": "calculate"},
             ],
         }
-        with pytest.raises(RuntimeError, match="Registry unavailable"):
-            await module.generate_response(_make_request(), body)
+        result = await module.generate_response(_make_request(), body)
+        assert isinstance(result, openai.types.responses.Response)
+        assert result.status == "completed"
 
     @pytest.mark.asyncio
     async def test_tool_invocation_http_error_handled_gracefully(
@@ -930,7 +945,8 @@ class TestToolErrors:
     async def test_partial_tools_resolved_when_some_missing(
         self, agentic_factory: ModuleFactory
     ):
-        """When some tools are found and others not, only found tools are used."""
+        """All client tool specs are registered with Strands; missing registry tools
+        return an error result at execution time without preventing other tools."""
         calc_definition = ToolDefinition(
             name="calculate",
             description="Evaluate a math expression",
@@ -954,8 +970,229 @@ class TestToolErrors:
             ],
         }
         result = await module.generate_response(_make_request(), body)
-        assert registry.get_tool_by_name.call_count == 2
         assert isinstance(result, openai.types.responses.Response)
+
+
+# ===================================================================
+# 8) Tool spec pass-through  (StrandsAgentChatModule only)
+# ===================================================================
+
+
+class TestToolSpecPassThrough:
+    """The tool spec from the client request is forwarded to the LLM unchanged.
+
+    Only ``StrandsAgentChatModule`` assembles a tool spec for the Strands
+    agent loop.  The ``description`` and ``parameters`` provided by the
+    client in the request ``tools`` array MUST reach the LLM verbatim; the
+    registry definition is only used for execution (``run``), not for
+    defining the tool's interface that the LLM sees.
+
+    Uses the llmock ``/history`` endpoint to inspect the exact request body
+    that was forwarded to the LLM, without any additional HTTP mocking.
+    """
+
+    @pytest.fixture(autouse=True)
+    def clear_history(self, llmock_base_url: str) -> None:
+        httpx_lib.delete(f"{llmock_base_url}history")
+
+    @pytest.mark.asyncio
+    async def test_client_description_forwarded_to_llm(self, llmock_base_url: str):
+        """Tool description from client spec reaches LLM instead of registry's."""
+
+        class _RegistryTool(Tool):
+            @property
+            def definition(self) -> ToolDefinition:
+                return ToolDefinition(
+                    name="calculate",
+                    description="REGISTRY description — must NOT reach LLM",
+                    parameters={"type": "object", "properties": {}},
+                )
+
+            async def run(self, params: dict[str, Any]) -> Any:
+                return "42"
+
+        registry = Mock()
+        registry.get_tool_by_name = AsyncMock(return_value=_RegistryTool())
+
+        provider = _make_provider(base_url=llmock_base_url, api_key=LLMOCK_API_KEY)
+        module = StrandsAgentChatModule(
+            dependencies=_make_dependencies(
+                provider_module=_make_provider_module([provider]),
+                tool_registry=registry,
+            ),
+            config={},
+        )
+
+        result = await module.generate_response(
+            _make_request(),
+            {
+                "model": "myprovider/gpt-4o",
+                "input": "Hi",
+                "tools": [
+                    {
+                        "type": "function",
+                        "name": "calculate",
+                        "description": "CLIENT description — must reach LLM unchanged",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"expression": {"type": "string"}},
+                            "required": ["expression"],
+                        },
+                    }
+                ],
+            },
+        )
+
+        assert result.status == "completed"
+        history = httpx_lib.get(f"{llmock_base_url}history").json()["requests"]
+        chat_requests = [r for r in history if r["path"] == "/chat/completions"]
+        assert chat_requests[0]["body"]["tools"] == [
+            {
+                "type": "function",
+                "function": {
+                    "name": "calculate",
+                    "description": "CLIENT description — must reach LLM unchanged",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "expression": {
+                                "type": "string",
+                                # Strands adds a default description for properties
+                                # that don't have one ("Property {name}").
+                                "description": "Property expression",
+                            }
+                        },
+                        "required": ["expression"],
+                    },
+                },
+            }
+        ]
+
+    @pytest.mark.asyncio
+    async def test_client_parameters_forwarded_to_llm(self, llmock_base_url: str):
+        """Tool parameters schema from client spec reaches LLM instead of registry's."""
+
+        class _RegistryTool(Tool):
+            @property
+            def definition(self) -> ToolDefinition:
+                return ToolDefinition(
+                    name="calculate",
+                    description="Registry tool",
+                    parameters={"type": "object", "properties": {}},
+                )
+
+            async def run(self, params: dict[str, Any]) -> Any:
+                return "42"
+
+        registry = Mock()
+        registry.get_tool_by_name = AsyncMock(return_value=_RegistryTool())
+
+        provider = _make_provider(base_url=llmock_base_url, api_key=LLMOCK_API_KEY)
+        module = StrandsAgentChatModule(
+            dependencies=_make_dependencies(
+                provider_module=_make_provider_module([provider]),
+                tool_registry=registry,
+            ),
+            config={},
+        )
+
+        result = await module.generate_response(
+            _make_request(),
+            {
+                "model": "myprovider/gpt-4o",
+                "input": "Hi",
+                "tools": [
+                    {
+                        "type": "function",
+                        "name": "calculate",
+                        "description": "Do math",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "expression": {
+                                    "type": "string",
+                                    "description": "Math expr",
+                                }
+                            },
+                            "required": ["expression"],
+                        },
+                    }
+                ],
+            },
+        )
+
+        assert result.status == "completed"
+        history = httpx_lib.get(f"{llmock_base_url}history").json()["requests"]
+        chat_requests = [r for r in history if r["path"] == "/chat/completions"]
+        assert chat_requests[0]["body"]["tools"] == [
+            {
+                "type": "function",
+                "function": {
+                    "name": "calculate",
+                    "description": "Do math",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "expression": {
+                                "type": "string",
+                                "description": "Math expr",
+                            }
+                        },
+                        "required": ["expression"],
+                    },
+                },
+            }
+        ]
+
+    @pytest.mark.asyncio
+    async def test_client_only_name_sends_empty_description_to_llm(
+        self, llmock_base_url: str
+    ):
+        """When client sends only a tool name (no description/parameters), the
+        LLM receives a tool with empty description — the registry is never
+        consulted for spec information."""
+
+        # Registry that finds no tool (returns None) — must not affect the spec.
+        registry = Mock()
+        registry.get_tool_by_name = AsyncMock(return_value=None)
+
+        provider = _make_provider(base_url=llmock_base_url, api_key=LLMOCK_API_KEY)
+        module = StrandsAgentChatModule(
+            dependencies=_make_dependencies(
+                provider_module=_make_provider_module([provider]),
+                tool_registry=registry,
+            ),
+            config={},
+        )
+
+        result = await module.generate_response(
+            _make_request(),
+            {
+                "model": "myprovider/gpt-4o",
+                "input": "Hi",
+                # Client sends only the tool name — no description or parameters
+                "tools": [{"type": "function", "name": "calculate"}],
+            },
+        )
+
+        assert result.status == "completed"
+        history = httpx_lib.get(f"{llmock_base_url}history").json()["requests"]
+        chat_requests = [r for r in history if r["path"] == "/chat/completions"]
+        assert chat_requests[0]["body"]["tools"] == [
+            {
+                "type": "function",
+                "function": {
+                    "name": "calculate",
+                    "description": "",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        # Strands adds "required": [] when the field is absent.
+                        "required": [],
+                    },
+                },
+            }
+        ]
 
 
 # ---------------------------------------------------------------------------

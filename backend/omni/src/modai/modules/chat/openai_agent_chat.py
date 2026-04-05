@@ -33,7 +33,7 @@ from modai.modules.model_provider.module import (
     ModelProviderModule,
     ModelProviderResponse,
 )
-from modai.modules.tools.module import Tool, ToolRegistryModule
+from modai.modules.tools.module import ToolRegistryModule
 
 logger = logging.getLogger(__name__)
 
@@ -215,20 +215,21 @@ def _message_text(msg: Any) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _extract_tool_names(body_json: dict[str, Any]) -> list[str]:
-    """Extract tool function names from the OpenAI Responses API request body.
+def _extract_tools(body_json: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract tool specs from the OpenAI Responses API request body.
 
     Expects the flat Responses API format: {type: "function", name: "..."}
+    Returns the full spec dicts so callers can forward description and parameters
+    to the LLM unchanged.
     """
     tools = body_json.get("tools", [])
-    names: list[str] = []
-    for tool in tools:
-        if not isinstance(tool, dict) or tool.get("type") != "function":
-            continue
-        name = tool.get("name")
-        if name:
-            names.append(name)
-    return names
+    return [
+        tool
+        for tool in tools
+        if isinstance(tool, dict)
+        and tool.get("type") == "function"
+        and tool.get("name")
+    ]
 
 
 async def _resolve_request_tools(
@@ -252,50 +253,59 @@ async def _resolve_request_tools(
     if not tool_registry:
         return []
 
-    tool_names = _extract_tool_names(body_json)
-    if not tool_names:
+    tool_specs = _extract_tools(body_json)
+    if not tool_specs:
         return []
 
-    strands_tools: list[PythonAgentTool] = []
-    for name in tool_names:
-        tool = await tool_registry.get_tool_by_name(
-            name, predefined_params=additional_tool_properties
+    return [
+        _create_strands_tool(
+            client_spec=client_spec,
+            tool_registry=tool_registry,
+            additional_tool_properties=additional_tool_properties,
         )
-        if tool is None:
-            logger.warning("Tool '%s' not found in registry, skipping", name)
-            continue
-        strands_tools.append(
-            _create_strands_tool(
-                tool, additional_tool_properties=additional_tool_properties
-            )
-        )
-
-    return strands_tools
+        for client_spec in tool_specs
+    ]
 
 
 def _create_strands_tool(
-    tool: Tool, additional_tool_properties: dict[str, Any] | None = None
+    client_spec: dict[str, Any],
+    tool_registry: ToolRegistryModule,
+    additional_tool_properties: dict[str, Any] | None = None,
 ) -> PythonAgentTool:
-    """Wrap a Tool as a Strands ``PythonAgentTool``.
+    """Wrap a client-provided tool spec as a Strands ``PythonAgentTool``.
 
-    The tool spec (name, description, input schema) comes from the tool's
-    definition.  The handler delegates execution to ``tool.run``.
+    The tool spec (name, description, input schema) is taken entirely from
+    ``client_spec`` — whatever the API client sent is forwarded to the LLM
+    verbatim.  Execution is handled lazily: when Strands invokes the tool,
+    the registry is queried by name and ``tool.run`` is called.
 
     ``additional_tool_properties`` (a dict of ``_``-prefixed keys) is merged
     into every invocation's params dict so that tool implementations can pick
     up transport-level concerns (auth, tracing, etc.) without the interface
     carrying extra args.
     """
-    definition = tool.definition
+    name: str = client_spec.get("name", "")
 
     tool_spec: ToolSpec = {
-        "name": definition.name,
-        "description": definition.description,
-        "inputSchema": {"json": definition.parameters},
+        "name": name,
+        "description": client_spec.get("description", ""),
+        "inputSchema": {
+            "json": client_spec.get("parameters", {"type": "object", "properties": {}})
+        },
     }
 
-    async def _handler(tool_use: ToolUse, **kwargs: Any) -> ToolResult:  # noqa: ARG001
+    async def _handler(tool_use: ToolUse, **kwargs: Any) -> ToolResult:
         """Invoke the tool and wrap the result for Strands."""
+        tool = await tool_registry.get_tool_by_name(
+            name, predefined_params=additional_tool_properties
+        )
+        if tool is None:
+            logger.warning("Tool '%s' not found in registry at execution time", name)
+            return {
+                "toolUseId": tool_use["toolUseId"],
+                "status": "error",
+                "content": [{"text": f"Tool '{name}' is not available"}],
+            }
         params: dict[str, Any] = dict(tool_use["input"])
         if additional_tool_properties:
             params.update(additional_tool_properties)
@@ -307,7 +317,7 @@ def _create_strands_tool(
                 "content": [{"text": str(result)}],
             }
         except Exception as exc:
-            logger.error("Tool '%s' invocation failed: %s", definition.name, exc)
+            logger.error("Tool '%s' invocation failed: %s", name, exc)
             return {
                 "toolUseId": tool_use["toolUseId"],
                 "status": "error",
@@ -315,7 +325,7 @@ def _create_strands_tool(
             }
 
     return PythonAgentTool(
-        tool_name=definition.name,
+        tool_name=name,
         tool_spec=tool_spec,
         tool_func=_handler,
     )
