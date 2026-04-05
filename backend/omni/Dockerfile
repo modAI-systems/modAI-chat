@@ -24,6 +24,11 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 # Copy the app from build stage
 COPY --from=build --chown=appuser:appgroup /app /app
 
+# Remove development-only modules (dev_* prefix) and test directories.
+# dev_* modules bypass security controls and must never run in production.
+RUN find /app/src -type f -name 'dev_*.py' -delete \
+ && find /app/src -type d -name '__tests__' -exec rm -rf {} + 2>/dev/null || true
+
 WORKDIR /app
 
 USER appuser
