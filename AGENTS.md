@@ -56,6 +56,14 @@ This project is designed for AI-first development. All agents MUST follow these 
     3. Check any other docs that reference API endpoints.
     4. Update all affected documentation before marking task as complete.
 
+### 7. Changelog Updates (MANDATORY)
+- **RULE**: After completing any code change, update the `CHANGELOG.md` in the affected sub-project root if one exists.
+- **PROCESS**:
+    1. Check whether `frontend/omni/CHANGELOG.md` or `backend/omni/CHANGELOG.md` exists for the changed sub-project.
+    2. Add a concise entry under the `Unreleased` section (or the latest version block if no `Unreleased` section is present) describing what was added, changed, or fixed.
+    3. Follow the existing format of the file (typically [Keep a Changelog](https://keepachangelog.com/) style).
+    4. Update the changelog **before** marking the task as complete.
+
 
 ## Project Overview
 
