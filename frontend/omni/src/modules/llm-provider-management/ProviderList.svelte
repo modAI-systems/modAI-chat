@@ -3,7 +3,7 @@ import {
   CircleCheck,
   CircleX,
   HeartPulse,
-  Loader2,
+  LoaderCircle,
   Settings2,
   Trash2,
 } from "lucide-svelte";
@@ -118,7 +118,7 @@ async function checkHealth(provider: Provider) {
 								onclick={() => checkHealth(provider)}
 								>
 									{#if healthState === "checking"}
-										<Loader2 class="size-4 animate-spin" />
+										<LoaderCircle class="size-4 animate-spin" />
 									{:else if healthState === "ok"}
 										<CircleCheck class="size-4" />
 									{:else if healthState === "fail"}

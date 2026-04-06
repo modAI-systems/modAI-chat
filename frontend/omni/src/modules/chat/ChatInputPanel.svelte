@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Check, ChevronDown, Loader2, SendIcon } from "lucide-svelte";
+import { Check, ChevronDown, LoaderCircle, SendIcon } from "lucide-svelte";
 import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.js";
 import { Button } from "$lib/components/ui/button/index.js";
 import * as Command from "$lib/components/ui/command/index.js";
@@ -142,7 +142,7 @@ function handleModelSelect(selectId: string) {
 					class="gap-1.5"
 				>
 					{#if !isIdle}
-						<Loader2 class="size-3.5 animate-spin" />
+						<LoaderCircle class="size-3.5 animate-spin" />
 					{:else}
 						<SendIcon class="size-3.5" />
 					{/if}
