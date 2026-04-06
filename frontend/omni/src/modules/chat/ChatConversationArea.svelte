@@ -1,9 +1,12 @@
 <script lang="ts">
 import type { UIMessage } from "ai";
 import { BotIcon, LoaderCircle } from "lucide-svelte";
+import { getT } from "@/modules/i18n/index.svelte.js";
 import * as Avatar from "$lib/shadcnui/components/ui/avatar/index.js";
 import { ScrollArea } from "$lib/shadcnui/components/ui/scroll-area/index.js";
 import ChatMessageItem from "./ChatMessageItem.svelte";
+
+const t = getT("chat");
 
 let {
     messages,
@@ -40,7 +43,7 @@ $effect(() => {
 			{#if modelsLoading}
 				<div class="flex items-center justify-center gap-2 py-20">
 					<LoaderCircle class="text-muted-foreground size-6 animate-spin" />
-					<span class="text-muted-foreground text-sm">Loading models...</span>
+					<span class="text-muted-foreground text-sm">{t("loadingModels", { defaultValue: "Loading models..." })}</span>
 				</div>
 			{:else}
 				<!-- Normal empty state -->
@@ -54,13 +57,13 @@ $effect(() => {
 					</div>
 					<div class="text-center">
 						<h2 class="text-2xl font-semibold tracking-tight">
-							How can I help you today?
+						{t("greeting", { defaultValue: "How can I help you today?" })}
 						</h2>
 						<p class="text-muted-foreground mt-2 text-sm">
 							{#if !hasModels}
-								Add a provider in Settings to start chatting.
-							{:else}
-								Ask me anything or pick a suggestion below.
+							{t("noProvidersHint", { defaultValue: "Add a provider in Settings to start chatting." })}
+						{:else}
+							{t("suggestionHint", { defaultValue: "Ask me anything or pick a suggestion below." })}
 							{/if}
 						</p>
 					</div>
@@ -83,7 +86,7 @@ $effect(() => {
 				<div class="flex items-center gap-2 pt-1">
 					<LoaderCircle class="text-muted-foreground size-4 animate-spin" />
 					<span class="text-muted-foreground text-xs">
-						{status === "submitted" ? "Thinking..." : "Generating..."}
+						{status === "submitted" ? t("thinking", { defaultValue: "Thinking..." }) : t("generating", { defaultValue: "Generating..." })}
 					</span>
 				</div>
 			</div>

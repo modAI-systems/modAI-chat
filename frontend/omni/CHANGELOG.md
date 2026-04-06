@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- i18n support via `i18next` with browser language detection (supports English fallback and German). Translations are module-scoped: each module with user-facing strings has its own `locales/de.json`. New `src/modules/i18n/` module provides the `getT(namespace)` helper used by all components.
 - Tools can now be toggled directly from the chat input panel via a wrench-icon popover — no separate Tools page needed.
 
 ### Changed

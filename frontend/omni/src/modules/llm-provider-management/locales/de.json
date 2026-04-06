@@ -1,0 +1,17 @@
+{
+  "title": "LLM-Anbieter",
+  "subtitle": "Verwalten Sie Ihre OpenAI-kompatiblen LLM-Anbieter.",
+  "addProvider": "Anbieter hinzufügen",
+  "providerName": "Anbieter-Name",
+  "providerNamePlaceholder": "Mein Anbieter",
+  "baseUrl": "Basis-URL",
+  "apiKey": "API-Schlüssel (optional)",
+  "failedToAdd": "Fehler beim Hinzufügen des Anbieters",
+  "editProviderNamePlaceholder": "Anbieter-Name",
+  "editBaseUrlPlaceholder": "Basis-URL",
+  "editApiKeyPlaceholder": "API-Schlüssel",
+  "save": "Speichern",
+  "cancel": "Abbrechen",
+  "checkHealth": "Anbieterstatus prüfen",
+  "navLabel": "Anbieter"
+}

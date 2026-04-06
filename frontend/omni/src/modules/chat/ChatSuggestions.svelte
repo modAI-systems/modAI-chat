@@ -1,7 +1,10 @@
 <script lang="ts">
+import { getT } from "@/modules/i18n/index.svelte.js";
 import { Button } from "$lib/shadcnui/components/ui/button/index.js";
 
-const suggestions = [
+const t = getT("chat");
+
+const defaultSuggestions = [
     "What are the latest trends in AI?",
     "How does machine learning work?",
     "Explain quantum computing",
@@ -11,6 +14,13 @@ const suggestions = [
     "What is the difference between SQL and NoSQL?",
     "Explain cloud computing basics",
 ];
+
+const suggestions = $derived(
+    t("suggestions", {
+        returnObjects: true,
+        defaultValue: defaultSuggestions,
+    }) as string[],
+);
 
 let {
     onselect,

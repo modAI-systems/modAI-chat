@@ -1,0 +1,27 @@
+{
+  "selectModel": "Modell auswählen",
+  "searchModels": "Modelle suchen...",
+  "noModelsFound": "Keine Modelle gefunden.",
+  "selectTools": "Werkzeuge auswählen",
+  "tools": "Werkzeuge",
+  "toggleTool": "Werkzeug {{name}} umschalten",
+  "typeMessage": "Nachricht eingeben...",
+  "send": "Senden",
+  "loadingModels": "Modelle werden geladen...",
+  "greeting": "Wie kann ich Ihnen heute helfen?",
+  "noProvidersHint": "Fügen Sie in den Einstellungen einen Anbieter hinzu, um mit dem Chatten zu beginnen.",
+  "suggestionHint": "Fragen Sie mich etwas oder wählen Sie einen Vorschlag.",
+  "thinking": "Denke nach...",
+  "generating": "Generiere...",
+  "navLabel": "Chat",
+  "suggestions": [
+    "Was sind die neuesten KI-Trends?",
+    "Wie funktioniert maschinelles Lernen?",
+    "Erkläre Quantencomputing",
+    "Best Practices für Svelte-Entwicklung",
+    "Vorteile von TypeScript",
+    "Wie optimiert man Datenbankabfragen?",
+    "Was ist der Unterschied zwischen SQL und NoSQL?",
+    "Grundlagen des Cloud Computing"
+  ]
+}

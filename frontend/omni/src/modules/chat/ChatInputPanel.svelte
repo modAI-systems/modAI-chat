@@ -1,8 +1,11 @@
 <script lang="ts">
 import { LoaderCircle, SendIcon } from "lucide-svelte";
 import type { Snippet } from "svelte";
+import { getT } from "@/modules/i18n/index.svelte.js";
 import { Button } from "$lib/shadcnui/components/ui/button/index.js";
 import { Textarea } from "$lib/shadcnui/components/ui/textarea/index.js";
+
+const t = getT("chat");
 
 let {
     canChat,
@@ -46,8 +49,8 @@ function sendMessage() {
 				<Textarea
 					bind:value={input}
 					onkeydown={handleKeydown}
-					placeholder="Type a message..."
-					class="border-0 shadow-none focus-visible:ring-0 min-h-[44px] resize-none p-0 max-h-48 bg-transparent dark:bg-transparent"
+					placeholder={t("typeMessage", { defaultValue: "Type a message..." })}
+					class="border-0 shadow-none focus-visible:ring-0 min-h-[44px] resize-none p-0 max-h-48 !bg-transparent dark:!bg-transparent disabled:!bg-transparent dark:disabled:!bg-transparent"
 					rows={1}
 					disabled={!canChat}
 				/>
@@ -68,7 +71,7 @@ function sendMessage() {
 						{:else}
 							<SendIcon class="size-3.5" />
 						{/if}
-						Send
+						{t("send", { defaultValue: "Send" })}
 					</Button>
 				</div>
 			</div>
