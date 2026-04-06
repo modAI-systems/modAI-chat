@@ -1,7 +1,10 @@
 <script lang="ts">
 import { PanelRight } from "lucide-svelte";
 import type { Snippet } from "svelte";
+import { getT } from "@/modules/i18n/index.svelte.js";
 import * as Sidebar from "$lib/shadcnui/components/ui/sidebar/index.js";
+
+const t = getT("main-app-sidebar-based");
 
 let {
     sidebar,
@@ -15,7 +18,7 @@ let {
 <Sidebar.Provider>
     <Sidebar.Inset>
         <header class="flex justify-end border-b bg-background/80 px-4 py-2 backdrop-blur md:px-6">
-            <Sidebar.Trigger aria-label="Toggle navigation" />
+            <Sidebar.Trigger aria-label={t("toggleNavigation", { defaultValue: "Toggle navigation" })} />
         </header>
         <div class="flex-1 overflow-hidden">
             {@render children?.()}
@@ -27,9 +30,9 @@ let {
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
                     <p class="truncate text-sm font-semibold tracking-tight">modAI</p>
-                    <p class="truncate text-xs text-sidebar-foreground/70">Modular AI Workspace</p>
+                    <p class="truncate text-xs text-sidebar-foreground/70">{t("workspaceSubtitle", { defaultValue: "Modular AI Workspace" })}</p>
                 </div>
-                <Sidebar.Trigger class="md:hidden" aria-label="Toggle navigation">
+                <Sidebar.Trigger class="md:hidden" aria-label={t("toggleNavigation", { defaultValue: "Toggle navigation" })}>
                     <PanelRight class="size-4" />
                 </Sidebar.Trigger>
             </div>

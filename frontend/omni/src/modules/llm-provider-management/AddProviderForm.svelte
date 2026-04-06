@@ -1,9 +1,12 @@
 <script lang="ts">
 import { LoaderCircle, PlusIcon } from "lucide-svelte";
+import { getT } from "@/modules/i18n/index.svelte.js";
 import type { CreateProviderRequest } from "@/modules/llm-provider-service/index.svelte";
 import { Button } from "$lib/shadcnui/components/ui/button/index.js";
 import * as Card from "$lib/shadcnui/components/ui/card/index.js";
 import { Input } from "$lib/shadcnui/components/ui/input/index.js";
+
+const t = getT("llm-provider-management");
 
 let { onAddProvider } = $props<{
     onAddProvider: (data: CreateProviderRequest) => void | Promise<void>;
@@ -30,7 +33,9 @@ async function handleAddProvider(e: SubmitEvent) {
         newProviderApiKey = "";
     } catch (err) {
         addProviderError =
-            err instanceof Error ? err.message : "Failed to add provider";
+            err instanceof Error
+                ? err.message
+                : t("failedToAdd", { defaultValue: "Failed to add provider" });
     } finally {
         addingProvider = false;
     }
@@ -41,25 +46,25 @@ async function handleAddProvider(e: SubmitEvent) {
 	<Card.Header>
 		<Card.Title class="flex items-center gap-2 text-base">
 			<PlusIcon class="size-4" />
-			Add Provider
+			{t("addProvider", { defaultValue: "Add Provider" })}
 		</Card.Title>
 	</Card.Header>
 	<Card.Content>
 		<form onsubmit={handleAddProvider} class="flex flex-col gap-3">
 			<div class="flex flex-col gap-1.5">
 				<label for="provider-name" class="text-sm font-medium">
-					Provider Name
+					{t("providerName", { defaultValue: "Provider Name" })}
 				</label>
 				<Input
 					id="provider-name"
 					bind:value={newProviderName}
-					placeholder="My Provider"
+					placeholder={t("providerNamePlaceholder", { defaultValue: "My Provider" })}
 					required
 				/>
 			</div>
 			<div class="flex flex-col gap-1.5">
 				<label for="provider-url" class="text-sm font-medium">
-					Base URL
+					{t("baseUrl", { defaultValue: "Base URL" })}
 				</label>
 				<Input
 					id="provider-url"
@@ -70,7 +75,7 @@ async function handleAddProvider(e: SubmitEvent) {
 			</div>
 			<div class="flex flex-col gap-1.5">
 				<label for="provider-key" class="text-sm font-medium">
-					API Key (optional)
+					{t("apiKey", { defaultValue: "API Key (optional)" })}
 				</label>
 				<Input
 					id="provider-key"
@@ -86,7 +91,7 @@ async function handleAddProvider(e: SubmitEvent) {
 				{#if addingProvider}
 					<LoaderCircle class="mr-2 size-4 animate-spin" />
 				{/if}
-				Add Provider
+				{t("addProvider", { defaultValue: "Add Provider" })}
 			</Button>
 		</form>
 	</Card.Content>

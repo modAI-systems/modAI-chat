@@ -1,4 +1,5 @@
 import "./app.css";
+import "@/modules/i18n/i18n.js";
 import { mount } from "svelte";
 import App from "./App.svelte";
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 import { AlertTriangle, ChevronDown } from "lucide-svelte";
 import { getModuleDeps } from "@/core/module-system/index.js";
+import { getT } from "@/modules/i18n/index.svelte.js";
 import AddProviderForm from "@/modules/llm-provider-management/AddProviderForm.svelte";
 import ProviderList from "@/modules/llm-provider-management/ProviderList.svelte";
 import type {
@@ -17,6 +18,7 @@ const deps = getModuleDeps(
 );
 const llmProviderService =
     deps.getOne<LLMProviderService>("llmProviderService");
+const t = getT("llm-provider-management");
 let providers = $state<Provider[]>([]);
 
 $effect(() => {
@@ -61,9 +63,9 @@ async function handleCheckProviderHealth(provider: Provider): Promise<boolean> {
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">
 	<div>
-		<h2 class="text-2xl font-semibold tracking-tight">LLM Providers</h2>
+		<h2 class="text-2xl font-semibold tracking-tight">{t("title", { defaultValue: "LLM Providers" })}</h2>
 		<p class="text-muted-foreground mt-1 text-sm">
-			Manage your OpenAI-compatible LLM providers.
+			{t("subtitle", { defaultValue: "Manage your OpenAI-compatible LLM providers." })}
 		</p>
 	</div>
 	<ProviderList

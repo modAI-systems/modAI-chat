@@ -1,10 +1,13 @@
 <script lang="ts">
 import { Check, ChevronDown } from "lucide-svelte";
+import { getT } from "@/modules/i18n/index.svelte.js";
 import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.js";
 import { Button } from "$lib/shadcnui/components/ui/button/index.js";
 import * as Command from "$lib/shadcnui/components/ui/command/index.js";
 import * as Popover from "$lib/shadcnui/components/ui/popover/index.js";
 import { modelSelectId } from "./utils.js";
+
+const t = getT("chat");
 
 let {
     providerGroups,
@@ -33,16 +36,16 @@ function handleSelect(selectId: string) {
 				class="text-muted-foreground h-auto gap-1.5 px-2 py-1 text-xs"
 				{...props}
 			>
-				{selectedModelData?.modelName ?? "Select model"}
+				{selectedModelData?.modelName ?? t("selectModel", { defaultValue: "Select model" })}
 				<ChevronDown class="size-3" />
 			</Button>
 		{/snippet}
 	</Popover.Trigger>
 	<Popover.Content class="w-[250px] p-0" align="start" side="top">
 		<Command.Root>
-			<Command.Input placeholder="Search models..." />
+			<Command.Input placeholder={t("searchModels", { defaultValue: "Search models..." })} />
 			<Command.List>
-				<Command.Empty>No models found.</Command.Empty>
+				<Command.Empty>{t("noModelsFound", { defaultValue: "No models found." })}</Command.Empty>
 				{#each providerGroups as group}
 					<Command.Group heading={group.name}>
 						{#each group.models as m}

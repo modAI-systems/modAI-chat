@@ -7,6 +7,7 @@ import {
     Settings2,
     Trash2,
 } from "lucide-svelte";
+import { getT } from "@/modules/i18n/index.svelte.js";
 import type {
     CreateProviderRequest,
     Provider,
@@ -14,6 +15,8 @@ import type {
 import { Button } from "$lib/shadcnui/components/ui/button/index.js";
 import * as Card from "$lib/shadcnui/components/ui/card/index.js";
 import { Input } from "$lib/shadcnui/components/ui/input/index.js";
+
+const t = getT("llm-provider-management");
 
 let { providers, onUpdateProvider, onDeleteProvider, onCheckProviderHealth } =
     $props<{
@@ -85,19 +88,19 @@ async function checkHealth(provider: Provider) {
 				<Card.Content class="flex flex-col gap-3 p-4">
 					{#if editingId === provider.id}
 						<div class="flex flex-col gap-2">
-							<Input bind:value={editName} placeholder="Provider Name" />
-							<Input bind:value={editBaseUrl} placeholder="Base URL" />
+						<Input bind:value={editName} placeholder={t("editProviderNamePlaceholder", { defaultValue: "Provider Name" })} />
+						<Input bind:value={editBaseUrl} placeholder={t("editBaseUrlPlaceholder", { defaultValue: "Base URL" })} />
 							<Input
 								type="password"
 								bind:value={editApiKey}
-								placeholder="API Key"
+									placeholder={t("editApiKeyPlaceholder", { defaultValue: "API Key" })}
 							/>
 							<div class="flex gap-2">
 								<Button size="sm" onclick={() => saveEdit(provider.id)}>
-									Save
-								</Button>
-								<Button size="sm" variant="outline" onclick={cancelEdit}>
-									Cancel
+								{t("save", { defaultValue: "Save" })}
+							</Button>
+							<Button size="sm" variant="outline" onclick={cancelEdit}>
+								{t("cancel", { defaultValue: "Cancel" })}
 								</Button>
 							</div>
 						</div>
@@ -114,7 +117,7 @@ async function checkHealth(provider: Provider) {
 									variant="ghost"
 									size="sm"
 									class="size-8 p-0 {healthState === 'ok' ? 'text-green-600 hover:text-green-700' : ''} {healthState === 'fail' ? 'text-red-600 hover:text-red-700' : ''}"
-									title="Check provider health"
+									title={t("checkHealth", { defaultValue: "Check provider health" })}
 								onclick={() => checkHealth(provider)}
 								>
 									{#if healthState === "checking"}

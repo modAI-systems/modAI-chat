@@ -1,8 +1,11 @@
 <script lang="ts">
 import { Check, Wrench } from "lucide-svelte";
+import { getT } from "@/modules/i18n/index.svelte.js";
 import type { OpenAIFunctionTool } from "@/modules/tools-service/index.svelte.js";
 import { Button } from "$lib/shadcnui/components/ui/button/index.js";
 import * as Popover from "$lib/shadcnui/components/ui/popover/index.js";
+
+const t = getT("chat");
 
 let {
     availableTools,
@@ -28,7 +31,7 @@ function isSelected(name: string): boolean {
 				variant="ghost"
 				size="sm"
 				class="text-muted-foreground h-auto gap-1.5 px-2 py-1 text-xs"
-				aria-label="Select tools"
+				aria-label={t("selectTools", { defaultValue: "Select tools" })}
 				{...props}
 			>
 				<Wrench class="size-3.5" />
@@ -39,12 +42,12 @@ function isSelected(name: string): boolean {
 		{/snippet}
 	</Popover.Trigger>
 	<Popover.Content class="w-[280px] p-1" align="start" side="top">
-		<div class="px-2 py-1.5 text-xs font-medium text-muted-foreground">Tools</div>
+		<div class="px-2 py-1.5 text-xs font-medium text-muted-foreground">{t("tools", { defaultValue: "Tools" })}</div>
 		{#each availableTools as tool}
 			<button
 				type="button"
 				class="flex w-full cursor-pointer items-start gap-2 rounded px-2 py-1.5 text-left hover:bg-accent"
-				aria-label="Toggle tool {tool.function.name}"
+				aria-label={t("toggleTool", { defaultValue: "Toggle tool {{name}}", name: tool.function.name })}
 				aria-pressed={isSelected(tool.function.name)}
 				onclick={() => ontoggle(tool.function.name)}
 			>

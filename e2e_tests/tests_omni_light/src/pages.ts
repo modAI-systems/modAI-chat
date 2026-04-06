@@ -9,6 +9,18 @@ export class General {
         const viewport = this.page.viewportSize();
         return viewport !== null && viewport.width < 768;
     }
+
+    async setLanguage(lang: string): Promise<void> {
+        await this.page.evaluate((l) => {
+            localStorage.setItem("i18nextLng", l);
+        }, lang);
+    }
+
+    async clearLanguage(): Promise<void> {
+        await this.page.evaluate(() => {
+            localStorage.removeItem("i18nextLng");
+        });
+    }
 }
 
 export class ChatPage {
