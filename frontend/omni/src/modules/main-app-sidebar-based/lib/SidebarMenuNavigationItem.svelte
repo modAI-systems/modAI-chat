@@ -1,18 +1,18 @@
 <script lang="ts">
 import type { Snippet } from "svelte";
 import { getRouterApi } from "@/modules/router/index.svelte";
-import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+import * as Sidebar from "$lib/shadcnui/components/ui/sidebar/index.js";
 
 const router = getRouterApi();
 
 let {
-  label,
-  path,
-  icon,
+    label,
+    path,
+    icon,
 }: {
-  label: string;
-  path: `/${string}`;
-  icon: Snippet;
+    label: string;
+    path: `/${string}`;
+    icon: Snippet;
 } = $props();
 </script>
 

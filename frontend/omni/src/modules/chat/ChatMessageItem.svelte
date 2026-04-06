@@ -2,21 +2,21 @@
 import type { UIMessage } from "ai";
 import { BotIcon, ChevronDown, UserIcon } from "lucide-svelte";
 import { marked } from "marked";
-import * as Avatar from "$lib/components/ui/avatar/index.js";
-import { Badge } from "$lib/components/ui/badge/index.js";
-import { Button } from "$lib/components/ui/button/index.js";
-import * as Collapsible from "$lib/components/ui/collapsible/index.js";
+import * as Avatar from "$lib/shadcnui/components/ui/avatar/index.js";
+import { Badge } from "$lib/shadcnui/components/ui/badge/index.js";
+import { Button } from "$lib/shadcnui/components/ui/button/index.js";
+import * as Collapsible from "$lib/shadcnui/components/ui/collapsible/index.js";
 
 let {
-  message,
-  selectedModelName,
+    message,
+    selectedModelName,
 }: {
-  message: UIMessage;
-  selectedModelName: string | undefined;
+    message: UIMessage;
+    selectedModelName: string | undefined;
 } = $props();
 
 function renderMarkdown(text: string): string {
-  return marked.parse(text, { async: false }) as string;
+    return marked.parse(text, { async: false }) as string;
 }
 </script>
 

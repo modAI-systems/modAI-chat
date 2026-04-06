@@ -7,7 +7,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["src/**", "!**/node_modules", "!src/lib/components"]
+    "includes": ["**", "!**/node_modules", "!src/lib/shadcnui"]
   },
   "formatter": {
     "enabled": true,
@@ -18,7 +18,15 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "nursery": {
+        "noExcessiveLinesPerFile": {
+          "level": "error",
+          "options": {
+            "maxLines": 200
+          }
+        }
+      }
     }
   },
   "javascript": {
@@ -41,6 +49,16 @@
     }
   },
   "overrides": [
+    {
+      "includes": ["**/*.spec.ts", "**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noExcessiveLinesPerFile": "off"
+          }
+        }
+      }
+    },
     {
       "includes": ["**/*.svelte"],
       "linter": {

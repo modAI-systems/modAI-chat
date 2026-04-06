@@ -3,10 +3,10 @@ import type { Component } from "svelte";
 import { getModuleDeps } from "@/core/module-system/index";
 
 const deps = getModuleDeps(
-  "@/modules/llm-provider-management/providersRouteDefinition/create",
+    "@/modules/llm-provider-management/providersRouteDefinition/create",
 );
 const providerComponents = $derived(
-  deps.getAll<Component>("providerManagement"),
+    deps.getAll<Component>("providerManagement"),
 );
 </script>
 

@@ -52,24 +52,4 @@ describe("ModaiBackendToolsService", () => {
 
         expect(result).toEqual([]);
     });
-
-    it("persists and restores selected tool names", async () => {
-        await service.saveSelectedToolNames([
-            "calculate",
-            "calculate",
-            "weather",
-        ]);
-
-        const selected = await service.fetchSelectedToolNames();
-
-        expect(selected).toEqual(["calculate", "weather"]);
-    });
-
-    it("returns empty list for invalid persisted selection", async () => {
-        localStorage.setItem("modai.selected.tools", "{broken-json");
-
-        const selected = await service.fetchSelectedToolNames();
-
-        expect(selected).toEqual([]);
-    });
 });

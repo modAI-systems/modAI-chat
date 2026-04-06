@@ -1,12 +1,12 @@
 <script lang="ts">
-import { Loader2, PlusIcon } from "lucide-svelte";
+import { LoaderCircle, PlusIcon } from "lucide-svelte";
 import type { CreateProviderRequest } from "@/modules/llm-provider-service/index.svelte";
-import { Button } from "$lib/components/ui/button/index.js";
-import * as Card from "$lib/components/ui/card/index.js";
-import { Input } from "$lib/components/ui/input/index.js";
+import { Button } from "$lib/shadcnui/components/ui/button/index.js";
+import * as Card from "$lib/shadcnui/components/ui/card/index.js";
+import { Input } from "$lib/shadcnui/components/ui/input/index.js";
 
 let { onAddProvider } = $props<{
-  onAddProvider: (data: CreateProviderRequest) => void | Promise<void>;
+    onAddProvider: (data: CreateProviderRequest) => void | Promise<void>;
 }>();
 
 let newProviderName = $state("");
@@ -16,24 +16,24 @@ let addProviderError = $state("");
 let addingProvider = $state(false);
 
 async function handleAddProvider(e: SubmitEvent) {
-  e.preventDefault();
-  addProviderError = "";
-  addingProvider = true;
-  try {
-    await onAddProvider({
-      name: newProviderName,
-      base_url: newProviderBaseUrl,
-      api_key: newProviderApiKey,
-    });
-    newProviderName = "";
-    newProviderBaseUrl = "";
-    newProviderApiKey = "";
-  } catch (err) {
-    addProviderError =
-      err instanceof Error ? err.message : "Failed to add provider";
-  } finally {
-    addingProvider = false;
-  }
+    e.preventDefault();
+    addProviderError = "";
+    addingProvider = true;
+    try {
+        await onAddProvider({
+            name: newProviderName,
+            base_url: newProviderBaseUrl,
+            api_key: newProviderApiKey,
+        });
+        newProviderName = "";
+        newProviderBaseUrl = "";
+        newProviderApiKey = "";
+    } catch (err) {
+        addProviderError =
+            err instanceof Error ? err.message : "Failed to add provider";
+    } finally {
+        addingProvider = false;
+    }
 }
 </script>
 
@@ -84,7 +84,7 @@ async function handleAddProvider(e: SubmitEvent) {
 			{/if}
 			<Button type="submit" disabled={addingProvider}>
 				{#if addingProvider}
-					<Loader2 class="mr-2 size-4 animate-spin" />
+					<LoaderCircle class="mr-2 size-4 animate-spin" />
 				{/if}
 				Add Provider
 			</Button>

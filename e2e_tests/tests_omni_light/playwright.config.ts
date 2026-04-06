@@ -13,9 +13,9 @@ export default defineConfig({
     ],
     use: {
         baseURL: "http://localhost:4173",
-        trace: 'retain-on-failure',
-		screenshot: 'only-on-failure',
-		video: 'off',
+        trace: "retain-on-failure",
+        screenshot: "only-on-failure",
+        video: "off",
     },
     projects: [
         {
@@ -42,9 +42,11 @@ export default defineConfig({
     webServer: [
         {
             name: "Frontend",
-            command: "cd ../../frontend/omni && ln -sf modules_browser_only.json public/modules.json && pnpm build && pnpm preview",
+            command:
+                "cd ../../frontend/omni && ln -sf modules_browser_only.json public/modules.json && pnpm build && pnpm preview",
             url: "http://localhost:4173",
             reuseExistingServer: !process.env.CI,
+            timeout: 120_000,
         },
         {
             name: "LLMock",
@@ -53,6 +55,7 @@ export default defineConfig({
             url: "http://localhost:3001/health",
             reuseExistingServer: !process.env.CI,
             gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },
+            timeout: 30_000,
         },
     ],
 });

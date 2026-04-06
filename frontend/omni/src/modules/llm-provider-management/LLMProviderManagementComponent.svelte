@@ -4,27 +4,27 @@ import { getModuleDeps } from "@/core/module-system/index.js";
 import AddProviderForm from "@/modules/llm-provider-management/AddProviderForm.svelte";
 import ProviderList from "@/modules/llm-provider-management/ProviderList.svelte";
 import type {
-  CreateProviderRequest,
-  LLMProviderService,
-  Provider,
+    CreateProviderRequest,
+    LLMProviderService,
+    Provider,
 } from "@/modules/llm-provider-service/index.svelte.js";
-import { Button } from "$lib/components/ui/button/index.js";
-import * as Card from "$lib/components/ui/card/index.js";
-import * as Collapsible from "$lib/components/ui/collapsible/index.js";
+import { Button } from "$lib/shadcnui/components/ui/button/index.js";
+import * as Card from "$lib/shadcnui/components/ui/card/index.js";
+import * as Collapsible from "$lib/shadcnui/components/ui/collapsible/index.js";
 
 const deps = getModuleDeps(
-  "@/modules/llm-provider-management/LLMProviderManagementComponent",
+    "@/modules/llm-provider-management/LLMProviderManagementComponent",
 );
 const llmProviderService =
-  deps.getOne<LLMProviderService>("llmProviderService");
+    deps.getOne<LLMProviderService>("llmProviderService");
 let providers = $state<Provider[]>([]);
 
 $effect(() => {
-  void refreshProviders();
+    void refreshProviders();
 });
 
 async function refreshProviders() {
-  providers = await llmProviderService.fetchProviders();
+    providers = await llmProviderService.fetchProviders();
 }
 
 // ---------------------------------------------------------------------------
@@ -32,30 +32,30 @@ async function refreshProviders() {
 // ---------------------------------------------------------------------------
 
 async function handleAddProvider(data: CreateProviderRequest) {
-  await llmProviderService.createProvider(data);
-  await refreshProviders();
+    await llmProviderService.createProvider(data);
+    await refreshProviders();
 }
 
 async function handleUpdateProvider(
-  id: string,
-  data: Partial<CreateProviderRequest>,
+    id: string,
+    data: Partial<CreateProviderRequest>,
 ) {
-  await llmProviderService.updateProvider(id, data);
-  await refreshProviders();
+    await llmProviderService.updateProvider(id, data);
+    await refreshProviders();
 }
 
 async function handleDeleteProvider(id: string) {
-  await llmProviderService.deleteProvider(id);
-  await refreshProviders();
+    await llmProviderService.deleteProvider(id);
+    await refreshProviders();
 }
 
 async function handleCheckProviderHealth(provider: Provider): Promise<boolean> {
-  try {
-    const models = await llmProviderService.fetchModels(provider);
-    return models.length > 0;
-  } catch {
-    return false;
-  }
+    try {
+        const models = await llmProviderService.fetchModels(provider);
+        return models.length > 0;
+    } catch {
+        return false;
+    }
 }
 </script>
 
@@ -66,37 +66,6 @@ async function handleCheckProviderHealth(provider: Provider): Promise<boolean> {
 			Manage your OpenAI-compatible LLM providers.
 		</p>
 	</div>
-
-	<Collapsible.Root>
-		<Card.Root class="border-amber-300/60 bg-amber-50 text-amber-950">
-			<Card.Header class="pb-2">
-				<div class="flex items-center justify-between gap-2">
-					<Card.Title class="flex items-center gap-2 text-sm">
-						<AlertTriangle class="size-4" />
-						Browser-direct mode requires CORS on your provider
-					</Card.Title>
-					<Collapsible.Trigger asChild>
-						{#snippet child({ props })}
-							<Button variant="outline" size="sm" class="gap-1.5" {...props}>
-								Show setup
-								<ChevronDown class="size-3.5" />
-							</Button>
-						{/snippet}
-					</Collapsible.Trigger>
-				</div>
-			</Card.Header>
-			<Collapsible.Content>
-				<Card.Content class="space-y-2 pt-0 text-sm">
-					<p>
-						This light frontend calls providers directly from the browser. If your provider does not allow your frontend origin, model loading, health checks, and chat will fail.
-					</p>
-					<p class="font-medium">llmock example:</p>
-					<pre class="overflow-x-auto rounded bg-amber-100/80 px-2 py-1 text-xs">docker run --rm -p 3001:8000 -e LLMOCK_CORS_ALLOW_ORIGINS='["http://localhost:5173"]' ghcr.io/modai-systems/llmock:latest</pre>
-				</Card.Content>
-			</Collapsible.Content>
-		</Card.Root>
-	</Collapsible.Root>
-
 	<ProviderList
 		{providers}
 		onUpdateProvider={handleUpdateProvider}

@@ -1,36 +1,36 @@
 <script lang="ts">
 import type { UIMessage } from "ai";
-import { BotIcon, Loader2 } from "lucide-svelte";
-import * as Avatar from "$lib/components/ui/avatar/index.js";
-import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
+import { BotIcon, LoaderCircle } from "lucide-svelte";
+import * as Avatar from "$lib/shadcnui/components/ui/avatar/index.js";
+import { ScrollArea } from "$lib/shadcnui/components/ui/scroll-area/index.js";
 import ChatMessageItem from "./ChatMessageItem.svelte";
 
 let {
-  messages,
-  status,
-  modelsLoading,
-  hasModels,
-  selectedModelName,
+    messages,
+    status,
+    modelsLoading,
+    hasModels,
+    selectedModelName,
 }: {
-  messages: UIMessage[];
-  status: string;
-  modelsLoading: boolean;
-  hasModels: boolean;
-  selectedModelName: string | undefined;
+    messages: UIMessage[];
+    status: string;
+    modelsLoading: boolean;
+    hasModels: boolean;
+    selectedModelName: string | undefined;
 } = $props();
 
 let conversationEl = $state<HTMLElement | null>(null);
 
 function scrollToBottom() {
-  if (conversationEl) {
-    conversationEl.scrollTop = conversationEl.scrollHeight;
-  }
+    if (conversationEl) {
+        conversationEl.scrollTop = conversationEl.scrollHeight;
+    }
 }
 
 $effect(() => {
-  // Access messages to track reactive changes (including streaming updates)
-  messages;
-  scrollToBottom();
+    // Access messages to track reactive changes (including streaming updates)
+    messages;
+    scrollToBottom();
 });
 </script>
 
@@ -39,7 +39,7 @@ $effect(() => {
 		{#if messages.length === 0}
 			{#if modelsLoading}
 				<div class="flex items-center justify-center gap-2 py-20">
-					<Loader2 class="text-muted-foreground size-6 animate-spin" />
+					<LoaderCircle class="text-muted-foreground size-6 animate-spin" />
 					<span class="text-muted-foreground text-sm">Loading models...</span>
 				</div>
 			{:else}
@@ -81,7 +81,7 @@ $effect(() => {
 					</Avatar.Fallback>
 				</Avatar.Root>
 				<div class="flex items-center gap-2 pt-1">
-					<Loader2 class="text-muted-foreground size-4 animate-spin" />
+					<LoaderCircle class="text-muted-foreground size-4 animate-spin" />
 					<span class="text-muted-foreground text-xs">
 						{status === "submitted" ? "Thinking..." : "Generating..."}
 					</span>
