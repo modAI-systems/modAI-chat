@@ -14,7 +14,7 @@
       "type": "MainApp",
       "path": "@/modules/router/AppRouter",
       "dependencies": {
-        "module:routes": ["chat-route", "providers-route", "tools-route", "chat-fallback-route", "sidebar-layout-route"]
+        "module:routes": ["chat-route", "providers-route", "chat-fallback-route", "sidebar-layout-route"]
       }
     },
     {
@@ -22,7 +22,7 @@
       "type": "MainApp",
       "path": "@/modules/main-app-sidebar-based/MainApp",
       "dependencies": {
-        "module:sidebarTopItems": ["chat-navigation-item", "providers-navigation-item", "tools-navigation-item"]
+        "module:sidebarTopItems": ["chat-navigation-item", "providers-navigation-item"]
       }
     },
     {
@@ -98,23 +98,9 @@
       "dependencies": {}
     },
     {
-      "id": "tools-management",
-      "type": "ToolsManagementComponent",
-      "path": "@/modules/tools-management/ToolsManagementComponent",
-      "dependencies": {
-        "module:toolsService": "tools-service"
-      }
-    },
-    {
       "id": "providers-navigation-item",
       "type": "SidebarTopItem",
       "path": "@/modules/llm-provider-management/providersNavigationItem",
-      "dependencies": {}
-    },
-    {
-      "id": "tools-navigation-item",
-      "type": "SidebarTopItem",
-      "path": "@/modules/tools-management/toolsNavigationItem",
       "dependencies": {}
     },
     {
@@ -123,14 +109,6 @@
       "path": "@/modules/llm-provider-management/providersRouteDefinition/create",
       "dependencies": {
         "module:providerManagement": ["llm-provider-management"]
-      }
-    },
-    {
-      "id": "tools-route",
-      "type": "Route",
-      "path": "@/modules/tools-management/toolsRouteDefinition/create",
-      "dependencies": {
-        "module:toolsManagement": ["tools-management"]
       }
     }
   ]

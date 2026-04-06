@@ -121,6 +121,32 @@ export class ChatPage {
         await expect(this.page).toHaveURL("/chat");
     }
 
+    async enableTool(toolName: string): Promise<void> {
+        // Open the tools popover inside the chat input panel
+        const toolsButton = this.page.getByRole("button", {
+            name: "Select tools",
+            exact: true,
+        });
+        await toolsButton.waitFor({ state: "visible", timeout: 10000 });
+        await toolsButton.click();
+
+        // Find the toggle button for this specific tool
+        const toggle = this.page.getByRole("button", {
+            name: `Toggle tool ${toolName}`,
+            exact: true,
+        });
+        await toggle.waitFor({ state: "visible", timeout: 5000 });
+
+        // Only enable if not already enabled
+        const isEnabled = await toggle.getAttribute("data-enabled");
+        if (isEnabled !== "true") {
+            await toggle.click();
+        }
+
+        // Close the popover by pressing Escape
+        await this.page.keyboard.press("Escape");
+    }
+
     async selectFirstModel(): Promise<void> {
         // Open the model selector popover and click the first option
         const modelButton = this.page
@@ -199,27 +225,6 @@ export class Sidebar {
 
         if (!wasOpen) {
             await this.close();
-        }
-    }
-}
-
-export class ToolsManagementPage {
-    constructor(private page: Page) {}
-
-    async navigateTo(): Promise<void> {
-        const sidebar = new Sidebar(this.page);
-        await sidebar.navigateTo("Tools");
-        await expect(this.page).toHaveURL("/tools");
-    }
-
-    async enableTool(toolName: string): Promise<void> {
-        const toggle = this.page.getByLabel(`Toggle tool ${toolName}`, {
-            exact: true,
-        });
-        await toggle.waitFor({ state: "visible", timeout: 10000 });
-        const isChecked = await toggle.getAttribute("data-state");
-        if (isChecked !== "checked") {
-            await toggle.click();
         }
     }
 }
