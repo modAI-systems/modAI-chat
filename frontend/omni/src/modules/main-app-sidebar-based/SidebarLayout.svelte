@@ -4,11 +4,11 @@ import type { Snippet } from "svelte";
 import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 
 let {
-  sidebar,
-  children,
+    sidebar,
+    children,
 }: {
-  sidebar?: Snippet;
-  children?: Snippet;
+    sidebar?: Snippet;
+    children?: Snippet;
 } = $props();
 </script>
 
