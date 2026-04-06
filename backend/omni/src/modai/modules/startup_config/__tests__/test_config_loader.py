@@ -365,3 +365,96 @@ def test_includes_nested_includes_are_rejected(tmp_path: Path):
     loader = YamlConfigModule(ModuleDependencies(), {"config_path": str(main)})
     with pytest.raises(ValueError, match="Nested includes are not supported"):
         loader.get_config()
+
+
+def test_includes_collision_strategy_drop_removes_base_and_incoming(tmp_path: Path):
+    """collision_strategy=drop on an incoming module removes both the base and incoming entries."""
+    main = tmp_path / "config.yaml"
+    main.write_text(
+        yaml.dump(
+            {
+                "includes": [{"path": "extra.yaml"}],
+                "modules": {
+                    "health": {"collision_strategy": "drop"},
+                    "other": {"class": "a.b.Other"},
+                },
+            }
+        )
+    )
+
+    included = tmp_path / "extra.yaml"
+    included.write_text(
+        yaml.dump(
+            {
+                "modules": {
+                    "health": {"class": "a.b.HealthIncluded"},
+                }
+            }
+        )
+    )
+
+    loader = YamlConfigModule(ModuleDependencies(), {"config_path": str(main)})
+    config = loader.get_config()
+
+    assert "health" not in config["modules"]
+    assert config == {"modules": {"other": {"class": "a.b.Other"}}}
+
+
+def test_includes_collision_strategy_drop_no_existing_module(tmp_path: Path):
+    """collision_strategy=drop on an incoming module with no prior base entry is simply not added."""
+    main = tmp_path / "config.yaml"
+    main.write_text(
+        yaml.dump(
+            {
+                "modules": {
+                    "health": {"collision_strategy": "drop"},
+                    "other": {"class": "a.b.Other"},
+                },
+            }
+        )
+    )
+
+    loader = YamlConfigModule(ModuleDependencies(), {"config_path": str(main)})
+    config = loader.get_config()
+
+    assert "health" not in config["modules"]
+    assert config == {"modules": {"other": {"class": "a.b.Other"}}}
+
+
+def test_includes_collision_strategy_drop_successor_modules_unaffected(tmp_path: Path):
+    """Modules defined after the drop module in the same config are loaded normally."""
+    main = tmp_path / "config.yaml"
+    main.write_text(
+        yaml.dump(
+            {
+                "includes": [{"path": "extra.yaml"}],
+                "modules": {
+                    "health": {"collision_strategy": "drop"},
+                    "successor": {"class": "a.b.Successor"},
+                },
+            }
+        )
+    )
+
+    included = tmp_path / "extra.yaml"
+    included.write_text(
+        yaml.dump(
+            {
+                "modules": {
+                    "health": {"class": "a.b.HealthIncluded"},
+                    "from_include": {"class": "a.b.FromInclude"},
+                }
+            }
+        )
+    )
+
+    loader = YamlConfigModule(ModuleDependencies(), {"config_path": str(main)})
+    config = loader.get_config()
+
+    assert "health" not in config["modules"]
+    assert config == {
+        "modules": {
+            "from_include": {"class": "a.b.FromInclude"},
+            "successor": {"class": "a.b.Successor"},
+        }
+    }
