@@ -1,0 +1,41 @@
+name: Update shadcn components
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Every Monday at 06:00 UTC
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  update-shadcn:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        working-directory: frontend/omni
+        run: pnpm install
+
+      - name: Run update script
+        working-directory: frontend/omni
+        run: bash update-shadcn.sh
+
+      - name: Create PR if changes exist
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore(frontend): update shadcn components"
+          title: "chore(frontend): weekly shadcn component update"
+          body: "Automated weekly update of shadcn-svelte components via `update-shadcn.sh`."
+          branch: "chore/update-shadcn"
+          delete-branch: true
+          labels: "dependencies"
