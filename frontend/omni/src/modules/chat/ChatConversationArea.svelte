@@ -1,8 +1,8 @@
 <script lang="ts">
 import type { UIMessage } from "ai";
 import { BotIcon, LoaderCircle } from "lucide-svelte";
-import * as Avatar from "$lib/components/ui/avatar/index.js";
-import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
+import * as Avatar from "$lib/shadcnui/components/ui/avatar/index.js";
+import { ScrollArea } from "$lib/shadcnui/components/ui/scroll-area/index.js";
 import ChatMessageItem from "./ChatMessageItem.svelte";
 
 let {

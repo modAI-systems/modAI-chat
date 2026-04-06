@@ -1,9 +1,9 @@
 <script lang="ts">
 import { LoaderCircle, PlusIcon } from "lucide-svelte";
 import type { CreateProviderRequest } from "@/modules/llm-provider-service/index.svelte";
-import { Button } from "$lib/components/ui/button/index.js";
-import * as Card from "$lib/components/ui/card/index.js";
-import { Input } from "$lib/components/ui/input/index.js";
+import { Button } from "$lib/shadcnui/components/ui/button/index.js";
+import * as Card from "$lib/shadcnui/components/ui/card/index.js";
+import { Input } from "$lib/shadcnui/components/ui/input/index.js";
 
 let { onAddProvider } = $props<{
     onAddProvider: (data: CreateProviderRequest) => void | Promise<void>;

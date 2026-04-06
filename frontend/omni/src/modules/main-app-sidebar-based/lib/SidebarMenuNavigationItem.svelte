@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { Snippet } from "svelte";
 import { getRouterApi } from "@/modules/router/index.svelte";
-import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+import * as Sidebar from "$lib/shadcnui/components/ui/sidebar/index.js";
 
 const router = getRouterApi();
 

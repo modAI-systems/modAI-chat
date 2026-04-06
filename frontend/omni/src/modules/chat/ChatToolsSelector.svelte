@@ -1,8 +1,8 @@
 <script lang="ts">
 import { Check, Wrench } from "lucide-svelte";
 import type { OpenAIFunctionTool } from "@/modules/tools-service/index.svelte.js";
-import { Button } from "$lib/components/ui/button/index.js";
-import * as Popover from "$lib/components/ui/popover/index.js";
+import { Button } from "$lib/shadcnui/components/ui/button/index.js";
+import * as Popover from "$lib/shadcnui/components/ui/popover/index.js";
 
 let {
     availableTools,
