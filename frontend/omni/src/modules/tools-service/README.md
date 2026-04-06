@@ -8,4 +8,4 @@ Provides the public `ToolsService` contract used by the frontend to:
 Implementations:
 
 - `modaiBackendToolsService.svelte.ts` for backend-connected setups
-- `emptyToolsService.svelte.ts` for browser-only mode without modAI backend
+- `noOpToolsService.svelte.ts` for browser-only mode without modAI backend
