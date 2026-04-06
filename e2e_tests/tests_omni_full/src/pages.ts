@@ -138,7 +138,7 @@ export class ChatPage {
         await toggle.waitFor({ state: "visible", timeout: 5000 });
 
         // Only enable if not already enabled
-        const isEnabled = await toggle.getAttribute("data-enabled");
+        const isEnabled = await toggle.getAttribute("aria-pressed");
         if (isEnabled !== "true") {
             await toggle.click();
         }

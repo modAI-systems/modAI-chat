@@ -45,7 +45,7 @@ function isSelected(name: string): boolean {
 				type="button"
 				class="flex w-full cursor-pointer items-start gap-2 rounded px-2 py-1.5 text-left hover:bg-accent"
 				aria-label="Toggle tool {tool.function.name}"
-				data-enabled={isSelected(tool.function.name)}
+				aria-pressed={isSelected(tool.function.name)}
 				onclick={() => ontoggle(tool.function.name)}
 			>
 				<Check
