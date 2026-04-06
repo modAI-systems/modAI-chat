@@ -8,9 +8,9 @@ import type {
     LLMProviderService,
     Provider,
 } from "@/modules/llm-provider-service/index.svelte.js";
-import { Button } from "$lib/components/ui/button/index.js";
-import * as Card from "$lib/components/ui/card/index.js";
-import * as Collapsible from "$lib/components/ui/collapsible/index.js";
+import { Button } from "$lib/shadcnui/components/ui/button/index.js";
+import * as Card from "$lib/shadcnui/components/ui/card/index.js";
+import * as Collapsible from "$lib/shadcnui/components/ui/collapsible/index.js";
 
 const deps = getModuleDeps(
     "@/modules/llm-provider-management/LLMProviderManagementComponent",

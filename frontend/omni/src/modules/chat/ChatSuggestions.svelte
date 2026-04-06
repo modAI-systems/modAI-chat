@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button } from "$lib/components/ui/button/index.js";
+import { Button } from "$lib/shadcnui/components/ui/button/index.js";
 
 const suggestions = [
     "What are the latest trends in AI?",

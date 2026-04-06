@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { Component } from "svelte";
 import { getModuleDeps } from "@/core/module-system";
-import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+import * as Sidebar from "$lib/shadcnui/components/ui/sidebar/index.js";
 import SidebarLayout from "./SidebarLayout.svelte";
 
 const deps = getModuleDeps("@/modules/main-app-sidebar-based/MainApp");

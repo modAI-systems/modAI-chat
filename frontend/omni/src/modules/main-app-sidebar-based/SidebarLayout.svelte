@@ -1,7 +1,7 @@
 <script lang="ts">
 import { PanelRight } from "lucide-svelte";
 import type { Snippet } from "svelte";
-import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+import * as Sidebar from "$lib/shadcnui/components/ui/sidebar/index.js";
 
 let {
     sidebar,

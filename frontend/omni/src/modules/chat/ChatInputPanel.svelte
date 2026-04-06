@@ -1,8 +1,8 @@
 <script lang="ts">
 import { LoaderCircle, SendIcon } from "lucide-svelte";
 import type { Snippet } from "svelte";
-import { Button } from "$lib/components/ui/button/index.js";
-import { Textarea } from "$lib/components/ui/textarea/index.js";
+import { Button } from "$lib/shadcnui/components/ui/button/index.js";
+import { Textarea } from "$lib/shadcnui/components/ui/textarea/index.js";
 
 let {
     canChat,

@@ -1,9 +1,9 @@
 <script lang="ts">
 import { Check, ChevronDown } from "lucide-svelte";
 import type { ProviderModel } from "@/modules/llm-provider-service/index.svelte.js";
-import { Button } from "$lib/components/ui/button/index.js";
-import * as Command from "$lib/components/ui/command/index.js";
-import * as Popover from "$lib/components/ui/popover/index.js";
+import { Button } from "$lib/shadcnui/components/ui/button/index.js";
+import * as Command from "$lib/shadcnui/components/ui/command/index.js";
+import * as Popover from "$lib/shadcnui/components/ui/popover/index.js";
 import { modelSelectId } from "./utils.js";
 
 let {
