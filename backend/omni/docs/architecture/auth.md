@@ -204,7 +204,35 @@ async def validate_permission(self, user_id: str, resource: str, action: str) ->
 - Session Module (for validating requests to permission endpoints)
 
 
-### 4.4 User Store Module
+### 4.4 Dev Mock Session Module (`DevMockSessionModule`)
+**Purpose**: Development-only session module that bypasses all authentication. Every request is treated as authenticated with a statically configured user identity. Allows running the application without an identity provider during local development.
+
+**Module Type**: Web Module + Session Module
+
+**⚠️ WARNING**: This module must **never** be used in production. It grants every caller the configured identity with no verification whatsoever.
+
+**Key Responsibilities**:
+- Return a fixed `Session` object for every incoming request
+- Emit a startup warning that authentication is disabled
+
+**API Endpoints**:
+- `GET /api/auth/session` - Always returns 200 OK with the configured mock user
+
+**Configuration**:
+```yaml
+session:
+  class: modai.modules.session.dev_mock_session.DevMockSessionModule
+  config:
+    user_id: "dev-user"        # required — returned as session.user_id
+    email: "dev@example.com"   # optional
+    name: "Dev User"           # optional
+```
+
+**Dependencies**: None
+
+---
+
+### 4.5 User Store Module
 **Purpose**: Manages user and group data. Supports JIT provisioning from OIDC claims.
 
 **Module Type**: Plain, (Persistence)*
@@ -286,7 +314,21 @@ sequenceDiagram
 
 ## 7. Development Setup
 
-### 7.1 NanoIDP (Identity Provider for development)
+### 7.1 Authentication-free local development (DevMockSessionModule)
+For quick local development that does not require any identity provider, replace the `session` module in `config.yaml` with `DevMockSessionModule` and remove `auth_oidc`:
+
+```yaml
+session:
+  class: modai.modules.session.dev_mock_session.DevMockSessionModule
+  config:
+    user_id: "dev-user"
+    email: "dev@example.com"
+    name: "Dev User"
+```
+
+⚠️ **Never use this in production.** The module is automatically removed from the Docker image at build time.
+
+### 7.2 NanoIDP (Identity Provider for development)
 [NanoIDP](https://github.com/cdelmonte-zg/nanoidp) is a lightweight OIDC identity provider used for local development and e2e tests. It runs as a Docker container with no external dependencies.
 
 ```bash
