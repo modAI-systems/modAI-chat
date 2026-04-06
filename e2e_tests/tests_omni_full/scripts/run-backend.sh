@@ -16,7 +16,6 @@ rm -f *.db
 export CONFIG_PATH="$SCRIPT_DIR/../backend-config-e2e.yaml"
 export OIDC_ISSUER="http://localhost:9000"
 export OIDC_CLIENT_ID="test-client"
-export OIDC_CLIENT_SECRET="test-secret"
 export OIDC_REDIRECT_URI="http://localhost:8000/api/auth/callback"
 export OIDC_POST_LOGIN_URI="http://localhost:4173/"
 export OIDC_POST_LOGOUT_URI="http://localhost:4173/"
