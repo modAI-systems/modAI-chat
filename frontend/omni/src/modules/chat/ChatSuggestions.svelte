@@ -15,12 +15,20 @@ const defaultSuggestions = [
     "Explain cloud computing basics",
 ];
 
-const suggestions = $derived(
-    t("suggestions", {
+const suggestions = $derived.by(() => {
+    const translatedSuggestions = t("suggestions", {
         returnObjects: true,
         defaultValue: defaultSuggestions,
-    }) as string[],
-);
+    });
+
+    return Array.isArray(translatedSuggestions) &&
+        translatedSuggestions.every(
+            (suggestion): suggestion is string =>
+                typeof suggestion === "string",
+        )
+        ? translatedSuggestions
+        : defaultSuggestions;
+});
 
 let {
     onselect,
