@@ -12,28 +12,28 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.48",
-    "@ai-sdk/svelte": "^4.0.141",
-    "ai": "^6.0.141",
+    "@ai-sdk/openai": "^3.0.50",
+    "@ai-sdk/svelte": "^4.0.146",
+    "ai": "^6.0.146",
     "clsx": "^2.1.1",
     "lucide-svelte": "^1.0.1",
-    "marked": "^17.0.5",
+    "marked": "^17.0.6",
     "sv-router": "^0.15.0",
     "svelte": "^5.55.1",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.9",
+    "@biomejs/biome": "^2.4.10",
     "@internationalized/date": "^3.12.0",
     "@lucide/svelte": "^1.7.0",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@tailwindcss/vite": "^4.2.2",
-    "bits-ui": "^2.16.4",
+    "bits-ui": "^2.17.2",
     "happy-dom": "^20.8.9",
     "tailwind-variants": "^3.2.2",
     "typescript": "^6.0.2",
-    "vite": "^8.0.3",
+    "vite": "^8.0.5",
     "vitest": "^4.1.2"
   }
 }
