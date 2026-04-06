@@ -5,19 +5,19 @@ import { Button } from "$lib/components/ui/button/index.js";
 import * as Popover from "$lib/components/ui/popover/index.js";
 
 let {
-  availableTools,
-  selectedToolNames,
-  ontoggle,
+    availableTools,
+    selectedToolNames,
+    ontoggle,
 }: {
-  availableTools: OpenAIFunctionTool[];
-  selectedToolNames: string[];
-  ontoggle: (toolName: string) => void;
+    availableTools: OpenAIFunctionTool[];
+    selectedToolNames: string[];
+    ontoggle: (toolName: string) => void;
 } = $props();
 
 let open = $state(false);
 
 function isSelected(name: string): boolean {
-  return selectedToolNames.includes(name);
+    return selectedToolNames.includes(name);
 }
 </script>
 

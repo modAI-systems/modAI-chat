@@ -2,20 +2,20 @@
 import { Button } from "$lib/components/ui/button/index.js";
 
 const suggestions = [
-  "What are the latest trends in AI?",
-  "How does machine learning work?",
-  "Explain quantum computing",
-  "Best practices for Svelte development",
-  "Tell me about TypeScript benefits",
-  "How to optimize database queries?",
-  "What is the difference between SQL and NoSQL?",
-  "Explain cloud computing basics",
+    "What are the latest trends in AI?",
+    "How does machine learning work?",
+    "Explain quantum computing",
+    "Best practices for Svelte development",
+    "Tell me about TypeScript benefits",
+    "How to optimize database queries?",
+    "What is the difference between SQL and NoSQL?",
+    "Explain cloud computing basics",
 ];
 
 let {
-  onselect,
+    onselect,
 }: {
-  onselect: (text: string) => void;
+    onselect: (text: string) => void;
 } = $props();
 </script>
 

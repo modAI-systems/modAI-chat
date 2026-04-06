@@ -12,11 +12,11 @@ const { children } = $props();
 let ready = $state(false);
 
 sessionService.refresh().then(() => {
-  if (!sessionService.isSessionActive()) {
-    noSessionAction.execute();
-  } else {
-    ready = true;
-  }
+    if (!sessionService.isSessionActive()) {
+        noSessionAction.execute();
+    } else {
+        ready = true;
+    }
 });
 </script>
 

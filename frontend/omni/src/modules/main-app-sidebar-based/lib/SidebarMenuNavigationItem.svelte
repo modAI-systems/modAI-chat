@@ -6,13 +6,13 @@ import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 const router = getRouterApi();
 
 let {
-  label,
-  path,
-  icon,
+    label,
+    path,
+    icon,
 }: {
-  label: string;
-  path: `/${string}`;
-  icon: Snippet;
+    label: string;
+    path: `/${string}`;
+    icon: Snippet;
 } = $props();
 </script>
 

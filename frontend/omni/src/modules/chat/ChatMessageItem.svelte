@@ -8,15 +8,15 @@ import { Button } from "$lib/components/ui/button/index.js";
 import * as Collapsible from "$lib/components/ui/collapsible/index.js";
 
 let {
-  message,
-  selectedModelName,
+    message,
+    selectedModelName,
 }: {
-  message: UIMessage;
-  selectedModelName: string | undefined;
+    message: UIMessage;
+    selectedModelName: string | undefined;
 } = $props();
 
 function renderMarkdown(text: string): string {
-  return marked.parse(text, { async: false }) as string;
+    return marked.parse(text, { async: false }) as string;
 }
 </script>
 

@@ -7,20 +7,20 @@ import * as Popover from "$lib/components/ui/popover/index.js";
 import { modelSelectId } from "./utils.js";
 
 let {
-  providerGroups,
-  selectedModel = $bindable(),
-  selectedModelData,
+    providerGroups,
+    selectedModel = $bindable(),
+    selectedModelData,
 }: {
-  providerGroups: { name: string; models: ProviderModel[] }[];
-  selectedModel: string;
-  selectedModelData: ProviderModel | undefined;
+    providerGroups: { name: string; models: ProviderModel[] }[];
+    selectedModel: string;
+    selectedModelData: ProviderModel | undefined;
 } = $props();
 
 let open = $state(false);
 
 function handleSelect(selectId: string) {
-  selectedModel = selectId;
-  open = false;
+    selectedModel = selectId;
+    open = false;
 }
 </script>
 

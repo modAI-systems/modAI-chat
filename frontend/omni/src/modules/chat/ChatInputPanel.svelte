@@ -5,35 +5,35 @@ import { Button } from "$lib/components/ui/button/index.js";
 import { Textarea } from "$lib/components/ui/textarea/index.js";
 
 let {
-  canChat,
-  isIdle,
-  children,
-  onsend,
+    canChat,
+    isIdle,
+    children,
+    onsend,
 }: {
-  canChat: boolean;
-  isIdle: boolean;
-  children?: Snippet;
-  onsend: (text: string) => void;
+    canChat: boolean;
+    isIdle: boolean;
+    children?: Snippet;
+    onsend: (text: string) => void;
 } = $props();
 
 let input = $state("");
 
 function handleSubmit(event: SubmitEvent) {
-  event.preventDefault();
-  sendMessage();
+    event.preventDefault();
+    sendMessage();
 }
 
 function handleKeydown(event: KeyboardEvent) {
-  if (event.key === "Enter" && !event.shiftKey) {
-    event.preventDefault();
-    sendMessage();
-  }
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    }
 }
 
 function sendMessage() {
-  if (!input.trim()) return;
-  onsend(input);
-  input = "";
+    if (!input.trim()) return;
+    onsend(input);
+    input = "";
 }
 </script>
 
