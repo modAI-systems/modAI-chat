@@ -66,37 +66,6 @@ async function handleCheckProviderHealth(provider: Provider): Promise<boolean> {
 			Manage your OpenAI-compatible LLM providers.
 		</p>
 	</div>
-
-	<Collapsible.Root>
-		<Card.Root class="border-amber-300/60 bg-amber-50 text-amber-950">
-			<Card.Header class="pb-2">
-				<div class="flex items-center justify-between gap-2">
-					<Card.Title class="flex items-center gap-2 text-sm">
-						<AlertTriangle class="size-4" />
-						Browser-direct mode requires CORS on your provider
-					</Card.Title>
-					<Collapsible.Trigger asChild>
-						{#snippet child({ props })}
-							<Button variant="outline" size="sm" class="gap-1.5" {...props}>
-								Show setup
-								<ChevronDown class="size-3.5" />
-							</Button>
-						{/snippet}
-					</Collapsible.Trigger>
-				</div>
-			</Card.Header>
-			<Collapsible.Content>
-				<Card.Content class="space-y-2 pt-0 text-sm">
-					<p>
-						This light frontend calls providers directly from the browser. If your provider does not allow your frontend origin, model loading, health checks, and chat will fail.
-					</p>
-					<p class="font-medium">llmock example:</p>
-					<pre class="overflow-x-auto rounded bg-amber-100/80 px-2 py-1 text-xs">docker run --rm -p 3001:8000 -e LLMOCK_CORS_ALLOW_ORIGINS='["http://localhost:5173"]' ghcr.io/modai-systems/llmock:latest</pre>
-				</Card.Content>
-			</Collapsible.Content>
-		</Card.Root>
-	</Collapsible.Root>
-
 	<ProviderList
 		{providers}
 		onUpdateProvider={handleUpdateProvider}
