@@ -2,6 +2,8 @@ includes:
   - path: ./src/modai/default_config.yaml
 
 modules:
+  auth_oidc:
+    collision_strategy: drop
   session:
     class: modai.modules.session.dev_mock_session.DevMockSessionModule
     collision_strategy: replace

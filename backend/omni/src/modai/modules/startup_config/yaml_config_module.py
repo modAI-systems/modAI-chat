@@ -107,6 +107,9 @@ class YamlConfigModule(StartupConfig):
         * On a name collision the ``collision_strategy`` field on the **incoming**
           (*config_modules*) entry decides:
 
+          - ``drop`` – the incoming entry is not added, and any existing entry
+            with the same name in *base_modules* is also removed.  Modules with
+            different names are not affected.
           - ``replace`` – the incoming entry completely replaces the existing one.
           - ``merge`` *(default)* – deep-merged; base-only keys are preserved,
             shared keys are overwritten by the incoming value, nested dicts
@@ -119,14 +122,16 @@ class YamlConfigModule(StartupConfig):
 
         for name, cfg in new_modules.items():
             cfg = cfg or {}
+            strategy = cfg.get("collision_strategy", "merge")
+            if strategy == "drop":
+                result.pop(name, None)
+                continue
             if name not in result:
                 result[name] = cfg
+            elif strategy == "replace":
+                result[name] = cfg
             else:
-                strategy = cfg.get("collision_strategy", "merge")
-                if strategy == "replace":
-                    result[name] = cfg
-                else:
-                    result[name] = _deep_merge(result[name] or {}, cfg)
+                result[name] = _deep_merge(result[name] or {}, cfg)
 
         # Strip the parsing-only key from every module in the result.
         for cfg in result.values():

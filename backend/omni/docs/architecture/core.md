@@ -101,6 +101,7 @@ already loaded from an include.
 |---|---|
 | `merge` *(default)* | Deep-merges the incoming module into the existing one. Keys present only in the base (earlier-loaded) module are preserved. When the same key exists in both, the **incoming value wins**. Nested dicts are merged recursively with the same rule. |
 | `replace` | The incoming module definition **completely replaces** the existing one. |
+| `drop` | The incoming module is **not added**, and any existing module with the same name is **removed**. Modules with different names are unaffected. |
 
 
 
