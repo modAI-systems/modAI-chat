@@ -1,11 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { TEST_USER_PASSWORD, TEST_USERNAME } from "./fixtures";
-import {
-    ChatPage,
-    LLMProvidersPage,
-    NanoIdpLoginPage,
-    ToolsManagementPage,
-} from "./pages";
+import { ChatPage, LLMProvidersPage, NanoIdpLoginPage } from "./pages";
 
 const BACKEND_URL = "http://localhost:8000";
 const LLMOCK_URL = "http://localhost:3001";
@@ -57,14 +52,10 @@ test.describe("Chat", () => {
     });
 
     test("should call dice-roller tool and return result", async ({ page }) => {
-        // Enable the dice-roller tool via the Tools management page
-        const toolsPage = new ToolsManagementPage(page);
-        await toolsPage.navigateTo();
-        await toolsPage.enableTool("roll_dice");
-
         const chatPage = new ChatPage(page);
         await chatPage.navigateTo();
         await chatPage.selectFirstModel();
+        await chatPage.enableTool("roll_dice");
 
         // llmock trigger: "call tool '<name>' with '<json>'" causes it to return
         // a tool_call response. The backend Strands agent then calls the

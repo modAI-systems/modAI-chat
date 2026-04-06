@@ -12,6 +12,9 @@ import type {
 } from "@/modules/tools-service/index.svelte.js";
 import ChatConversationArea from "./ChatConversationArea.svelte";
 import ChatInputPanel from "./ChatInputPanel.svelte";
+import ChatModelSelector from "./ChatModelSelector.svelte";
+import ChatSuggestions from "./ChatSuggestions.svelte";
+import ChatToolsSelector from "./ChatToolsSelector.svelte";
 import { modelSelectId } from "./utils.js";
 
 const deps = getModuleDeps("@/modules/chat/ChatComponent");
@@ -57,15 +60,13 @@ $effect(() => {
 });
 
 async function loadTools() {
-  const [tools, selectedNames] = await Promise.all([
-    toolsService.fetchAvailableTools(),
-    toolsService.fetchSelectedToolNames(),
-  ]);
+  availableTools = await toolsService.fetchAvailableTools();
+}
 
-  availableTools = tools;
-  selectedToolNames = selectedNames.filter((name) =>
-    tools.some((tool) => tool.function.name === name),
-  );
+function handleToolToggle(toolName: string) {
+  selectedToolNames = selectedToolNames.includes(toolName)
+    ? selectedToolNames.filter((n) => n !== toolName)
+    : [...selectedToolNames, toolName];
 }
 
 const selectedModelData = $derived(
@@ -164,14 +165,26 @@ function makeMessageId(): string {
 		hasModels={availableModels.length > 0}
 		selectedModelName={selectedModelData?.modelName}
 	/>
+	{#if messages.length === 0 && availableModels.length > 0}
+		<ChatSuggestions onselect={handleSend} />
+	{/if}
 	<ChatInputPanel
-		messageCount={messages.length}
-		hasModels={availableModels.length > 0}
 		{canChat}
 		{isIdle}
-		{providerGroups}
-		bind:selectedModel
-		{selectedModelData}
 		onsend={handleSend}
-	/>
+	>
+		{#if availableTools.length > 0}
+			<ChatToolsSelector
+				{availableTools}
+				{selectedToolNames}
+				ontoggle={handleToolToggle}
+			/>
+		{/if}
+
+		<ChatModelSelector
+			{providerGroups}
+			bind:selectedModel
+			{selectedModelData}
+		/>
+	</ChatInputPanel>
 </div>
