@@ -31,15 +31,10 @@ def test_config_loader_invalid_yaml(tmp_path: Path):
         loader.get_config()
 
 
-def test_config_loader_fallback_to_default():
-    """Test that config loader falls back to default config when no path is provided."""
-    loader = YamlConfigModule(ModuleDependencies(), {})
-    config = loader.get_config()
-
-    # Should load the default configuration
-    assert config is not None
-    assert "modules" in config
-    assert "health" in config["modules"]
+def test_config_loader_no_path_raises():
+    """Test that config loader raises FileNotFoundError when no config_path is provided."""
+    with pytest.raises(FileNotFoundError):
+        YamlConfigModule(ModuleDependencies(), {})
 
 
 def test_config_loader_env_var(tmp_path: Path, monkeypatch):

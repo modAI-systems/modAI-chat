@@ -40,6 +40,12 @@ flowchart TD
 
 The config file is a YAML file with a `modules` key and an optional `includes` key.
 
+By default the server uses the built-in `default_config.yaml`. To point to a custom file, set the `CONFIG_PATH` environment variable:
+
+```bash
+CONFIG_PATH=/path/to/my-config.yaml uv run uvicorn modai.main:app
+```
+
 ```yaml
 includes:
   - path: ./extra-modules.yaml   # relative to this config file
@@ -277,3 +283,20 @@ The names ("health", "session", "user") have no deeper meaning within the applic
 - **Decision 1**: Dependent modules are passed to the module instead of modules accessing the module loader directly.
    - **Trade-offs**: More isolated development of modules possible. Testing is easier.
    - **Risks and Mitigation**: If dependent modules are replaced or shutdown at runtime, modules they depend on it must also be updated.
+
+## 9. Development Modules (`dev-` prefix)
+
+Module implementation files whose name starts with the prefix `dev_` are **development-only modules**. They are available during local development to simplify the setup (e.g., skipping an external identity provider), but are intentionally stripped from production Docker images at build time.
+
+### Rules
+- Any module implementation file named `dev_<something>.py` is a development module.
+- Development modules **must never** be used in production; they typically bypass security controls.
+- The Docker build process removes all `dev_*.py` files and `__tests__` directories from the final image (see `Dockerfile`).
+- When adding a new `dev_*` module, add a prominent `WARNING` comment in the class docstring stating that it must not be used in production.
+
+### Available Development Modules
+
+| Module file | Config class | Purpose |
+|---|---|---|
+| `modai/modules/session/dev_mock_session.py` | `DevMockSessionModule` | Bypasses authentication — every request is treated as the configured user |
+

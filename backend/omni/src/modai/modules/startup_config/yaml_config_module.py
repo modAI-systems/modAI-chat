@@ -24,12 +24,9 @@ class YamlConfigModule(StartupConfig):
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
         super().__init__(dependencies, config)
 
-        if "config_path" not in config:
-            # Fallback to default_config.yaml relative to the modai package
-            modai_package_dir = Path(__file__).parent.parent.parent
-            self.config["config_path"] = modai_package_dir / "default_config.yaml"
-
-        if not os.path.exists(self.config.get("config_path")):
+        if not self.config.get("config_path") or not os.path.exists(
+            self.config.get("config_path", "")
+        ):
             raise FileNotFoundError(
                 f"Config file not found at {self.config.get('config_path')}"
             )
