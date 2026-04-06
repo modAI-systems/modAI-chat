@@ -51,7 +51,6 @@ modules:
     config:
       issuer: ${OIDC_ISSUER}
       client_id: ${OIDC_CLIENT_ID}
-      client_secret: ${OIDC_CLIENT_SECRET}
       redirect_uri: ${OIDC_REDIRECT_URI}
       post_login_uri: ${OIDC_POST_LOGIN_URI}
       post_logout_uri: ${OIDC_POST_LOGOUT_URI}

@@ -99,7 +99,6 @@ auth_oidc:
   config:
     issuer: ${OIDC_ISSUER}              # e.g., http://localhost:9000
     client_id: ${OIDC_CLIENT_ID}        # OIDC client ID
-    client_secret: ${OIDC_CLIENT_SECRET} # OIDC client secret (optional, for IDPs that don't support PKCE)
     redirect_uri: ${OIDC_REDIRECT_URI}  # e.g., http://localhost:8000/api/auth/callback
     post_login_uri: ${OIDC_POST_LOGIN_URI}   # e.g., http://localhost:5173/
     post_logout_uri: ${OIDC_POST_LOGOUT_URI} # e.g., http://localhost:5173/
@@ -346,7 +345,6 @@ Backend (`backend/omni/.env` or exported in shell):
 ```
 OIDC_ISSUER=http://localhost:9000
 OIDC_CLIENT_ID=test-client
-OIDC_CLIENT_SECRET=test-secret
 OIDC_REDIRECT_URI=http://localhost:8000/api/auth/callback
 OIDC_POST_LOGIN_URI=http://localhost:4173/
 OIDC_POST_LOGOUT_URI=http://localhost:4173/
