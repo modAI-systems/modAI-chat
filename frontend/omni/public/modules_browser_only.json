@@ -102,7 +102,7 @@
     {
       "id": "tools-service",
       "type": "ToolsService",
-      "path": "@/modules/tools-service/emptyToolsService/create",
+      "path": "@/modules/tools-service/noOpToolsService/create",
       "dependencies": {}
     },
     {
