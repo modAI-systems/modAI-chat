@@ -13,9 +13,9 @@ export default defineConfig({
     ],
     use: {
         baseURL: "http://localhost:4173",
-        trace: 'retain-on-failure',
-		screenshot: 'only-on-failure',
-		video: 'off',
+        trace: "retain-on-failure",
+        screenshot: "only-on-failure",
+        video: "off",
     },
     projects: [
         {
@@ -63,7 +63,8 @@ export default defineConfig({
         },
         {
             name: "LLMock",
-            command: "docker container run --rm -p 3001:8000 -e LLMOCK_DEBUG=true ghcr.io/modai-systems/llmock:latest",
+            command:
+                "docker container run --rm -p 3001:8000 -e LLMOCK_DEBUG=true ghcr.io/modai-systems/llmock:latest",
             url: "http://localhost:3001/health",
             reuseExistingServer: !process.env.CI,
             gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },
