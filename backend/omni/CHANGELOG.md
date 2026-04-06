@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Config can include other config files
 
+### Chnaged
+
+- Config to be used can be defined via CONFIG_PATH environment variable
 
 ## [0.0.1] - 2026-02-12
 

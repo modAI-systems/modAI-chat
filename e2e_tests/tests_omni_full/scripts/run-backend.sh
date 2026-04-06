@@ -13,6 +13,7 @@ BACKEND_DIR="$ROOT_DIR/backend/omni"
 cd "$BACKEND_DIR"
 rm -f *.db
 
+export CONFIG_PATH="$SCRIPT_DIR/../backend-config-e2e.yaml"
 export OIDC_ISSUER="http://localhost:9000"
 export OIDC_CLIENT_ID="test-client"
 export OIDC_CLIENT_SECRET="test-secret"

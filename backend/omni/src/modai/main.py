@@ -30,8 +30,12 @@ def load_startup_config() -> dict[str, Any]:
     working_dir = Path.cwd()
     load_dotenv(find_dotenv(str(working_dir / ".env")))
 
-    config_path = Path("config.yaml")
-    config = {"config_path": str(config_path)} if config_path.exists() else {}
+    env_config_path = os.getenv("CONFIG_PATH")
+    if not env_config_path:
+        modai_package_dir = Path(__file__).parent
+        env_config_path = str(modai_package_dir / "default_config.yaml")
+    config = {"config_path": env_config_path}
+    logger.info(f"Loading configuration '{env_config_path}'...")
     return YamlConfigModule(ModuleDependencies(), config).get_config()
 
 
@@ -63,7 +67,6 @@ def create_app() -> FastAPI:
 
     """Create and configure the FastAPI application."""
     # 1. Config Loading
-    logger.info("Loading configuration...")
     startup_config = load_startup_config()
 
     # Initialize the core system following the startup flow

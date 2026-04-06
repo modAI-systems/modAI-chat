@@ -1,0 +1,16 @@
+includes:
+  - path: ./src/modai/default_config.yaml
+
+modules:
+  session:
+    class: modai.modules.session.dev_mock_session.DevMockSessionModule
+    collision_strategy: replace
+    config:
+      user_id: "dev-user"
+      email: "dev@example.com"
+      name: "Dev User"
+  openapi_tool_registry:
+    config:
+      tools:
+        - url: http://localhost:8001/roll
+          method: POST

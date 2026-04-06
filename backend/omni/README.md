@@ -23,6 +23,13 @@ To run the application:
 uv run uvicorn modai.main:app --reload
 ```
 
+By default the server uses the built-in `default_config.yaml`.
+To use a custom config file, set the `CONFIG_PATH` environment variable:
+
+```bash
+CONFIG_PATH=/path/to/my-config.yaml uv run uvicorn modai.main:app --reload
+```
+
 ## Tests
 
 To execute all tests, keys to the following external systems are needed:

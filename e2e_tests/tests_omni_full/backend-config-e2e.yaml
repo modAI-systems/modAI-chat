@@ -1,5 +1,5 @@
 includes:
-  - path: ./src/modai/default_config.yaml
+  - path: ../../backend/omni/src/modai/default_config.yaml
 
 modules:
   openapi_tool_registry:
