@@ -24,7 +24,12 @@
       "type": "MainApp",
       "path": "@/modules/router/AppRouter",
       "dependencies": {
-        "module:routes": ["chat-route", "providers-route", "chat-fallback-route", "sidebar-layout-route"]
+        "module:routes": [
+          "chat-route",
+          "providers-route",
+          "chat-fallback-route",
+          "sidebar-layout-route"
+        ]
       }
     },
     {
@@ -32,7 +37,10 @@
       "type": "MainApp",
       "path": "@/modules/main-app-sidebar-based/MainApp",
       "dependencies": {
-        "module:sidebarTopItems": ["chat-navigation-item", "providers-navigation-item"]
+        "module:sidebarTopItems": [
+          "chat-navigation-item",
+          "providers-navigation-item"
+        ]
       }
     },
     {

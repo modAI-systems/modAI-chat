@@ -13,9 +13,9 @@ export default defineConfig({
     ],
     use: {
         baseURL: "http://localhost:4173",
-        trace: 'retain-on-failure',
-		screenshot: 'only-on-failure',
-		video: 'off',
+        trace: "retain-on-failure",
+        screenshot: "only-on-failure",
+        video: "off",
     },
     projects: [
         {
@@ -42,7 +42,8 @@ export default defineConfig({
     webServer: [
         {
             name: "Frontend",
-            command: "cd ../../frontend/omni && ln -sf modules_browser_only.json public/modules.json && pnpm build && pnpm preview",
+            command:
+                "cd ../../frontend/omni && ln -sf modules_browser_only.json public/modules.json && pnpm build && pnpm preview",
             url: "http://localhost:4173",
             reuseExistingServer: !process.env.CI,
         },
