@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switch frontend to Svelte
 - ChatInputPanel redesigned: textarea, model selector, tools selector, and send button are now visually inside a single input box (ai-sdk.dev/examples/chatbot style).
 - Removed the Tools sidebar navigation item and `/tools` route from all module configurations.
+- Made the chat tools selector popover scrollable with a viewport-constrained height so long tool lists remain fully accessible.
+- Simplified the chat tools selector list to show only tool names; tool descriptions are now shown as tooltips on hover/focus.
+- Tool identifiers are now displayed as human-readable names in the chat tools selector (for example, `some_tool` -> `Some Tool`).
 
 
 ## [0.0.1] - 2026-02-12
