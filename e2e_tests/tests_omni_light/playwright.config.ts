@@ -42,8 +42,7 @@ export default defineConfig({
     webServer: [
         {
             name: "Frontend",
-            command:
-                "cd ../../frontend/omni && ln -sf modules_browser_only.json public/modules.json && pnpm build && pnpm preview",
+            command: "./scripts/run-frontend.sh",
             url: "http://localhost:4173",
             reuseExistingServer: !process.env.CI,
             timeout: 120_000,
