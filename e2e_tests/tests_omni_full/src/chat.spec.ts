@@ -55,7 +55,7 @@ test.describe("Chat", () => {
         const chatPage = new ChatPage(page);
         await chatPage.navigateTo();
         await chatPage.selectFirstModel();
-        await chatPage.enableTool("roll_dice");
+        await chatPage.enableTool("Roll Dice");
 
         // llmock trigger: "call tool '<name>' with '<json>'" causes it to return
         // a tool_call response. The backend Strands agent then calls the

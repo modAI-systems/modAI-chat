@@ -4,6 +4,7 @@ import { getT } from "@/modules/i18n/index.svelte.js";
 import type { OpenAIFunctionTool } from "@/modules/tools-service/index.svelte.js";
 import { Button } from "$lib/shadcnui/components/ui/button/index.js";
 import * as Popover from "$lib/shadcnui/components/ui/popover/index.js";
+import * as Tooltip from "$lib/shadcnui/components/ui/tooltip/index.js";
 
 const t = getT("chat");
 
@@ -22,6 +23,14 @@ let open = $state(false);
 function isSelected(name: string): boolean {
     return selectedToolNames.includes(name);
 }
+
+function formatToolName(name: string): string {
+    return name
+        .replace(/[_-]+/g, " ")
+        .trim()
+        .replace(/\s+/g, " ")
+        .replace(/\b\w/g, (match) => match.toUpperCase());
+}
 </script>
 
 <Popover.Root bind:open>
@@ -31,7 +40,7 @@ function isSelected(name: string): boolean {
 				variant="ghost"
 				size="sm"
 				class="text-muted-foreground h-auto gap-1.5 px-2 py-1 text-xs"
-				aria-label={t("selectTools", { defaultValue: "Select tools" })}
+				aria-label={t("selectTools", { defaultValue: "Select tools" }) as string}
 				{...props}
 			>
 				<Wrench class="size-3.5" />
@@ -41,28 +50,43 @@ function isSelected(name: string): boolean {
 			</Button>
 		{/snippet}
 	</Popover.Trigger>
-	<Popover.Content class="w-[280px] p-1" align="start" side="top">
+	<Popover.Content class="max-h-[70vh] w-[280px] overflow-y-auto p-1" align="start" side="top">
 		<div class="px-2 py-1.5 text-xs font-medium text-muted-foreground">{t("tools", { defaultValue: "Tools" })}</div>
 		{#each availableTools as tool}
-			<button
-				type="button"
-				class="flex w-full cursor-pointer items-start gap-2 rounded px-2 py-1.5 text-left hover:bg-accent"
-				aria-label={t("toggleTool", { defaultValue: "Toggle tool {{name}}", name: tool.function.name })}
-				aria-pressed={isSelected(tool.function.name)}
-				onclick={() => ontoggle(tool.function.name)}
-			>
-				<Check
-					class="mt-0.5 size-4 shrink-0 {isSelected(tool.function.name)
-						? 'opacity-100'
-						: 'opacity-0'}"
-				/>
-				<div>
-					<div class="text-sm font-medium">{tool.function.name}</div>
-					{#if tool.function.description}
-						<div class="text-muted-foreground text-xs">{tool.function.description}</div>
-					{/if}
-				</div>
-			</button>
+			{@const displayName = formatToolName(tool.function.name)}
+			{#if tool.function.description}
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}
+							<button
+								type="button"
+								class="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-left hover:bg-accent"
+								aria-label={t("toggleTool", { defaultValue: "Toggle tool {{name}}", name: displayName }) as string}
+								aria-pressed={isSelected(tool.function.name)}
+								{...props}
+								onclick={() => ontoggle(tool.function.name)}
+							>
+								<Check class="size-4 shrink-0 {isSelected(tool.function.name) ? 'opacity-100' : 'opacity-0'}" />
+								<div class="text-sm font-medium">{displayName}</div>
+							</button>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content side="right" align="start">
+						{tool.function.description}
+					</Tooltip.Content>
+				</Tooltip.Root>
+			{:else}
+				<button
+					type="button"
+					class="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-left hover:bg-accent"
+					aria-label={t("toggleTool", { defaultValue: "Toggle tool {{name}}", name: displayName }) as string}
+					aria-pressed={isSelected(tool.function.name)}
+					onclick={() => ontoggle(tool.function.name)}
+				>
+					<Check class="size-4 shrink-0 {isSelected(tool.function.name) ? 'opacity-100' : 'opacity-0'}" />
+					<div class="text-sm font-medium">{displayName}</div>
+				</button>
+			{/if}
 		{/each}
 	</Popover.Content>
 </Popover.Root>
