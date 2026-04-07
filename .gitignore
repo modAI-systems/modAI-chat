@@ -24,9 +24,6 @@ lerna-debug.log*
 test-results/
 playwright-report/
 
-# Frontend generated
-frontend/omni/public/modules.json
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
