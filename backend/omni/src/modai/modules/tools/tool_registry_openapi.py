@@ -1,5 +1,6 @@
 import logging
 import re
+from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlparse
 
@@ -92,27 +93,26 @@ class OpenAPIToolRegistryModule(ToolRegistryModule):
     the service's OpenAPI spec.  The run method makes an HTTP request to the
     configured trigger endpoint.
 
-    Configuration:
-        tools: list of dicts, each with:
-          - "url": the full trigger endpoint URL of the tool microservice
-          - "method": the HTTP method to invoke the tool (e.g. PUT, POST, GET)
-        The registry derives the base URL from "url" and appends
-        "/openapi.json" to fetch the spec.
+        Configuration:
+                tool_servers: list of dicts, each with:
+                    - "url": the OpenAPI specification URL of a tool server
+                        (e.g. ``http://tool-service:8000/openapi.json``)
+
+                The registry discovers all operations with ``operationId`` from each
+                OpenAPI spec and creates one Tool per operation.
 
     Module Dependencies:
         http_client: an HttpClientModule used for all outbound HTTP requests.
 
-    Example config:
-        tools:
-          - url: http://calculator-service:8000/calculate
-            method: POST
-          - url: http://web-search-service:8000/search
-            method: PUT
+        Example config:
+                tool_servers:
+                    - url: http://calculator-service:8000/openapi.json
+                    - url: http://web-search-service:8000/openapi.json
     """
 
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
         super().__init__(dependencies, config)
-        self.tool_services: list[dict[str, str]] = config.get("tools", [])
+        self.tool_servers: list[dict[str, str]] = config.get("tool_servers", [])
         self._http_client: HttpClientModule = dependencies.get_module("http_client")  # type: ignore[assignment]
 
     async def get_tools(
@@ -122,29 +122,32 @@ class OpenAPIToolRegistryModule(ToolRegistryModule):
         tools: list[Tool] = []
 
         async with self._http_client.new(timeout=HTTP_TIMEOUT_SECONDS) as client:
-            for service in self.tool_services:
-                url = service["url"]
-                method = service["method"]
-                base_url = _derive_base_url(url)
-                spec = await _fetch_openapi_spec(client, base_url)
+            for server in self.tool_servers:
+                openapi_url = server["url"]
+                spec = await _fetch_openapi_spec(client, openapi_url)
                 if spec is None:
                     continue
-                definition, header_param_names = _build_tool_definition(spec)
-                if definition is None:
+                service_base_url = _derive_base_url(openapi_url)
+                operation_specs = _build_operation_specs(spec)
+                if not operation_specs:
                     logger.warning(
                         "No valid operation with operationId found in spec from %s, skipping",
-                        base_url,
+                        openapi_url,
                     )
                     continue
-                tools.append(
-                    _OpenAPITool(
-                        url=url,
-                        method=method,
-                        definition=definition,
-                        http_client_factory=self._http_client,
-                        header_param_names=header_param_names,
+                for operation_spec in operation_specs:
+                    tool_url = _build_operation_url(
+                        service_base_url, operation_spec.path
                     )
-                )
+                    tools.append(
+                        _OpenAPITool(
+                            url=tool_url,
+                            method=operation_spec.method,
+                            definition=operation_spec.definition,
+                            http_client_factory=self._http_client,
+                            header_param_names=operation_spec.header_param_names,
+                        )
+                    )
 
         return tools
 
@@ -160,33 +163,61 @@ class OpenAPIToolRegistryModule(ToolRegistryModule):
         return None
 
 
-def _build_tool_definition(
-    spec: dict[str, Any],
-) -> tuple[ToolDefinition, frozenset[str]] | tuple[None, frozenset[str]]:
-    """Build a ToolDefinition from an OpenAPI spec.
+@dataclass(frozen=True)
+class _OperationSpec:
+    """Resolved operation information needed to build a Tool instance."""
+
+    path: str
+    method: str
+    definition: ToolDefinition
+    header_param_names: frozenset[str]
+
+
+def _build_operation_specs(spec: dict[str, Any]) -> list[_OperationSpec]:
+    """Build all Tool definitions from an OpenAPI spec.
 
     Extracts name (operationId), description (summary/description), and
     parameters (request body schema with $ref fully resolved, path params and
     header params merged in).
 
-    Returns a ``(ToolDefinition, header_param_names)`` tuple so callers know
-    which parameter names map to HTTP headers at invocation time.  Returns
-    ``(None, frozenset())`` if no operation with an operationId is found.
+    Returns one entry per operation that has an ``operationId``.
     """
     paths = spec.get("paths", {})
-    for _path, methods in paths.items():
-        for _method, operation in methods.items():
+    operation_specs: list[_OperationSpec] = []
+    for path, methods in paths.items():
+        if not isinstance(methods, dict):
+            continue
+
+        shared_parameters = methods.get("parameters", [])
+        for method, operation in methods.items():
+            if method == "parameters":
+                continue
             if not isinstance(operation, dict) or "operationId" not in operation:
                 continue
+            merged_operation = {
+                **operation,
+                "parameters": [*shared_parameters, *operation.get("parameters", [])],
+            }
+
             name = operation["operationId"]
             description = operation.get("summary") or operation.get("description", "")
-            parameters = _extract_parameters(operation, spec)
-            header_params = _extract_header_parameters(operation, spec)
+            parameters = _extract_parameters(merged_operation, spec)
+            header_params = _extract_header_parameters(merged_operation, spec)
             header_param_names = frozenset(p["name"] for p in header_params)
-            return ToolDefinition(
-                name=name, description=description, parameters=parameters
-            ), header_param_names
-    return None, frozenset()
+            operation_specs.append(
+                _OperationSpec(
+                    path=path,
+                    method=method,
+                    definition=ToolDefinition(
+                        name=name,
+                        description=description,
+                        parameters=parameters,
+                    ),
+                    header_param_names=header_param_names,
+                )
+            )
+
+    return operation_specs
 
 
 def _extract_parameters(
@@ -284,33 +315,55 @@ def _follow_ref(ref: str, spec: dict[str, Any]) -> dict[str, Any]:
     return current if isinstance(current, dict) else {}
 
 
-def _derive_base_url(trigger_url: str) -> str:
-    """Derive the service base URL from a full trigger endpoint URL.
+def _derive_base_url(openapi_url: str) -> str:
+    """Derive service base URL from an OpenAPI spec URL.
 
-    E.g. 'http://calc:8000/calculate' -> 'http://calc:8000'
+    E.g. 'http://calc:8000/openapi.json' -> 'http://calc:8000'
+         'http://calc:8000/api/openapi.json' -> 'http://calc:8000/api'
     """
-    parsed = urlparse(trigger_url)
-    return f"{parsed.scheme}://{parsed.netloc}"
+    parsed = urlparse(_normalize_openapi_url(openapi_url))
+    base_path = parsed.path.rsplit("/", maxsplit=1)[0]
+    origin = f"{parsed.scheme}://{parsed.netloc}"
+    return f"{origin}{base_path}" if base_path else origin
+
+
+def _build_operation_url(service_base_url: str, operation_path: str) -> str:
+    """Join service base URL with an OpenAPI path item key."""
+    if operation_path.startswith("/"):
+        return f"{service_base_url.rstrip('/')}{operation_path}"
+    return f"{service_base_url.rstrip('/')}/{operation_path}"
+
+
+def _normalize_openapi_url(openapi_url: str) -> str:
+    """Normalize OpenAPI URL; append '/openapi.json' if only server base was provided."""
+    normalized = openapi_url.rstrip("/")
+    if normalized.endswith(".json"):
+        return normalized
+    return f"{normalized}/openapi.json"
 
 
 async def _fetch_openapi_spec(
-    client: httpx.AsyncClient, base_url: str
+    client: httpx.AsyncClient, openapi_url: str
 ) -> dict[str, Any] | None:
-    openapi_url = f"{base_url.rstrip('/')}/openapi.json"
+    normalized_openapi_url = _normalize_openapi_url(openapi_url)
     try:
-        response = await client.request("GET", openapi_url)
+        response = await client.request("GET", normalized_openapi_url)
         response.raise_for_status()
         return response.json()
     except httpx.HTTPStatusError as e:
         logger.warning(
-            "Tool service %s returned HTTP %s", base_url, e.response.status_code
+            "Tool service %s returned HTTP %s",
+            normalized_openapi_url,
+            e.response.status_code,
         )
         return None
     except httpx.RequestError as e:
-        logger.warning("Failed to reach tool service %s: %s", base_url, e)
+        logger.warning("Failed to reach tool service %s: %s", normalized_openapi_url, e)
         return None
     except Exception:
         logger.warning(
-            "Unexpected error fetching spec from %s", base_url, exc_info=True
+            "Unexpected error fetching spec from %s",
+            normalized_openapi_url,
+            exc_info=True,
         )
         return None
