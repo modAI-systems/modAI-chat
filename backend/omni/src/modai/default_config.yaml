@@ -79,13 +79,11 @@ modules:
     module_dependencies:
       http_client: "http_client"
     config:
-      tools: []
+      tool_servers: []
       # Example:
-      # tools:
-      #   - url: http://calculator-service:8000/calculate
-      #     method: POST
-      #   - url: http://web-search-service:8000/search
-      #     method: PUT
+      # tool_servers:
+      #   - url: http://calculator-service:8000/openapi.json
+      #   - url: http://web-search-service:8000/openapi.json
 
   tool_registry:
     class: modai.modules.tools.tool_registry_predefined_vars.PredefinedVariablesToolRegistryModule

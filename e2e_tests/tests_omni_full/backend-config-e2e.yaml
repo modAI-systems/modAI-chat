@@ -4,6 +4,5 @@ includes:
 modules:
   openapi_tool_registry:
     config:
-      tools:
-        - url: http://localhost:8001/roll
-          method: POST
+      tool_servers:
+        - url: http://localhost:8001/openapi.json

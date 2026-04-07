@@ -61,16 +61,14 @@ class ToolRegistryModule(ModaiModule, ABC):
     Aggregates tools from all configured sources and provides lookup by name.
 
     Configuration:
-        tools: list of dicts, each with:
-          - "url": the full trigger endpoint URL of the tool microservice
-          - "method": the HTTP method to invoke the tool (e.g. PUT, POST, GET)
+                tool_servers: list of dicts, each with:
+                    - "url": the OpenAPI spec URL of a tool server
+                        (e.g. ``http://calculator-service:8000/openapi.json``)
 
     Example config:
-        tools:
-          - url: http://calculator-service:8000/calculate
-            method: POST
-          - url: http://web-search-service:8000/search
-            method: PUT
+                tool_servers:
+                    - url: http://calculator-service:8000/openapi.json
+                    - url: http://web-search-service:8000/openapi.json
     """
 
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):

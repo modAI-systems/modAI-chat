@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Config can include other config files
+- OpenAPI tool registry now supports `tool_servers` and auto-registers all `operationId` endpoints from each OpenAPI spec as tools
 
 ### Chnaged
 

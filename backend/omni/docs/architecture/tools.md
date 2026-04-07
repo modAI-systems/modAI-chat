@@ -180,8 +180,8 @@ This convention keeps the `Tool.run` interface stable while allowing callers to 
 **Purpose**: Concrete registry implementation that harvests OpenAPI specs from configured HTTP microservices.
 
 **How it works**:
-- On each call to `get_tools`, fetches `/openapi.json` from each configured service
-- Extracts the tool definition from the spec:
+- On each call to `get_tools`, fetches the OpenAPI spec URL from each configured tool server
+- Extracts one tool definition per operation that has an `operationId`:
   - `operationId` → name
   - `summary`/`description` → description
   - Request body schema → parameters (all `$ref` resolved inline)
@@ -189,11 +189,12 @@ This convention keeps the `Tool.run` interface stable while allowing callers to 
 - Each resulting tool's `run` operation:
   1. Resolves `{param_name}` placeholders in the configured URL by substituting values from the supplied `params` dict
   2. Sends the remaining parameters as the JSON request body
-  3. Makes an HTTP call to the resolved URL using the configured method
+  3. Makes an HTTP call to the resolved URL using the operation's HTTP method
 
-**Configuration** — each tool entry specifies:
-- `url`: The full trigger endpoint URL of the tool microservice
-- `method`: The HTTP method to use when invoking the tool (e.g. POST, PUT, GET)
+**Configuration** — each tool server entry specifies:
+- `url`: The OpenAPI document URL of the tool server (e.g. `http://localhost:8001/openapi.json`)
+
+All operations from that OpenAPI document that define an `operationId` are registered as tools.
 
 ### 4.4 Tools Web Module (Web Module)
 
@@ -259,10 +260,9 @@ If a tool service is unreachable, it is omitted from the response and a warning 
 
 ## 6. Configuration
 
-The tool registry is configured with a list of tool microservice endpoints. Each entry has:
-- `url`: The full trigger endpoint URL of the tool microservice
-- `method`: The HTTP method used to invoke the tool (e.g. PUT, POST, GET)
+The tool registry is configured with a list of OpenAPI servers. Each entry has:
+- `url`: The OpenAPI spec URL of the tool server
 
-The registry derives the base URL from `url` (strips the path) and appends `/openapi.json` to fetch the spec.
+The registry discovers all operations with `operationId` from each server spec and registers them as tools.
 
 See `config.yaml` and `default_config.yaml` for concrete configuration examples.
