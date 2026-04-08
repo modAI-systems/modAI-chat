@@ -17,6 +17,6 @@ check:
     uv run ruff check .
 
 # Fix code style and linting issues
-check-write:
+format:
     uv run ruff format .
     uv run ruff check --fix .
