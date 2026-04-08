@@ -3,3 +3,6 @@ dist/
 src/modules/external-*
 
 public/modules.json
+public/modules*.json
+!public/modules_browser_only.json
+!public/modules_with_backend.json

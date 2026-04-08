@@ -115,6 +115,52 @@ To activate a module, add it to `modules*.json`.
 
 > **Auto-discovery**: The module registry automatically discovers all `.svelte` and `.svelte.ts` files under `src/modules/**` via Vite's `import.meta.glob`. No manual TypeScript registry entry is required.
 
+#### `modules*.json` — top-level structure and includes
+
+A manifest file has the following top-level shape:
+
+```json
+{
+  "version": "1.0.0",
+  "includes": [{ "path": "base.json" }],
+  "modules": [...]
+}
+```
+
+- **version**: manifest format version (currently `"1.0.0"`)
+- **includes** _(optional, root manifest only)_: list of other manifest files to merge in before this file's own modules. Each entry is an object with a `path` field. Relative paths are resolved relative to the current manifest. Nested includes (an included file itself containing `includes`) are not supported and throw an error.
+- **modules**: array of module entries (see below)
+
+**Load order** — mirrors the backend YAML config loader:
+1. Included files are fetched and applied left-to-right; later includes win on collision.
+2. The root manifest's own `modules` are applied last and always win.
+
+**`collisionStrategy`** on a module entry controls what happens when that module's `id` already exists from an earlier include:
+- `"merge"` *(default)* — deep-merges `config`; incoming wins on shared keys. `dependencies` is shallow-merged; incoming wins on key collision.
+- `"replace"` — incoming entry fully replaces the existing one.
+- `"drop"` — removes the existing entry; does not add the incoming one either.
+
+`collisionStrategy` is stripped from the resolved manifest before it is used.
+
+**Example** — composing a deployment-specific manifest from a base:
+
+```json
+{
+  "version": "1.0.0",
+  "includes": [{ "path": "modules_with_backend.json" }],
+  "modules": [
+    {
+      "id": "fetch-service",
+      "path": "@/modules/fetch-service/sessionFetchService/create",
+      "collisionStrategy": "replace",
+      "dependencies": {
+        "module:sessionService": "session-service"
+      }
+    }
+  ]
+}
+```
+
 #### `modules*.json` — regular module entry
 
 ```json

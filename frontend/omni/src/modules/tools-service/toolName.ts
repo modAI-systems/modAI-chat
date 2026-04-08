@@ -4,7 +4,7 @@ export function sortToolsByName(
     tools: OpenAIFunctionTool[],
 ): OpenAIFunctionTool[] {
     return [...tools].sort((left, right) =>
-        left.name.localeCompare(right.name, undefined, {
+        left.name.localeCompare(right.name, "und", {
             sensitivity: "base",
         }),
     );
