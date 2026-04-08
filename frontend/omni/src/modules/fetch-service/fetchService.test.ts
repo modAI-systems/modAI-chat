@@ -4,6 +4,7 @@ import type {
     NoSessionAction,
     SessionService,
 } from "@/modules/session-service/index.svelte";
+import type { FetchService } from "./index.svelte";
 import { create as createPureFetchService } from "./pureFetchService.svelte";
 import { create as createSessionFetchService } from "./sessionFetchService.svelte";
 
@@ -37,6 +38,9 @@ describe("PureFetchService", () => {
 });
 
 describe("SessionFetchService", () => {
+    const mockFetchService: FetchService = {
+        fetch: vi.fn(),
+    };
     const mockSessionService: SessionService = {
         refresh: vi.fn(),
         isSessionActive: vi.fn(),
@@ -48,6 +52,7 @@ describe("SessionFetchService", () => {
     function makeDeps(): ModuleDependencies {
         return {
             getOne: vi.fn().mockImplementation((name: string) => {
+                if (name === "fetchService") return mockFetchService;
                 if (name === "sessionService") return mockSessionService;
                 if (name === "noSessionAction") return mockNoSessionAction;
                 throw new Error(`Unknown dep "${name}"`);
@@ -64,19 +69,17 @@ describe("SessionFetchService", () => {
     }
 
     beforeEach(() => {
-        vi.stubGlobal("fetch", vi.fn());
         vi.mocked(mockSessionService.refresh).mockResolvedValue(undefined);
         vi.mocked(mockNoSessionAction.execute).mockImplementation(() => {});
     });
 
     afterEach(() => {
-        vi.unstubAllGlobals();
         vi.clearAllMocks();
     });
 
     it("returns the response without touching session service on success", async () => {
         const mockResponse = new Response(null, { status: 200 });
-        vi.mocked(fetch).mockResolvedValue(mockResponse);
+        vi.mocked(mockFetchService.fetch).mockResolvedValue(mockResponse);
 
         const response = await makeService().fetch("/api/data");
 
@@ -85,7 +88,9 @@ describe("SessionFetchService", () => {
     });
 
     it("does not interact with session service on non-401 error responses", async () => {
-        vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 500 }));
+        vi.mocked(mockFetchService.fetch).mockResolvedValue(
+            new Response(null, { status: 500 }),
+        );
 
         await makeService().fetch("/api/data");
 
@@ -93,7 +98,9 @@ describe("SessionFetchService", () => {
     });
 
     it("calls session service refresh on 401", async () => {
-        vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 401 }));
+        vi.mocked(mockFetchService.fetch).mockResolvedValue(
+            new Response(null, { status: 401 }),
+        );
 
         await makeService().fetch("/api/data");
 
@@ -101,7 +108,9 @@ describe("SessionFetchService", () => {
     });
 
     it("executes no-session action when session is inactive after 401", async () => {
-        vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 401 }));
+        vi.mocked(mockFetchService.fetch).mockResolvedValue(
+            new Response(null, { status: 401 }),
+        );
 
         await makeService(false).fetch("/api/data");
 
@@ -109,30 +118,54 @@ describe("SessionFetchService", () => {
     });
 
     it("does not execute no-session action when session is still active after 401", async () => {
-        vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 401 }));
+        vi.mocked(mockFetchService.fetch).mockResolvedValue(
+            new Response(null, { status: 401 }),
+        );
 
         await makeService(true).fetch("/api/data");
 
         expect(mockNoSessionAction.execute).not.toHaveBeenCalled();
     });
 
+    it("delegates fetch call to injected fetch service", async () => {
+        vi.mocked(mockFetchService.fetch).mockResolvedValue(
+            new Response(null, { status: 200 }),
+        );
+        const init: RequestInit = { method: "POST", body: "data" };
+
+        await makeService().fetch("/api/data", init);
+
+        expect(mockFetchService.fetch).toHaveBeenCalledWith(
+            "/api/data",
+            expect.objectContaining({
+                credentials: "include",
+                method: "POST",
+                body: "data",
+            }),
+        );
+    });
+
     it("includes credentials by default", async () => {
-        vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 200 }));
+        vi.mocked(mockFetchService.fetch).mockResolvedValue(
+            new Response(null, { status: 200 }),
+        );
 
         await makeService().fetch("/api/data");
 
-        expect(fetch).toHaveBeenCalledWith(
+        expect(mockFetchService.fetch).toHaveBeenCalledWith(
             "/api/data",
             expect.objectContaining({ credentials: "include" }),
         );
     });
 
     it("allows caller to override credentials", async () => {
-        vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 200 }));
+        vi.mocked(mockFetchService.fetch).mockResolvedValue(
+            new Response(null, { status: 200 }),
+        );
 
         await makeService().fetch("/api/data", { credentials: "omit" });
 
-        expect(fetch).toHaveBeenCalledWith(
+        expect(mockFetchService.fetch).toHaveBeenCalledWith(
             "/api/data",
             expect.objectContaining({ credentials: "omit" }),
         );
