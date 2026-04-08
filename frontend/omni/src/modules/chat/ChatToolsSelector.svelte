@@ -2,6 +2,7 @@
 import { Check, Wrench } from "lucide-svelte";
 import { getT } from "@/modules/i18n/index.svelte.js";
 import type { OpenAIFunctionTool } from "@/modules/tools-service/index.svelte.js";
+import { sortToolsByName } from "@/modules/tools-service/toolName";
 import { Button } from "$lib/shadcnui/components/ui/button/index.js";
 import * as Popover from "$lib/shadcnui/components/ui/popover/index.js";
 import * as Tooltip from "$lib/shadcnui/components/ui/tooltip/index.js";
@@ -19,6 +20,7 @@ let {
 } = $props();
 
 let open = $state(false);
+const sortedTools = $derived(sortToolsByName(availableTools));
 
 function isSelected(name: string): boolean {
     return selectedToolNames.includes(name);
@@ -52,9 +54,9 @@ function formatToolName(name: string): string {
 	</Popover.Trigger>
 	<Popover.Content class="max-h-[70vh] w-[280px] overflow-y-auto p-1" align="start" side="top">
 		<div class="px-2 py-1.5 text-xs font-medium text-muted-foreground">{t("tools", { defaultValue: "Tools" })}</div>
-		{#each availableTools as tool}
-			{@const displayName = formatToolName(tool.function.name)}
-			{#if tool.function.description}
+		{#each sortedTools as tool}
+			{@const displayName = formatToolName(tool.name)}
+			{#if tool.description}
 				<Tooltip.Root>
 					<Tooltip.Trigger>
 						{#snippet child({ props })}
@@ -62,17 +64,17 @@ function formatToolName(name: string): string {
 								type="button"
 								class="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-left hover:bg-accent"
 								aria-label={t("toggleTool", { defaultValue: "Toggle tool {{name}}", name: displayName }) as string}
-								aria-pressed={isSelected(tool.function.name)}
+								aria-pressed={isSelected(tool.name)}
 								{...props}
-								onclick={() => ontoggle(tool.function.name)}
+								onclick={() => ontoggle(tool.name)}
 							>
-								<Check class="size-4 shrink-0 {isSelected(tool.function.name) ? 'opacity-100' : 'opacity-0'}" />
+								<Check class="size-4 shrink-0 {isSelected(tool.name) ? 'opacity-100' : 'opacity-0'}" />
 								<div class="text-sm font-medium">{displayName}</div>
 							</button>
 						{/snippet}
 					</Tooltip.Trigger>
 					<Tooltip.Content side="right" align="start">
-						{tool.function.description}
+						{tool.description}
 					</Tooltip.Content>
 				</Tooltip.Root>
 			{:else}
@@ -80,10 +82,10 @@ function formatToolName(name: string): string {
 					type="button"
 					class="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-left hover:bg-accent"
 					aria-label={t("toggleTool", { defaultValue: "Toggle tool {{name}}", name: displayName }) as string}
-					aria-pressed={isSelected(tool.function.name)}
-					onclick={() => ontoggle(tool.function.name)}
+					aria-pressed={isSelected(tool.name)}
+					onclick={() => ontoggle(tool.name)}
 				>
-					<Check class="size-4 shrink-0 {isSelected(tool.function.name) ? 'opacity-100' : 'opacity-0'}" />
+					<Check class="size-4 shrink-0 {isSelected(tool.name) ? 'opacity-100' : 'opacity-0'}" />
 					<div class="text-sm font-medium">{displayName}</div>
 				</button>
 			{/if}

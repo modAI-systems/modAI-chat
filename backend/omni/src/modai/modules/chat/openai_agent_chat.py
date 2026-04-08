@@ -68,11 +68,10 @@ class StrandsAgentChatModule(ChatLLMModule):
     ) -> OpenAIResponse | AsyncGenerator[OpenAIResponseStreamEvent, None]:
         provider_name, actual_model = _parse_model(body_json.get("model", ""))
         provider = await self._resolve_provider(request, provider_name)
-        additional_tool_properties = _extract_additional_tool_properties(request)
         tools = await _resolve_request_tools(
             body_json,
             self.tool_registry,
-            additional_tool_properties=additional_tool_properties,
+            request=request,
         )
         agent = _create_agent(provider, actual_model, body_json, tools)
         user_message = _extract_last_user_message(body_json)
@@ -110,23 +109,6 @@ def _parse_model(model: str) -> tuple[str, str]:
             f"Invalid model format: {model}. Expected 'provider_name/model_name'"
         )
     return parts[0], parts[1]
-
-
-def _extract_additional_tool_properties(request: Request) -> dict[str, Any]:
-    """Extract caller-supplied metadata from the request to inject into tool calls.
-
-    Returns a dict of ``_``-prefixed keys that are merged into every tool
-    invocation's ``params`` dict.  Tool implementations consume these reserved
-    keys (e.g. for HTTP headers) without forwarding them to the payload.
-
-    Currently extracted properties:
-    - ``_bearer_token``: raw token from the ``Authorization: Bearer`` header.
-    """
-    properties: dict[str, Any] = {}
-    auth_header = request.headers.get("Authorization", "")
-    if auth_header.startswith("Bearer "):
-        properties["_bearer_token"] = auth_header[len("Bearer ") :]
-    return properties
 
 
 def _create_agent(
@@ -235,17 +217,13 @@ def _extract_tools(body_json: dict[str, Any]) -> list[dict[str, Any]]:
 async def _resolve_request_tools(
     body_json: dict[str, Any],
     tool_registry: ToolRegistryModule | None,
-    additional_tool_properties: dict[str, Any] | None = None,
+    request: Request,
 ) -> list[PythonAgentTool]:
     """Resolve requested tools from the request body into Strands agent tools.
 
     For each tool name in the request, the corresponding ``ToolDefinition``
     is looked up in the registry and wrapped as a ``PythonAgentTool`` that
     invokes the tool microservice over HTTP.
-
-    ``additional_tool_properties`` is a dict of ``_``-prefixed keys extracted
-    from the request (see ``_extract_additional_tool_properties``) that are
-    merged into every tool invocation's params dict.
 
     Returns an empty list when no registry is configured or no tools are
     requested.
@@ -261,7 +239,7 @@ async def _resolve_request_tools(
         _create_strands_tool(
             client_spec=client_spec,
             tool_registry=tool_registry,
-            additional_tool_properties=additional_tool_properties,
+            request=request,
         )
         for client_spec in tool_specs
     ]
@@ -270,7 +248,7 @@ async def _resolve_request_tools(
 def _create_strands_tool(
     client_spec: dict[str, Any],
     tool_registry: ToolRegistryModule,
-    additional_tool_properties: dict[str, Any] | None = None,
+    request: Request,
 ) -> PythonAgentTool:
     """Wrap a client-provided tool spec as a Strands ``PythonAgentTool``.
 
@@ -279,10 +257,6 @@ def _create_strands_tool(
     verbatim.  Execution is handled lazily: when Strands invokes the tool,
     the registry is queried by name and ``tool.run`` is called.
 
-    ``additional_tool_properties`` (a dict of ``_``-prefixed keys) is merged
-    into every invocation's params dict so that tool implementations can pick
-    up transport-level concerns (auth, tracing, etc.) without the interface
-    carrying extra args.
     """
     name: str = client_spec.get("name", "")
 
@@ -294,23 +268,14 @@ def _create_strands_tool(
         },
     }
 
-    async def _handler(tool_use: ToolUse, **kwargs: Any) -> ToolResult:
+    async def _run_tool_handler(tool_use: ToolUse, **kwargs: Any) -> ToolResult:
         """Invoke the tool and wrap the result for Strands."""
-        tool = await tool_registry.get_tool_by_name(
-            name, predefined_params=additional_tool_properties
-        )
-        if tool is None:
-            logger.warning("Tool '%s' not found in registry at execution time", name)
-            return {
-                "toolUseId": tool_use["toolUseId"],
-                "status": "error",
-                "content": [{"text": f"Tool '{name}' is not available"}],
-            }
-        params: dict[str, Any] = dict(tool_use["input"])
-        if additional_tool_properties:
-            params.update(additional_tool_properties)
+        params: dict[str, Any] = {
+            "name": name,
+            "arguments": dict(tool_use["input"]),
+        }
         try:
-            result = await tool.run(params)
+            result = await tool_registry.run_tool(request, params)
             return {
                 "toolUseId": tool_use["toolUseId"],
                 "status": "success",
@@ -327,7 +292,7 @@ def _create_strands_tool(
     return PythonAgentTool(
         tool_name=name,
         tool_spec=tool_spec,
-        tool_func=_handler,
+        tool_func=_run_tool_handler,
     )
 
 

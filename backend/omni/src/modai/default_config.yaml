@@ -85,7 +85,7 @@ modules:
       #   - url: http://calculator-service:8000/openapi.json
       #   - url: http://web-search-service:8000/openapi.json
 
-  tool_registry:
+  predefined_tool_registry:
     class: modai.modules.tools.tool_registry_predefined_vars.PredefinedVariablesToolRegistryModule
     module_dependencies:
       delegate_registry: "openapi_tool_registry"
@@ -96,10 +96,10 @@ modules:
       # variable_mappings:
       #   X-Session-Id: session_id
 
-  tools_web:
-    class: modai.modules.tools.tools_web_module.OpenAIToolsWebModule
+  tool_registry:
+    class: modai.modules.tools.tool_router.ToolsRouterModule
     module_dependencies:
-      tool_registry: tool_registry
+      predefined: "predefined_tool_registry"
 
   full_reset:
     class: modai.modules.reset.reset_web_module.ResetWebModule

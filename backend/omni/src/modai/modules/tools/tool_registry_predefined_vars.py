@@ -21,45 +21,20 @@ HTTP, or OpenAPI — all actual tool work is performed by the inner registry
 supplied via the ``delegate_registry`` module dependency.
 """
 
-import logging
 from typing import Any
 
+from fastapi import Request
+
 from modai.module import ModuleDependencies
-from modai.modules.tools.module import Tool, ToolDefinition, ToolRegistryModule
-
-logger = logging.getLogger(__name__)
+from modai.modules.tools.module import ToolDefinition, ToolRegistryModule
 
 
-class _PredefinedVariablesTool(Tool):
-    """Wraps an inner Tool, hiding known variables from its public definition.
-
-    ``translations`` is a mapping of ``tool_param_name → prefixed_predefined_key``
-    (e.g. ``{"X-Session-Id": "_session_id"}``).  In :meth:`run` each prefixed
-    key is popped from ``params`` and re-injected under its tool parameter name
-    before the call is forwarded to the inner tool.
-    """
-
-    def __init__(
-        self,
-        inner: Tool,
-        translations: dict[str, str],
-        filtered_definition: ToolDefinition,
-    ) -> None:
-        self._inner = inner
-        self._translations = translations
-        self._filtered_definition = filtered_definition
-
-    @property
-    def definition(self) -> ToolDefinition:
-        return self._filtered_definition
-
-    async def run(self, params: dict[str, Any]) -> Any:
-        """Forward to inner tool, substituting predefined values into their tool param names."""
-        translated = dict(params)
-        for tool_param, prefixed_key in self._translations.items():
-            if prefixed_key in translated:
-                translated[tool_param] = translated.pop(prefixed_key)
-        return await self._inner.run(translated)
+def _extract_predefined_params(request: Request) -> dict[str, Any]:
+    """Extract predefined tool params from all request headers."""
+    return {
+        f"_{header_name.lower().replace('-', '_')}": value
+        for header_name, value in request.headers.items()
+    }
 
 
 class PredefinedVariablesToolRegistryModule(ToolRegistryModule):
@@ -108,52 +83,58 @@ class PredefinedVariablesToolRegistryModule(ToolRegistryModule):
         )  # type: ignore[assignment]
         self._variable_mappings: dict[str, str] = config.get("variable_mappings", {})
 
-    async def get_tools(
-        self, predefined_params: dict[str, Any] | None = None
-    ) -> list[Tool]:
-        tools = await self._inner_registry.get_tools()
+    async def get_tools(self, request: Request) -> list[ToolDefinition]:
+        tools = await self._inner_registry.get_tools(request)
+        predefined_params = _extract_predefined_params(request)
         return [
-            _wrap_tool(tool, predefined_params, self._variable_mappings)
-            for tool in tools
+            _filter_tool_definition(
+                definition, predefined_params, self._variable_mappings
+            )
+            for definition in tools
         ]
 
-    async def get_tool_by_name(
-        self, name: str, predefined_params: dict[str, Any] | None = None
-    ) -> Tool | None:
-        tool = await self._inner_registry.get_tool_by_name(name)
-        if tool is None:
-            return None
-        return _wrap_tool(tool, predefined_params, self._variable_mappings)
+    async def run_tool(self, request: Request, params: dict[str, Any]) -> Any:
+        predefined_params = _extract_predefined_params(request)
+        name = params.get("name")
+        if not isinstance(name, str) or not name:
+            raise ValueError("Tool invocation requires a non-empty 'name'")
 
+        tool_definitions = await self._inner_registry.get_tools(request)
+        definition = next(
+            (tool for tool in tool_definitions if tool["name"] == name), None
+        )
+        if definition is None:
+            raise ValueError(f"Tool '{name}' not found")
 
-# ---------------------------------------------------------------------------
-# Pure helper functions
-# ---------------------------------------------------------------------------
+        translated_params = dict(params)
+        raw_arguments = translated_params.get("arguments", {})
+        if not isinstance(raw_arguments, dict):
+            raise ValueError("Tool invocation 'arguments' must be an object")
+
+        translated_arguments = dict(raw_arguments)
+        translations = _build_translations(
+            definition=definition,
+            predefined_params=predefined_params,
+            variable_mappings=self._variable_mappings,
+        )
+        for tool_param, prefixed_key in translations.items():
+            predefined_value = predefined_params.get(prefixed_key)
+            if predefined_value is not None and tool_param not in translated_arguments:
+                translated_arguments[tool_param] = predefined_value
+
+        translated_params["arguments"] = translated_arguments
+        return await self._inner_registry.run_tool(request, translated_params)
 
 
 def _build_translations(
     definition: ToolDefinition,
-    predefined_params: dict[str, Any] | None,
+    predefined_params: dict[str, Any],
     variable_mappings: dict[str, str],
 ) -> dict[str, str]:
-    """Build a ``tool_param → prefixed_predefined_key`` map for *definition*.
-
-    Only includes entries where:
-    - the prefixed predefined key is present in ``predefined_params``, AND
-    - the target tool parameter exists in the definition's schema properties.
-
-    Direct mappings (``_session_id`` → ``session_id``) are derived
-    automatically from ``predefined_params``.  ``variable_mappings`` entries
-    (``X-Session-Id: session_id``) override the direct mapping for the same
-    predefined variable so the value is routed to the correct tool parameter.
-    """
-    if not predefined_params:
-        return {}
-
-    schema_properties = set(definition.parameters.get("properties", {}).keys())
+    schema = definition.get("parameters") or {}
+    schema_properties = set(schema.get("properties", {}).keys())
     translations: dict[str, str] = {}
 
-    # Direct: _session_id → session_id (when session_id is in the schema)
     for prefixed_key in predefined_params:
         if not prefixed_key.startswith("_"):
             continue
@@ -161,56 +142,49 @@ def _build_translations(
         if var_name in schema_properties:
             translations[var_name] = prefixed_key
 
-    # Configured: X-Session-Id ← _session_id (overrides the direct mapping)
     for tool_param, var_name in variable_mappings.items():
         prefixed_key = f"_{var_name}"
         if prefixed_key not in predefined_params:
             continue
         if tool_param not in schema_properties:
             continue
-        # Remove default direct mapping for var_name if it was added above
         translations.pop(var_name, None)
         translations[tool_param] = prefixed_key
 
     return translations
 
 
-def _wrap_tool(
-    tool: Tool,
-    predefined_params: dict[str, Any] | None,
+def _filter_tool_definition(
+    definition: ToolDefinition,
+    predefined_params: dict[str, Any],
     variable_mappings: dict[str, str],
-) -> Tool:
-    """Return a filtered wrapper around *tool*, or *tool* itself if nothing to hide."""
-    translations = _build_translations(
-        tool.definition, predefined_params, variable_mappings
-    )
-    if not translations:
-        return tool
-    hidden = set(translations.keys())
-    filtered_definition = _filter_definition(tool.definition, hidden)
-    return _PredefinedVariablesTool(
-        inner=tool,
-        translations=translations,
-        filtered_definition=filtered_definition,
-    )
-
-
-def _filter_definition(
-    definition: ToolDefinition, hidden_properties: set[str]
 ) -> ToolDefinition:
-    """Return a new :class:`ToolDefinition` with *hidden_properties* removed."""
-    params = definition.parameters
+    translations = _build_translations(definition, predefined_params, variable_mappings)
+    if not translations:
+        return definition
+
+    hidden_properties = set(translations.keys())
+    parameters = definition.get("parameters") or {}
     new_properties = {
         k: v
-        for k, v in params.get("properties", {}).items()
+        for k, v in parameters.get("properties", {}).items()
         if k not in hidden_properties
     }
-    new_required = [r for r in params.get("required", []) if r not in hidden_properties]
-    new_params: dict[str, Any] = {**params, "properties": new_properties}
-    if "required" in params:
-        new_params["required"] = new_required
-    return ToolDefinition(
-        name=definition.name,
-        description=definition.description,
-        parameters=new_params,
-    )
+    new_required = [
+        r for r in parameters.get("required", []) if r not in hidden_properties
+    ]
+
+    new_parameters: dict[str, Any] = {**parameters, "properties": new_properties}
+    if "required" in parameters:
+        new_parameters["required"] = new_required
+
+    filtered: ToolDefinition = {
+        "type": "function",
+        "name": definition["name"],
+        "parameters": new_parameters,
+        "strict": definition.get("strict", True),
+    }
+    if "description" in definition:
+        filtered["description"] = definition.get("description")
+
+    return filtered

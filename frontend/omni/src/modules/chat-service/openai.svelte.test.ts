@@ -72,13 +72,11 @@ describe("OpenAIChatService", () => {
             [
                 {
                     type: "function",
-                    function: {
-                        name: "calculate",
-                        description: "A calculator",
-                        parameters: {
-                            type: "object",
-                            properties: { x: { type: "number" } },
-                        },
+                    name: "calculate",
+                    description: "A calculator",
+                    parameters: {
+                        type: "object",
+                        properties: { x: { type: "number" } },
                     },
                 },
             ],

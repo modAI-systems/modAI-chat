@@ -49,11 +49,11 @@ function trimTrailingSlash(url: string): string {
 function convertToAiSdkTools(openAiTools: OpenAIFunctionTool[]) {
     return Object.fromEntries(
         openAiTools.map((t) => [
-            t.function.name,
+            t.name,
             tool({
-                description: t.function.description,
+                description: t.description,
                 inputSchema: jsonSchema(
-                    (t.function.parameters ?? {
+                    (t.parameters ?? {
                         type: "object",
                         properties: {},
                     }) as object,

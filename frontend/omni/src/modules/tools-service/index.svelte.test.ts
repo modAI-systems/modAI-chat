@@ -18,20 +18,18 @@ describe("ModaiBackendToolsService", () => {
         const tools = [
             {
                 type: "function" as const,
-                function: {
-                    name: "calculate",
-                    description: "Evaluate a math expression",
-                    parameters: {
-                        type: "object",
-                        properties: {
-                            expression: { type: "string" },
-                        },
+                name: "calculate",
+                description: "Evaluate a math expression",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        expression: { type: "string" },
                     },
                 },
             },
         ];
         vi.mocked(fetchService.fetch).mockResolvedValue(
-            new Response(JSON.stringify({ tools }), {
+            new Response(JSON.stringify(tools), {
                 status: 200,
                 headers: { "Content-Type": "application/json" },
             }),
