@@ -4,7 +4,7 @@ import { setContext, untrack } from "svelte";
 import { ComponentResolver } from "./componentResolver";
 import { MODULES_KEY, type Modules } from "./index";
 import { resolveManifestDependencies } from "./manifestDependencyResolver";
-import { fetchManifestJson } from "./manifestJson";
+import { resolveManifest } from "./manifestJson";
 import { ActiveModulesImpl } from "./module";
 
 interface Props {
@@ -28,7 +28,7 @@ const modules: Modules = {
 setContext(MODULES_KEY, modules);
 
 // untrack: manifest path is intentionally captured once at mount time
-const ready = fetchManifestJson(untrack(() => manifestPath)).then(
+const ready = resolveManifest(untrack(() => manifestPath)).then(
     async (json) => {
         const activeEntries = resolveManifestDependencies(json.modules, []);
         const componentResolver =
