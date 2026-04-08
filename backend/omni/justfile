@@ -21,6 +21,6 @@ check:
     uv run ruff check src
 
 # Fix code style and linting issues
-check-write:
+format:
     uv run ruff format src
     uv run ruff check --fix src
