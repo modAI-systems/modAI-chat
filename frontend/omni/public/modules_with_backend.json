@@ -60,6 +60,7 @@
       "type": "FetchService",
       "path": "@/modules/fetch-service/sessionFetchService/create",
       "dependencies": {
+        "module:fetchService": "plain-fetch-service",
         "module:sessionService": "session-service",
         "module:noSessionAction": "no-session-action"
       }
