@@ -35,6 +35,4 @@ playwright-report/
 *.sln
 *.sw?
 
-# Other
 .env
-*.db

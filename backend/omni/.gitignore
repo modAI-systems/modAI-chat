@@ -1,0 +1,4 @@
+config*.yaml
+!config.sample.yaml
+*.db
+.env
