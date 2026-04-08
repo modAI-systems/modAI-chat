@@ -2,6 +2,7 @@ includes:
   - path: ./src/modai/default_config.yaml
 
 modules:
+  # Deactivate authentication completely for development purposes.
   auth_oidc:
     collision_strategy: drop
   session:
@@ -11,7 +12,3 @@ modules:
       user_id: "dev-user"
       email: "dev@example.com"
       name: "Dev User"
-  openapi_tool_registry:
-    config:
-      tool_servers:
-        - url: http://localhost:8001/openapi.json
