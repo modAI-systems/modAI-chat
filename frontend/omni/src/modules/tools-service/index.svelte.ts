@@ -1,11 +1,9 @@
 export type OpenAIFunctionTool = {
     type: "function";
-    function: {
-        name: string;
-        description?: string;
-        parameters?: Record<string, unknown>;
-        strict?: boolean;
-    };
+    name: string;
+    description?: string;
+    parameters?: Record<string, unknown>;
+    strict?: boolean;
 };
 
 /**

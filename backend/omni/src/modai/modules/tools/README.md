@@ -5,13 +5,11 @@
 The abstract interface is defined in `module.py`.
 
 - Module types:
-  - `ToolRegistryModule` (plain module): resolves available tools and lookup by name.
-  - `ToolsWebModule` (web module): exposes `GET /api/tools`.
+  - `ToolRegistryModule` (plain module): resolves available tools and executes tool calls.
 - Public contract for callers:
-  - `get_tools(predefined_params: dict[str, Any] | None = None) -> list[Tool]`
-  - `get_tool_by_name(name: str, predefined_params: dict[str, Any] | None = None) -> Tool | None`
-  - `Tool.definition` returns LLM-agnostic tool metadata.
-  - `Tool.run(params)` executes the tool and returns implementation-specific output.
+  - `get_tools(request: Request) -> list[ToolDefinition]`
+  - `run_tool(request: Request, params: dict[str, Any]) -> Any`
+  - `ToolDefinition` uses OpenAI Responses API format (`FunctionToolParam`).
 
 ## OpenAPIToolRegistryModule
 
@@ -34,41 +32,40 @@ modules:
 Supported config keys:
 - `tool_servers` (required list): list of objects with `url` (OpenAPI spec URL).
 
-## PredefinedVariablesToolRegistryModule
+Module dependencies:
+- `http_client`
 
-Purpose: wraps another registry and hides caller-predefined `_`-prefixed parameters from tool definitions, then re-injects them on execution.
+## ToolsRouterModule
+
+Purpose: aggregate multiple `ToolRegistryModule` implementations behind one public endpoint and dispatch runtime tool calls.
 
 Class used in config:
-- `modai.modules.tools.tool_registry_predefined_vars.PredefinedVariablesToolRegistryModule`
+- `modai.modules.tools.tool_router.ToolsRouterModule`
 
 ```yaml
 modules:
-  tool_registry:
-    class: modai.modules.tools.tool_registry_predefined_vars.PredefinedVariablesToolRegistryModule
+  openapi_tool_registry:
+    class: modai.modules.tools.tool_registry_openapi.OpenAPIToolRegistryModule
     module_dependencies:
-      delegate_registry: "openapi_tool_registry"
+      http_client: "http_client"
     config:
-      variable_mappings:
-        X-Session-Id: session_id
-```
+      tool_servers:
+        - url: http://localhost:8001/openapi.json
 
-Supported config keys:
-- `variable_mappings` (optional dict): maps tool parameter name to predefined variable name without leading underscore.
-
-## OpenAIToolsWebModule
-
-Purpose: exposes `GET /api/tools` in OpenAI function-calling format.
-
-Class used in config:
-- `modai.modules.tools.tools_web_module.OpenAIToolsWebModule`
-
-```yaml
-modules:
-  tools_web:
-    class: modai.modules.tools.tools_web_module.OpenAIToolsWebModule
+  tool_registry:
+    class: modai.modules.tools.tool_router.ToolsRouterModule
     module_dependencies:
-      tool_registry: "tool_registry"
+      openapi: "openapi_tool_registry"
 ```
 
 Supported config keys:
-- none.
+- none
+
+Module dependencies:
+- one or more `ToolRegistryModule` implementations (named freely in `module_dependencies`)
+
+Behavior:
+- Exposes `GET /api/tools`.
+- Returns tool names as provided by underlying registries (no prefixing).
+- On `run_tool`, routes to the registry that provides the requested tool name.
+- If multiple registries provide the same tool name, invocation fails with an ambiguity error.

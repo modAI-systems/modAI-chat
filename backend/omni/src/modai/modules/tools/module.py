@@ -1,135 +1,49 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import Request
+from openai.types.responses.function_tool_param import FunctionToolParam
 
-from modai.module import ModaiModule, ModuleDependencies
-
-
-@dataclass(frozen=True)
-class ToolDefinition:
-    """LLM-agnostic description of a tool.
-
-    Contains enough information to construct LLM tool calls but is not tied
-    to any specific LLM API format.  Parameters are fully resolved (no $ref)
-    so they can be passed directly to any LLM.
-    """
-
-    name: str
-    description: str
-    parameters: dict[str, Any]
+from modai.module import ModaiModule
 
 
-class Tool(ABC):
-    """A tool with its LLM-agnostic definition and run capability.
-
-    Implementations provide both the definition (used by LLMs to understand
-    and invoke the tool) and the ability to execute the tool with parameters
-    returned by the LLM.
-    """
-
-    @property
-    @abstractmethod
-    def definition(self) -> ToolDefinition:
-        """The tool's LLM-agnostic definition (name, description, parameters)."""
-        pass
-
-    @abstractmethod
-    async def run(self, params: dict[str, Any]) -> Any:
-        """Execute the tool with the given parameters.
-
-        Args:
-            params: Parameters to pass to the tool, typically the arguments
-                    returned by an LLM tool call.  Callers may inject
-                    additional transport-level properties using ``_``-prefixed
-                    keys (e.g. ``_bearer_token``).  These reserved keys must
-                    be extracted and consumed by the implementation before
-                    building the request payload — they are never forwarded
-                    to the tool microservice as part of the JSON body.
-
-        Returns:
-            The tool's result (implementation-specific).
-        """
-        pass
+ToolDefinition = FunctionToolParam
 
 
 class ToolRegistryModule(ModaiModule, ABC):
     """
     Module Declaration for: Tool Registry (Plain Module)
 
-    Aggregates tools from all configured sources and provides lookup by name.
+    Abstract contract for tool discovery and execution.
 
-    Configuration:
-                tool_servers: list of dicts, each with:
-                    - "url": the OpenAPI spec URL of a tool server
-                        (e.g. ``http://calculator-service:8000/openapi.json``)
+    This interface defines runtime tool discovery via ``get_tools`` and
+    tool execution via ``run_tool``.
 
-    Example config:
-                tool_servers:
-                    - url: http://calculator-service:8000/openapi.json
-                    - url: http://web-search-service:8000/openapi.json
+    Concrete implementations decide how tools are sourced and invoked
+    (for example via OpenAPI specs, static definitions, or other backends).
     """
 
-    def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
-        super().__init__(dependencies, config)
-
     @abstractmethod
-    async def get_tools(
-        self, predefined_params: dict[str, Any] | None = None
-    ) -> list[Tool]:
+    async def get_tools(self, request: Request) -> list[ToolDefinition]:
         """
         Returns all configured tools.
 
-        Each Tool provides its definition and run capability.
+        Each entry is returned in OpenAI ``function`` tool format.
         Unavailable tool services are omitted with a warning logged.
 
         Args:
-            predefined_params: Optional dict of ``_``-prefixed keys whose
-                values are already known by the caller (e.g.
-                ``{"_session_id": "abc", "_bearer_token": "xyz"}``).
-                Implementations may use these to strip the corresponding
-                properties from tool definitions so the LLM is not asked to
-                supply values that are already available.
+            request: FastAPI request context.
         """
         pass
 
     @abstractmethod
-    async def get_tool_by_name(
-        self, name: str, predefined_params: dict[str, Any] | None = None
-    ) -> Tool | None:
+    async def run_tool(self, request: Request, params: dict[str, Any]) -> Any:
         """
-        Look up a tool by its name.
-
-        Returns the matching Tool if found, or None if not found.
+        Execute a configured tool.
 
         Args:
-            name: The tool's unique name (derived from OpenAPI ``operationId``).
-            predefined_params: Same semantics as in :meth:`get_tools`.
-        """
-        pass
-
-
-class ToolsWebModule(ModaiModule, ABC):
-    """
-    Module Declaration for: Tools Web Module (Web Module)
-
-    Exposes GET /api/tools. Retrieves tools from the Tool Registry and returns
-    their definitions in a format suitable for the consumer.
-    """
-
-    def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
-        super().__init__(dependencies, config)
-        self.router = APIRouter()
-        self.router.add_api_route("/api/tools", self.get_tools, methods=["GET"])
-
-    @abstractmethod
-    async def get_tools(self) -> dict[str, Any]:
-        """
-        Returns all available tool definitions in a consumer-specific format.
-
-        The response must contain a "tools" key with a list of tool definitions.
-        The exact structure of each tool definition is determined by the
-        implementation.
+            request: FastAPI request context.
+            params: Invocation payload. Implementations should expect at least
+                ``name`` and ``arguments`` keys.
         """
         pass

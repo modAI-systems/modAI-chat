@@ -4,10 +4,10 @@ from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
+from fastapi import Request
 
 from modai.module import ModuleDependencies
 from modai.modules.http_client.module import HttpClientModule
-from modai.modules.tools.module import Tool, ToolDefinition
 from modai.modules.tools.tool_registry_openapi import (
     OpenAPIToolRegistryModule,
     _build_operation_specs,
@@ -17,8 +17,6 @@ from modai.modules.tools.tool_registry_openapi import (
 
 
 class _StubHttpClientFactory(HttpClientModule):
-    """Test factory that yields clients in sequence; reuses the last one when exhausted."""
-
     def __init__(self, *clients: httpx.AsyncClient):
         super().__init__(ModuleDependencies(), {})
         self._clients = list(clients)
@@ -34,8 +32,23 @@ class _StubHttpClientFactory(HttpClientModule):
         return _ctx()
 
 
+def _request(
+    path: str = "/api/tools", headers: dict[str, str] | None = None
+) -> Request:
+    raw_headers = [
+        (name.lower().encode("latin-1"), value.encode("latin-1"))
+        for name, value in (headers or {}).items()
+    ]
+    scope: dict[str, Any] = {
+        "type": "http",
+        "method": "GET",
+        "path": path,
+        "headers": raw_headers,
+    }
+    return Request(scope)
+
+
 def _mock_response(spec: dict | None = None, text: str = "") -> MagicMock:
-    """Build a minimal mock httpx response."""
     resp = MagicMock()
     resp.raise_for_status = MagicMock()
     if spec is not None:
@@ -46,14 +59,12 @@ def _mock_response(spec: dict | None = None, text: str = "") -> MagicMock:
 
 SAMPLE_OPENAPI_SPEC = {
     "openapi": "3.1.0",
-    "info": {"title": "Calculator Tool", "version": "1.0.0"},
     "paths": {
         "/calculate": {
             "post": {
                 "summary": "Evaluate a math expression",
                 "operationId": "calculate",
                 "requestBody": {
-                    "required": True,
                     "content": {
                         "application/json": {
                             "schema": {
@@ -62,7 +73,7 @@ SAMPLE_OPENAPI_SPEC = {
                                 "required": ["expression"],
                             }
                         }
-                    },
+                    }
                 },
             }
         }
@@ -71,7 +82,6 @@ SAMPLE_OPENAPI_SPEC = {
 
 PATH_PARAMS_SPEC = {
     "openapi": "3.1.0",
-    "info": {"title": "User Tool", "version": "1.0.0"},
     "paths": {
         "/users/{user_id}/orders/{order_id}": {
             "get": {
@@ -100,7 +110,6 @@ PATH_PARAMS_SPEC = {
 
 HEADER_PARAMS_SPEC = {
     "openapi": "3.1.0",
-    "info": {"title": "Session Tool", "version": "1.0.0"},
     "paths": {
         "/data": {
             "get": {
@@ -129,7 +138,6 @@ HEADER_PARAMS_SPEC = {
 
 HEADER_AND_BODY_SPEC = {
     "openapi": "3.1.0",
-    "info": {"title": "Submit Tool", "version": "1.0.0"},
     "paths": {
         "/submit": {
             "post": {
@@ -163,7 +171,6 @@ HEADER_AND_BODY_SPEC = {
 
 PATH_PARAMS_WITH_BODY_SPEC = {
     "openapi": "3.1.0",
-    "info": {"title": "Update Tool", "version": "1.0.0"},
     "paths": {
         "/items/{item_id}": {
             "put": {
@@ -197,7 +204,6 @@ PATH_PARAMS_WITH_BODY_SPEC = {
 
 DICE_ROLLER_SPEC = {
     "openapi": "3.1.0",
-    "info": {"title": "Dice Roller Tool", "version": "1.0.0"},
     "paths": {
         "/roll": {
             "post": {
@@ -236,87 +242,59 @@ DICE_ROLLER_SPEC = {
 }
 
 
-class TestBuildToolDefinition:
-    def test_openapi_with_inline_schema(self):
+class TestBuildOperationSpecs:
+    def test_builds_openai_function_tool_definition(self):
         specs = _build_operation_specs(SAMPLE_OPENAPI_SPEC)
         assert len(specs) == 1
-        definition = specs[0].definition
-        header_names = specs[0].header_param_names
-        assert definition == ToolDefinition(
-            name="calculate",
-            description="Evaluate a math expression",
-            parameters={
+        assert specs[0].definition == {
+            "type": "function",
+            "name": "calculate",
+            "description": "Evaluate a math expression",
+            "parameters": {
                 "type": "object",
                 "properties": {"expression": {"type": "string"}},
                 "required": ["expression"],
             },
-        )
-        assert header_names == frozenset()
+            "strict": True,
+        }
 
-    def test_openapi_with_ref_schema(self):
+    def test_ref_schema_is_resolved(self):
         specs = _build_operation_specs(DICE_ROLLER_SPEC)
         assert len(specs) == 1
-        definition = specs[0].definition
-        header_names = specs[0].header_param_names
-        assert definition == ToolDefinition(
-            name="roll_dice",
-            description="Roll dice and return the results",
-            parameters={
-                "type": "object",
-                "properties": {
-                    "count": {
-                        "type": "integer",
-                        "default": 1,
-                        "description": "Number of dice to roll",
-                    },
-                    "sides": {
-                        "type": "integer",
-                        "default": 6,
-                        "description": "Number of sides per die",
-                    },
-                },
-            },
-        )
-        assert header_names == frozenset()
+        params = specs[0].definition["parameters"]
+        assert "count" in params["properties"]
+        assert "sides" in params["properties"]
+        assert params["properties"]["count"]["type"] == "integer"
+        assert specs[0].header_param_names == frozenset()
 
-    def test_path_parameters_only(self):
+    def test_path_parameters_become_properties(self):
         specs = _build_operation_specs(PATH_PARAMS_SPEC)
         assert len(specs) == 1
         definition = specs[0].definition
-        header_names = specs[0].header_param_names
-        assert definition is not None
-        assert definition.name == "get_user_order"
-        assert definition.description == "Get a specific user order"
-        params = definition.parameters
-        assert params["type"] == "object"
+        assert definition["name"] == "get_user_order"
+        params = definition["parameters"]
         assert "user_id" in params["properties"]
         assert "order_id" in params["properties"]
         assert params["properties"]["user_id"]["type"] == "string"
         assert params["properties"]["user_id"]["description"] == "The user's ID"
         assert params["properties"]["order_id"]["type"] == "integer"
         assert set(params["required"]) == {"user_id", "order_id"}
-        assert header_names == frozenset()
+        assert specs[0].header_param_names == frozenset()
 
     def test_path_parameters_merged_with_request_body(self):
         specs = _build_operation_specs(PATH_PARAMS_WITH_BODY_SPEC)
         assert len(specs) == 1
-        definition = specs[0].definition
-        header_names = specs[0].header_param_names
-        assert definition is not None
-        params = definition.parameters
+        params = specs[0].definition["parameters"]
         assert "item_id" in params["properties"]
         assert "name" in params["properties"]
         assert "item_id" in params["required"]
         assert "name" in params["required"]
-        assert header_names == frozenset()
+        assert specs[0].header_param_names == frozenset()
 
     def test_header_parameters_in_definition(self):
         specs = _build_operation_specs(HEADER_PARAMS_SPEC)
         assert len(specs) == 1
-        definition = specs[0].definition
-        header_names = specs[0].header_param_names
-        assert definition is not None
-        params = definition.parameters
+        params = specs[0].definition["parameters"]
         assert "X-Session-Id" in params["properties"]
         assert "X-Tenant" in params["properties"]
         assert params["properties"]["X-Session-Id"]["type"] == "string"
@@ -326,45 +304,66 @@ class TestBuildToolDefinition:
         )
         assert "X-Session-Id" in params["required"]
         assert "X-Tenant" not in params.get("required", [])
-        assert header_names == {"X-Session-Id", "X-Tenant"}
+        assert specs[0].header_param_names == frozenset({"X-Session-Id", "X-Tenant"})
 
     def test_header_parameters_merged_with_request_body(self):
         specs = _build_operation_specs(HEADER_AND_BODY_SPEC)
         assert len(specs) == 1
-        definition = specs[0].definition
-        header_names = specs[0].header_param_names
-        assert definition is not None
-        params = definition.parameters
+        params = specs[0].definition["parameters"]
         assert "X-Request-Id" in params["properties"]
         assert "payload" in params["properties"]
         assert "X-Request-Id" in params["required"]
         assert "payload" in params["required"]
-        assert header_names == {"X-Request-Id"}
+        assert specs[0].header_param_names == frozenset({"X-Request-Id"})
 
-    def test_no_operation_id_returns_none(self):
+    def test_no_operation_id_skips_operation(self):
         spec = {"paths": {"/run": {"post": {"summary": "no id"}}}}
-        specs = _build_operation_specs(spec)
-        assert specs == []
+        assert _build_operation_specs(spec) == []
 
+
+class TestGetTools:
     def _make_module(
-        self, tool_servers: list[dict], factory=None
+        self,
+        factory: HttpClientModule,
+        tool_servers: list[dict] | None = None,
     ) -> OpenAPIToolRegistryModule:
-        if factory is None:
-            # Provide a factory that yields a no-op async client by default
-            factory = _StubHttpClientFactory(AsyncMock())
         deps = ModuleDependencies({"http_client": factory})
-        return OpenAPIToolRegistryModule(deps, {"tool_servers": tool_servers})
+        return OpenAPIToolRegistryModule(
+            deps,
+            {
+                "tool_servers": tool_servers
+                or [{"url": "http://calc:8000/openapi.json"}]
+            },
+        )
+
+    @pytest.mark.asyncio
+    async def test_get_tools_returns_openai_function_tools(self):
+        spec_client = AsyncMock()
+        spec_client.request = AsyncMock(
+            return_value=_mock_response(spec=SAMPLE_OPENAPI_SPEC)
+        )
+        module = self._make_module(_StubHttpClientFactory(spec_client))
+
+        result = await module.get_tools(_request())
+
+        assert len(result) == 1
+        assert result[0]["type"] == "function"
+        assert result[0]["name"] == "calculate"
+        assert result[0]["strict"] is True
 
     @pytest.mark.asyncio
     async def test_get_tools_empty_config(self):
-        module = self._make_module([])
-        result = await module.get_tools()
+        deps = ModuleDependencies({"http_client": _StubHttpClientFactory(AsyncMock())})
+        module = OpenAPIToolRegistryModule(deps, {})
+
+        result = await module.get_tools(_request())
+
         assert result == []
 
     @pytest.mark.asyncio
     async def test_get_tools_returns_tools_from_all_services(self):
         search_spec = {
-            **SAMPLE_OPENAPI_SPEC,
+            "openapi": "3.1.0",
             "paths": {
                 "/search": {
                     "put": {
@@ -393,39 +392,18 @@ class TestBuildToolDefinition:
         mock_client = AsyncMock()
         mock_client.request = mock_request
         module = self._make_module(
-            [
+            _StubHttpClientFactory(mock_client),
+            tool_servers=[
                 {"url": "http://calc:8000/openapi.json"},
                 {"url": "http://search:8000/openapi.json"},
             ],
-            factory=_StubHttpClientFactory(mock_client),
         )
 
-        result = await module.get_tools()
+        result = await module.get_tools(_request())
 
         assert len(result) == 2
-        assert isinstance(result[0], Tool)
-        assert isinstance(result[1], Tool)
-        names = {tool.definition.name for tool in result}
+        names = {tool["name"] for tool in result}
         assert names == {"calculate", "web_search"}
-
-    @pytest.mark.asyncio
-    async def test_tool_definition_extracted_from_spec(self):
-        mock_client = AsyncMock()
-        mock_client.request = AsyncMock(
-            return_value=_mock_response(spec=SAMPLE_OPENAPI_SPEC)
-        )
-        module = self._make_module(
-            [{"url": "http://calc:8000/openapi.json"}],
-            factory=_StubHttpClientFactory(mock_client),
-        )
-
-        result = await module.get_tools()
-
-        assert len(result) == 1
-        definition = result[0].definition
-        assert definition.name == "calculate"
-        assert definition.description == "Evaluate a math expression"
-        assert "expression" in definition.parameters["properties"]
 
     @pytest.mark.asyncio
     async def test_get_tools_skips_unavailable_service(self):
@@ -437,48 +415,28 @@ class TestBuildToolDefinition:
         mock_client = AsyncMock()
         mock_client.request = mock_request
         module = self._make_module(
-            [
+            _StubHttpClientFactory(mock_client),
+            tool_servers=[
                 {"url": "http://good:8000/openapi.json"},
                 {"url": "http://bad:8000/openapi.json"},
             ],
-            factory=_StubHttpClientFactory(mock_client),
         )
 
-        result = await module.get_tools()
+        result = await module.get_tools(_request())
 
         assert len(result) == 1
-        assert result[0].definition.name == "calculate"
+        assert result[0]["name"] == "calculate"
 
     @pytest.mark.asyncio
     async def test_get_tools_skips_spec_without_operation_id(self):
         no_op_spec = {"paths": {"/run": {"post": {"summary": "No operationId"}}}}
         mock_client = AsyncMock()
         mock_client.request = AsyncMock(return_value=_mock_response(spec=no_op_spec))
-        module = self._make_module(
-            [{"url": "http://tool:8000/openapi.json"}],
-            factory=_StubHttpClientFactory(mock_client),
-        )
+        module = self._make_module(_StubHttpClientFactory(mock_client))
 
-        result = await module.get_tools()
+        result = await module.get_tools(_request())
 
         assert result == []
-
-    def test_has_no_router(self):
-        module = self._make_module([])
-        assert not hasattr(module, "router")
-
-    def test_stores_tool_servers_from_config(self):
-        tool_servers = [
-            {"url": "http://a:8000/openapi.json"},
-            {"url": "http://b:9000/openapi.json"},
-        ]
-        module = self._make_module(tool_servers)
-        assert module.tool_servers == tool_servers
-
-    def test_defaults_to_empty_tool_servers_list(self):
-        deps = ModuleDependencies()
-        module = OpenAPIToolRegistryModule(deps, {})
-        assert module.tool_servers == []
 
     @pytest.mark.asyncio
     async def test_get_tools_returns_all_operations_from_single_server(self):
@@ -486,64 +444,65 @@ class TestBuildToolDefinition:
             "openapi": "3.1.0",
             "paths": {
                 "/calculate": {
-                    "post": {
-                        "summary": "Evaluate",
-                        "operationId": "calculate",
-                    }
+                    "post": {"summary": "Evaluate", "operationId": "calculate"}
                 },
-                "/search": {
-                    "put": {
-                        "summary": "Search",
-                        "operationId": "web_search",
-                    }
-                },
+                "/search": {"put": {"summary": "Search", "operationId": "web_search"}},
             },
         }
         mock_client = AsyncMock()
         mock_client.request = AsyncMock(return_value=_mock_response(spec=multi_op_spec))
-        module = self._make_module(
-            [{"url": "http://tool-server:8000/openapi.json"}],
-            factory=_StubHttpClientFactory(mock_client),
-        )
+        module = self._make_module(_StubHttpClientFactory(mock_client))
 
-        result = await module.get_tools()
+        result = await module.get_tools(_request())
 
-        names = {tool.definition.name for tool in result}
+        names = {tool["name"] for tool in result}
         assert names == {"calculate", "web_search"}
 
+    def test_has_no_router(self):
+        deps = ModuleDependencies({"http_client": _StubHttpClientFactory(AsyncMock())})
+        module = OpenAPIToolRegistryModule(deps, {})
+        assert not hasattr(module, "router")
 
-class TestToolRun:
-    """Tool.run invokes the tool microservice over HTTP."""
+    def test_stores_tool_servers_from_config(self):
+        tool_servers = [
+            {"url": "http://a:8000/openapi.json"},
+            {"url": "http://b:9000/openapi.json"},
+        ]
+        deps = ModuleDependencies({"http_client": _StubHttpClientFactory(AsyncMock())})
+        module = OpenAPIToolRegistryModule(deps, {"tool_servers": tool_servers})
+        assert module.tool_servers == tool_servers
 
+    def test_defaults_to_empty_tool_servers_list(self):
+        deps = ModuleDependencies({"http_client": _StubHttpClientFactory(AsyncMock())})
+        module = OpenAPIToolRegistryModule(deps, {})
+        assert module.tool_servers == []
+
+
+class TestRunTool:
     def _make_module(
-        self, tool_servers: list[dict], factory=None
+        self, spec: dict[str, Any], run_client: AsyncMock
     ) -> OpenAPIToolRegistryModule:
-        if factory is None:
-            factory = _StubHttpClientFactory(AsyncMock())
-        deps = ModuleDependencies({"http_client": factory})
-        return OpenAPIToolRegistryModule(deps, {"tool_servers": tool_servers})
+        spec_client = AsyncMock()
+        spec_client.request = AsyncMock(return_value=_mock_response(spec=spec))
+        deps = ModuleDependencies(
+            {"http_client": _StubHttpClientFactory(spec_client, run_client)}
+        )
+        return OpenAPIToolRegistryModule(
+            deps, {"tool_servers": [{"url": "http://calc:8000/openapi.json"}]}
+        )
 
     @pytest.mark.asyncio
-    async def test_run_makes_http_request_to_tool_endpoint(self):
-        spec_client = AsyncMock()
-        spec_client.request = AsyncMock(
-            return_value=_mock_response(spec=SAMPLE_OPENAPI_SPEC)
-        )
-
-        run_response = _mock_response(text='{"result": 42}')
+    async def test_run_tool_executes_operation_by_name(self):
         run_client = AsyncMock()
-        run_client.request = AsyncMock(return_value=run_response)
-
-        # factory yields spec_client on first new() call, run_client on second
-        module = self._make_module(
-            [{"url": "http://calc:8000/openapi.json"}],
-            factory=_StubHttpClientFactory(spec_client, run_client),
+        run_client.request = AsyncMock(
+            return_value=_mock_response(text='{"result": 42}')
         )
+        module = self._make_module(SAMPLE_OPENAPI_SPEC, run_client)
 
-        tools = await module.get_tools()
-        assert len(tools) == 1
-
-        result = await tools[0].run({"expression": "6*7"})
+        result = await module.run_tool(
+            _request("/api/responses"),
+            {"name": "calculate", "arguments": {"expression": "6*7"}},
+        )
 
         run_client.request.assert_called_once_with(
             method="POST",
@@ -554,180 +513,128 @@ class TestToolRun:
         assert result == '{"result": 42}'
 
     @pytest.mark.asyncio
-    async def test_run_forwards_bearer_token_as_authorization_header(self):
-        """When _bearer_token is in params it becomes Authorization: Bearer <token>."""
-        spec_client = AsyncMock()
-        spec_client.request = AsyncMock(
-            return_value=_mock_response(spec=SAMPLE_OPENAPI_SPEC)
-        )
-
-        run_response = _mock_response(text='{"result": 42}')
+    async def test_run_tool_forwards_bearer_and_header_params(self):
+        spec = {
+            "openapi": "3.1.0",
+            "paths": {
+                "/submit": {
+                    "post": {
+                        "operationId": "submit",
+                        "parameters": [
+                            {
+                                "name": "X-Request-Id",
+                                "in": "header",
+                                "required": True,
+                                "schema": {"type": "string"},
+                            }
+                        ],
+                    }
+                }
+            },
+        }
         run_client = AsyncMock()
-        run_client.request = AsyncMock(return_value=run_response)
+        run_client.request = AsyncMock(return_value=_mock_response(text='{"ok": true}'))
+        module = self._make_module(spec, run_client)
 
-        module = self._make_module(
-            [{"url": "http://calc:8000/openapi.json"}],
-            factory=_StubHttpClientFactory(spec_client, run_client),
+        await module.run_tool(
+            _request(),
+            {
+                "name": "submit",
+                "arguments": {
+                    "payload": "hello",
+                    "X-Request-Id": "req-1",
+                    "_bearer_token": "secret",
+                },
+            },
         )
-
-        tools = await module.get_tools()
-        await tools[0].run({"expression": "2+2", "_bearer_token": "secret"})
 
         run_client.request.assert_called_once_with(
             method="POST",
-            url="http://calc:8000/calculate",
-            json={"expression": "2+2"},
-            headers={"Authorization": "Bearer secret"},
+            url="http://calc:8000/submit",
+            json={"payload": "hello"},
+            headers={"Authorization": "Bearer secret", "X-Request-Id": "req-1"},
         )
 
     @pytest.mark.asyncio
-    async def test_run_substitutes_path_parameters_into_url(self):
-        """Path parameters are substituted into the URL template, not sent in the body."""
-        spec_client = AsyncMock()
-        spec_client.request = AsyncMock(
-            return_value=_mock_response(spec=PATH_PARAMS_SPEC)
-        )
-
-        run_response = _mock_response(text='{"order": "details"}')
+    async def test_run_tool_raises_for_unknown_name(self):
         run_client = AsyncMock()
-        run_client.request = AsyncMock(return_value=run_response)
+        run_client.request = AsyncMock(return_value=_mock_response(text='{"ok": true}'))
+        module = self._make_module(SAMPLE_OPENAPI_SPEC, run_client)
 
-        module = self._make_module(
-            [{"url": "http://users:8000/openapi.json"}],
-            factory=_StubHttpClientFactory(spec_client, run_client),
+        with pytest.raises(ValueError, match="not found"):
+            await module.run_tool(_request(), {"name": "unknown", "arguments": {}})
+
+    @pytest.mark.asyncio
+    async def test_run_tool_substitutes_path_parameters_into_url(self):
+        run_client = AsyncMock()
+        run_client.request = AsyncMock(
+            return_value=_mock_response(text='{"order": "details"}')
         )
+        module = self._make_module(PATH_PARAMS_SPEC, run_client)
 
-        tools = await module.get_tools()
-        assert len(tools) == 1
-
-        result = await tools[0].run({"user_id": "alice", "order_id": 42})
+        result = await module.run_tool(
+            _request(),
+            {
+                "name": "get_user_order",
+                "arguments": {"user_id": "alice", "order_id": 42},
+            },
+        )
 
         run_client.request.assert_called_once_with(
             method="GET",
-            url="http://users:8000/users/alice/orders/42",
+            url="http://calc:8000/users/alice/orders/42",
             json={},
             headers={},
         )
         assert result == '{"order": "details"}'
 
     @pytest.mark.asyncio
-    async def test_run_substitutes_path_parameters_leaving_body_params(self):
-        """Path params are substituted into URL; remaining params go in the request body."""
-        spec_client = AsyncMock()
-        spec_client.request = AsyncMock(
-            return_value=_mock_response(spec=PATH_PARAMS_WITH_BODY_SPEC)
-        )
-
-        run_response = _mock_response(text='{"updated": true}')
+    async def test_run_tool_substitutes_path_params_leaving_body(self):
         run_client = AsyncMock()
-        run_client.request = AsyncMock(return_value=run_response)
-
-        module = self._make_module(
-            [{"url": "http://items:8000/openapi.json"}],
-            factory=_StubHttpClientFactory(spec_client, run_client),
+        run_client.request = AsyncMock(
+            return_value=_mock_response(text='{"updated": true}')
         )
+        module = self._make_module(PATH_PARAMS_WITH_BODY_SPEC, run_client)
 
-        tools = await module.get_tools()
-        assert len(tools) == 1
-
-        await tools[0].run({"item_id": 7, "name": "Widget"})
+        await module.run_tool(
+            _request(),
+            {"name": "update_item", "arguments": {"item_id": 7, "name": "Widget"}},
+        )
 
         run_client.request.assert_called_once_with(
             method="PUT",
-            url="http://items:8000/items/7",
+            url="http://calc:8000/items/7",
             json={"name": "Widget"},
             headers={},
         )
 
+
+class TestHelpers:
     @pytest.mark.asyncio
-    async def test_run_forwards_header_parameters_as_http_headers(self):
-        """Header parameters declared in the spec are forwarded as HTTP headers, not in the body."""
-        spec_client = AsyncMock()
-        spec_client.request = AsyncMock(
-            return_value=_mock_response(spec=HEADER_AND_BODY_SPEC)
-        )
-
-        run_response = _mock_response(text='{"ok": true}')
-        run_client = AsyncMock()
-        run_client.request = AsyncMock(return_value=run_response)
-
-        module = self._make_module(
-            [{"url": "http://submit:8000/openapi.json"}],
-            factory=_StubHttpClientFactory(spec_client, run_client),
-        )
-
-        tools = await module.get_tools()
-        assert len(tools) == 1
-
-        await tools[0].run({"payload": "hello", "X-Request-Id": "req-abc"})
-
-        run_client.request.assert_called_once_with(
-            method="POST",
-            url="http://submit:8000/submit",
-            json={"payload": "hello"},
-            headers={"X-Request-Id": "req-abc"},
-        )
-
-    @pytest.mark.asyncio
-    async def test_run_combines_bearer_token_and_header_parameters(self):
-        """Both _bearer_token and header params end up in the headers dict."""
-        spec_client = AsyncMock()
-        spec_client.request = AsyncMock(
-            return_value=_mock_response(spec=HEADER_AND_BODY_SPEC)
-        )
-
-        run_response = _mock_response(text='{"ok": true}')
-        run_client = AsyncMock()
-        run_client.request = AsyncMock(return_value=run_response)
-
-        module = self._make_module(
-            [{"url": "http://submit:8000/openapi.json"}],
-            factory=_StubHttpClientFactory(spec_client, run_client),
-        )
-
-        tools = await module.get_tools()
-        await tools[0].run(
-            {"payload": "hello", "X-Request-Id": "req-abc", "_bearer_token": "tok"}
-        )
-
-        run_client.request.assert_called_once_with(
-            method="POST",
-            url="http://submit:8000/submit",
-            json={"payload": "hello"},
-            headers={"Authorization": "Bearer tok", "X-Request-Id": "req-abc"},
-        )
-
-
-class TestFetchOpenapiSpec:
-    @pytest.mark.asyncio
-    async def test_success(self):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.raise_for_status = lambda: None
-        mock_response.json.return_value = SAMPLE_OPENAPI_SPEC
-
+    async def test_fetch_openapi_spec_appends_default_path(self):
         client = AsyncMock()
-        client.request = AsyncMock(return_value=mock_response)
+        client.request = AsyncMock(
+            return_value=_mock_response(spec=SAMPLE_OPENAPI_SPEC)
+        )
 
         result = await _fetch_openapi_spec(client, "http://tool:8000")
+
         assert result == SAMPLE_OPENAPI_SPEC
         client.request.assert_called_once_with("GET", "http://tool:8000/openapi.json")
 
     @pytest.mark.asyncio
-    async def test_strips_trailing_slash(self):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.raise_for_status = lambda: None
-        mock_response.json.return_value = SAMPLE_OPENAPI_SPEC
-
+    async def test_fetch_openapi_spec_strips_trailing_slash(self):
         client = AsyncMock()
-        client.request = AsyncMock(return_value=mock_response)
+        client.request = AsyncMock(
+            return_value=_mock_response(spec=SAMPLE_OPENAPI_SPEC)
+        )
 
         await _fetch_openapi_spec(client, "http://tool:8000/")
+
         client.request.assert_called_once_with("GET", "http://tool:8000/openapi.json")
 
     @pytest.mark.asyncio
-    async def test_http_error_returns_none(self):
+    async def test_fetch_openapi_spec_http_error_returns_none(self):
         mock_response = MagicMock()
         mock_response.status_code = 500
         mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
@@ -735,96 +642,48 @@ class TestFetchOpenapiSpec:
             request=httpx.Request("GET", "http://tool:8000/openapi.json"),
             response=mock_response,
         )
-
         client = AsyncMock()
         client.request = AsyncMock(return_value=mock_response)
 
         result = await _fetch_openapi_spec(client, "http://tool:8000")
+
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_connection_error_returns_none(self):
+    async def test_fetch_openapi_spec_connection_error_returns_none(self):
         client = AsyncMock()
         client.request = AsyncMock(side_effect=httpx.ConnectError("Connection refused"))
 
         result = await _fetch_openapi_spec(client, "http://tool:8000")
+
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_unexpected_error_returns_none(self):
+    async def test_fetch_openapi_spec_unexpected_error_returns_none(self):
         client = AsyncMock()
         client.request = AsyncMock(side_effect=RuntimeError("something went wrong"))
 
         result = await _fetch_openapi_spec(client, "http://tool:8000")
+
         assert result is None
 
+    def test_derive_base_url(self):
+        assert (
+            _derive_base_url("http://host:9000/api/openapi.json")
+            == "http://host:9000/api"
+        )
 
-class TestDeriveBaseUrl:
-    def test_strips_openapi_json(self):
+    def test_derive_base_url_strips_openapi_json(self):
         assert _derive_base_url("http://calc:8000/openapi.json") == "http://calc:8000"
 
-    def test_keeps_nested_base_path(self):
+    def test_derive_base_url_keeps_nested_base_path(self):
         assert (
             _derive_base_url("http://host:9000/api/v1/openapi.json")
             == "http://host:9000/api/v1"
         )
 
-    def test_accepts_base_url_without_json(self):
+    def test_derive_base_url_accepts_bare_base_url(self):
         assert _derive_base_url("http://tool:8000") == "http://tool:8000"
 
-    def test_trailing_slash(self):
+    def test_derive_base_url_trailing_slash(self):
         assert _derive_base_url("http://tool:8000/") == "http://tool:8000"
-
-
-class TestGetToolByName:
-    def _make_module(
-        self, tool_servers: list[dict], factory=None
-    ) -> OpenAPIToolRegistryModule:
-        if factory is None:
-            factory = _StubHttpClientFactory(AsyncMock())
-        deps = ModuleDependencies({"http_client": factory})
-        return OpenAPIToolRegistryModule(deps, {"tool_servers": tool_servers})
-
-    def _make_spec_factory(self, spec_map: dict[str, dict]):
-        """Build an HttpClientFactory whose client dispatches by URL key."""
-
-        async def mock_request(method, url, **kwargs):
-            for key, spec in spec_map.items():
-                if key in url:
-                    return _mock_response(spec=spec)
-            raise httpx.ConnectError("No mock for " + url)
-
-        mock_client = AsyncMock()
-        mock_client.request = mock_request
-        return _StubHttpClientFactory(mock_client)
-
-    @pytest.mark.asyncio
-    async def test_finds_tool_by_name(self):
-        module = self._make_module(
-            [{"url": "http://calc:8000/openapi.json"}],
-            factory=self._make_spec_factory({"calc": SAMPLE_OPENAPI_SPEC}),
-        )
-
-        result = await module.get_tool_by_name("calculate")
-
-        assert result is not None
-        assert isinstance(result, Tool)
-        assert result.definition.name == "calculate"
-        assert result.definition.description == "Evaluate a math expression"
-
-    @pytest.mark.asyncio
-    async def test_returns_none_for_unknown_name(self):
-        module = self._make_module(
-            [{"url": "http://calc:8000/openapi.json"}],
-            factory=self._make_spec_factory({"calc": SAMPLE_OPENAPI_SPEC}),
-        )
-
-        result = await module.get_tool_by_name("nonexistent")
-
-        assert result is None
-
-    @pytest.mark.asyncio
-    async def test_returns_none_for_empty_registry(self):
-        module = self._make_module([])
-        result = await module.get_tool_by_name("calculate")
-        assert result is None

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Switch frontend to Svelte
+- Updated tools fetching and chat tool handling to support `/api/tools` responses as a raw list of function tools (instead of requiring a `{ tools: [...] }` envelope); legacy envelope parsing remains supported for compatibility.
 - ChatInputPanel redesigned: textarea, model selector, tools selector, and send button are now visually inside a single input box (ai-sdk.dev/examples/chatbot style).
 - Removed the Tools sidebar navigation item and `/tools` route from all module configurations.
 - Made the chat tools selector popover scrollable with a viewport-constrained height so long tool lists remain fully accessible.

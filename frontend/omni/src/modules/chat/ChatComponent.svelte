@@ -113,7 +113,7 @@ async function handleSend(text: string) {
     try {
         chatStatus = "streaming";
         const selectedTools = availableTools.filter((tool) =>
-            selectedToolNames.includes(tool.function.name),
+            selectedToolNames.includes(tool.name),
         );
         for await (const textPart of chatService.streamChat(
             selectedModelData,

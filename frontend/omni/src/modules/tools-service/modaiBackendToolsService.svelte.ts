@@ -4,10 +4,6 @@ import type { OpenAIFunctionTool, ToolsService } from "./index.svelte.js";
 
 const API_BASE = "/api/tools";
 
-type BackendToolsResponse = {
-    tools: OpenAIFunctionTool[];
-};
-
 export class ModaiBackendToolsService implements ToolsService {
     readonly #fetchService: FetchService;
 
@@ -21,8 +17,7 @@ export class ModaiBackendToolsService implements ToolsService {
             return [];
         }
 
-        const data = (await response.json()) as BackendToolsResponse;
-        return data.tools ?? [];
+        return (await response.json()) as OpenAIFunctionTool[];
     }
 }
 

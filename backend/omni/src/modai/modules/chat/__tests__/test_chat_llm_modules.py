@@ -41,7 +41,6 @@ from modai.modules.model_provider.module import (
     ModelProviderResponse,
     ModelProvidersListResponse,
 )
-from modai.modules.tools.module import Tool, ToolDefinition
 
 working_dir = Path.cwd()
 load_dotenv(find_dotenv(str(working_dir / ".env")))
@@ -93,6 +92,10 @@ _NON_AGENTIC_ONLY_PARAMS = [
 
 # Both module classes, llmock backend only (no OpenAI key required).
 _LLMOCK_ONLY_PARAMS = [_AGENTIC_LLMOCK, _NON_AGENTIC_LLMOCK]
+
+# Agentic module with llmock only — for tool-call execution tests that require
+# deterministic LLM behaviour (llmock ToolCallStrategy always calls the tool).
+_AGENTIC_LLMOCK_ONLY_PARAMS = [_AGENTIC_LLMOCK]
 
 # ---------------------------------------------------------------------------
 # Module factory
@@ -177,6 +180,14 @@ def llmock_only_factory(
     request: pytest.FixtureRequest, llmock_base_url: str
 ) -> ModuleFactory:
     """All module classes, llmock backend only (no OpenAI key required)."""
+    return _build_module_factory(request.param, llmock_base_url)
+
+
+@pytest.fixture(params=_AGENTIC_LLMOCK_ONLY_PARAMS)
+def agentic_llmock_factory(
+    request: pytest.FixtureRequest, llmock_base_url: str
+) -> ModuleFactory:
+    """Agentic module with llmock only — tool call behaviour is deterministic."""
     return _build_module_factory(request.param, llmock_base_url)
 
 
@@ -568,35 +579,22 @@ class TestAgenticLoop:
 
     @pytest.mark.asyncio
     async def test_tool_is_executed_during_non_streaming_loop(
-        self, agentic_factory: ModuleFactory
+        self, agentic_llmock_factory: ModuleFactory
     ):
         captured_calls: list[dict] = []
 
-        class _CapturingTool(Tool):
-            @property
-            def definition(self) -> ToolDefinition:
-                return ToolDefinition(
-                    name="calculate",
-                    description="Evaluate a math expression",
-                    parameters={
-                        "type": "object",
-                        "properties": {"expression": {"type": "string"}},
-                        "required": ["expression"],
-                    },
-                )
-
-            async def run(self, params: dict[str, Any]) -> Any:
-                captured_calls.append(dict(params))
-                return "42"
+        async def _run_tool(request: Any, params: dict[str, Any]) -> str:
+            captured_calls.append(dict(params))
+            return "42"
 
         registry = Mock()
-        registry.get_tool_by_name = AsyncMock(return_value=_CapturingTool())
+        registry.run_tool = AsyncMock(side_effect=_run_tool)
 
-        module = agentic_factory.create(tool_registry=registry)
+        module = agentic_llmock_factory.create(tool_registry=registry)
         result = await module.generate_response(
             _make_request(),
             {
-                "model": agentic_factory.model,
+                "model": agentic_llmock_factory.model,
                 "input": "call tool 'calculate' with '{\"expression\": \"6*7\"}'",
                 "tools": [_AGENTIC_CALCULATE_TOOL],
             },
@@ -607,35 +605,22 @@ class TestAgenticLoop:
 
     @pytest.mark.asyncio
     async def test_tool_is_executed_during_streaming_loop(
-        self, agentic_factory: ModuleFactory
+        self, agentic_llmock_factory: ModuleFactory
     ):
         captured_calls: list[dict] = []
 
-        class _CapturingTool(Tool):
-            @property
-            def definition(self) -> ToolDefinition:
-                return ToolDefinition(
-                    name="calculate",
-                    description="Evaluate a math expression",
-                    parameters={
-                        "type": "object",
-                        "properties": {"expression": {"type": "string"}},
-                        "required": ["expression"],
-                    },
-                )
-
-            async def run(self, params: dict[str, Any]) -> Any:
-                captured_calls.append(dict(params))
-                return "42"
+        async def _run_tool(request: Any, params: dict[str, Any]) -> str:
+            captured_calls.append(dict(params))
+            return "42"
 
         registry = Mock()
-        registry.get_tool_by_name = AsyncMock(return_value=_CapturingTool())
+        registry.run_tool = AsyncMock(side_effect=_run_tool)
 
-        module = agentic_factory.create(tool_registry=registry)
+        module = agentic_llmock_factory.create(tool_registry=registry)
         gen = await module.generate_response(
             _make_request(),
             {
-                "model": agentic_factory.model,
+                "model": agentic_llmock_factory.model,
                 "input": "call tool 'calculate' with '{\"expression\": \"6*7\"}'",
                 "tools": [_AGENTIC_CALCULATE_TOOL],
                 "stream": True,
@@ -814,7 +799,9 @@ class TestToolErrors:
         agent continues to a final text response.
         """
         registry = Mock()
-        registry.get_tool_by_name = AsyncMock(return_value=None)
+        registry.run_tool = AsyncMock(
+            side_effect=ValueError("Tool 'nonexistent_tool' not found")
+        )
         module = agentic_factory.create(tool_registry=registry)
         body = {
             "model": agentic_factory.model,
@@ -833,20 +820,8 @@ class TestToolErrors:
     ):
         """A tool whose run() raises an error does not crash the agent."""
 
-        class _FailingTool(Tool):
-            @property
-            def definition(self) -> ToolDefinition:
-                return ToolDefinition(
-                    name="broken_tool",
-                    description="Broken",
-                    parameters={"type": "object", "properties": {}},
-                )
-
-            async def run(self, params: dict[str, Any]) -> Any:
-                raise RuntimeError("tool exploded")
-
         registry = Mock()
-        registry.get_tool_by_name = AsyncMock(return_value=_FailingTool())
+        registry.run_tool = AsyncMock(side_effect=RuntimeError("tool exploded"))
         module = agentic_factory.create(tool_registry=registry)
         body = {
             "model": agentic_factory.model,
@@ -870,9 +845,7 @@ class TestToolErrors:
         result so the agent can continue to a final text response.
         """
         registry = Mock()
-        registry.get_tool_by_name = AsyncMock(
-            side_effect=RuntimeError("Registry unavailable")
-        )
+        registry.run_tool = AsyncMock(side_effect=RuntimeError("Registry unavailable"))
         module = agentic_factory.create(tool_registry=registry)
         body = {
             "model": agentic_factory.model,
@@ -890,19 +863,10 @@ class TestToolErrors:
         self, agentic_factory: ModuleFactory
     ):
         """When a tool URL is unreachable the agent receives a tool error and completes."""
-        definition = ToolDefinition(
-            name="calculate",
-            description="Evaluate a math expression",
-            parameters={
-                "type": "object",
-                "properties": {"expression": {"type": "string"}},
-            },
-        )
-        tool = _make_tool(
-            definition, run_url="http://localhost:1/calculate", run_method="POST"
-        )
         registry = Mock()
-        registry.get_tool_by_name = AsyncMock(return_value=tool)
+        registry.run_tool = AsyncMock(
+            side_effect=httpx_lib.ConnectError("Connection refused")
+        )
         module = agentic_factory.create(tool_registry=registry)
         body = {
             "model": agentic_factory.model,
@@ -918,19 +882,18 @@ class TestToolErrors:
     ):
         """The tool HTTP endpoint receives the call forwarded by the agent."""
         httpserver.expect_oneshot_request("/calculate").respond_with_json({"result": 4})
-        definition = ToolDefinition(
-            name="calculate",
-            description="Evaluate a math expression",
-            parameters={
-                "type": "object",
-                "properties": {"expression": {"type": "string"}},
-            },
-        )
-        tool = _make_tool(
-            definition, run_url=httpserver.url_for("/calculate"), run_method="POST"
-        )
+
+        async def _run_tool_http(request: Any, params: dict[str, Any]) -> str:
+            async with httpx_lib.AsyncClient(timeout=30.0) as client:
+                resp = await client.post(
+                    httpserver.url_for("/calculate"),
+                    json=params.get("arguments", {}),
+                )
+                resp.raise_for_status()
+                return resp.text
+
         registry = Mock()
-        registry.get_tool_by_name = AsyncMock(return_value=tool)
+        registry.run_tool = AsyncMock(side_effect=_run_tool_http)
         module = agentic_factory.create(tool_registry=registry)
         body = {
             "model": agentic_factory.model,
@@ -947,19 +910,15 @@ class TestToolErrors:
     ):
         """All client tool specs are registered with Strands; missing registry tools
         return an error result at execution time without preventing other tools."""
-        calc_definition = ToolDefinition(
-            name="calculate",
-            description="Evaluate a math expression",
-            parameters={
-                "type": "object",
-                "properties": {"expression": {"type": "string"}},
-            },
-        )
-        calc_tool = _make_tool(calc_definition)
+
+        async def _run_tool_partial(request: Any, params: dict[str, Any]) -> Any:
+            name = params.get("name")
+            if name == "calculate":
+                return "42"
+            raise ValueError(f"Tool '{name}' not found")
+
         registry = Mock()
-        registry.get_tool_by_name = AsyncMock(
-            side_effect=lambda name, **_: calc_tool if name == "calculate" else None
-        )
+        registry.run_tool = AsyncMock(side_effect=_run_tool_partial)
         module = agentic_factory.create(tool_registry=registry)
         body = {
             "model": agentic_factory.model,
@@ -999,20 +958,8 @@ class TestToolSpecPassThrough:
     async def test_client_description_forwarded_to_llm(self, llmock_base_url: str):
         """Tool description from client spec reaches LLM instead of registry's."""
 
-        class _RegistryTool(Tool):
-            @property
-            def definition(self) -> ToolDefinition:
-                return ToolDefinition(
-                    name="calculate",
-                    description="REGISTRY description — must NOT reach LLM",
-                    parameters={"type": "object", "properties": {}},
-                )
-
-            async def run(self, params: dict[str, Any]) -> Any:
-                return "42"
-
         registry = Mock()
-        registry.get_tool_by_name = AsyncMock(return_value=_RegistryTool())
+        registry.run_tool = AsyncMock(return_value="42")
 
         provider = _make_provider(base_url=llmock_base_url, api_key=LLMOCK_API_KEY)
         module = StrandsAgentChatModule(
@@ -1072,20 +1019,8 @@ class TestToolSpecPassThrough:
     async def test_client_parameters_forwarded_to_llm(self, llmock_base_url: str):
         """Tool parameters schema from client spec reaches LLM instead of registry's."""
 
-        class _RegistryTool(Tool):
-            @property
-            def definition(self) -> ToolDefinition:
-                return ToolDefinition(
-                    name="calculate",
-                    description="Registry tool",
-                    parameters={"type": "object", "properties": {}},
-                )
-
-            async def run(self, params: dict[str, Any]) -> Any:
-                return "42"
-
         registry = Mock()
-        registry.get_tool_by_name = AsyncMock(return_value=_RegistryTool())
+        registry.run_tool = AsyncMock(return_value="42")
 
         provider = _make_provider(base_url=llmock_base_url, api_key=LLMOCK_API_KEY)
         module = StrandsAgentChatModule(
@@ -1152,9 +1087,8 @@ class TestToolSpecPassThrough:
         LLM receives a tool with empty description — the registry is never
         consulted for spec information."""
 
-        # Registry that finds no tool (returns None) — must not affect the spec.
         registry = Mock()
-        registry.get_tool_by_name = AsyncMock(return_value=None)
+        registry.run_tool = AsyncMock(return_value="42")
 
         provider = _make_provider(base_url=llmock_base_url, api_key=LLMOCK_API_KEY)
         module = StrandsAgentChatModule(
@@ -1299,37 +1233,6 @@ def _real_provider() -> ModelProviderResponse:
 def _real_model() -> str:
     model = os.environ.get("OPENAI_MODEL", "gpt-4o")
     return f"myopenai/{model}"
-
-
-def _make_tool(
-    definition: ToolDefinition, run_url: str = "", run_method: str = "POST"
-) -> Tool:
-    """Create a Tool stub for testing.
-
-    If run_url is provided the tool makes a real HTTP call when run() is called;
-    otherwise run() returns an empty string.
-    """
-    url = run_url
-    method = run_method
-
-    class _TestTool(Tool):
-        @property
-        def definition(self) -> ToolDefinition:
-            return definition
-
-        async def run(self, params: dict[str, Any]) -> Any:
-            if url:
-                import httpx
-
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    response = await client.request(
-                        method=method.upper(), url=url, json=params
-                    )
-                    response.raise_for_status()
-                    return response.text
-            return ""
-
-    return _TestTool()
 
 
 def _wait_for_health(base_url: str, timeout: float = 30.0) -> None:
