@@ -9,10 +9,8 @@ import * as Collapsible from "$lib/shadcnui/components/ui/collapsible/index.js";
 
 let {
     message,
-    selectedModelName,
 }: {
-    message: UIMessage;
-    selectedModelName: string | undefined;
+    message: UIMessage<{ modelName?: string }>;
 } = $props();
 
 function renderMarkdown(text: string): string {
@@ -51,7 +49,7 @@ function renderMarkdown(text: string): string {
 			>
 				{message.role === "user"
 					? "You"
-					: (selectedModelName ?? "Assistant")}
+					: (message.metadata?.modelName ?? "Assistant")}
 			</p>
 			<div
 				class="flex flex-col gap-2 {message.role === 'user'
