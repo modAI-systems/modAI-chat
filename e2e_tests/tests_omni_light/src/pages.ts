@@ -44,7 +44,7 @@ export class ChatPage {
                 hasText: /Select model|gpt-/i,
             })
             .first();
-        await expect(modelButton).toBeEnabled({ timeout: 10000 });
+        await modelButton.waitFor({ state: "visible", timeout: 10000 });
         await modelButton.click();
         // Click the first option in the popover/command list
         const firstOption = this.page.locator('[role="option"]').first();
@@ -52,19 +52,53 @@ export class ChatPage {
         await firstOption.click();
     }
 
+    async selectModel(modelName: string): Promise<void> {
+        const modelButton = this.page
+            .locator("button")
+            .filter({ hasText: /Select model|gpt-/i })
+            .first();
+        await modelButton.waitFor({ state: "visible", timeout: 10000 });
+        await modelButton.click();
+        const option = this.page
+            .locator('[role="option"]')
+            .filter({ hasText: modelName })
+            .first();
+        await option.waitFor({ state: "visible", timeout: 5000 });
+        await option.click();
+    }
+
     async sendMessage(message: string): Promise<void> {
         const input = this.page.getByRole("textbox", {
             name: "Type a message...",
         });
-        await expect(input).toBeEnabled({ timeout: 5000 });
         await input.fill(message);
         await this.page.getByRole("button", { name: "Send" }).click();
+    }
+
+    async waitForIdle(): Promise<void> {
+        const input = this.page.getByRole("textbox", {
+            name: "Type a message...",
+        });
+        await input
+            .and(this.page.locator(":enabled"))
+            .waitFor({ timeout: 10000 });
     }
 
     async assertLastResponse(content: string): Promise<void> {
         await expect(
             this.page.locator(".bg-muted.rounded-2xl").last(),
         ).toContainText(content, { timeout: 5000 });
+    }
+
+    async assertAssistantMessageModelName(
+        index: number,
+        modelName: string,
+    ): Promise<void> {
+        // Each assistant message is in a flex container with justify-start.
+        // The model-name label is the first <p> inside the message content area.
+        await expect(
+            this.page.locator("div.flex.justify-start .flex-1 > p").nth(index),
+        ).toHaveText(modelName, { timeout: 5000 });
     }
 }
 

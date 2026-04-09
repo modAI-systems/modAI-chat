@@ -48,4 +48,26 @@ test.describe("Chat", () => {
         await chatPage.sendMessage("world");
         await chatPage.assertLastResponse("world");
     });
+
+    test("Each assistant message keeps the model that generated it", async ({
+        page,
+    }) => {
+        const chatPage = new ChatPage(page);
+
+        await chatPage.navigateTo();
+        await chatPage.selectModel("gpt-4o");
+
+        await chatPage.sendMessage("first message");
+        await chatPage.assertLastResponse("first message");
+        await chatPage.waitForIdle();
+
+        await chatPage.selectModel("gpt-4o-mini");
+
+        await chatPage.sendMessage("second message");
+        await chatPage.assertLastResponse("second message");
+        await chatPage.waitForIdle();
+
+        await chatPage.assertAssistantMessageModelName(0, "gpt-4o");
+        await chatPage.assertAssistantMessageModelName(1, "gpt-4o-mini");
+    });
 });
