@@ -136,7 +136,7 @@ A manifest file has the following top-level shape:
 2. The root manifest's own `modules` are applied last and always win.
 
 **`collisionStrategy`** on a module entry controls what happens when that module's `id` already exists from an earlier include:
-- `"merge"` *(default)* — deep-merges `config`; incoming wins on shared keys. `dependencies` is shallow-merged; incoming wins on key collision.
+- `"merge"` *(default)* — deep-merges `config`; incoming wins on shared keys. `dependencies` is merged per key: string values follow the same "incoming wins" rule; **array values are unioned** (base items first, then new incoming items; duplicates dropped).
 - `"replace"` — incoming entry fully replaces the existing one.
 - `"drop"` — removes the existing entry; does not add the incoming one either.
 
