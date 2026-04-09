@@ -157,7 +157,7 @@ describe("resolveManifest — collisionStrategy", () => {
         expect(svc?.config).toEqual({ nested: { a: 1, b: 2, c: 3 } });
     });
 
-    it("merge: merges dependencies records, incoming wins on key collision", async () => {
+    it("merge: merges dependencies records, incoming wins on string key collision", async () => {
         mockFetch({
             "/modules.json": manifest(
                 [
@@ -188,6 +188,68 @@ describe("resolveManifest — collisionStrategy", () => {
             "module:router": "router",
             "module:sidebar": "sidebar",
         });
+    });
+
+    it("merge: unions array dependencies, base items first then new incoming items", async () => {
+        mockFetch({
+            "/modules.json": manifest(
+                [
+                    entry("router", {
+                        dependencies: {
+                            "module:routes": ["extra-route"],
+                        },
+                    }),
+                ],
+                { includes: [{ path: "/base.json" }] },
+            ),
+            "/base.json": manifest([
+                entry("router", {
+                    dependencies: {
+                        "module:routes": ["chat-route", "fallback-route"],
+                    },
+                }),
+            ]),
+        });
+
+        const result = await resolveManifest("/modules.json");
+        const router = result.modules.find((m) => m.id === "router");
+
+        expect(router?.dependencies?.["module:routes"]).toEqual([
+            "chat-route",
+            "fallback-route",
+            "extra-route",
+        ]);
+    });
+
+    it("merge: array union deduplicates items already present in the base", async () => {
+        mockFetch({
+            "/modules.json": manifest(
+                [
+                    entry("router", {
+                        dependencies: {
+                            "module:routes": ["chat-route", "extra-route"],
+                        },
+                    }),
+                ],
+                { includes: [{ path: "/base.json" }] },
+            ),
+            "/base.json": manifest([
+                entry("router", {
+                    dependencies: {
+                        "module:routes": ["chat-route", "fallback-route"],
+                    },
+                }),
+            ]),
+        });
+
+        const result = await resolveManifest("/modules.json");
+        const router = result.modules.find((m) => m.id === "router");
+
+        expect(router?.dependencies?.["module:routes"]).toEqual([
+            "chat-route",
+            "fallback-route",
+            "extra-route",
+        ]);
     });
 
     it("replace: incoming entry fully replaces the included one", async () => {

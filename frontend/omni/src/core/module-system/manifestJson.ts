@@ -22,6 +22,9 @@ export interface ManifestEntry {
      * includes that overwrite earlier ones).
      *
      * - `merge` (default): deep-merge config; incoming wins on shared keys.
+     *   For dependency keys whose values are arrays in both base and incoming,
+     *   the arrays are unioned (base items first, then new incoming items;
+     *   duplicates are dropped). For string dependency values, incoming wins.
      * - `replace`: incoming entry fully replaces the existing one.
      * - `drop`: remove the existing entry; do not add this entry either.
      *
@@ -117,6 +120,23 @@ function applyModules(
     return result;
 }
 
+function mergeDependencies(
+    base: Record<string, string | string[]>,
+    incoming: Record<string, string | string[]>,
+): Record<string, string | string[]> {
+    const result: Record<string, string | string[]> = { ...base };
+    for (const [key, val] of Object.entries(incoming)) {
+        const existing = result[key];
+        if (Array.isArray(val) && Array.isArray(existing)) {
+            const seen = new Set(existing);
+            result[key] = [...existing, ...val.filter((v) => !seen.has(v))];
+        } else {
+            result[key] = val;
+        }
+    }
+    return result;
+}
+
 function deepMergeEntries(
     base: ManifestEntry,
     incoming: ManifestEntry,
@@ -127,10 +147,10 @@ function deepMergeEntries(
         base.dependencies !== undefined ||
         incoming.dependencies !== undefined
     ) {
-        merged.dependencies = {
-            ...(base.dependencies ?? {}),
-            ...(incoming.dependencies ?? {}),
-        };
+        merged.dependencies = mergeDependencies(
+            base.dependencies ?? {},
+            incoming.dependencies ?? {},
+        );
     }
 
     if (base.config !== undefined || incoming.config !== undefined) {

@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "includes": [{ "path": "modules_browser_only.json" }],
+  "modules": [
+    {
+      "id": "external-test-hello-world-route",
+      "type": "Routes",
+      "path": "@/modules/external-module-test/helloWorldRouteDefinition/create",
+      "dependencies": {}
+    },
+    {
+      "id": "routing-main",
+      "collisionStrategy": "merge",
+      "dependencies": {
+        "module:routes": ["external-test-hello-world-route"]
+      }
+    }
+  ]
+}
