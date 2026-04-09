@@ -80,7 +80,7 @@ const providerGroups = $derived(
     })),
 );
 
-let messages = $state<UIMessage[]>([]);
+let messages = $state<UIMessage<{ modelName?: string }>[]>([]);
 let chatStatus = $state<"ready" | "submitted" | "streaming">("ready");
 
 const isIdle = $derived(
@@ -106,6 +106,7 @@ async function handleSend(text: string) {
             id: assistantMessageId,
             role: "assistant",
             parts: [{ type: "text", text: "" }],
+            metadata: { modelName: selectedModelData.modelName },
         },
     ];
     chatStatus = "submitted";
@@ -172,7 +173,6 @@ function makeMessageId(): string {
 		status={chatStatus}
 		{modelsLoading}
 		hasModels={availableModels.length > 0}
-		selectedModelName={selectedModelData?.modelName}
 	/>
 	{#if messages.length === 0 && availableModels.length > 0}
 		<ChatSuggestions onselect={handleSend} />

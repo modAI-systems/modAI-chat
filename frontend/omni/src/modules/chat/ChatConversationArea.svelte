@@ -13,13 +13,11 @@ let {
     status,
     modelsLoading,
     hasModels,
-    selectedModelName,
 }: {
-    messages: UIMessage[];
+    messages: UIMessage<{ modelName?: string }>[];
     status: string;
     modelsLoading: boolean;
     hasModels: boolean;
-    selectedModelName: string | undefined;
 } = $props();
 
 let conversationEl = $state<HTMLElement | null>(null);
@@ -72,7 +70,7 @@ $effect(() => {
 		{/if}
 
 		{#each messages as message (message.id)}
-			<ChatMessageItem {message} {selectedModelName} />
+			<ChatMessageItem {message} />
 		{/each}
 
 		<!-- Streaming indicator -->
