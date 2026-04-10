@@ -18,6 +18,46 @@ _ENV_VAR_PATTERN = re.compile(r"^\${([A-Za-z_][A-Za-z0-9_]*)}$")
 ## __init__ function signature.
 
 
+class _OverrideValue:
+    """Sentinel produced by the ``!override`` YAML tag.
+
+    The tagged value completely replaces the corresponding base value — no
+    deep-merge is performed at this level or below.
+    """
+
+    def __init__(self, value: Any):
+        self.value = value
+
+
+class _DropValue:
+    """Sentinel produced by the ``!drop`` YAML tag.
+
+    The tagged key (or module) is removed from the base and is not re-added.
+    """
+
+
+class _ModaiYamlLoader(yaml.SafeLoader):
+    """SafeLoader extended with ``!override`` and ``!drop`` tag support."""
+
+
+def _construct_override(loader: yaml.SafeLoader, node: yaml.Node) -> _OverrideValue:
+    if isinstance(node, yaml.MappingNode):
+        value = loader.construct_mapping(node, deep=True)
+    elif isinstance(node, yaml.SequenceNode):
+        value = loader.construct_sequence(node, deep=True)
+    else:
+        value = loader.construct_scalar(node)
+    return _OverrideValue(value)
+
+
+def _construct_drop(loader: yaml.SafeLoader, node: yaml.Node) -> _DropValue:
+    return _DropValue()
+
+
+_ModaiYamlLoader.add_constructor("!override", _construct_override)
+_ModaiYamlLoader.add_constructor("!drop", _construct_drop)
+
+
 class YamlConfigModule(StartupConfig):
     """Default implementation of the StartupConfig module."""
 
@@ -52,8 +92,7 @@ class YamlConfigModule(StartupConfig):
         2. Each subsequent include is applied in order, top-to-bottom.
            Later includes overwrite earlier ones on ``merge`` collisions.
         3. The root config's own modules are applied last and always win
-           (highest priority). The ``collision_strategy`` on a root module
-           controls how it merges with an already-loaded module from an include.
+           (highest priority).
 
         Example: root → [A, B]
 
@@ -92,7 +131,7 @@ class YamlConfigModule(StartupConfig):
 
     def _load_yaml_file(self, path: Path) -> dict[str, Any]:
         with open(path, "r") as file:
-            config = yaml.safe_load(file)
+            config = yaml.load(file, Loader=_ModaiYamlLoader)
             if config is None:
                 raise ValueError(f"Config file is empty or invalid: {path}")
             return _resolve_env_vars(config)
@@ -100,20 +139,23 @@ class YamlConfigModule(StartupConfig):
     def _apply_config(
         self, base_modules: dict[str, Any], new_modules: dict[str, Any]
     ) -> dict[str, Any]:
-        """Merge *config_modules* onto *base_modules* and return the result.
+        """Merge *new_modules* onto *base_modules* and return the result.
 
         * Modules present only in *base_modules* are kept as-is.
-        * Modules present only in *config_modules* are added unconditionally.
-        * On a name collision the ``collision_strategy`` field on the **incoming**
-          (*config_modules*) entry decides:
+        * Modules present only in *new_modules* are added unconditionally.
+        * On a name collision the merge behaviour is controlled by YAML tags
+          placed on the **incoming** (*new_modules*) entry:
 
-          - ``drop`` – the incoming entry is not added, and any existing entry
-            with the same name in *base_modules* is also removed.  Modules with
-            different names are not affected.
-          - ``replace`` – the incoming entry completely replaces the existing one.
-          - ``merge`` *(default)* – deep-merged; base-only keys are preserved,
+          - ``!drop`` – the incoming entry is not added, and any existing entry
+            with the same name in *base_modules* is also removed.
+          - ``!override`` – the incoming entry completely replaces the existing
+            one; no deep-merge is performed.
+          - *(no tag, default)* – deep-merged; base-only keys are preserved,
             shared keys are overwritten by the incoming value, nested dicts
-            recurse with the same rule.
+            recurse with the same rule, lists are concatenated (base + incoming).
+
+        The ``!override`` and ``!drop`` tags may also be placed on any nested
+        key within a module definition for fine-grained control.
 
         Because the root config's modules are always passed last (see
         ``_load_config``), they act as the final incoming and always win.
@@ -121,28 +163,26 @@ class YamlConfigModule(StartupConfig):
         result = dict(base_modules)
 
         for name, cfg in new_modules.items():
-            cfg = cfg or {}
-            strategy = cfg.get("collision_strategy", "merge")
-            if strategy == "drop":
+            if isinstance(cfg, _DropValue):
                 result.pop(name, None)
+                continue
+            if isinstance(cfg, _OverrideValue):
+                result[name] = cfg.value
                 continue
             if name not in result:
                 result[name] = cfg
-            elif strategy == "replace":
-                result[name] = cfg
             else:
-                result[name] = _deep_merge(result[name] or {}, cfg)
-
-        # Strip the parsing-only key from every module in the result.
-        for cfg in result.values():
-            if isinstance(cfg, dict):
-                cfg.pop("collision_strategy", None)
+                result[name] = _deep_merge(result[name] or {}, cfg or {})
 
         return result
 
 
 def _resolve_env_vars(obj: Any) -> Any:
-    if isinstance(obj, dict):
+    if isinstance(obj, _OverrideValue):
+        return _OverrideValue(_resolve_env_vars(obj.value))
+    elif isinstance(obj, _DropValue):
+        return obj
+    elif isinstance(obj, dict):
         return {k: _resolve_env_vars(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [_resolve_env_vars(i) for i in obj]
@@ -160,13 +200,25 @@ def _deep_merge(base: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any
 
     - Keys present only in *base* are preserved (nothing is removed).
     - Keys present only in *incoming* are added.
-    - When both sides share a key: if both values are dicts, the merge recurses;
-      otherwise the *incoming* value overwrites the base value.
+    - ``!drop`` on an incoming value removes the key from the result.
+    - ``!override`` on an incoming value uses it as-is (no further merging).
+    - When both sides share a key: dicts are merged recursively, lists are
+      concatenated (base first, then incoming), other values are replaced by
+      the incoming value.
     """
     result = dict(base)
     for key, value in incoming.items():
-        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            result[key] = _deep_merge(result[key], value)
+        if isinstance(value, _DropValue):
+            result.pop(key, None)
+        elif isinstance(value, _OverrideValue):
+            result[key] = value.value
+        elif key in result:
+            if isinstance(result[key], dict) and isinstance(value, dict):
+                result[key] = _deep_merge(result[key], value)
+            elif isinstance(result[key], list) and isinstance(value, list):
+                result[key] = result[key] + value
+            else:
+                result[key] = value
         else:
             result[key] = value
     return result

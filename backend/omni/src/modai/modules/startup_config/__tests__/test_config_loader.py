@@ -87,21 +87,15 @@ def test_includes_merges_modules_from_included_file(tmp_path: Path):
     }
 
 
-def test_includes_collision_strategy_replace(tmp_path: Path):
-    """collision_strategy=replace on a root module: root fully replaces the included one."""
+def test_includes_override_tag_replaces_module(tmp_path: Path):
+    """!override on a root module: root fully replaces the included one."""
     main = tmp_path / "config.yaml"
     main.write_text(
-        yaml.dump(
-            {
-                "includes": [{"path": "extra.yaml"}],
-                "modules": {
-                    "health": {
-                        "class": "a.b.HealthRoot",
-                        "collision_strategy": "replace",
-                    }
-                },
-            }
-        )
+        "includes:\n"
+        "  - path: extra.yaml\n"
+        "modules:\n"
+        "  health: !override\n"
+        "    class: a.b.HealthRoot\n"
     )
 
     included = tmp_path / "extra.yaml"
@@ -130,8 +124,8 @@ def test_includes_collision_strategy_replace(tmp_path: Path):
     }
 
 
-def test_includes_collision_strategy_merge_default(tmp_path: Path):
-    """Without collision_strategy the default is merge: root wins on collision, include-only keys survive."""
+def test_includes_merge_default(tmp_path: Path):
+    """Default (no tag) is merge: root wins on collision, include-only keys survive."""
     main = tmp_path / "config.yaml"
     main.write_text(
         yaml.dump(
@@ -171,51 +165,7 @@ def test_includes_collision_strategy_merge_default(tmp_path: Path):
     }
 
 
-def test_includes_collision_strategy_merge_explicit(tmp_path: Path):
-    """Explicit collision_strategy=merge on a root module behaves identically to the default."""
-    main = tmp_path / "config.yaml"
-    main.write_text(
-        yaml.dump(
-            {
-                "includes": [{"path": "extra.yaml"}],
-                "modules": {
-                    "health": {
-                        "class": "a.b.HealthRoot",
-                        "collision_strategy": "merge",
-                    }
-                },
-            }
-        )
-    )
-
-    included = tmp_path / "extra.yaml"
-    included.write_text(
-        yaml.dump(
-            {
-                "modules": {
-                    "health": {
-                        "class": "a.b.HealthIncluded",
-                        "config": {"extra_key": "added"},
-                    }
-                }
-            }
-        )
-    )
-
-    loader = YamlConfigModule(ModuleDependencies(), {"config_path": str(main)})
-    config = loader.get_config()
-
-    assert config == {
-        "modules": {
-            "health": {
-                "class": "a.b.HealthRoot",
-                "config": {"extra_key": "added"},
-            }
-        }
-    }
-
-
-def test_includes_collision_strategy_merge_does_not_remove_existing_keys(
+def test_includes_merge_does_not_remove_existing_keys(
     tmp_path: Path,
 ):
     """merge never removes keys that already exist in the included module."""
@@ -259,6 +209,174 @@ def test_includes_collision_strategy_merge_does_not_remove_existing_keys(
                     "root_section": {"value": 1},
                     "include_key": True,
                 },
+            }
+        }
+    }
+
+
+def test_includes_override_tag_on_nested_key(tmp_path: Path):
+    """!override on a nested config key replaces that sub-tree without merging."""
+    main = tmp_path / "config.yaml"
+    main.write_text(
+        "includes:\n"
+        "  - path: extra.yaml\n"
+        "modules:\n"
+        "  health:\n"
+        "    class: a.b.HealthRoot\n"
+        "    config: !override\n"
+        "      new_key: new_value\n"
+    )
+
+    included = tmp_path / "extra.yaml"
+    included.write_text(
+        yaml.dump(
+            {
+                "modules": {
+                    "health": {
+                        "class": "a.b.HealthIncluded",
+                        "config": {"old_key": "old_value", "other_key": 42},
+                    }
+                }
+            }
+        )
+    )
+
+    loader = YamlConfigModule(ModuleDependencies(), {"config_path": str(main)})
+    config = loader.get_config()
+
+    # config is fully replaced; old_key from include is gone
+    assert config == {
+        "modules": {
+            "health": {
+                "class": "a.b.HealthRoot",
+                "config": {"new_key": "new_value"},
+            }
+        }
+    }
+
+
+def test_includes_drop_tag_on_nested_key(tmp_path: Path):
+    """!drop on a nested key removes that key from the merged result."""
+    main = tmp_path / "config.yaml"
+    main.write_text(
+        "includes:\n"
+        "  - path: extra.yaml\n"
+        "modules:\n"
+        "  health:\n"
+        "    class: a.b.HealthRoot\n"
+        "    config:\n"
+        "      keep_key: kept\n"
+        "      remove_key: !drop\n"
+    )
+
+    included = tmp_path / "extra.yaml"
+    included.write_text(
+        yaml.dump(
+            {
+                "modules": {
+                    "health": {
+                        "class": "a.b.HealthIncluded",
+                        "config": {"keep_key": "base", "remove_key": "base_value"},
+                    }
+                }
+            }
+        )
+    )
+
+    loader = YamlConfigModule(ModuleDependencies(), {"config_path": str(main)})
+    config = loader.get_config()
+
+    assert config == {
+        "modules": {
+            "health": {
+                "class": "a.b.HealthRoot",
+                "config": {"keep_key": "kept"},
+            }
+        }
+    }
+
+
+def test_default_list_merge(tmp_path: Path):
+    """Lists are concatenated (base first, then incoming) by default."""
+    main = tmp_path / "config.yaml"
+    main.write_text(
+        yaml.dump(
+            {
+                "includes": [{"path": "extra.yaml"}],
+                "modules": {
+                    "svc": {
+                        "class": "a.b.Svc",
+                        "config": {"items": ["c", "d"]},
+                    }
+                },
+            }
+        )
+    )
+
+    included = tmp_path / "extra.yaml"
+    included.write_text(
+        yaml.dump(
+            {
+                "modules": {
+                    "svc": {
+                        "class": "a.b.Svc",
+                        "config": {"items": ["a", "b"]},
+                    }
+                }
+            }
+        )
+    )
+
+    loader = YamlConfigModule(ModuleDependencies(), {"config_path": str(main)})
+    config = loader.get_config()
+
+    assert config == {
+        "modules": {
+            "svc": {
+                "class": "a.b.Svc",
+                "config": {"items": ["a", "b", "c", "d"]},
+            }
+        }
+    }
+
+
+def test_override_tag_on_list_replaces_base_list(tmp_path: Path):
+    """!override on a list value replaces the base list instead of concatenating."""
+    main = tmp_path / "config.yaml"
+    main.write_text(
+        "includes:\n"
+        "  - path: extra.yaml\n"
+        "modules:\n"
+        "  svc:\n"
+        "    class: a.b.Svc\n"
+        "    config:\n"
+        "      items: !override\n"
+        "        - c\n"
+        "        - d\n"
+    )
+
+    included = tmp_path / "extra.yaml"
+    included.write_text(
+        yaml.dump(
+            {
+                "modules": {
+                    "svc": {
+                        "class": "a.b.Svc",
+                        "config": {"items": ["a", "b"]},
+                    }
+                }
+            }
+        )
+    )
+
+    loader = YamlConfigModule(ModuleDependencies(), {"config_path": str(main)})
+    config = loader.get_config()
+
+    assert config == {
+        "modules": {
+            "svc": {
+                "class": "a.b.Svc",
+                "config": {"items": ["c", "d"]},
             }
         }
     }
@@ -367,19 +485,16 @@ def test_includes_nested_includes_are_rejected(tmp_path: Path):
         loader.get_config()
 
 
-def test_includes_collision_strategy_drop_removes_base_and_incoming(tmp_path: Path):
-    """collision_strategy=drop on an incoming module removes both the base and incoming entries."""
+def test_includes_drop_tag_removes_base_and_incoming(tmp_path: Path):
+    """!drop on an incoming module removes both the base and incoming entries."""
     main = tmp_path / "config.yaml"
     main.write_text(
-        yaml.dump(
-            {
-                "includes": [{"path": "extra.yaml"}],
-                "modules": {
-                    "health": {"collision_strategy": "drop"},
-                    "other": {"class": "a.b.Other"},
-                },
-            }
-        )
+        "includes:\n"
+        "  - path: extra.yaml\n"
+        "modules:\n"
+        "  health: !drop\n"
+        "  other:\n"
+        "    class: a.b.Other\n"
     )
 
     included = tmp_path / "extra.yaml"
@@ -400,19 +515,10 @@ def test_includes_collision_strategy_drop_removes_base_and_incoming(tmp_path: Pa
     assert config == {"modules": {"other": {"class": "a.b.Other"}}}
 
 
-def test_includes_collision_strategy_drop_no_existing_module(tmp_path: Path):
-    """collision_strategy=drop on an incoming module with no prior base entry is simply not added."""
+def test_includes_drop_tag_no_existing_module(tmp_path: Path):
+    """!drop on an incoming module with no prior base entry is simply not added."""
     main = tmp_path / "config.yaml"
-    main.write_text(
-        yaml.dump(
-            {
-                "modules": {
-                    "health": {"collision_strategy": "drop"},
-                    "other": {"class": "a.b.Other"},
-                },
-            }
-        )
-    )
+    main.write_text("modules:\n  health: !drop\n  other:\n    class: a.b.Other\n")
 
     loader = YamlConfigModule(ModuleDependencies(), {"config_path": str(main)})
     config = loader.get_config()
@@ -421,19 +527,16 @@ def test_includes_collision_strategy_drop_no_existing_module(tmp_path: Path):
     assert config == {"modules": {"other": {"class": "a.b.Other"}}}
 
 
-def test_includes_collision_strategy_drop_successor_modules_unaffected(tmp_path: Path):
-    """Modules defined after the drop module in the same config are loaded normally."""
+def test_includes_drop_tag_successor_modules_unaffected(tmp_path: Path):
+    """Modules defined after the !drop module in the same config are loaded normally."""
     main = tmp_path / "config.yaml"
     main.write_text(
-        yaml.dump(
-            {
-                "includes": [{"path": "extra.yaml"}],
-                "modules": {
-                    "health": {"collision_strategy": "drop"},
-                    "successor": {"class": "a.b.Successor"},
-                },
-            }
-        )
+        "includes:\n"
+        "  - path: extra.yaml\n"
+        "modules:\n"
+        "  health: !drop\n"
+        "  successor:\n"
+        "    class: a.b.Successor\n"
     )
 
     included = tmp_path / "extra.yaml"

@@ -56,7 +56,6 @@ modules:
     class: modai.modules.health.simple_health_module.SimpleHealthModule
   my_module:
     class: modai.modules.example.ExampleModule
-    collision_strategy: merge   # optional, see below
     config:
       some_key: some_value
 ```
@@ -89,19 +88,51 @@ B modules     (loaded 2nd — overwrites A on collision)
 root modules  (loaded last — highest precedence, always wins)
 ```
 
-##### `collision_strategy` — handling duplicate module names
+##### `!override` and `!drop` — controlling merge behaviour
 
-When the same module name appears in multiple config files, the
-`collision_strategy` field on the **incoming** (later-loaded) module decides what
-happens. Because root modules are always applied last as incoming, setting
-`collision_strategy` on a **root module** controls how it interacts with a module
-already loaded from an include.
+By default, when the same module name (or nested key) appears in multiple config
+files, values are **deep-merged**: dict keys are combined recursively and the
+incoming value wins on shared keys; lists are **concatenated** (base items first,
+then incoming items).
 
-| Value | Behaviour |
+Two YAML tags can change this behaviour at **any level** of the document:
+
+| Tag | Behaviour |
 |---|---|
-| `merge` *(default)* | Deep-merges the incoming module into the existing one. Keys present only in the base (earlier-loaded) module are preserved. When the same key exists in both, the **incoming value wins**. Nested dicts are merged recursively with the same rule. |
-| `replace` | The incoming module definition **completely replaces** the existing one. |
-| `drop` | The incoming module is **not added**, and any existing module with the same name is **removed**. Modules with different names are unaffected. |
+| *(no tag, default)* | Deep-merge. Dict keys merged recursively, incoming wins on shared keys. Lists concatenated (base + incoming). |
+| `!override` | The tagged value **completely replaces** the base value at that level — no merge is performed at this level or below. |
+| `!drop` | The tagged key (or module) is **removed** from the base and is not re-added. |
+
+Because the tags can appear on **any YAML node**, the granularity is flexible:
+drop or override an entire module, a single config section, or a single list.
+
+**Examples:**
+
+```yaml
+# Drop an entire module (remove it from the base, don't add this one)
+modules:
+  auth_oidc: !drop
+
+# Override an entire module (replace, don't merge)
+modules:
+  session: !override
+    class: modai.modules.session.dev_mock_session.DevMockSessionModule
+    config:
+      user_id: dev-user
+
+# Override only the config sub-tree (merge the module, but replace config)
+modules:
+  my_module:
+    class: modai.modules.example.ExampleModule
+    config: !override
+      key: value
+
+# Drop a single nested key during merge
+modules:
+  my_module:
+    config:
+      obsolete_key: !drop
+```
 
 
 
