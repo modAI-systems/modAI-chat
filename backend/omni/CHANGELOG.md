@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Config can include other config files
 - OpenAPI tool registry now supports `tool_servers` and auto-registers all `operationId` endpoints from each OpenAPI spec as tools
 
-### Chnaged
+### Changed
 
 - Config to be used can be defined via CONFIG_PATH environment variable
 - Refactored tools contract to use request-aware registry methods: `get_tools(request)` and `run_tool(request, params)`

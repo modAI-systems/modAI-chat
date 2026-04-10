@@ -3,11 +3,9 @@ includes:
 
 modules:
   # Deactivate authentication completely for development purposes.
-  auth_oidc:
-    collision_strategy: drop
-  session:
+  auth_oidc: !drop
+  session: !override
     class: modai.modules.session.dev_mock_session.DevMockSessionModule
-    collision_strategy: replace
     config:
       user_id: "dev-user"
       email: "dev@example.com"
