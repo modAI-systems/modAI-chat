@@ -594,13 +594,108 @@ Disclaimer: This analysis was completely done by AI with some human guidelines i
 | **Truly OSS** | Yes | Yes (AGPL) | Yes (MPL) | Partial | Yes | Yes (AGPL) | Yes | Yes | **No** | Yes | Yes | Yes | Yes | Yes |
 | **No Feature Limits** | Yes | Yes | Mostly | **No** | Yes | Yes | **No** | Yes | **No** | Yes | Yes | Yes | Yes | Yes |
 | **OIDC Provider** | Yes | Yes | Yes | Yes | Yes | No | No | Yes | Yes | No | Yes | Yes | Yes | Yes |
-| **Social Login** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | **No** | Yes (via connectors) | Partial (generic OIDC only) | Early (in dev) |
-| **Email/Password** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Static only | Yes | Yes |
+| **Social Login (IdP Federation)** | **Yes** ᵃ | **Yes** ᵇ | **Yes** ᶜ | **Yes** ᵈ | **Yes** ᵉ | **Yes** ᶠ | **Yes** ᵍ | **Yes** ʰ | **Yes** ⁱ | **Yes** ʲ | **No** ᵏ | **Yes** ˡ | Partial ᵐ | Early ⁿ |
+| **Username / Password** | **Yes** ᵒ | **Yes** ᵖ | **Yes** ᵍ | **Yes** ʳ | **Yes** ˢ | **Yes** ᵗ | **Yes** ᵘ | **Yes** ᵛ | **Yes** ʷ | **Yes** ˣ | Limited ʸ | **No** ᶻ | **Yes** ᵃᵃ | **Yes** ᵃᵇ |
 | **Login UI** | Yes | Yes | Yes | Yes | **No** | Yes | Yes | Yes | Yes | **No** | Yes | Basic | Yes | Yes |
 | **User Management UI** | Yes | Yes | Yes | Yes | **No** | Basic | Yes | Yes | Yes | **No** | **No** | **No** | Yes | Yes |
 | **Multi-Tenant** | Yes | Excellent | Yes | Partial | Cloud | No | Paid | Yes | Yes | Plugin | No | No | No | Yes (Realms) |
 | **Extensible** | Excellent | Good | Moderate | Good | Excellent | Moderate | Good | Moderate | Good | Good | Limited | Good (connectors) | Moderate | Moderate |
 | **Self-Host Easy** | Medium | Easy | Easy | Easy | Hard | Easy | Easy | Easy | Easy | N/A | Easy | Easy | Very Easy | Medium |
+| **Subpath Support** | **Yes** ¹ | **No** ² | Partial ³ | **Yes** ⁴ | **Yes** ⁵ | **Yes** ⁶ | **Yes** ⁷ | **Yes** ⁸ | Partial ⁹ | N/A ¹⁰ | **Yes** ¹¹ | Partial ¹² | **Yes** ¹³ | **No** ¹⁴ |
+
+**Social Login (IdP Federation) Notes:**
+
+ᵃ **Keycloak**: First-class "Identity Brokering". Built-in connectors for Google, Microsoft, Apple, GitHub, Facebook, LinkedIn, Twitter/X, Instagram, BitBucket, GitLab, OpenShift, PayPal, Stack Overflow. Any additional provider is configurable via generic OIDC 2.0, OAuth 2.0, or SAML 2.0. One of the broadest provider ecosystems.
+
+ᵇ **ZITADEL**: Built-in connectors: Google, GitHub, GitLab, Apple, Microsoft, Okta, Azure AD, generic OIDC, generic OAuth2, SAML (enterprise), LDAP, JWT. Provider setup via admin console. Comprehensive coverage for OIDC-compliant providers.
+
+ᶜ **Logto**: 30+ built-in connectors: Google, GitHub, Apple, Microsoft, Facebook, Discord, WeChat, Kakao, Naver, LINE, Twitter/X, LinkedIn, and more. Enterprise SAML connectors available (cloud add-on). Custom OIDC/OAuth2 also supported.
+
+ᵈ **authentik**: Supports any OIDC/OAuth2 and SAML provider via "Sources" configuration. Pre-configured sources for GitHub, Google, Discord, Plex, Azure AD, Okta, LDAP. Social login is a core feature. No explicit list of pre-built connectors — configuration-driven.
+
+ᵉ **Ory (Kratos)**: Social login via OIDC/OAuth2 in Kratos. Documented integrations: Google, GitHub, GitLab, Discord, Slack, Twitch, Facebook, Apple, Microsoft. Any OAuth2/OIDC-compliant provider works. Configuration in Jsonnet mapper files.
+
+ᶠ **Hanko**: Built-in providers: Apple, Google, GitHub, Discord, LinkedIn, Microsoft (Azure AD). Custom OAuth/OIDC providers also configurable. Provider credentials configured in YAML.
+
+ᵍ **SuperTokens**: Built-in providers: Google, GitHub, Facebook, Apple, Discord, Okta, GitLab, LinkedIn, Twitter/X, BitBucket, Box. Custom OAuth2/OIDC providers configurable. All free in self-hosted core.
+
+ʰ **Casdoor**: **100+ built-in providers** — the broadest pre-built provider list of all candidates. Includes all major social providers plus many regional ones (WeChat, QQ, DingTalk, etc.), enterprise (LDAP, SAML, Azure AD, Okta), and custom OIDC/OAuth2.
+
+ⁱ **FusionAuth**: Unlimited identity providers even on community (free) tier. All major social providers plus SAML and generic OIDC/OAuth2. Provider setup via admin console.
+
+ʲ **Better Auth**: Social providers via plugins: Google, GitHub, Discord, Twitter/X, LinkedIn, Microsoft, Facebook, Apple, Twitch, and others. Plugin-based; adding providers requires the corresponding plugin. Custom OAuth2/OIDC providers supported.
+
+ᵏ **Authelia**: **None.** Authelia does not federate with external identity providers. It is purely an authentication portal backed by its internal user database or LDAP. It cannot do "Sign in with Google" — it is itself an OIDC provider but does not consume external ones.
+
+ˡ **Dex**: Connector-based architecture: GitHub, Google, Microsoft, GitLab, LinkedIn, BitBucket, OpenShift, OpenLDAP, Active Directory (SAML), Gitea, and any generic OIDC/OAuth2 provider. ~16 built-in connectors. Note: Dex federates *exclusively* through upstream connectors — it does not store users itself.
+
+ᵐ **Rauthy**: **Generic OIDC upstream only.** Any provider that supports standard OIDC (Google, GitLab, etc.) works by configuring an upstream OIDC connection. However, there are **no pre-built connectors** for providers that use OAuth2 without OIDC (e.g., GitHub, Twitter/X use OAuth2 with non-standard user info endpoints), nor for Apple (non-standard implementation). These require workarounds or are unsupported.
+
+ⁿ **FerrisKey**: Social login API endpoints were added in v0.3.0. Google, GitHub, and Facebook are documented as targets, but implementation is in early development. Not production-ready for social login as of the current version.
+
+---
+
+**Username / Password Notes:**
+
+ᵒ **Keycloak**: Full-featured. Configurable password policies (length, complexity, history, expiry), multiple hash algorithms including Argon2, bcrypt, PBKDF2. Self-service password reset via email. Admin-forced password reset. Works alongside passkeys and social login.
+
+ᵖ **ZITADEL**: Built-in with configurable complexity policy (min length, uppercase, numbers, symbols). Password reset via email. Supports password login alongside passkeys and social providers. Admin can force password change on next login.
+
+ᵍ **Logto**: Built-in email/password authentication with email verification required by default. Password reset via email. Configurable password strength checking.
+
+ʳ **authentik**: Email/password login via the "Password" stage in the flow engine. Configurable password policies. Password change and reset flows. Supports username or email as identifier.
+
+ˢ **Ory (Kratos)**: Username/password and email/password supported as an "Identifier first" or combined login flow. Password strength validation with zxcvbn library. Self-service password recovery via email. No admin-forced reset without using the API.
+
+ᵗ **Hanko**: Email/password authentication supported (enabled in config). Password minimum length configurable. Works alongside passkeys (can be set as optional or required). Also supports email-only passcode authentication without passwords.
+
+ᵘ **SuperTokens**: Email/password with built-in email verification flow. Password hashing with bcrypt. Self-service password reset via email. Works alongside social login providers.
+
+ᵛ **Casdoor**: Username/password via internal user table. hashed with bcrypt. Also supports LDAP bind as auth backend. Registration page configurable.
+
+ʷ **FusionAuth**: Full username/password with breach password detection (paid), configurable policies, HIBP integration (paid). Self-service reset via email. Admin-forced expiry.
+
+ˣ **Better Auth**: Email/password via the core `emailAndPassword` plugin. Configurable min password length. Password reset via email using a token. Built-in rate limiting on login attempts.
+
+ʸ **Authelia**: **Limited.** Uses a static users YAML file (`users_database.yml`) with bcrypt-hashed passwords by default, or delegates to LDAP. There is **no self-service registration** — users must be added manually or via LDAP provisioning. No self-service password reset without LDAP. Suitable for a closed set of known users, not for end-user registration.
+
+ᶻ **Dex**: **Not supported for production use.** The built-in "Local" connector only supports static passwords defined in the Dex config file (YAML). There is no user registration, no password management API, no self-service password reset, and no admin UI to manage users. This is an intentional design — Dex delegates user management to upstream connectors.
+
+ᵃᵃ **Rauthy**: Full username/password authentication with Argon2ID hashing (best-practice algorithm). Configurable password policy and minimum length. Self-service password reset via email. Admin UI for forced password change. A Rust-based utility to tune Argon2ID parameters for the target hardware is included.
+
+ᵃᵇ **FerrisKey**: Username/password and email/password both documented as supported. Standard bcrypt expected. No advanced policy configuration documented yet given early project stage.
+
+---
+
+**Subpath Support Notes:**
+
+¹ **Keycloak**: First-class support. Use `--http-relative-path /auth` to change the server's own base path, or set `--hostname https://my.app/auth`. The `X-Forwarded-Prefix` header is also supported via the `xforwarded` proxy-headers mode. Running at `my.app/auth` is a documented and tested scenario.
+
+² **ZITADEL**: **Not supported.** ZITADEL uses gRPC over HTTP/2 for all APIs and requires the reverse proxy to pass through to the root path (`/`). Its own NGINX examples only show root-path deployments. There is no configuration option for a path prefix, and the internal routing architecture (console at `/ui/console`, login at `/ui/v2/login`, OIDC at `/oauth/v2/...`) is hardcoded. Must run on its own domain or subdomain.
+
+³ **Logto**: Partial. Its individual endpoints are at fixed paths (`/oidc`, `/api`, `/console`). You could expose only specific sub-paths via a reverse proxy (e.g., proxy `my.app/oidc` → Logto `/oidc`), but proxying all paths under a single custom prefix (e.g., `my.app/auth/*`) is not directly supported and would require careful per-route mapping. No global base-path config option exists.
+
+⁴ **authentik**: **Yes.** Set the `AUTHENTIK_WEB__PATH=/auth/` environment variable to configure a URL prefix. The Caddy/Nginx integrations describe pathing. Well-documented subpath deployment.
+
+⁵ **Ory**: **Yes.** Each micro-service (Kratos, Hydra, Oathkeeper) is a standard HTTP server that can be proxied at any path. Fully flexible path routing. However, the OIDC issuer URL must be configured to match the full public URL including the path.
+
+⁶ **Hanko**: **Yes.** Standard HTTP Go server; configure `my.app/auth/` via nginx `proxy_pass`. The `<hanko-auth api="/auth/">` web component prop accepts a relative URL. Well suited to same-domain subpath deployment.
+
+⁷ **SuperTokens**: **Yes (inherently).** The auth routes are added to your existing FastAPI/Node.js app at `/auth/` by default (configurable). They live in your app — there is no second service exposed to users. Fully same-domain by design.
+
+⁸ **Casdoor**: **Yes.** Standard Go HTTP server. The `httpPath` config option sets the base path prefix. Can be proxied to `my.app/casdoor/` or similar. Straightforward.
+
+⁹ **FusionAuth**: Partial. FusionAuth can be placed behind a reverse proxy, and `fusionauth.app.url` can include a path prefix. However, some redirect URIs and internal asset links have known issues with path prefixes depending on the version. The docs focus on subdomain deployment.
+
+¹⁰ **Better Auth**: N/A — it is a library embedded in your app. Always same origin, no separate service. The auth API routes live at whatever path you mount the handler on (e.g., `app.mount("/auth", better_auth_handler)`).
+
+¹¹ **Authelia**: **Yes.** Standard reverse proxy companion design. Authelia itself listens on its own port and can be placed at any path via the reverse proxy. Its `server.path_prefix` config option explicitly controls the path prefix.
+
+¹² **Dex**: Partial. Dex is a standard HTTP server proxiable to any path. However, the OIDC Discovery document (`/.well-known/openid-configuration`) must resolve relative to the issuer. If you configure the issuer as `https://my.app/dex`, then the discovery URL must be at `https://my.app/dex/.well-known/openid-configuration` — this works if the reverse proxy strips the prefix correctly. No first-class path prefix config option; requires careful proxy rewriting.
+
+¹³ **Rauthy**: **Yes.** The `SERVER_PATH_PREFIX` config option (e.g., `SERVER_PATH_PREFIX=/auth`) sets the base path. Explicitly supported and documented. Running at `my.app/auth` works out of the box with a single config change.
+
+¹⁴ **FerrisKey**: **Not supported.** Ships as separate API and web console containers, each serving from the root path. No documented path-prefix configuration. Too early-stage for non-trivial deployment scenarios.
 
 ---
 
@@ -662,3 +757,205 @@ For an **open-source web app** that needs to completely hand off authentication:
 > If multi-tenancy is not critical and you want maximum maturity and ecosystem, go with **Keycloak** instead.
 >
 > If you need the most permissive license (Apache 2.0) and broad social login support, consider **Casdoor**.
+
+---
+
+## Re-Evaluation: Embedded / Library-Based Approach
+
+**Date:** April 2026
+
+**New constraint:** Avoid a dedicated separate-domain IDP (e.g. `sso.my.app`). Prefer a solution that either:
+1. Integrates as a **library** into the existing FastAPI + Svelte app, or
+2. Can be embedded on the **same domain as a subpath** (e.g. `my.app/auth`), and provides ready-made frontend components.
+
+The original evaluation was focused on standalone OIDC providers. This section re-evaluates the landscape from the embedded / same-domain angle.
+
+---
+
+### The "Separate Domain" Problem — How Real Is It?
+
+Most of the IDPs above are standalone services and redirect the browser to their own login page. This login page is typically served from their own origin, which raises two concerns:
+
+1. **UX**: Users leave your app's domain, reducing trust and breaking branding.
+2. **Same-site cookies**: Session cookies set by the IDP at `sso.my.app` are unavailable to your app at `my.app`.
+
+**Is a subpath possible?** Technically yes for most services — you can proxy `/auth` to the IDP container using nginx/Caddy. However:
+
+- **OIDC Discovery**: The `/.well-known/openid-configuration` endpoint must resolve relative to the issuer URL. If the issuer is `https://my.app/auth`, the discovery endpoint must be at `https://my.app/auth/.well-known/openid-configuration`. Most modern IDPs (Keycloak, ZITADEL, Rauthy) support configuring a sub-path issuer correctly, but the config is non-trivial.
+- **If you are not acting as an OIDC provider** (i.e. you only *consume* OIDC from Google/GitHub for social login — not *expose* OIDC to other apps), then the discovery endpoint issue is completely irrelevant to you. You just need your app's auth UI and API to live at a convenient path.
+
+**Key insight**: If modAI-chat does not need to act as an OIDC provider for third-party applications, the entire "standalone IDP" category is over-engineered for the use case. A lighter embedded solution becomes appropriate.
+
+---
+
+### Embedded / Library-Based Candidates
+
+#### The Honest State of the Ecosystem
+
+There is **no single OSS library that provides both a Python/FastAPI backend module and a Svelte frontend component library**. The ecosystem is fragmented across language boundaries:
+
+| Layer | Options |
+|---|---|
+| Python backend library (no separate service) | `fastapi-users`, `Authlib`, `python-social-auth` |
+| Svelte frontend auth UI library | **None that are mature/complete** |
+| Cross-stack service with Svelte-compatible frontend | **Hanko** (web components), **SuperTokens** (React components + custom UI API) |
+
+---
+
+### Re-Evaluated Candidate: Hanko (Significantly Updated)
+
+**Website:** https://www.hanko.io/ | **License:** AGPL-3.0 (backend), **MIT** (frontend elements)
+**GitHub Stars:** ~8.9k (as of April 2026)
+
+Since the first evaluation, Hanko has shipped major improvements:
+
+| Criterion | Rating | Notes |
+|-----------|--------|-------|
+| **Email/Password** | **Yes** | Now fully supported (was limited before); configurable min length |
+| **Social Login (OIDC/OAuth)** | **Yes** | Apple, Google, GitHub, Discord, LinkedIn, Microsoft, custom OIDC/OAuth via built-in + custom providers |
+| **SAML Enterprise SSO** | Yes | Added in later releases |
+| **Frontend Components** | **Excellent** | `hanko-elements` web components — framework-agnostic, work in Svelte with 2 lines |
+| **Svelte Support** | **Yes** | `<hanko-auth api="...">` drop-in web component |
+| **Same-Domain / Subpath** | Yes | Proxy Hanko backend at `/hanko/` via nginx; configure `api` prop accordingly |
+| **Not an OIDC Provider** | — | Hanko issues its own JWTs; does not act as OIDC IdP for third-party apps |
+| **Acts as OAuth consumer** | Yes | Accepts social logins from external providers |
+| **MFA** | Yes | TOTP, security keys (WebAuthn) |
+| **Passkeys** | Yes | First-class passkey support, passwordless-only option |
+| **User Management** | Good | API-based; admin REST API; no built-in admin UI (Hanko Cloud has one) |
+| **Multi-Tenant** | Partial | Organizations in progress; not yet for arbitrary B2B multi-tenancy |
+| **License (backend)** | AGPL-3.0 | Fine for self-hosting; not embeddable in proprietary code |
+| **License (elements)** | **MIT** | The frontend components you embed in Svelte are MIT |
+| **Separate service?** | **Yes** | A separate Go binary (lightweight, ~30 MB); NOT a Python library |
+
+**Same-domain integration architecture:**
+```
+nginx:
+  /          → Svelte SPA (existing)
+  /auth-api/ → Hanko backend (Go, port 8000 internally)
+  /api/      → FastAPI (Python, existing)
+
+Svelte:
+  <hanko-auth api="/auth-api" />  ← drop-in login component
+  Session JWT from Hanko verified in FastAPI via JWKS endpoint
+```
+
+**Pros:**
+- The only option that provides ready-made, production-quality Svelte-compatible login UI (via web components)
+- Social login now fully supported (Apple, Google, GitHub, Discord, LinkedIn, Microsoft, custom OIDC)
+- Passwords, passkeys, SAML, MFA all work
+- Can run on same domain via reverse proxy — users never leave `my.app`
+- Frontend elements are MIT licensed (what you embed in the app)
+- Lightweight Go binary — very low resource usage
+- Actively maintained; 8.9k stars; growing community
+
+**Cons:**
+- Still a **separate binary to run and manage** (not a Python library)
+- Backend is AGPL-3.0 (important if you intend to fork/modify the backend)
+- Not an OIDC provider — cannot issue OIDC tokens for third-party apps
+- No "admin UI" dashboard in the open-source version (Cloud feature). User management is via admin REST API only
+- Multi-tenancy/organizations is still in progress
+
+**Verdict:** **Best fit for the new constraint.** If you want a login UI that works in Svelte out-of-the-box and runs under your own domain as a subpath, Hanko is the only realistically complete OSS option. The `hanko-elements` MIT web components integrate into Svelte with minimal effort. The Go backend can be run on the same host behind a proxy — no second domain required.
+
+---
+
+### New Candidate: SuperTokens (Revisited as Embedded SDK)
+
+**Website:** https://supertokens.com/ | **License:** Apache 2.0 (core)
+
+SuperTokens was evaluated in the first pass as "not an IdP". Re-evaluated here as an embedded auth framework:
+
+| Criterion | Rating | Notes |
+|-----------|--------|-------|
+| **Python/FastAPI SDK** | **Yes** | `supertokens-python` library integrates directly into FastAPI as a middleware; adds `/auth/*` routes automatically |
+| **Frontend components** | Partial | Pre-built UI for **React only**; Svelte requires custom UI built against the SuperTokens API |
+| **Same-domain / subpath** | **Yes** | Auth routes are at `/auth/` on your existing domain by default |
+| **Separate service** | Partial | SuperTokens Core runs locally (port 3567, internal-only); users only interact with your FastAPI app |
+| **Social Login** | Yes | Google, GitHub, Facebook, Apple, custom OAuth/OIDC providers |
+| **Email/Password** | Yes | Built-in |
+| **MFA** | Paid | `$0.01/MAU` |
+| **Multi-Tenancy** | Paid | Minimum `$100/month` |
+| **License** | Apache 2.0 (core) | Core is free; paid add-ons for MFA/multi-tenancy |
+
+**Same-domain integration architecture:**
+```
+FastAPI app:
+  /api/**  → your app routes
+  /auth/** → SuperTokens routes (added by supertokens-python middleware)
+
+Svelte:
+  Custom login form → calls /auth/signinup (SuperTokens API directly)
+  No pre-built Svelte component exists; you build the form yourself
+```
+
+**Pros:**
+- Python SDK is the most deeply integrated option — it literally adds auth routes to your existing FastAPI app
+- No separate domain; auth lives at `/auth/` on your app
+- Social login, email/password all supported in the free tier
+
+**Cons:**
+- **No Svelte frontend components** — you build the login form yourself (forms are simple, but it's not "provided")
+- MFA and multi-tenancy are paid features ($100+/month minimum)
+- SuperTokens Core is still a separate internal service (Java/Kotlin binary), just not user-facing
+
+**Verdict:** Good choice for **Python-first** teams who are comfortable building a simple Svelte login form. The Python SDK is the most deeply embedded option for FastAPI. But if you want pre-built frontend components that work with Svelte, this does not satisfy that requirement.
+
+---
+
+### New Candidate: fastapi-users (Pure Python Library)
+
+**Website:** https://fastapi-users.github.io/fastapi-users/ | **License:** MIT
+**GitHub Stars:** ~6.1k
+
+A pure Python library that adds auth routes directly to your FastAPI application. No separate service, no separate domain.
+
+| Criterion | Rating | Notes |
+|-----------|--------|-------|
+| **Integration style** | Library | Directly imported into FastAPI; adds routers via `include_router` |
+| **Social Login** | Yes | Google, GitHub, Facebook, etc. via `httpx-oauth` |
+| **Email/Password** | Yes | Built-in; JWT or session-based |
+| **Frontend components** | **No** | No frontend provided; build your own Svelte forms |
+| **Same-domain** | **Yes** | Auth routes are part of your FastAPI app at `/auth/` |
+| **User Management UI** | **No** | Manage users via the API you expose |
+| **License** | MIT | Fully open source, no restrictions |
+| **Maintenance status** | **⚠ Maintenance mode** | No new features. Security updates and dependency updates only. A successor library is in development by the same author. |
+
+**Verdict:** The **most "true library"** option — auth is literally code in your Python app. Zero extra services to run. However, it is in maintenance mode and provides no frontend components. Suitable if you can build a small Svelte login form and are comfortable with maintenance-mode software for this layer.
+
+---
+
+### Embedded Solution Comparison Matrix
+
+| | **Hanko** | **SuperTokens** | **fastapi-users** |
+|---|---|---|---|
+| **Integration model** | Separate Go service (proxied) | Separate Core + Python SDK | Pure Python library |
+| **Python/FastAPI backend** | JWT validation only | Deep SDK integration | Library |
+| **Svelte frontend components** | **Yes (web components, MIT)** | No (build your own) | No (build your own) |
+| **Social login** | Yes (Apple, Google, GitHub, etc.) | Yes | Yes (via httpx-oauth) |
+| **Email/Password** | Yes | Yes | Yes |
+| **MFA** | Yes (TOTP, WebAuthn) | Paid | No |
+| **Passkeys** | Yes | No | No |
+| **Same-domain (subpath)** | Yes (via reverse proxy) | Yes (built-in) | Yes (built-in) |
+| **Admin UI** | No (Cloud feature) | No | No |
+| **User Management API** | Yes (Admin REST API) | Yes | Yes |
+| **Multi-Tenant** | Partial (in progress) | Paid | No |
+| **License** | AGPL-3.0 backend / MIT frontend | Apache 2.0 | MIT |
+| **Status** | Active (8.9k ⭐) | Active (12k ⭐) | Maintenance mode (6.1k ⭐) |
+
+---
+
+### Updated Recommendation for Embedded / Same-Domain Use Case
+
+> **Hanko** is the recommended choice for a FastAPI + Svelte app that needs auth on the same domain without a separate IDP service.
+>
+> - The `<hanko-auth>` web component (MIT) integrates into Svelte with two lines of code
+> - Social login (Google, GitHub, Apple, Discord, Microsoft, custom OIDC) fully supported
+> - Passwords + passkeys + MFA + SAML all work out-of-the-box
+> - Running it behind a reverse proxy subpath (`/auth/`) is well-documented; users never leave your domain
+> - FastAPI verifies Hanko's JWTs using Hanko's JWKS endpoint — a clean, standard integration
+>
+> **Trade-off**: It is still a separate binary (a lightweight Go process), not a Python library. Session management between Hanko and FastAPI happens via JWT, which is idiomatic for this stack.
+>
+> **If you absolutely need a pure Python library** (zero extra processes), use `fastapi-users` for the backend together with a custom Svelte login form (which is a small amount of work — a form with email/password fields and social login buttons). Note that fastapi-users is in maintenance mode, and a successor is in development by the same author. Monitor for the successor library before committing.
+>
+> **Avoid** using a full standalone OIDC IDP (Keycloak, ZITADEL, Logto, etc.) for this use case — they are engineered to protect multiple applications via standard protocols, which is significant over-engineering if you only need to authenticate users in one web app.
