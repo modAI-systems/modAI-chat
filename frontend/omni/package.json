@@ -28,7 +28,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.10",
     "@internationalized/date": "^3.12.0",
-    "@lucide/svelte": "^1.7.0",
+    "@lucide/svelte": "^1.8.0",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@tailwindcss/vite": "^4.2.2",
     "bits-ui": "^2.17.2",
