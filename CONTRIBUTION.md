@@ -23,14 +23,22 @@ Our promise to you:
 1. not close your requests without any comment
 1. when turning something down we give you reasons why and allow a discussion
 
-## AI assistend coding
+## AI assisted coding
 
-We totoally appreaciate and support AI assisted coding. Therefore important concepts are documented
-in a humand and AI friendly way make it easy start implementing certain features.
+We totally appreciate and support AI assisted coding. Therefore important concepts are documented in a human and AI friendly way to make it easy to start implementing certain features. This includes general `AGENTS.md` guidance, per-technology skill files, and thorough architecture documentation so AI can do a good job.
 
-Keep in mind, that pure vibe coding without reviewing a single line of produced code is not
-what we understand under "AI assisted coding". Feel free to let the AI write all your code
-but at least ensure that it did a good job by reviewing it.
+### Accepted workflows
+
+Both of the following workflows are welcome:
+
+- **Human writes code + tests → Human reviews**
+- **AI writes code + tests → Human reviews**
+
+### What we do NOT accept
+
+**AI-only review is not sufficient.** AI may assist with a review, but a human must also review every change before a pull request is created or merged. This is a hard requirement — no exceptions.
+
+In other words: feel free to let the AI write all your code, but you are responsible for reviewing what it produced before opening a PR.
 
 ## Conventions
 
