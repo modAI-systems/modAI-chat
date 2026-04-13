@@ -33,6 +33,7 @@ jobs:
       - name: Create PR if changes exist
         uses: peter-evans/create-pull-request@v7
         with:
+          token: ${{ secrets.TRIGGER_WORKFLOW_TOKEN }}
           commit-message: "chore(frontend): update shadcn components"
           title: "chore(frontend): weekly shadcn component update"
           body: "Automated weekly update of shadcn-svelte components via `update-shadcn.sh`."
