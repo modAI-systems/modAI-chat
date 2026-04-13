@@ -601,7 +601,7 @@ Disclaimer: This analysis was completely done by AI with some human guidelines i
 | **Multi-Tenant** | Yes | Excellent | Yes | Partial | Cloud | No | Paid | Yes | Yes | Plugin | No | No | No | Yes (Realms) |
 | **Extensible** | Excellent | Good | Moderate | Good | Excellent | Moderate | Good | Moderate | Good | Good | Limited | Good (connectors) | Moderate | Moderate |
 | **Self-Host Easy** | Medium | Easy | Easy | Easy | Hard | Easy | Easy | Easy | Easy | N/A | Easy | Easy | Very Easy | Medium |
-| **Subpath Support** | **Yes** ¹ | **No** ² | Partial ³ | **Yes** ⁴ | **Yes** ⁵ | **Yes** ⁶ | **Yes** ⁷ | **Yes** ⁸ | Partial ⁹ | N/A ¹⁰ | **Yes** ¹¹ | Partial ¹² | **Yes** ¹³ | **No** ¹⁴ |
+| **Subpath Support** | **Yes** ¹ | **No** ² | Partial ³ | **Yes** ⁴ | **Yes** ⁵ | **Yes** ⁶ | **Yes** ⁷ | **No** ⁸ | Partial ⁹ | N/A ¹⁰ | **Yes** ¹¹ | **Yes** ¹² | Partial ¹³ | **No** ¹⁴ |
 
 **Social Login (IdP Federation) Notes:**
 
@@ -683,17 +683,17 @@ Disclaimer: This analysis was completely done by AI with some human guidelines i
 
 ⁷ **SuperTokens**: **Yes (inherently).** The auth routes are added to your existing FastAPI/Node.js app at `/auth/` by default (configurable). They live in your app — there is no second service exposed to users. Fully same-domain by design.
 
-⁸ **Casdoor**: **Yes.** Standard Go HTTP server. The `httpPath` config option sets the base path prefix. Can be proxied to `my.app/casdoor/` or similar. Straightforward.
+⁸ **Casdoor**: **No.** Despite being a standard Go/Beego HTTP server, Casdoor has no base-path prefix configuration. The `httpPath` option does not exist (0 results in the codebase). The frontend is a React SPA built without a configurable `PUBLIC_URL` subpath, so all asset and route references are hardcoded to root. Subpath deployment is not supported; Casdoor must run on its own domain or subdomain.
 
 ⁹ **FusionAuth**: Partial. FusionAuth can be placed behind a reverse proxy, and `fusionauth.app.url` can include a path prefix. However, some redirect URIs and internal asset links have known issues with path prefixes depending on the version. The docs focus on subdomain deployment.
 
 ¹⁰ **Better Auth**: N/A — it is a library embedded in your app. Always same origin, no separate service. The auth API routes live at whatever path you mount the handler on (e.g., `app.mount("/auth", better_auth_handler)`).
 
-¹¹ **Authelia**: **Yes.** Standard reverse proxy companion design. Authelia itself listens on its own port and can be placed at any path via the reverse proxy. Its `server.path_prefix` config option explicitly controls the path prefix.
+¹¹ **Authelia**: **Yes.** Standard reverse proxy companion design. Authelia itself listens on its own port and can be placed at any path. Configure the path as part of the `server.address` option (e.g., `address: 'tcp://:9091/auth/'`). If a non-root path is configured, Authelia handles requests for both `/` and the configured path.
 
-¹² **Dex**: Partial. Dex is a standard HTTP server proxiable to any path. However, the OIDC Discovery document (`/.well-known/openid-configuration`) must resolve relative to the issuer. If you configure the issuer as `https://my.app/dex`, then the discovery URL must be at `https://my.app/dex/.well-known/openid-configuration` — this works if the reverse proxy strips the prefix correctly. No first-class path prefix config option; requires careful proxy rewriting.
+¹² **Dex**: **Yes.** First-class support via the `issuer` configuration field. The issuer is the canonical URL for the Dex service; if a path is provided (e.g., `issuer: https://my.app/dex`), Dex's HTTP service will listen at that non-root path automatically. OIDC discovery and all endpoints are served relative to the issuer URL. No reverse-proxy rewriting needed.
 
-¹³ **Rauthy**: **Yes.** The `SERVER_PATH_PREFIX` config option (e.g., `SERVER_PATH_PREFIX=/auth`) sets the base path. Explicitly supported and documented. Running at `my.app/auth` works out of the box with a single config change.
+¹³ **Rauthy**: **Partial.** Rauthy's routes are hardcoded at `/auth/v1/…` by design — there is no configurable path prefix (`SERVER_PATH_PREFIX` does not exist). Because Rauthy already serves everything under `/auth/v1/`, you can proxy the root of a domain to Rauthy and users reach it at `my.app/auth/v1/…`, but the prefix is fixed and cannot be changed without a custom build.
 
 ¹⁴ **FerrisKey**: **Not supported.** Ships as separate API and web console containers, each serving from the root path. No documented path-prefix configuration. Too early-stage for non-trivial deployment scenarios.
 
