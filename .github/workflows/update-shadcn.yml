@@ -31,7 +31,7 @@ jobs:
         run: bash update-shadcn.sh
 
       - name: Create PR if changes exist
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.TRIGGER_WORKFLOW_TOKEN }}
           commit-message: "chore(frontend): update shadcn components"
