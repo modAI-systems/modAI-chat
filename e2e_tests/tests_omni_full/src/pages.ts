@@ -143,8 +143,8 @@ export class ChatPage {
             await toggle.click();
         }
 
-        // Close the popover by pressing Escape
-        await this.page.keyboard.press("Escape");
+        // Close the popover by clicking the trigger button again
+        await toolsButton.click();
     }
 
     async selectFirstModel(): Promise<void> {
