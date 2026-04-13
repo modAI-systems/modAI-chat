@@ -120,12 +120,10 @@ auth_oidc:
 
 **Key Responsibilities**:
 - Decoding and verifying the JWT session cookie on every request
-- Providing the `Session` object (user_id + claims) to other modules
-- User info retrieval with JIT provisioning
+- Providing the `Session` object (user_id, name, claims) to other modules
 
 **API Endpoints**:
-- `GET /api/auth/session` - Returns the active session (200 OK) or 401 if missing/invalid/expired
-- `GET /api/auth/userinfo` - Returns user info with JIT provisioning (200 OK / 401 / 404)
+- `GET /api/auth/userinfo` - Returns the active session (200 OK) or 401 if missing/invalid/expired
 
 **Configuration**:
 ```yaml
@@ -135,12 +133,9 @@ session:
     session_secret: ${SESSION_SECRET}   # Secret for verifying session cookies
     # Optional:
     # session_duration: 86400            # seconds, default 24 h
-  module_dependencies:
-    user_store: "user_store"            # optional, for JIT provisioning
 ```
 
-**Dependencies**:
-- User Store Module (optional, for JIT provisioning)
+**Dependencies**: None
 
 **Session Interface**:
 ```python
@@ -149,7 +144,7 @@ def validate_session(self, request: Request) -> Session:
     Decodes the JWT session cookie and returns a Session.
 
     Returns:
-        Session with user_id (from OIDC sub claim) and additional claims
+        Session with user_id (from OIDC sub claim), name, and additional claims
         (email, name, email_verified)
 
     Raises:
@@ -161,14 +156,8 @@ def validate_session(self, request: Request) -> Session:
 
 Session endpoint:
 ```json
-// GET /api/auth/session (200 OK)
-{"user_id": "user-id", "additional": {"email": "user@example.com", "name": "John Doe"}}
-```
-
-Userinfo:
-```json
 // GET /api/auth/userinfo (200 OK)
-{"id": "user-id", "email": "user@example.com", "full_name": "John Doe"}
+{"user_id": "user-id", "name": "John Doe", "additional": {"email": "user@example.com", "name": "John Doe"}}
 ```
 
 
@@ -215,7 +204,7 @@ async def validate_permission(self, user_id: str, resource: str, action: str) ->
 - Emit a startup warning that authentication is disabled
 
 **API Endpoints**:
-- `GET /api/auth/session` - Always returns 200 OK with the configured mock user
+- `GET /api/auth/userinfo` - Always returns 200 OK with the configured mock user
 
 **Configuration**:
 ```yaml
@@ -272,7 +261,7 @@ sequenceDiagram
     participant IDP
 
     Browser->>Frontend: Navigate to app
-    Frontend->>Backend: GET /api/auth/session
+    Frontend->>Backend: GET /api/auth/userinfo
     Backend->>Frontend: 401 if not authenticated
     Frontend->>Backend: GET /api/auth/login
     Backend->>Browser: 302 Redirect to IDP /authorize
@@ -287,7 +276,7 @@ sequenceDiagram
     Backend->>Browser: 302 Redirect to frontend + Set-Cookie
     Browser->>Frontend: Navigate to app (with cookie)
     Frontend->>Backend: GET /api/auth/userinfo (cookie)
-    Backend->>Backend: Validate session, JIT provision user
+    Backend->>Backend: Validate session
     Backend->>Frontend: User data
 ```
 

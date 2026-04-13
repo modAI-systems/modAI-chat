@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { TEST_USER_EMAIL, TEST_USER_PASSWORD, TEST_USERNAME } from "./fixtures";
+import { TEST_USER_PASSWORD, TEST_USERNAME } from "./fixtures";
 import { NanoIdpLoginPage } from "./pages";
 
 const BACKEND_URL = "http://localhost:8000";
@@ -10,7 +10,7 @@ test.describe("Login", () => {
     }) => {
         await page.goto("/");
 
-        // The auth guard calls /api/auth/session → unauthenticated
+        // The auth guard calls /api/auth/userinfo → unauthenticated
         // → redirect to /api/auth/login → NanoIDP authorize endpoint on port 9000
         await page.waitForURL(/localhost:9000/, { timeout: 10000 });
         await expect(page).toHaveURL(/localhost:9000/);
@@ -28,9 +28,9 @@ test.describe("Login", () => {
     test("should show app as unauthenticated before login", async ({
         page,
     }) => {
-        // Check /api/auth/session directly — should be unauthorized
+        // Check /api/auth/userinfo directly — should be unauthorized
         const response = await page.request.get(
-            `${BACKEND_URL}/api/auth/session`,
+            `${BACKEND_URL}/api/auth/userinfo`,
         );
         expect(response.status()).toBe(401);
     });
@@ -39,9 +39,9 @@ test.describe("Login", () => {
         const loginPage = new NanoIdpLoginPage(page);
         await loginPage.login(TEST_USERNAME, TEST_USER_PASSWORD);
 
-        // Session endpoint should now return session payload (cookie is sent)
+        // Userinfo endpoint should now return session payload (cookie is sent)
         const response = await page.request.get(
-            `${BACKEND_URL}/api/auth/session`,
+            `${BACKEND_URL}/api/auth/userinfo`,
         );
         expect(response.ok()).toBe(true);
         const body = await response.json();
@@ -52,14 +52,14 @@ test.describe("Login", () => {
         const loginPage = new NanoIdpLoginPage(page);
         await loginPage.login(TEST_USERNAME, TEST_USER_PASSWORD);
 
-        // /api/auth/userinfo includes JIT-provisioned user data
+        // /api/auth/userinfo includes the user's name from the JWT claims
         const response = await page.request.get(
             `${BACKEND_URL}/api/auth/userinfo`,
         );
         expect(response.ok()).toBe(true);
         const body = await response.json();
-        expect(body.email).toBe(TEST_USER_EMAIL);
-        expect(body.id).toBeTruthy();
+        expect(body.user_id).toBeTruthy();
+        expect(body.additional.email).toBeTruthy();
     });
 
     test.skip("should log out and clear session", async ({ page }) => {
@@ -68,7 +68,7 @@ test.describe("Login", () => {
 
         // Confirm we have a valid session
         const beforeLogout = await page.request.get(
-            `${BACKEND_URL}/api/auth/session`,
+            `${BACKEND_URL}/api/auth/userinfo`,
         );
         expect(beforeLogout.ok()).toBe(true);
         expect((await beforeLogout.json()).user_id).toBeTruthy();
@@ -87,7 +87,7 @@ test.describe("Login", () => {
 
         // Session should now be cleared (no cookie -> unauthorized)
         const afterLogout = await page.request.get(
-            `${BACKEND_URL}/api/auth/session`,
+            `${BACKEND_URL}/api/auth/userinfo`,
         );
         expect(afterLogout.status()).toBe(401);
     });

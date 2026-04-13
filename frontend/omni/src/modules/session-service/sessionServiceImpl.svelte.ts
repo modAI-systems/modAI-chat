@@ -13,7 +13,7 @@ class SessionServiceImpl implements SessionService {
     async refresh(): Promise<void> {
         try {
             const response =
-                await this.#fetchService.fetch("/api/auth/session");
+                await this.#fetchService.fetch("/api/auth/userinfo");
             this.#sessionActive = response.ok;
         } catch {
             this.#sessionActive = false;

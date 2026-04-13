@@ -71,7 +71,7 @@ describe("sessionServiceImpl", () => {
             expect(service.isSessionActive()).toBe(false);
         });
 
-        it("calls /api/auth/session via FetchService", async () => {
+        it("calls /api/auth/userinfo via FetchService", async () => {
             const fetchFn = vi.fn(
                 async () =>
                     new Response(JSON.stringify({ user_id: "admin" }), {
@@ -83,7 +83,7 @@ describe("sessionServiceImpl", () => {
             await service.refresh();
 
             expect(fetchFn).toHaveBeenCalledWith(
-                "/api/auth/session",
+                "/api/auth/userinfo",
                 undefined,
             );
         });
