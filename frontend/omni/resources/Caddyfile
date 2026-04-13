@@ -1,4 +1,4 @@
-localhost {
+:80 {
 	handle /api/* {
 		reverse_proxy {$API_BACKEND_URL}
 	}
