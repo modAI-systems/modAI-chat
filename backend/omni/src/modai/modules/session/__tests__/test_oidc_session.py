@@ -4,13 +4,12 @@ import jwt
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 from modai.module import ModuleDependencies
 from modai.modules.authentication._cookie import COOKIE_NAME
 from modai.modules.session.oidc_session import OIDCSessionModule
 from modai.modules.session.module import Session
-from modai.modules.user_store.module import User, UserStore
 
 SESSION_SECRET = "super-secret-test-key"
 
@@ -20,13 +19,9 @@ BASE_CONFIG = {"session_secret": SESSION_SECRET}
 def _build_module(
     *,
     config: dict | None = None,
-    user_store: UserStore | None = None,
 ) -> OIDCSessionModule:
-    deps: dict = {}
-    if user_store:
-        deps["user_store"] = user_store
     return OIDCSessionModule(
-        dependencies=ModuleDependencies(deps),
+        dependencies=ModuleDependencies({}),
         config=BASE_CONFIG if config is None else config,
     )
 
@@ -156,7 +151,7 @@ class TestValidateSession:
         assert session.additional["email_verified"] is True
 
 
-# ── /api/auth/session ────────────────────────────────────────────────────────
+# ── /api/auth/userinfo ───────────────────────────────────────────────────────
 
 
 class TestSessionStatusEndpoint:
@@ -166,17 +161,18 @@ class TestSessionStatusEndpoint:
 
         client.cookies.set(COOKIE_NAME, _make_cookie())
 
-        resp = client.get("/api/auth/session")
+        resp = client.get("/api/auth/userinfo")
         assert resp.status_code == 200
         data = resp.json()
         assert data["user_id"] == "user-1"
         assert data["additional"]["email"] == "u@test.com"
+        assert data["additional"]["name"] == "Test"
 
     def test_unauthenticated_returns_401(self):
         module = _build_module()
         client = _build_client(module)
 
-        resp = client.get("/api/auth/session")
+        resp = client.get("/api/auth/userinfo")
         assert resp.status_code == 401
 
     def test_expired_cookie_returns_401(self):
@@ -185,115 +181,5 @@ class TestSessionStatusEndpoint:
 
         client.cookies.set(COOKIE_NAME, _make_cookie(expires_delta=-60))
 
-        resp = client.get("/api/auth/session")
-        assert resp.status_code == 401
-
-
-# ── /api/auth/userinfo ───────────────────────────────────────────────────────
-
-
-class TestUserinfoEndpoint:
-    def test_returns_401_without_session(self):
-        module = _build_module()
-        client = _build_client(module)
-
         resp = client.get("/api/auth/userinfo")
         assert resp.status_code == 401
-
-    def test_returns_claims_without_user_store(self):
-        module = _build_module()
-        client = _build_client(module)
-
-        client.cookies.set(COOKIE_NAME, _make_cookie())
-
-        resp = client.get("/api/auth/userinfo")
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["id"] == "user-1"
-        assert data["email"] == "u@test.com"
-
-    def test_returns_existing_user_from_store(self):
-        user_store = Mock(spec=UserStore)
-        user_store.get_user_by_id = AsyncMock(
-            return_value=User(
-                id="user-1", email="store@example.com", full_name="DB User"
-            )
-        )
-        module = _build_module(user_store=user_store)
-        client = _build_client(module)
-
-        client.cookies.set(COOKIE_NAME, _make_cookie())
-
-        resp = client.get("/api/auth/userinfo")
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["id"] == "user-1"
-        assert data["email"] == "store@example.com"
-        assert data["full_name"] == "DB User"
-
-    def test_jit_provisions_new_user(self):
-        user_store = Mock(spec=UserStore)
-        user_store.get_user_by_id = AsyncMock(return_value=None)
-        user_store.get_user_by_email = AsyncMock(return_value=None)
-        provisioned = User(id="user-1", email="u@test.com", full_name="Test")
-        user_store.create_user = AsyncMock(return_value=provisioned)
-
-        module = _build_module(user_store=user_store)
-        client = _build_client(module)
-
-        client.cookies.set(COOKIE_NAME, _make_cookie())
-
-        resp = client.get("/api/auth/userinfo")
-        assert resp.status_code == 200
-        user_store.create_user.assert_called_once_with(
-            email="u@test.com", full_name="Test", id="user-1"
-        )
-
-    def test_returns_user_found_by_email(self):
-        user_store = Mock(spec=UserStore)
-        user_store.get_user_by_id = AsyncMock(return_value=None)
-        user_store.get_user_by_email = AsyncMock(
-            return_value=User(id="user-1", email="u@test.com", full_name="Test")
-        )
-
-        module = _build_module(user_store=user_store)
-        client = _build_client(module)
-
-        client.cookies.set(COOKIE_NAME, _make_cookie())
-
-        resp = client.get("/api/auth/userinfo")
-        assert resp.status_code == 200
-        assert resp.json()["id"] == "user-1"
-
-    def test_returns_404_when_user_cannot_be_provisioned(self):
-        user_store = Mock(spec=UserStore)
-        now = int(time.time())
-        # no email in cookie → cannot provision
-        cookie = jwt.encode(
-            {"sub": "u1", "iat": now, "exp": now + 3600},
-            SESSION_SECRET,
-            algorithm="HS256",
-        )
-        user_store.get_user_by_id = AsyncMock(return_value=None)
-
-        module = _build_module(user_store=user_store)
-        client = _build_client(module)
-
-        client.cookies.set(COOKIE_NAME, cookie)
-
-        resp = client.get("/api/auth/userinfo")
-        assert resp.status_code == 404
-
-    def test_returns_500_when_create_user_fails(self):
-        user_store = Mock(spec=UserStore)
-        user_store.get_user_by_id = AsyncMock(return_value=None)
-        user_store.get_user_by_email = AsyncMock(return_value=None)
-        user_store.create_user = AsyncMock(side_effect=RuntimeError("DB error"))
-
-        module = _build_module(user_store=user_store)
-        client = _build_client(module)
-
-        client.cookies.set(COOKIE_NAME, _make_cookie())
-
-        resp = client.get("/api/auth/userinfo")
-        assert resp.status_code == 500

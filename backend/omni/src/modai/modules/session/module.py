@@ -30,7 +30,7 @@ class SessionModule(ModaiModule, ABC):
         self.logger = logging.getLogger(__name__)
         self.router = APIRouter()
         self.router.add_api_route(
-            "/api/auth/session",
+            "/api/auth/userinfo",
             self.validate_session,
             methods=["GET"],
         )
