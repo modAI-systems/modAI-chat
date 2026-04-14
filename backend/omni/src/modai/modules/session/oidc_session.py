@@ -2,22 +2,20 @@
 OIDC Session Module: Validates stateless JWT session cookies.
 
 Implements the SessionModule web contract and provides cookie-based
-authentication plus user info retrieval with optional JIT provisioning.
+authentication.
 
 All session state is encoded directly in the signed JWT cookie -
 no server-side session store is required. See _cookie.py for the
 cookie payload structure.
 
 Endpoints:
-  GET  /api/auth/session  - Returns current session information
-  GET  /api/auth/userinfo - Returns current user info (with JIT provisioning)
+  GET  /api/auth/userinfo  - Returns current session information
 """
 
 import logging
 from typing import Any
 
 from fastapi import HTTPException, Request
-from pydantic import BaseModel
 
 from modai.module import ModuleDependencies
 from modai.modules.authentication._cookie import (
@@ -25,13 +23,6 @@ from modai.modules.authentication._cookie import (
     decode_session_cookie,
 )
 from modai.modules.session.module import Session, SessionModule
-from modai.modules.user_store.module import UserStore
-
-
-class UserInfoResponse(BaseModel):
-    id: str
-    email: str
-    full_name: str | None = None
 
 
 class OIDCSessionModule(SessionModule):
@@ -49,13 +40,6 @@ class OIDCSessionModule(SessionModule):
 
         # Required config
         self.session_secret = self._require_config("session_secret")
-
-        # Optional dependency
-        user_store = dependencies.modules.get("user_store")
-        self.user_store: UserStore | None = user_store  # type: ignore[assignment]
-
-        # Additional route
-        self.router.add_api_route("/api/auth/userinfo", self.userinfo, methods=["GET"])
 
     def validate_session(self, request: Request) -> Session:
         """Validate the JWT session cookie and return the current session.
@@ -97,60 +81,6 @@ class OIDCSessionModule(SessionModule):
         }
 
         return Session(user_id=str(user_id), additional=additional)
-
-    async def userinfo(self, request: Request) -> UserInfoResponse:
-        """Return user info from the cookie claims with optional JIT provisioning."""
-        session = self.validate_session(request)
-
-        if not self.user_store:
-            return UserInfoResponse(
-                id=session.user_id,
-                email=session.additional.get("email", ""),
-                full_name=session.additional.get("name"),
-            )
-
-        # JIT provisioning
-        user = await self.user_store.get_user_by_id(session.user_id)
-
-        if not user:
-            email = session.additional.get("email")
-            if email:
-                user = await self.user_store.get_user_by_email(email)
-
-            if not user and email:
-                try:
-                    user = await self.user_store.create_user(
-                        email=email,
-                        full_name=session.additional.get("name"),
-                        id=session.user_id,
-                    )
-                    self.logger.info(
-                        "JIT provisioned user %s (%s)",
-                        session.user_id,
-                        email,
-                    )
-                except Exception as e:
-                    self.logger.error(
-                        "Failed to JIT provision user %s: %s",
-                        session.user_id,
-                        e,
-                    )
-                    raise HTTPException(
-                        status_code=500,
-                        detail="Failed to provision user account",
-                    ) from e
-
-        if not user:
-            raise HTTPException(
-                status_code=404,
-                detail="User not found and could not be provisioned",
-            )
-
-        return UserInfoResponse(
-            id=user.id,
-            email=user.email,
-            full_name=user.full_name,
-        )
 
     def _require_config(self, key: str) -> str:
         value = self.config.get(key)

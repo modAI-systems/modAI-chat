@@ -21,7 +21,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "cryptography>=46.0.5",
+    "cryptography>=46.0.7",
     "datamodel-code-generator[ruff]",
     "pytest",
     "pytest-asyncio",

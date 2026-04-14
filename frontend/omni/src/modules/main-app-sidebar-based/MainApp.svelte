@@ -9,26 +9,40 @@ const t = getT("main-app-sidebar-based");
 
 const deps = getModuleDeps("@/modules/main-app-sidebar-based/MainApp");
 const sidebarTopItems = $derived(deps.getAll<Component>("sidebarTopItems"));
+const sidebarBottomItems = $derived(
+    deps.getAll<Component>("sidebarBottomItems"),
+);
+const hasHeaderItems = $derived(sidebarTopItems.length > 0);
+const hasFooterItems = $derived(sidebarBottomItems.length > 0);
 const { children } = $props();
 </script>
 
 <main class="flex min-h-screen flex-col bg-background">
-	{#if sidebarTopItems.length > 0}
+	{#if hasHeaderItems || hasFooterItems}
 		<SidebarLayout>
-			{#snippet sidebar()}
-				<Sidebar.Menu>
-					{#each sidebarTopItems as SidebarTopItem, index (index)}
-						<SidebarTopItem />
-					{/each}
-				</Sidebar.Menu>
-			{/snippet}
+            {#snippet sidebarHeader()}
+                {#if hasHeaderItems}
+                    <Sidebar.Menu>
+                        {#each sidebarTopItems as SidebarTopItem, index (index)}
+                            <SidebarTopItem />
+                        {/each}
+                    </Sidebar.Menu>
+                {/if}
+            {/snippet}
+
+            {#snippet sidebarFooter()}
+                {#if hasFooterItems}
+                    <Sidebar.Menu>
+                        {#each sidebarBottomItems as SidebarBottomItem, index (index)}
+                            <SidebarBottomItem />
+                        {/each}
+                    </Sidebar.Menu>
+                {/if}
+            {/snippet}
 
 			{@render children?.()}
 		</SidebarLayout>
 	{:else}
-		<div class="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
-			<h1 class="text-4xl font-bold text-foreground">modAI</h1>
-			<p class="text-muted-foreground">{t("techStack", { defaultValue: "Svelte · Vite · Tailwind · Module System" })}</p>
-		</div>
+		{@render children?.()}
 	{/if}
 </main>
