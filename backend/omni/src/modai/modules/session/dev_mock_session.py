@@ -8,7 +8,7 @@ Every request is treated as if it comes from a statically configured user,
 allowing the application to be used without an identity provider.
 
 Endpoints:
-  GET /api/auth/session  - Always returns the configured mock user session
+  GET /api/auth/userinfo  - Always returns the configured mock user session
 """
 
 import logging
@@ -48,10 +48,11 @@ class DevMockSessionModule(SessionModule):
 
         self._user_id = self._require_config("user_id")
 
+        name: str | None = config.get("name") or None
         additional: dict[str, Any] = {}
         if email := config.get("email"):
             additional["email"] = email
-        if name := config.get("name"):
+        if name:
             additional["name"] = name
         self._session = Session(user_id=self._user_id, additional=additional)
 

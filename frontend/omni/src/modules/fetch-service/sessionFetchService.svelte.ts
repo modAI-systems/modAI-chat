@@ -19,8 +19,8 @@ export function create(deps: ModuleDependencies): FetchService {
                 ...init,
             });
             if (response.status === 401) {
-                await sessionService.refresh();
-                if (!sessionService.isSessionActive()) {
+                const { active } = await sessionService.getActiveSession();
+                if (!active) {
                     noSessionAction.execute();
                 }
             }
