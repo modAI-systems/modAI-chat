@@ -30,7 +30,8 @@
         "module:sidebarTopItems": [
           "chat-navigation-item",
           "providers-navigation-item"
-        ]
+        ],
+        "module:sidebarBottomItems": []
       }
     },
     {

@@ -42,8 +42,7 @@ describe("SessionFetchService", () => {
         fetch: vi.fn(),
     };
     const mockSessionService: SessionService = {
-        refresh: vi.fn(),
-        isSessionActive: vi.fn(),
+        getActiveSession: vi.fn(),
     };
     const mockNoSessionAction: NoSessionAction = {
         execute: vi.fn(),
@@ -62,14 +61,18 @@ describe("SessionFetchService", () => {
     }
 
     function makeService(sessionActive = false) {
-        vi.mocked(mockSessionService.isSessionActive).mockReturnValue(
-            sessionActive,
-        );
+        vi.mocked(mockSessionService.getActiveSession).mockResolvedValue({
+            active: sessionActive,
+            userInfo: null,
+        });
         return createSessionFetchService(makeDeps());
     }
 
     beforeEach(() => {
-        vi.mocked(mockSessionService.refresh).mockResolvedValue(undefined);
+        vi.mocked(mockSessionService.getActiveSession).mockResolvedValue({
+            active: false,
+            userInfo: null,
+        });
         vi.mocked(mockNoSessionAction.execute).mockImplementation(() => {});
     });
 
@@ -84,7 +87,7 @@ describe("SessionFetchService", () => {
         const response = await makeService().fetch("/api/data");
 
         expect(response).toBe(mockResponse);
-        expect(mockSessionService.refresh).not.toHaveBeenCalled();
+        expect(mockSessionService.getActiveSession).not.toHaveBeenCalled();
     });
 
     it("does not interact with session service on non-401 error responses", async () => {
@@ -94,7 +97,7 @@ describe("SessionFetchService", () => {
 
         await makeService().fetch("/api/data");
 
-        expect(mockSessionService.refresh).not.toHaveBeenCalled();
+        expect(mockSessionService.getActiveSession).not.toHaveBeenCalled();
     });
 
     it("calls session service refresh on 401", async () => {
@@ -104,7 +107,7 @@ describe("SessionFetchService", () => {
 
         await makeService().fetch("/api/data");
 
-        expect(mockSessionService.refresh).toHaveBeenCalledOnce();
+        expect(mockSessionService.getActiveSession).toHaveBeenCalledOnce();
     });
 
     it("executes no-session action when session is inactive after 401", async () => {
