@@ -22,6 +22,8 @@ Endpoints:
                             end_session_endpoint
 """
 
+import hashlib
+import hmac
 import logging
 from typing import Any
 from urllib.parse import urlencode
@@ -36,6 +38,7 @@ from modai.module import ModaiModule, ModuleDependencies
 from modai.modules.authentication._cookie import (
     COOKIE_NAME,
     DEFAULT_SESSION_DURATION,
+    decode_session_cookie,
     encode_session_cookie,
 )
 
@@ -95,6 +98,7 @@ class OIDCAuthModule(ModaiModule):
 
         self.router.add_api_route("/api/auth/login", self.login, methods=["GET"])
         self.router.add_api_route("/api/auth/callback", self.callback, methods=["GET"])
+        self.router.add_api_route("/api/auth/csrf", self.csrf, methods=["GET"])
         self.router.add_api_route("/api/auth/logout", self.logout, methods=["POST"])
 
     def configure_app(self, app: FastAPI) -> None:
@@ -174,10 +178,31 @@ class OIDCAuthModule(ModaiModule):
         self.logger.info("Authentication successful for user: %s", sub)
         return response
 
+    async def csrf(self, request: Request) -> Response:
+        """Return a CSRF token tied to the current session cookie."""
+        session_cookie = request.cookies.get(COOKIE_NAME)
+        if not session_cookie:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        try:
+            decode_session_cookie(session_cookie, self.session_secret)
+        except ValueError:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        response = JSONResponse({"csrf_token": self._make_csrf_token(session_cookie)})
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Vary"] = "Cookie"
+        return response
+
     async def logout(self, request: Request) -> Response:
         """Clear session cookie and redirect to OIDC end_session_endpoint."""
-        if not request.cookies.get(COOKIE_NAME):
+        session_cookie = request.cookies.get(COOKIE_NAME)
+        if not session_cookie:
             raise HTTPException(status_code=401, detail="Not authenticated")
+
+        csrf_token = request.headers.get("X-CSRF-Token")
+        expected = self._make_csrf_token(session_cookie)
+        if not csrf_token or not hmac.compare_digest(csrf_token, expected):
+            raise HTTPException(status_code=403, detail="Invalid CSRF token")
+
         metadata = await self._oauth.oidc.load_server_metadata()
         end_session_endpoint = metadata.get("end_session_endpoint")
 
@@ -195,6 +220,14 @@ class OIDCAuthModule(ModaiModule):
         return response
 
     # ── Internal helpers ─────────────────────────────────────────────────
+
+    def _make_csrf_token(self, session_cookie: str) -> str:
+        """Derive a CSRF token from the raw session cookie value."""
+        return hmac.new(
+            self.session_secret.encode(),
+            session_cookie.encode(),
+            hashlib.sha256,
+        ).hexdigest()
 
     def _require_config(self, key: str) -> str:
         value = self.config.get(key)
