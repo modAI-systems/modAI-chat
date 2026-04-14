@@ -40,7 +40,8 @@
         "module:sidebarTopItems": [
           "chat-navigation-item",
           "providers-navigation-item"
-        ]
+        ],
+        "module:sidebarBottomItems": ["user-avatar-item"]
       }
     },
     {
@@ -155,6 +156,13 @@
       "path": "@/modules/llm-provider-management/providersRouteDefinition/create",
       "dependencies": {
         "module:providerManagement": ["llm-provider-management"]
+      }
+    },
+    {
+      "id": "user-avatar-item",
+      "path": "@/modules/user-avatar/UserAvatarItem",
+      "dependencies": {
+        "module:sessionService": "session-service"
       }
     }
   ]

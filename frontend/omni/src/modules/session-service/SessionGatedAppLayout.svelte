@@ -11,8 +11,8 @@ const { children } = $props();
 
 let ready = $state(false);
 
-sessionService.refresh().then(() => {
-    if (!sessionService.isSessionActive()) {
+sessionService.getActiveSession().then(({ active }) => {
+    if (!active) {
         noSessionAction.execute();
     } else {
         ready = true;

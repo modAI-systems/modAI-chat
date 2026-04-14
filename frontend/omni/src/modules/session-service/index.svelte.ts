@@ -1,10 +1,21 @@
+export interface UserInfo {
+    user_id: string;
+    name: string | null;
+}
+
+export interface SessionState {
+    active: boolean;
+    userInfo: UserInfo | null;
+}
+
 /**
- * Manages backend session state.
- * Call refresh() to probe the current session, then isSessionActive() to read it.
+ * Probes backend session state.
+ * Services are stateless — getActiveSession() fetches and returns the current
+ * session state directly instead of caching it. Callers are responsible for
+ * storing the result.
  */
 export interface SessionService {
-    refresh(): Promise<void>;
-    isSessionActive(): boolean;
+    getActiveSession(): Promise<SessionState>;
 }
 
 /**

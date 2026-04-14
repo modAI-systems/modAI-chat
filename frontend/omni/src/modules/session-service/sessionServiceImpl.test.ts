@@ -21,8 +21,8 @@ describe("sessionServiceImpl", () => {
         vi.restoreAllMocks();
     });
 
-    describe("refresh + isSessionActive", () => {
-        it("marks session active when backend returns 200", async () => {
+    describe("refresh", () => {
+        it("returns active=true when backend returns 200", async () => {
             const service = create(
                 makeDeps(
                     vi.fn(
@@ -34,12 +34,12 @@ describe("sessionServiceImpl", () => {
                 ),
             );
 
-            await service.refresh();
+            const result = await service.getActiveSession();
 
-            expect(service.isSessionActive()).toBe(true);
+            expect(result.active).toBe(true);
         });
 
-        it("marks session inactive when backend returns 401", async () => {
+        it("returns active=false when backend returns 401", async () => {
             const service = create(
                 makeDeps(
                     vi.fn(
@@ -49,26 +49,19 @@ describe("sessionServiceImpl", () => {
                 ),
             );
 
-            await service.refresh();
+            const result = await service.getActiveSession();
 
-            expect(service.isSessionActive()).toBe(false);
+            expect(result.active).toBe(false);
         });
 
-        it("marks session inactive on network error", async () => {
-            const fetchFn = vi
-                .fn()
-                .mockResolvedValueOnce(
-                    new Response(JSON.stringify({ user_id: "admin" }), {
-                        status: 200,
-                    }),
-                )
-                .mockRejectedValueOnce(new Error("network error"));
-            const service = create(makeDeps(fetchFn));
+        it("returns active=false on network error", async () => {
+            const service = create(
+                makeDeps(vi.fn().mockRejectedValue(new Error("network error"))),
+            );
 
-            await service.refresh(); // set active
-            await service.refresh(); // network error
+            const result = await service.getActiveSession();
 
-            expect(service.isSessionActive()).toBe(false);
+            expect(result.active).toBe(false);
         });
 
         it("calls /api/auth/userinfo via FetchService", async () => {
@@ -80,12 +73,81 @@ describe("sessionServiceImpl", () => {
             );
             const service = create(makeDeps(fetchFn));
 
-            await service.refresh();
+            await service.getActiveSession();
 
             expect(fetchFn).toHaveBeenCalledWith(
                 "/api/auth/userinfo",
                 undefined,
             );
+        });
+
+        it("returns userInfo with user_id and name when backend returns them", async () => {
+            const service = create(
+                makeDeps(
+                    vi.fn(
+                        async () =>
+                            new Response(
+                                JSON.stringify({
+                                    user_id: "u-42",
+                                    additional: { name: "Alice Wonderland" },
+                                }),
+                                { status: 200 },
+                            ),
+                    ),
+                ),
+            );
+
+            const result = await service.getActiveSession();
+
+            expect(result.userInfo).toEqual({
+                user_id: "u-42",
+                name: "Alice Wonderland",
+            });
+        });
+
+        it("returns userInfo with name=null when backend omits it", async () => {
+            const service = create(
+                makeDeps(
+                    vi.fn(
+                        async () =>
+                            new Response(JSON.stringify({ user_id: "u-99" }), {
+                                status: 200,
+                            }),
+                    ),
+                ),
+            );
+
+            const result = await service.getActiveSession();
+
+            expect(result.userInfo).toEqual({
+                user_id: "u-99",
+                name: null,
+            });
+        });
+
+        it("returns userInfo=null when session is inactive (401)", async () => {
+            const service = create(
+                makeDeps(
+                    vi.fn(
+                        async () =>
+                            new Response("Unauthorized", { status: 401 }),
+                    ),
+                ),
+            );
+
+            const result = await service.getActiveSession();
+
+            expect(result.userInfo).toBeNull();
+        });
+
+        it("returns userInfo=null on network error", async () => {
+            const service = create(
+                makeDeps(vi.fn().mockRejectedValue(new Error("network error"))),
+            );
+
+            const result = await service.getActiveSession();
+
+            expect(result.userInfo).toBeNull();
         });
     });
 });
