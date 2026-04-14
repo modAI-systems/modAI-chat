@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `GET /api/auth/userinfo` now returns `user_id`, `name`, and `additional` claims directly from the JWT session cookie (no separate session endpoint)
+- `GET /api/auth/userinfo` no longer performs `user_store`-backed JIT provisioning or user lookup; it now serves claims directly from the JWT session cookie
+- `GET /api/auth/csrf` - returns a CSRF token derived from the active session cookie (HMAC-SHA256)
+- `POST /api/auth/logout` now requires a valid `X-CSRF-Token` header (returns 403 without it); redirects to the IDP `end_session_endpoint` when available, falls back to `post_logout_uri`
 
 ## [0.0.2] - 2026-04-13
 

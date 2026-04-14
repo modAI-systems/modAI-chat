@@ -90,7 +90,8 @@ When a user authenticates for the first time, they are automatically provisioned
 **API Endpoints**:
 - `GET /api/auth/login` - Initiates OIDC login flow, redirects to IDP
 - `GET /api/auth/callback` - Handles authorization code exchange, sets stateless JWT cookie
-- `POST /api/auth/logout` - Clears session cookie, redirects to IDP end_session_endpoint
+- `GET /api/auth/csrf` - Returns a CSRF token derived from the active session cookie (401 if no valid session)
+- `POST /api/auth/logout` - Clears session cookie, redirects to IDP end_session_endpoint (requires `X-CSRF-Token` header; 401 if no session, 403 if CSRF missing/invalid)
 
 **Configuration**:
 ```yaml
