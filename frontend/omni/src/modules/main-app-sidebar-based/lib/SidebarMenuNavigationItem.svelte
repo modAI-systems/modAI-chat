@@ -2,6 +2,7 @@
 import type { Snippet } from "svelte";
 import { getRouterApi } from "@/modules/router/index.svelte";
 import * as Sidebar from "$lib/shadcnui/components/ui/sidebar/index.js";
+import { SIDEBAR_MENU_BUTTON_CLASS } from "./styles";
 
 const router = getRouterApi();
 
@@ -19,7 +20,7 @@ let {
 <Sidebar.MenuItem>
     <Sidebar.MenuButton
         isActive={false}
-        class="data-[active=false]:bg-transparent data-[active=false]:text-sidebar-foreground data-[active=false]:hover:bg-sidebar-accent data-[active=false]:hover:text-sidebar-accent-foreground data-[active=false]:focus-visible:bg-sidebar-accent data-[active=false]:focus-visible:text-sidebar-accent-foreground"
+        class={SIDEBAR_MENU_BUTTON_CLASS}
         onclick={() => router.navigate(path)}
     >
       {@render icon()}

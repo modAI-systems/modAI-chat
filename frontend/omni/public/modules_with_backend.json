@@ -41,7 +41,7 @@
           "chat-navigation-item",
           "providers-navigation-item"
         ],
-        "module:sidebarBottomItems": ["user-avatar-item"]
+        "module:sidebarBottomItems": ["logout-item", "user-avatar-item"]
       }
     },
     {
@@ -156,6 +156,13 @@
       "path": "@/modules/llm-provider-management/providersRouteDefinition/create",
       "dependencies": {
         "module:providerManagement": ["llm-provider-management"]
+      }
+    },
+    {
+      "id": "logout-item",
+      "path": "@/modules/authentication/LogoutItem",
+      "dependencies": {
+        "module:fetchService": "fetch-service"
       }
     },
     {

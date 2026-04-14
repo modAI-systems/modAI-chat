@@ -227,4 +227,11 @@ export class Sidebar {
             await this.close();
         }
     }
+
+    async logout(): Promise<void> {
+        await this.open();
+        await this.page
+            .getByRole("button", { name: "Logout", exact: true })
+            .click();
+    }
 }
