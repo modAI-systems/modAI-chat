@@ -7,10 +7,12 @@ import * as Sidebar from "$lib/shadcnui/components/ui/sidebar/index.js";
 const t = getT("main-app-sidebar-based");
 
 let {
-    sidebar,
+    sidebarHeader,
+    sidebarFooter,
     children,
 }: {
-    sidebar?: Snippet;
+    sidebarHeader?: Snippet;
+    sidebarFooter?: Snippet;
     children?: Snippet;
 } = $props();
 </script>
@@ -38,7 +40,12 @@ let {
             </div>
         </Sidebar.Header>
         <Sidebar.Content class="px-2 py-3">
-            {@render sidebar?.()}
+            {@render sidebarHeader?.()}
         </Sidebar.Content>
+        {#if sidebarFooter}
+            <Sidebar.Footer class="px-2 py-3">
+                {@render sidebarFooter()}
+            </Sidebar.Footer>
+        {/if}
     </Sidebar.Root>
 </Sidebar.Provider>

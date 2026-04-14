@@ -1,3 +1,5 @@
+import hashlib
+import hmac as hmac_module
 import time
 from urllib.parse import parse_qs, urlparse
 
@@ -69,6 +71,13 @@ def _build_client(module: OIDCAuthModule) -> TestClient:
     module.configure_app(app)
     app.include_router(module.router)
     return TestClient(app, follow_redirects=False)
+
+
+def _make_csrf_token(session_cookie: str, secret: str = SESSION_SECRET) -> str:
+    """Derive the CSRF token the same way the module does."""
+    return hmac_module.new(
+        secret.encode(), session_cookie.encode(), hashlib.sha256
+    ).hexdigest()
 
 
 def _make_session_cookie(
@@ -284,19 +293,21 @@ class TestCallback:
 
 
 class TestLogout:
-    def test_logout_redirects_to_idp(self, httpserver):
+    def test_logout_returns_redirect_url_to_idp(self, httpserver):
         module = _build_module_with_server(httpserver)
         client = _build_client(module)
 
         cookie = _make_session_cookie()
         client.cookies.set(COOKIE_NAME, cookie)
+        csrf = _make_csrf_token(cookie)
 
-        resp = client.post("/api/auth/logout")
-        assert resp.status_code == 302
+        resp = client.post("/api/auth/logout", headers={"X-CSRF-Token": csrf})
+        assert resp.status_code == 200
 
-        location = resp.headers["location"]
-        assert "end_session" in location
-        assert f"client_id={CLIENT_ID}" in location
+        body = resp.json()
+        assert "redirect_url" in body
+        assert "end_session" in body["redirect_url"]
+        assert f"client_id={CLIENT_ID}" in body["redirect_url"]
 
     def test_logout_without_session(self):
         module = _build_module()
@@ -304,6 +315,28 @@ class TestLogout:
 
         resp = client.post("/api/auth/logout")
         assert resp.status_code == 401
+
+    def test_logout_without_csrf_token(self, httpserver):
+        """Logout without X-CSRF-Token header is rejected with 403."""
+        module = _build_module_with_server(httpserver)
+        client = _build_client(module)
+
+        cookie = _make_session_cookie()
+        client.cookies.set(COOKIE_NAME, cookie)
+
+        resp = client.post("/api/auth/logout")
+        assert resp.status_code == 403
+
+    def test_logout_with_invalid_csrf_token(self, httpserver):
+        """Logout with a wrong CSRF token is rejected with 403."""
+        module = _build_module_with_server(httpserver)
+        client = _build_client(module)
+
+        cookie = _make_session_cookie()
+        client.cookies.set(COOKIE_NAME, cookie)
+
+        resp = client.post("/api/auth/logout", headers={"X-CSRF-Token": "wrong-token"})
+        assert resp.status_code == 403
 
     def test_logout_without_end_session_endpoint(self, httpserver):
         issuer = f"http://{httpserver.host}:{httpserver.port}"
@@ -320,31 +353,74 @@ class TestLogout:
 
         cookie = _make_session_cookie()
         client.cookies.set(COOKIE_NAME, cookie)
+        csrf = _make_csrf_token(cookie)
 
-        resp = client.post("/api/auth/logout")
-        assert resp.status_code == 302
-        assert resp.headers["location"] == POST_LOGOUT_URI
+        resp = client.post("/api/auth/logout", headers={"X-CSRF-Token": csrf})
+        assert resp.status_code == 200
+        assert resp.json()["redirect_url"] == POST_LOGOUT_URI
 
     def test_logout_with_expired_cookie(self, httpserver):
-        """Expired cookies are cleared and the user is redirected (no 401 - already logged out)."""
+        """Expired cookies are cleared and the user receives a redirect URL."""
         module = _build_module_with_server(httpserver)
         client = _build_client(module)
 
         cookie = _make_session_cookie(expires_delta=-60)
         client.cookies.set(COOKIE_NAME, cookie)
+        csrf = _make_csrf_token(cookie)
 
-        resp = client.post("/api/auth/logout")
-        assert resp.status_code == 302
+        resp = client.post("/api/auth/logout", headers={"X-CSRF-Token": csrf})
+        assert resp.status_code == 200
+        assert "redirect_url" in resp.json()
 
     def test_logout_with_tampered_cookie(self, httpserver):
-        """Tampered cookies are cleared and the user is redirected."""
+        """Tampered cookies are cleared and the user receives a redirect URL."""
         module = _build_module_with_server(httpserver)
         client = _build_client(module)
 
-        client.cookies.set(COOKIE_NAME, "garbage.token.here")
+        cookie = "garbage.token.here"
+        client.cookies.set(COOKIE_NAME, cookie)
+        csrf = _make_csrf_token(cookie)
 
-        resp = client.post("/api/auth/logout")
-        assert resp.status_code == 302
+        resp = client.post("/api/auth/logout", headers={"X-CSRF-Token": csrf})
+        assert resp.status_code == 200
+        assert "redirect_url" in resp.json()
+
+
+# ── CSRF endpoint ───────────────────────────────────────────────────────
+
+
+class TestCsrf:
+    def test_csrf_returns_token_for_valid_session(self):
+        module = _build_module()
+        client = _build_client(module)
+
+        cookie = _make_session_cookie()
+        client.cookies.set(COOKIE_NAME, cookie)
+
+        resp = client.get("/api/auth/csrf")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert "csrf_token" in body
+        assert body["csrf_token"] == _make_csrf_token(cookie)
+        assert resp.headers["cache-control"] == "no-store"
+        assert "cookie" in resp.headers.get("vary", "").lower()
+
+    def test_csrf_requires_session(self):
+        module = _build_module()
+        client = _build_client(module)
+
+        resp = client.get("/api/auth/csrf")
+        assert resp.status_code == 401
+
+    def test_csrf_rejects_expired_session(self):
+        module = _build_module()
+        client = _build_client(module)
+
+        cookie = _make_session_cookie(expires_delta=-60)
+        client.cookies.set(COOKIE_NAME, cookie)
+
+        resp = client.get("/api/auth/csrf")
+        assert resp.status_code == 401
 
 
 # ── Cookie structure ─────────────────────────────────────────────────────

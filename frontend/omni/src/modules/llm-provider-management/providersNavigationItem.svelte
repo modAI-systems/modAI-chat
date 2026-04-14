@@ -1,18 +1,22 @@
 <script lang="ts">
 import { Settings2 } from "lucide-svelte";
 import { getT } from "@/modules/i18n/index.svelte.js";
-import SidebarMenuNavigationItem from "@/modules/main-app-sidebar-based/lib/SidebarMenuNavigationItem.svelte";
+import { SIDEBAR_MENU_BUTTON_CLASS } from "@/modules/main-app-sidebar-based/lib/styles";
+import { getRouterApi } from "@/modules/router/index.svelte";
+import * as Sidebar from "$lib/shadcnui/components/ui/sidebar/index.js";
 import { PROVIDERS_PATH } from "./providersRouteDefinition.svelte";
 
 const t = getT("llm-provider-management");
+const router = getRouterApi();
 </script>
 
-{#snippet icon()}
-	<Settings2 />
-{/snippet}
-
-<SidebarMenuNavigationItem
-  label={t("navLabel", { defaultValue: "Providers" })}
-  path={PROVIDERS_PATH}
-  {icon}
-/>
+<Sidebar.MenuItem>
+	<Sidebar.MenuButton
+		isActive={false}
+		class={SIDEBAR_MENU_BUTTON_CLASS}
+		onclick={() => router.navigate(PROVIDERS_PATH)}
+	>
+		<Settings2 />
+		<span>{t("navLabel", { defaultValue: "Providers" })}</span>
+	</Sidebar.MenuButton>
+</Sidebar.MenuItem>
