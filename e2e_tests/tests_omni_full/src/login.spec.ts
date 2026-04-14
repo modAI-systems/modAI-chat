@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { TEST_USER_PASSWORD, TEST_USERNAME } from "./fixtures";
-import { NanoIdpLoginPage } from "./pages";
+import { NanoIdpLoginPage, Sidebar } from "./pages";
 
 const BACKEND_URL = "http://localhost:8000";
 
@@ -62,44 +62,21 @@ test.describe("Login", () => {
         expect(body.additional.email).toBeTruthy();
     });
 
-    test.skip("should log out and clear session", async ({ page }) => {
+    test("should log out and redirect to login page", async ({ page }) => {
+        // 1. Login via NanoIDP
         const loginPage = new NanoIdpLoginPage(page);
         await loginPage.login(TEST_USERNAME, TEST_USER_PASSWORD);
 
-        // Confirm we have a valid session
-        const beforeLogout = await page.request.get(
-            `${BACKEND_URL}/api/auth/userinfo`,
-        );
-        expect(beforeLogout.ok()).toBe(true);
-        expect((await beforeLogout.json()).user_id).toBeTruthy();
+        // 2. Assert logged in — app header must be visible
+        await expect(page.locator("header")).toBeVisible();
+        await expect(page).toHaveURL(/localhost:4173/);
 
-        // Fetch CSRF token (required for state-mutating requests)
-        const csrfResponse = await page.request.get(
-            `${BACKEND_URL}/api/auth/csrf`,
-        );
-        expect(csrfResponse.ok()).toBe(true);
-        const { csrf_token } = await csrfResponse.json();
+        // 3. Click the Logout button in the sidebar
+        const sidebar = new Sidebar(page);
+        await sidebar.logout();
 
-        // Call logout endpoint with CSRF token header
-        await page.request.post(`${BACKEND_URL}/api/auth/logout`, {
-            headers: { "X-CSRF-Token": csrf_token },
-        });
-
-        // Session should now be cleared (no cookie -> unauthorized)
-        const afterLogout = await page.request.get(
-            `${BACKEND_URL}/api/auth/userinfo`,
-        );
-        expect(afterLogout.status()).toBe(401);
-    });
-
-    test.skip("should reject logout without CSRF token", async ({ page }) => {
-        const loginPage = new NanoIdpLoginPage(page);
-        await loginPage.login(TEST_USERNAME, TEST_USER_PASSWORD);
-
-        // Attempt logout without X-CSRF-Token header → must be rejected
-        const response = await page.request.post(
-            `${BACKEND_URL}/api/auth/logout`,
-        );
-        expect(response.status()).toBe(403);
+        // 4. Assert the NanoIDP login page is displayed again
+        await page.waitForURL(/localhost:9000/, { timeout: 15000 });
+        await expect(page).toHaveURL(/localhost:9000/);
     });
 });

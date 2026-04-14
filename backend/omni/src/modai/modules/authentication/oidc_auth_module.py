@@ -31,7 +31,7 @@ from urllib.parse import urlencode
 from authlib.integrations.base_client import MismatchingStateError, OAuthError
 from authlib.integrations.starlette_client import OAuth
 from fastapi import APIRouter, FastAPI, HTTPException, Request, Response
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
 
 from modai.module import ModaiModule, ModuleDependencies
@@ -211,11 +211,11 @@ class OIDCAuthModule(ModaiModule):
                 "post_logout_redirect_uri": self.post_logout_uri,
                 "client_id": self.client_id,
             }
-            logout_url = f"{end_session_endpoint}?{urlencode(params)}"
-            response: Response = RedirectResponse(logout_url, status_code=302)
+            redirect_url = f"{end_session_endpoint}?{urlencode(params)}"
         else:
-            response = RedirectResponse(self.post_logout_uri, status_code=302)
+            redirect_url = self.post_logout_uri
 
+        response: Response = JSONResponse({"redirect_url": redirect_url})
         response.delete_cookie(COOKIE_NAME)
         return response
 

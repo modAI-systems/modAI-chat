@@ -293,7 +293,7 @@ class TestCallback:
 
 
 class TestLogout:
-    def test_logout_redirects_to_idp(self, httpserver):
+    def test_logout_returns_redirect_url_to_idp(self, httpserver):
         module = _build_module_with_server(httpserver)
         client = _build_client(module)
 
@@ -302,11 +302,12 @@ class TestLogout:
         csrf = _make_csrf_token(cookie)
 
         resp = client.post("/api/auth/logout", headers={"X-CSRF-Token": csrf})
-        assert resp.status_code == 302
+        assert resp.status_code == 200
 
-        location = resp.headers["location"]
-        assert "end_session" in location
-        assert f"client_id={CLIENT_ID}" in location
+        body = resp.json()
+        assert "redirect_url" in body
+        assert "end_session" in body["redirect_url"]
+        assert f"client_id={CLIENT_ID}" in body["redirect_url"]
 
     def test_logout_without_session(self):
         module = _build_module()
@@ -355,11 +356,11 @@ class TestLogout:
         csrf = _make_csrf_token(cookie)
 
         resp = client.post("/api/auth/logout", headers={"X-CSRF-Token": csrf})
-        assert resp.status_code == 302
-        assert resp.headers["location"] == POST_LOGOUT_URI
+        assert resp.status_code == 200
+        assert resp.json()["redirect_url"] == POST_LOGOUT_URI
 
     def test_logout_with_expired_cookie(self, httpserver):
-        """Expired cookies are cleared and the user is redirected (no 401 - already logged out)."""
+        """Expired cookies are cleared and the user receives a redirect URL."""
         module = _build_module_with_server(httpserver)
         client = _build_client(module)
 
@@ -368,10 +369,11 @@ class TestLogout:
         csrf = _make_csrf_token(cookie)
 
         resp = client.post("/api/auth/logout", headers={"X-CSRF-Token": csrf})
-        assert resp.status_code == 302
+        assert resp.status_code == 200
+        assert "redirect_url" in resp.json()
 
     def test_logout_with_tampered_cookie(self, httpserver):
-        """Tampered cookies are cleared and the user is redirected."""
+        """Tampered cookies are cleared and the user receives a redirect URL."""
         module = _build_module_with_server(httpserver)
         client = _build_client(module)
 
@@ -380,7 +382,8 @@ class TestLogout:
         csrf = _make_csrf_token(cookie)
 
         resp = client.post("/api/auth/logout", headers={"X-CSRF-Token": csrf})
-        assert resp.status_code == 302
+        assert resp.status_code == 200
+        assert "redirect_url" in resp.json()
 
 
 # ── CSRF endpoint ───────────────────────────────────────────────────────
