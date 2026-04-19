@@ -77,6 +77,13 @@ Browse to http://localhost:5173/
 User: `user1`
 Password: `password`
 
+## 🔌 External Module / Plugin Development
+
+modAI's modular architecture allows you to develop your own modules in separate repositories and integrate them into the frontend and backend.
+
+- **Frontend modules**: See [frontend/omni/docs/EXTERNAL-MODULE-DEVELOPMENT.md](frontend/omni/docs/EXTERNAL-MODULE-DEVELOPMENT.md) for a step-by-step guide on creating, integrating, and deploying custom frontend modules.
+- **Backend modules**: See [backend/omni/docs/EXTERNAL-MODULE-DEVELOPMENT.md](backend/omni/docs/EXTERNAL-MODULE-DEVELOPMENT.md) for extending the backend with custom modules.
+
 ## 🤝 Contribution
 
 Contributions are welcome in form of pull requests, issues or discussions. If you plan to implement something new or bigger, it is advisable to start a discussion first.

@@ -1,5 +1,6 @@
 __pycache__/
 *egg-info/
+src/modai/modules/external-*/
 
 config*.yaml
 !config.sample.yaml
