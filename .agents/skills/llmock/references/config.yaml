@@ -1,8 +1,14 @@
 # llmock Configuration
 # Each section is consumed by its respective router/component
 
+# Port for the HTTP server (default: 8000)
+port: 8000
+
+# Debug mode - when true, pretty-prints all incoming request bodies to stdout
+debug: false
+
 # API key for authentication (optional - if not set, no auth required)
-api-key: "your-secret-api-key"
+api-key:
 
 # CORS configuration
 cors:
@@ -21,15 +27,16 @@ models:
     created: 1677610602
     owned_by: "openai"
 
-# Ordered list of strategies to try. The first strategy that returns a
-# non-empty result wins. At least one must be set.
-#
-# Available strategies:
-#   MirrorStrategy    - echoes back the last user message
-#   ToolCallStrategy  - triggered by `call tool '<name>' with '<json>'` phrase in last user message
-#   ErrorStrategy     - triggered by `raise error <json>` phrase in last user message
-#
+# Ordered list of strategies (first non-empty result wins)
 strategies:
   - ErrorStrategy
+  - CustomAnswersStrategy
   - ToolCallStrategy
   - MirrorStrategy
+
+# Inline question→answer pairs for CustomAnswersStrategy (exact-match, case-sensitive)
+# customReplies:
+#   - question: How are you today?
+#     answer: I'm fine. how are you?
+#   - question: What is 1+1?
+#     answer: 2
