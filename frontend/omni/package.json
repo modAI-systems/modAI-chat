@@ -12,30 +12,30 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.52",
-    "@ai-sdk/svelte": "^4.0.158",
-    "ai": "^6.0.158",
+    "@ai-sdk/openai": "^3.0.53",
+    "@ai-sdk/svelte": "^4.0.168",
+    "ai": "^6.0.168",
     "clsx": "^2.1.1",
-    "i18next": "^26.0.4",
+    "i18next": "^26.0.6",
     "i18next-browser-languagedetector": "^8.2.1",
     "lucide-svelte": "^1.0.1",
-    "marked": "^18.0.0",
+    "marked": "^18.0.2",
     "sv-router": "^0.16.0",
-    "svelte": "^5.55.3",
+    "svelte": "^5.55.4",
     "tailwind-merge": "^3.5.0",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^4.2.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.11",
-    "@internationalized/date": "^3.12.0",
+    "@biomejs/biome": "^2.4.12",
+    "@internationalized/date": "^3.12.1",
     "@lucide/svelte": "^1.8.0",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
-    "@tailwindcss/vite": "^4.2.2",
-    "bits-ui": "^2.17.3",
-    "happy-dom": "^20.8.9",
+    "@tailwindcss/vite": "^4.2.3",
+    "bits-ui": "^2.18.0",
+    "happy-dom": "^20.9.0",
     "tailwind-variants": "^3.2.2",
-    "typescript": "^6.0.2",
-    "vite": "^8.0.8",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.9",
     "vitest": "^4.1.4"
   }
 }
