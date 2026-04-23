@@ -49,6 +49,27 @@ test.describe("Chat", () => {
         await chatPage.assertLastResponse("world");
     });
 
+    test("Wide markdown response fits within the chat bubble", async ({
+        page,
+    }) => {
+        const chatPage = new ChatPage(page);
+        await chatPage.navigateTo();
+        await chatPage.selectFirstModel();
+
+        // Send a message that will be echoed back as a wide markdown table.
+        // llmock mirrors the input, so this table becomes the assistant response.
+        const wideTable =
+            "| Column A | Column B | Column C | Column D | Column E |\n" +
+            "|----------|----------|----------|----------|----------|\n" +
+            "| Value 1  | Value 2  | Value 3  | Value 4  | Value 5  |\n" +
+            "| Value 6  | Value 7  | Value 8  | Value 9  | Value 10 |";
+
+        await chatPage.sendMessage(wideTable);
+        await chatPage.waitForIdle();
+
+        await chatPage.assertLastResponseFitsInBubble();
+    });
+
     test("Each assistant message keeps the model that generated it", async ({
         page,
     }) => {

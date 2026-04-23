@@ -17,6 +17,7 @@ cd "$FRONTEND_DIR"
 rm -rf src/modules/external-module-test
 cp -R "$LIGHT_TESTS_DIR/fixtures/external-module-test" src/modules/external-module-test
 
+rm -f public/modules.json
 cp "$LIGHT_TESTS_DIR/fixtures/modules.json" public/modules.json
 
 pnpm install

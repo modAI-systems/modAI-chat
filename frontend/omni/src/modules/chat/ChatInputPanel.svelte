@@ -41,7 +41,7 @@ function sendMessage() {
 </script>
 
 <div class="shrink-0">
-	<div class="mx-auto w-full max-w-3xl px-4 py-3">
+	<div class="mx-auto w-full max-w-3xl px-4 py-3 lg:max-w-5xl xl:max-w-6xl">
 		<form onsubmit={handleSubmit}>
 			<div
 				class="border-input bg-background focus-within:ring-ring rounded-2xl border px-4 py-3 focus-within:ring-2 focus-within:ring-offset-0"

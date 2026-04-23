@@ -2,7 +2,7 @@
 import type { UIMessage } from "ai";
 import { BotIcon, LoaderCircle } from "lucide-svelte";
 import { getT } from "@/modules/i18n/index.svelte.js";
-import * as Avatar from "$lib/shadcnui/components/ui/avatar/index.js";
+import type { MarkdownRenderer } from "@/modules/markdown-renderer/index.svelte.js";
 import { ScrollArea } from "$lib/shadcnui/components/ui/scroll-area/index.js";
 import ChatMessageItem from "./ChatMessageItem.svelte";
 
@@ -13,11 +13,13 @@ let {
     status,
     modelsLoading,
     hasModels,
+    renderers,
 }: {
     messages: UIMessage<{ modelName?: string }>[];
     status: string;
     modelsLoading: boolean;
     hasModels: boolean;
+    renderers: MarkdownRenderer[];
 } = $props();
 
 let conversationEl = $state<HTMLElement | null>(null);
@@ -36,7 +38,7 @@ $effect(() => {
 </script>
 
 <ScrollArea class="flex-1" bind:ref={conversationEl}>
-	<div class="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6">
+	<div class="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 lg:max-w-5xl xl:max-w-6xl">
 		{#if messages.length === 0}
 			{#if modelsLoading}
 				<div class="flex items-center justify-center gap-2 py-20">
@@ -70,18 +72,14 @@ $effect(() => {
 		{/if}
 
 		{#each messages as message (message.id)}
-			<ChatMessageItem {message} />
+			<ChatMessageItem {message} {renderers} />
 		{/each}
 
 		<!-- Streaming indicator -->
 		{#if status === "streaming" || status === "submitted"}
-			<div class="flex gap-3">
-				<Avatar.Root class="border-border size-8 shrink-0 border">
-					<Avatar.Fallback class="bg-primary/10 text-primary text-xs">
-						<BotIcon class="size-4" />
-					</Avatar.Fallback>
-				</Avatar.Root>
-				<div class="flex items-center gap-2 pt-1">
+			<div class="flex flex-col gap-1">
+				<p class="text-muted-foreground text-xs font-medium">Assistant</p>
+				<div class="flex items-center gap-2">
 					<LoaderCircle class="text-muted-foreground size-4 animate-spin" />
 					<span class="text-muted-foreground text-xs">
 						{status === "submitted" ? t("thinking", { defaultValue: "Thinking..." }) : t("generating", { defaultValue: "Generating..." })}

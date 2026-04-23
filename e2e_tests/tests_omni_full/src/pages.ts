@@ -174,7 +174,7 @@ export class ChatPage {
 
     async assertLastResponse(content: string, timeout = 5000): Promise<void> {
         await expect(
-            this.page.locator(".bg-muted.rounded-2xl").last(),
+            this.page.locator(".prose-assistant").last(),
         ).toContainText(content, { timeout });
     }
 }
