@@ -86,18 +86,35 @@ export class ChatPage {
 
     async assertLastResponse(content: string): Promise<void> {
         await expect(
-            this.page.locator(".bg-muted.rounded-2xl").last(),
+            this.page.locator(".prose-assistant").last(),
         ).toContainText(content, { timeout: 5000 });
+    }
+
+    async assertLastResponseFitsInBubble(): Promise<void> {
+        // The assistant prose container must not overflow its parent.
+        const overflows = await this.page.evaluate(() => {
+            const proseEls = document.querySelectorAll(".prose-assistant");
+            const last = proseEls[proseEls.length - 1];
+            if (!last) return false;
+            const parent = last.parentElement;
+            if (!parent) return false;
+            const parentRight = parent.getBoundingClientRect().right;
+            const elRight = last.getBoundingClientRect().right;
+            return elRight > parentRight + 1;
+        });
+        expect(overflows).toBe(false);
     }
 
     async assertAssistantMessageModelName(
         index: number,
         modelName: string,
     ): Promise<void> {
-        // Each assistant message is in a flex container with justify-start.
-        // The model-name label is the first <p> inside the message content area.
+        // Each assistant message is a flex-col container whose first <p> is the model-name label.
         await expect(
-            this.page.locator("div.flex.justify-start .flex-1 > p").nth(index),
+            this.page
+                .locator(".prose-assistant")
+                .nth(index)
+                .locator("xpath=../preceding-sibling::p[1]"),
         ).toHaveText(modelName, { timeout: 5000 });
     }
 }

@@ -14,10 +14,13 @@
   "dependencies": {
     "@ai-sdk/openai": "^3.0.53",
     "@ai-sdk/svelte": "^4.0.168",
+    "@tailwindcss/typography": "^0.5.19",
     "ai": "^6.0.168",
     "clsx": "^2.1.1",
+    "dompurify": "^3.4.1",
     "i18next": "^26.0.6",
     "i18next-browser-languagedetector": "^8.2.1",
+    "katex": "^0.16.45",
     "lucide-svelte": "^1.0.1",
     "marked": "^18.0.2",
     "sv-router": "^0.16.0",

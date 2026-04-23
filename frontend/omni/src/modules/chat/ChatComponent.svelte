@@ -6,6 +6,7 @@ import type {
     LLMProviderService,
     ProviderModel,
 } from "@/modules/llm-provider-service/index.svelte.js";
+import type { MarkdownRenderer } from "@/modules/markdown-renderer/index.svelte.js";
 import type {
     OpenAIFunctionTool,
     ToolsService,
@@ -22,6 +23,7 @@ const chatService = deps.getOne<ChatService>("chatService");
 const llmProviderService =
     deps.getOne<LLMProviderService>("llmProviderService");
 const toolsService = deps.getOne<ToolsService>("toolsService");
+const markdownRenderers = deps.getAll<MarkdownRenderer>("markdownRenderers");
 
 let availableModels = $state<ProviderModel[]>([]);
 let availableTools = $state<OpenAIFunctionTool[]>([]);
@@ -173,6 +175,7 @@ function makeMessageId(): string {
 		status={chatStatus}
 		{modelsLoading}
 		hasModels={availableModels.length > 0}
+		renderers={markdownRenderers}
 	/>
 	{#if messages.length === 0 && availableModels.length > 0}
 		<ChatSuggestions onselect={handleSend} />

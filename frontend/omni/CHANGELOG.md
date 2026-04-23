@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - User avatar at the bottom of the sidebar showing the logged-in user.
 - Logout button in the sidebar footer.
 
+### Changed
+
+- Chat message layout redesigned to a minimalist flat style: assistant messages render full-width without a background bubble; user messages use a small right-aligned secondary-colored pill (no avatar).
+- User messages now render markdown (headings, lists, code, tables, blockquotes) using `@tailwindcss/typography` prose styles.
+
 ## [0.0.2] - 2026-04-13
 
 ### Added

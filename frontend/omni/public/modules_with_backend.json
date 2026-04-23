@@ -97,13 +97,24 @@
       }
     },
     {
+      "id": "katex-renderer",
+      "path": "@/modules/markdown-renderer/katexRenderer/create",
+      "dependencies": {}
+    },
+    {
+      "id": "marked-renderer",
+      "path": "@/modules/markdown-renderer/markedRenderer/create",
+      "dependencies": {}
+    },
+    {
       "id": "chat",
       "type": "ChatComponent",
       "path": "@/modules/chat/ChatComponent",
       "dependencies": {
         "module:chatService": "chat-service",
         "module:llmProviderService": "llm-provider-service",
-        "module:toolsService": "tools-service"
+        "module:toolsService": "tools-service",
+        "module:markdownRenderers": ["katex-renderer", "marked-renderer"]
       }
     },
     {
