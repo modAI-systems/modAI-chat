@@ -321,10 +321,7 @@ session:
 [NanoIDP](https://github.com/cdelmonte-zg/nanoidp) is a lightweight OIDC identity provider used for local development and e2e tests. It runs as a Docker container with no external dependencies.
 
 ```bash
-docker run --rm -p 9000:9000 ghcr.io/cdelmonte-zg/nanoidp:latest \
-  sh -c "sed -i 's/port: 8000/port: 9000/g' /app/config/settings.yaml && \
-         sed -i 's|http://localhost:8000|http://localhost:9000|g' /app/config/settings.yaml && \
-         nanoidp --host 0.0.0.0 --port 9000"
+docker compose -f resources/compose-files/compose-nanoidp.yaml up -d
 ```
 
 Default client: `test-client` / `test-secret`
