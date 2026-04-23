@@ -187,7 +187,7 @@ The easiest way to distribute a custom modAI backend is to build a Docker image 
 4. **Provide your config** at runtime via the `CONFIG_PATH` environment variable:
 
    ```bash
-   docker run \
+   docker container run \
      -e CONFIG_PATH=/config/my-config.yaml \
      -v /path/to/my-config.yaml:/config/my-config.yaml \
      your-registry.com/modai-backend-custom:latest
