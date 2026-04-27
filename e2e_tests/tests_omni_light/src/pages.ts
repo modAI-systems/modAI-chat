@@ -32,8 +32,8 @@ export class ChatPage {
 
     async navigateTo(): Promise<void> {
         const sidebar = new Sidebar(this.page);
-        await sidebar.navigateTo("Chat");
-        await expect(this.page).toHaveURL("/chat");
+        await sidebar.navigateTo("New Chat");
+        await expect(this.page).toHaveURL(/\/chat\/[\w-]+/);
     }
 
     async selectFirstModel(): Promise<void> {
@@ -65,6 +65,15 @@ export class ChatPage {
             .first();
         await option.waitFor({ state: "visible", timeout: 5000 });
         await option.click();
+    }
+
+    async startNewChat(): Promise<void> {
+        const sidebar = new Sidebar(this.page);
+        await sidebar.navigateTo("New Chat");
+    }
+
+    async assertChatIsEmpty(): Promise<void> {
+        await expect(this.page.locator(".prose-assistant")).toHaveCount(0);
     }
 
     async sendMessage(message: string): Promise<void> {

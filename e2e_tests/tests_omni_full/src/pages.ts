@@ -117,8 +117,8 @@ export class ChatPage {
 
     async navigateTo(): Promise<void> {
         const sidebar = new Sidebar(this.page);
-        await sidebar.navigateTo("Chat");
-        await expect(this.page).toHaveURL("/chat");
+        await sidebar.navigateTo("New Chat");
+        await expect(this.page).toHaveURL(/\/chat\/[\w-]+/);
     }
 
     async enableTool(toolName: string): Promise<void> {

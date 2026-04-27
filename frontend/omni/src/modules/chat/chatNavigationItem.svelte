@@ -17,6 +17,6 @@ const router = getRouterApi();
 		onclick={() => router.navigate(CHAT_PATH)}
 	>
 		<MessageSquare />
-		<span>{t("navLabel", { defaultValue: "Chat" })}</span>
+		<span>{t("navLabel", { defaultValue: "New Chat" })}</span>
 	</Sidebar.MenuButton>
 </Sidebar.MenuItem>
