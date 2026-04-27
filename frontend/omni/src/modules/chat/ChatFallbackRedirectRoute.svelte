@@ -6,6 +6,6 @@ import { CHAT_PATH } from "./chatRouteDefinition.svelte";
 const router = getRouterApi();
 
 onMount(() => {
-    router.navigate(CHAT_PATH);
+    router.navigate(`${CHAT_PATH}/${crypto.randomUUID()}`, { replace: true });
 });
 </script>

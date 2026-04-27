@@ -58,7 +58,7 @@ nanoidp Dashboard: http://localhost:9000
 ### Backend Setup
 ```bash
 cd backend/omni
-cp .env.sample .env   # pre-configured for NanoIDP; add your OPENAI_API_KEY
+cp .env.sample .env
 uv sync
 uv run uvicorn modai.main:app --reload
 ```
@@ -66,7 +66,6 @@ uv run uvicorn modai.main:app --reload
 ### Frontend Setup
 ```bash
 cd frontend/omni
-# Activate the full backend-integrated module configuration
 ln -sf modules_with_backend.json public/modules.json
 pnpm install
 pnpm dev
