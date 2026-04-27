@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - User avatar at the bottom of the sidebar showing the logged-in user.
 - Logout button in the sidebar footer.
 - "New Chat" sidebar item: clicking starts a fresh empty conversation.
+- Docker image now published as a multi-platform manifest covering `linux/amd64` and `linux/arm64`.
 
 ### Changed
 
