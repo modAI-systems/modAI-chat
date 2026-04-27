@@ -36,8 +36,8 @@ class TestModelProviderModule:
 
         # Include API key in properties when testing models
         properties = {"key": "value", "model": "test-model"}
-        if "OPENAI_API_KEY" in os.environ:
-            properties["api_key"] = os.environ["OPENAI_API_KEY"]
+        if "UNIT_TEST_OPENAI_API_KEY" in os.environ:
+            properties["api_key"] = os.environ["UNIT_TEST_OPENAI_API_KEY"]
 
         # Sample provider data with OpenAI URL and API key
         sample_provider = ModelProvider(
@@ -382,7 +382,8 @@ class TestModelProviderModule:
         )
 
     @pytest.mark.skipif(
-        "OPENAI_API_KEY" not in os.environ, reason="OPENAI_API_KEY not set"
+        "UNIT_TEST_OPENAI_API_KEY" not in os.environ,
+        reason="UNIT_TEST_OPENAI_API_KEY not set",
     )
     def test_get_models_endpoint(
         self, test_client: TestClient, mock_provider_store: ModelProviderStore
