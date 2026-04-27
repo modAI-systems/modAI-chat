@@ -91,4 +91,21 @@ test.describe("Chat", () => {
         await chatPage.assertAssistantMessageModelName(0, "gpt-4o");
         await chatPage.assertAssistantMessageModelName(1, "gpt-4o-mini");
     });
+
+    test("New Chat sidebar item clears the conversation", async ({ page }) => {
+        const chatPage = new ChatPage(page);
+
+        await chatPage.navigateTo();
+        await chatPage.selectFirstModel();
+
+        await chatPage.sendMessage("hello");
+        await chatPage.assertLastResponse("hello");
+        await chatPage.waitForIdle();
+
+        await chatPage.startNewChat();
+        await page
+            .getByText("How can I help you today?")
+            .waitFor({ state: "visible", timeout: 5000 });
+        await chatPage.assertChatIsEmpty();
+    });
 });
