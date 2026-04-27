@@ -6,8 +6,8 @@ parametrised over:
 
   * StrandsAgentChatModule + llmock   (always runs)
   * OpenAILLMChatModule   + llmock   (always runs)
-  * StrandsAgentChatModule + OpenAI  (requires OPENAI_API_KEY)
-  * OpenAILLMChatModule   + OpenAI  (requires OPENAI_API_KEY)
+  * StrandsAgentChatModule + OpenAI  (requires UNIT_TEST_OPENAI_API_KEY)
+  * OpenAILLMChatModule   + OpenAI  (requires UNIT_TEST_OPENAI_API_KEY)
 
 Module-specific test groups use a narrower parameter set:
   * TestAgenticLoop      — strands-only (StrandsAgentChatModule drives the
@@ -70,8 +70,10 @@ _NON_AGENTIC_LLMOCK = "non_agentic_llmock"
 _AGENTIC_OPENAI = "agentic_openai"
 _NON_AGENTIC_OPENAI = "non_agentic_openai"
 
-_HAS_OPENAI_KEY = bool(os.environ.get("OPENAI_API_KEY"))
-_SKIP_NO_KEY = pytest.mark.skipif(not _HAS_OPENAI_KEY, reason="OPENAI_API_KEY not set")
+_HAS_OPENAI_KEY = bool(os.environ.get("UNIT_TEST_OPENAI_API_KEY"))
+_SKIP_NO_KEY = pytest.mark.skipif(
+    not _HAS_OPENAI_KEY, reason="UNIT_TEST_OPENAI_API_KEY not set"
+)
 
 _ALL_PARAMS = [
     _AGENTIC_LLMOCK,
@@ -1223,7 +1225,7 @@ def _real_provider() -> ModelProviderResponse:
         type="openai",
         name="myopenai",
         base_url=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
-        api_key=os.environ.get("OPENAI_API_KEY", ""),
+        api_key=os.environ.get("UNIT_TEST_OPENAI_API_KEY", ""),
         properties={},
         created_at=None,
         updated_at=None,
