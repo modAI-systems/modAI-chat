@@ -1,0 +1,115 @@
+---
+title: Tools installieren
+description: So registrieren Sie OpenAPI-kompatible Tool-Server in modAI.
+---
+
+import Mermaid from '../../../../components/Mermaid';
+
+# Tools installieren
+
+modAI integriert Tools über die **OpenAPI Tool Registry**. Jeder HTTP-Server, der eine OpenAPI-kompatible Spezifikation bereitstellt, kann registriert werden — modAI liest die Spezifikation beim Start und stellt jede darin aufgeführte Operation der KI als aufrufbares Tool zur Verfügung.
+
+## Voraussetzungen
+
+Ein Tool-Server muss:
+
+- Laufen und vom modAI-Backend über HTTP erreichbar sein
+- Eine OpenAPI-Spezifikation bereitstellen (typischerweise unter `/openapi.json`)
+- Mindestens eine Operation definieren, die als Tool dient
+
+Wie der Tool-Server deployed und konfiguriert wird, ist in dessen eigener Dokumentation beschrieben.
+
+## Deployment-Übersicht
+
+<Mermaid chart={`graph TD
+    subgraph modAI["modAI Backend"]
+        Registry["openapi_tool_registry"]
+    end
+    subgraph Tools["Tool-Server"]
+        ToolA["Calculator Service\nhttp://calculator:8001/openapi.json"]
+        ToolB["Web Search Service\nhttp://websearch:8002/openapi.json"]
+    end
+    Registry -- "1. Spezifikation beim Start abrufen" --> ToolA
+    Registry -- "1. Spezifikation beim Start abrufen" --> ToolB
+    Registry -- "2. Aufruf während des Chats" --> ToolA
+    Registry -- "2. Aufruf während des Chats" --> ToolB`} />
+
+## Schritt 1: Tool-Server deployen
+
+Folgen Sie der Dokumentation des Tool-Servers, um ihn so zu deployen, dass er vom modAI-Backend erreichbar ist. Notieren Sie sich die URL, unter der seine OpenAPI-Spezifikation bereitgestellt wird (z. B. `http://my-tool-server:8001/openapi.json`).
+
+## Schritt 2: Tool-Server in `config.yaml` registrieren
+
+Fügen Sie die OpenAPI-Spezifikations-URL des Tool-Servers in `openapi_tool_registry.config.tool_servers` Ihrer `config.yaml` ein:
+
+```yaml
+modules:
+  openapi_tool_registry:
+    class: modai.modules.tools.tool_registry_openapi.OpenAPIToolRegistryModule
+    module_dependencies:
+      http_client: "http_client"
+    config:
+      tool_servers:
+        - url: http://calculator:8001/openapi.json
+        - url: http://websearch:8002/openapi.json
+```
+
+Jeder Eintrag in `tool_servers` enthält ein einzelnes `url`-Feld, das auf die OpenAPI-Spezifikation des Tool-Servers zeigt. Sie können beliebig viele Tool-Server registrieren — alle Operationen aus allen registrierten Spezifikationen werden zu einem Tool-Verzeichnis zusammengeführt, das der KI zur Verfügung steht.
+
+## Schritt 3: Backend neu starten
+
+Starten Sie das modAI-Backend neu, um die neue Konfiguration zu übernehmen. Die Tool Registry lädt und validiert alle Tool-Spezifikationen beim Start. Überprüfen Sie die Logs auf Fehler beim Laden einer Spezifikation.
+
+:::info
+Tools werden aus ihren Spezifikationen zum **Startzeitpunkt** geladen. Ist ein Tool-Server beim Start von modAI nicht erreichbar, stehen dessen Tools nicht zur Verfügung. Starten Sie das Backend neu, nachdem der Tool-Server verfügbar ist.
+:::
+
+---
+
+
+## Erweitert: Parameter vor der KI verbergen
+
+Bei einem Tool-Aufruf sind zwei verschiedene HTTP-Anfragen beteiligt:
+
+1. **Frontend → modAI** (`POST /api/responses`) — diese Anfrage schickt der Browser, einschließlich etwaiger benutzerdefinierter Header.
+2. **modAI → Tool-Server** — wenn die KI einen Tool-Aufruf anfordert, stellt modAI diese zweite Anfrage an den Tool-Server.
+
+Die `predefined_tool_registry` liest Header-Werte aus **Anfrage 1** und fügt sie als Parameter in **Anfrage 2** ein — vollständig verborgen vor der KI.
+
+### Typische Header der Frontend-Anfrage
+
+Die folgenden Header sind in Anfrage 1 häufig vorhanden, je nachdem was das Frontend oder ein Reverse Proxy sendet:
+
+- `X-Session-Id` — aktueller Benutzer-Session-Bezeichner
+- `X-User-Id` — authentifizierte Benutzer-ID
+- `X-User-Email` — E-Mail-Adresse des authentifizierten Benutzers
+- `X-User-Name` — Anzeigename des authentifizierten Benutzers
+
+### Wie Tool-Parameter befüllt werden
+
+Wenn modAI den Tool-Server aufruft (Anfrage 2), prüft es jeden Parameter der OpenAPI-Spezifikation des Tools. Ein Parameter wird vor der KI verborgen und automatisch eingefügt, wenn sein Name einem eingehenden Header entspricht — in einer dieser beiden Formen:
+
+- **Underscore-Form**: Der Header-Name wird kleingeschrieben und Bindestriche durch Unterstriche ersetzt. Header `X-Session-Id` befüllt einen Tool-Parameter namens `x_session_id`.
+- **Header-Form**: Der Tool-Parametername normalisiert zum gleichen Ergebnis. Header `X-Session-Id` befüllt auch einen Tool-Parameter, der buchstäblich `X-Session-Id` heißt.
+
+Beide Formen funktionieren automatisch ohne Konfiguration.
+
+`variable_mappings` wird nur benötigt, wenn der Tool-Parametername nicht durch eine der beiden Regeln aus dem Header-Namen abgeleitet werden kann. Beispiel: Das Frontend sendet `X-Session-Id`, aber das Tool erwartet einen Parameter namens `session_id`:
+
+```yaml
+modules:
+  predefined_tool_registry:
+    class: modai.modules.tools.tool_registry_predefined_vars.PredefinedVariablesToolRegistryModule
+    module_dependencies:
+      delegate_registry: "openapi_tool_registry"
+    config:
+      variable_mappings:
+        - from_modai_header: X-Session-Id   # Header in Anfrage 1
+          to_tool_parameter: session_id     # Parametername in der OpenAPI-Spezifikation des Tools
+```
+
+Dies ist in der Standard-modAI-Konfiguration enthalten — zum Aktivieren muss lediglich der `variable_mappings`-Block auskommentiert werden.
+
+---
+
+- [Was sind Tools?](./what-are-tools)

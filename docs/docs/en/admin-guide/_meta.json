@@ -13,5 +13,10 @@
 		"type": "dir-section-header",
 		"name": "modules",
 		"label": "modules"
+	},
+	{
+		"type": "dir-section-header",
+		"name": "tools",
+		"label": "tools"
 	}
 ]

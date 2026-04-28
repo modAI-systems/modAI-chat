@@ -39,6 +39,18 @@
 		"en": "Frontend Modules",
 		"de": "Frontend-Module"
 	},
+	"tools": {
+		"en": "Tools",
+		"de": "Tools"
+	},
+	"whatAreTools": {
+		"en": "What Are Tools?",
+		"de": "Was sind Tools?"
+	},
+	"installingTools": {
+		"en": "Installing Tools",
+		"de": "Tools installieren"
+	},
 	"languagesText": {
 		"de": "Sprache"
 	},

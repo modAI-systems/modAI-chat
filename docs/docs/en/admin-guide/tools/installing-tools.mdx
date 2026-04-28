@@ -1,0 +1,110 @@
+---
+title: Installing Tools
+description: How to register OpenAPI-compatible tool servers with modAI.
+---
+
+import Mermaid from '../../../../components/Mermaid';
+
+# Installing Tools
+
+modAI integrates tools via the **OpenAPI tool registry**. Any HTTP server that exposes an OpenAPI-compatible spec can be registered — modAI reads the spec at startup and makes every listed operation available to the AI as a callable tool.
+
+## Prerequisites
+
+A tool server must:
+
+- Be running and reachable by the modAI backend over HTTP
+- Expose an OpenAPI specification (typically at `/openapi.json`)
+- Define at least one operation that serves as a tool
+
+Refer to the tool server's own documentation for how to deploy it and what configuration options it supports.
+
+## Deployment Overview
+
+<Mermaid chart={`graph TD
+    subgraph modAI["modAI Backend"]
+        Registry["openapi_tool_registry"]
+    end
+    subgraph Tools["Tool Servers"]
+        ToolA["Calculator Service\nhttp://calculator:8001/openapi.json"]
+        ToolB["Web Search Service\nhttp://websearch:8002/openapi.json"]
+    end
+    Registry -- "1. fetch spec at startup" --> ToolA
+    Registry -- "1. fetch spec at startup" --> ToolB
+    Registry -- "2. call during chat" --> ToolA
+    Registry -- "2. call during chat" --> ToolB`} />
+
+## Step 1: Deploy the Tool Server
+
+Follow the tool server's documentation to deploy it so it is reachable from the modAI backend. Make a note of the URL where its OpenAPI spec is served (e.g. `http://my-tool-server:8001/openapi.json`).
+
+## Step 2: Register the Tool Server in `config.yaml`
+
+Add the tool server's OpenAPI spec URL to `openapi_tool_registry.config.tool_servers` in your `config.yaml`:
+
+```yaml
+modules:
+  openapi_tool_registry:
+    class: modai.modules.tools.tool_registry_openapi.OpenAPIToolRegistryModule
+    module_dependencies:
+      http_client: "http_client"
+    config:
+      tool_servers:
+        - url: http://calculator:8001/openapi.json
+        - url: http://websearch:8002/openapi.json
+```
+
+Each entry in `tool_servers` takes a single `url` field pointing to the OpenAPI spec of the tool server. You can register as many tool servers as needed — all operations from all registered specs are merged into the tool list available to the AI.
+
+## Step 3: Restart the Backend
+
+Restart the modAI backend to pick up the new configuration. The tool registry loads and validates all tool specs at startup. Check the logs for any errors loading a spec.
+
+:::info
+Tools are fetched from their specs at **startup time**. If a tool server is unreachable when modAI starts, its tools will not be available. Restart the backend after the tool server is up.
+:::
+
+---
+
+## Advanced: Hiding Parameters from the AI
+
+There are two distinct HTTP requests involved in a tool call:
+
+1. **Frontend → modAI** (`POST /api/responses`) — the browser sends this request, including any custom headers.
+2. **modAI → Tool Server** — when the AI requests a tool call, modAI makes this second request to the tool server.
+
+The `predefined_tool_registry` reads header values from **request 1** and injects them as parameters into **request 2**, hiding them from the AI entirely.
+
+### Typical Headers on the Frontend Request
+
+The following headers are commonly present on request 1, depending on what the frontend or a reverse proxy sends:
+
+- `X-Session-Id` — current user session identifier
+- `X-User-Id` — authenticated user ID
+- `X-User-Email` — authenticated user's email address
+- `X-User-Name` — authenticated user's display name
+
+### How Tool Parameters Are Filled
+
+When modAI calls the tool server (request 2), it looks at each parameter defined in the tool's OpenAPI spec. A parameter is hidden from the AI and injected automatically if its name matches an incoming header — in either of these two forms:
+
+- **Underscore form**: the header name lowercased with hyphens replaced by underscores. Header `X-Session-Id` fills a tool parameter named `x_session_id`.
+- **Header form**: the tool parameter name normalises to the same result. Header `X-Session-Id` also fills a tool parameter literally named `X-Session-Id`.
+
+Both forms work automatically with no configuration.
+
+`variable_mappings` is only needed when the tool parameter name cannot be derived from the header name by either rule. For example, if the frontend sends `X-Session-Id` but the tool expects a parameter simply named `session_id`:
+
+```yaml
+modules:
+  predefined_tool_registry:
+    class: modai.modules.tools.tool_registry_predefined_vars.PredefinedVariablesToolRegistryModule
+    module_dependencies:
+      delegate_registry: "openapi_tool_registry"
+    config:
+      variable_mappings:
+        - from_modai_header: X-Session-Id   # header on request 1
+          to_tool_parameter: session_id     # parameter name in the tool's OpenAPI spec
+```
+
+This is included in the default modAI configuration — enabling it only requires uncommenting the `variable_mappings` block.
