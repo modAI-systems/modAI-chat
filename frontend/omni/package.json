@@ -18,27 +18,27 @@
     "ai": "^6.0.168",
     "clsx": "^2.1.1",
     "dompurify": "^3.4.1",
-    "i18next": "^26.0.6",
+    "i18next": "^26.0.8",
     "i18next-browser-languagedetector": "^8.2.1",
     "katex": "^0.16.45",
     "lucide-svelte": "^1.0.1",
     "marked": "^18.0.2",
     "sv-router": "^0.16.0",
-    "svelte": "^5.55.4",
+    "svelte": "^5.55.5",
     "tailwind-merge": "^3.5.0",
-    "tailwindcss": "^4.2.3"
+    "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.13",
     "@internationalized/date": "^3.12.1",
     "@lucide/svelte": "^1.11.0",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
-    "@tailwindcss/vite": "^4.2.3",
+    "@tailwindcss/vite": "^4.2.4",
     "bits-ui": "^2.18.0",
     "happy-dom": "^20.9.0",
     "tailwind-variants": "^3.2.2",
     "typescript": "^6.0.3",
-    "vite": "^8.0.9",
-    "vitest": "^4.1.4"
+    "vite": "^8.0.10",
+    "vitest": "^4.1.5"
   }
 }
