@@ -5,7 +5,7 @@ default:
 
 # Install dependencies
 install:
-    uv sync
+    uv sync --all-extras
 
 # Start the development server
 start:

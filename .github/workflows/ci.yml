@@ -8,10 +8,13 @@ on:
       - "**"
 
 jobs:
-  backend-format:
+  backend-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
+      - name: Install just
+        uses: extractions/setup-just@v2
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -21,17 +24,13 @@ jobs:
 
       - name: Install dependencies
         working-directory: backend/omni
-        run: uv sync --all-extras
+        run: just install
 
-      - name: Check formatting
+      - name: Check
         working-directory: backend/omni
-        run: uv run ruff format --check .
+        run: just check
 
-      - name: Lint
-        working-directory: backend/omni
-        run: uv run ruff check .
-
-  frontend-format:
+  frontend-check:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -39,8 +38,12 @@ jobs:
           - frontend/omni
           - e2e_tests/tests_omni_full
           - e2e_tests/tests_omni_light
+          - docs
     steps:
       - uses: actions/checkout@v6
+
+      - name: Install just
+        uses: extractions/setup-just@v2
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -52,16 +55,19 @@ jobs:
 
       - name: Install dependencies
         working-directory: ${{ matrix.working-dir }}
-        run: pnpm install
+        run: just install
 
-      - name: Check formatting and linting
+      - name: Check
         working-directory: ${{ matrix.working-dir }}
-        run: pnpm check
+        run: just check
 
   backend-unit-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
+      - name: Install just
+        uses: extractions/setup-just@v2
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -71,16 +77,19 @@ jobs:
 
       - name: Install dependencies
         working-directory: backend/omni
-        run: uv sync --all-extras
+        run: just install
 
       - name: Run tests
         working-directory: backend/omni
-        run: uv run pytest -v
+        run: just test
 
   frontend-unit-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
+      - name: Install just
+        uses: extractions/setup-just@v2
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -92,11 +101,11 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend/omni
-        run: pnpm install
+        run: just install
 
       - name: Run unit tests
         working-directory: frontend/omni
-        run: pnpm test
+        run: just test
 
   e2e-test:
     runs-on: ubuntu-latest
@@ -107,6 +116,9 @@ jobs:
           - tests_omni_full
     steps:
       - uses: actions/checkout@v6
+
+      - name: Install just
+        uses: extractions/setup-just@v2
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -124,24 +136,20 @@ jobs:
 
       - name: Install dependencies for frontend
         working-directory: frontend/omni
-        run: pnpm install
+        run: just install
 
       - name: Install dependencies for backend (full tests only)
         if: matrix.name == 'tests_omni_full'
         working-directory: backend/omni
-        run: uv sync --all-extras
+        run: just install
 
       - name: Install dependencies for tests
         working-directory: e2e_tests/${{ matrix.name }}
-        run: pnpm install
-
-      - name: Install Playwright browsers
-        working-directory: e2e_tests/${{ matrix.name }}
-        run: pnpm playwright install --with-deps
+        run: just install
 
       - name: Run Playwright tests
         working-directory: e2e_tests/${{ matrix.name }}
-        run: pnpm test
+        run: just test
 
       - name: Upload Test Results (traces, screenshots, videos)
         uses: actions/upload-artifact@v7

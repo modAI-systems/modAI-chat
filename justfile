@@ -7,6 +7,15 @@ install:
     just --justfile e2e_tests/tests_omni_light/justfile install
     just --justfile docs/justfile install
 
+# Run checks in all sub-projects
+check:
+    just --justfile backend/omni/justfile check
+    just --justfile backend/tools/dice-roller/justfile check
+    just --justfile frontend/omni/justfile check
+    just --justfile e2e_tests/tests_omni_full/justfile check
+    just --justfile e2e_tests/tests_omni_light/justfile check
+    just --justfile docs/justfile check
+
 # Run format in all sub-projects
 format:
     just --justfile backend/omni/justfile format
