@@ -1,0 +1,17 @@
+[
+	{
+		"type": "file",
+		"name": "what-are-modules",
+		"label": "whatAreModules"
+	},
+	{
+		"type": "file",
+		"name": "installing-backend-modules",
+		"label": "backendModules"
+	},
+	{
+		"type": "file",
+		"name": "installing-frontend-modules",
+		"label": "frontendModules"
+	}
+]

@@ -1,3 +1,4 @@
+# Whenever this file is updated, also update the sidekick file default_config.mermaid
 modules:
   health:
     class: modai.modules.health.simple_health_module.SimpleHealthModule

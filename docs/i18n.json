@@ -1,0 +1,114 @@
+{
+	"adminManual": {
+		"en": "Admin Manual",
+		"de": "Administratorhandbuch"
+	},
+	"userManual": {
+		"en": "User Manual",
+		"de": "Benutzerhandbuch"
+	},
+	"devDocs": {
+		"en": "Dev Docs",
+		"de": "Dev Docs"
+	},
+	"overview": {
+		"en": "Overview",
+		"de": "Übersicht"
+	},
+	"quickstart": {
+		"en": "Quickstart",
+		"de": "Schnellstart"
+	},
+	"modules": {
+		"en": "Modules",
+		"de": "Module"
+	},
+	"whatAreModules": {
+		"en": "What Are Modules?",
+		"de": "Was sind Module?"
+	},
+	"installingModules": {
+		"en": "Installing Modules",
+		"de": "Module installieren"
+	},
+	"backendModules": {
+		"en": "Backend Modules",
+		"de": "Backend-Module"
+	},
+	"frontendModules": {
+		"en": "Frontend Modules",
+		"de": "Frontend-Module"
+	},
+	"languagesText": {
+		"de": "Sprache"
+	},
+	"themeText": {
+		"de": "Design"
+	},
+	"versionsText": {
+		"de": "Versionen"
+	},
+	"menuTitle": {
+		"de": "Menü"
+	},
+	"outlineTitle": {
+		"de": "Auf dieser Seite"
+	},
+	"scrollToTopText": {
+		"de": "Nach oben"
+	},
+	"lastUpdatedText": {
+		"de": "Zuletzt aktualisiert"
+	},
+	"prevPageText": {
+		"de": "Vorherige Seite"
+	},
+	"nextPageText": {
+		"de": "Nächste Seite"
+	},
+	"sourceCodeText": {
+		"de": "Quellcode"
+	},
+	"searchPlaceholderText": {
+		"de": "Suchen"
+	},
+	"searchPanelCancelText": {
+		"de": "Abbrechen"
+	},
+	"searchNoResultsText": {
+		"de": "Keine Ergebnisse"
+	},
+	"searchSuggestedQueryText": {
+		"de": "Versuchen Sie zu suchen"
+	},
+	"overview.filterNameText": {
+		"de": "Filter"
+	},
+	"overview.filterPlaceholderText": {
+		"de": "Seiten filtern"
+	},
+	"overview.filterNoResultText": {
+		"de": "Keine Ergebnisse"
+	},
+	"openInText": {
+		"de": "Öffnen in"
+	},
+	"copyMarkdownText": {
+		"de": "Markdown kopieren"
+	},
+	"copyMarkdownLinkText": {
+		"de": "Markdown-Link kopieren"
+	},
+	"editLinkText": {
+		"de": "Diese Seite bearbeiten"
+	},
+	"codeButtonGroupCopyButtonText": {
+		"de": "Kopieren"
+	},
+	"notFoundText": {
+		"de": "Seite nicht gefunden"
+	},
+	"takeMeHomeText": {
+		"de": "Zur Startseite"
+	}
+}

@@ -1,0 +1,29 @@
+# rspress-noob Documentation
+
+default:
+    @just --list
+
+# Install dependencies
+install:
+    pnpm install
+
+# Start the development server
+start:
+    pnpm dev
+
+# Build the static site
+build:
+    pnpm build
+
+# Serve the built site locally
+preview:
+    pnpm preview
+
+# Type-check TypeScript and MDX files, verify i18n parity, and lint
+check:
+    bash scripts/check-i18n-parity.sh
+    pnpm check
+
+# Fix code style and linting issues
+format:
+    pnpm check:write

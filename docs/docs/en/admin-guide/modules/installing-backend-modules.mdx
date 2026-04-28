@@ -1,0 +1,107 @@
+---
+title: Installing Backend Modules
+description: How to install backend modules into a modAI Docker image.
+---
+
+# Installing Backend Modules
+
+A backend module extends the modAI server. Depending on what it does, it can expose new REST endpoints, act as an internal service that other modules depend on, connect to an external system, or replace a built-in component entirely. The steps below walk through cloning a module and wiring it into the configuration.
+
+:::info
+Backend modules are compiled into the Docker image at **build time**. Installing a module always requires rebuilding the backend image. Runtime installation without a rebuild is not supported.
+:::
+
+
+## Step 1: Clone the Module Repository
+
+Clone the module repository into the backend modules directory using the `external-` prefix:
+
+```bash
+cd backend/omni/src/modai/modules
+git clone <MODULE_REPOSITORY_URL> external-<module-name>
+```
+
+**Example:**
+```bash
+git clone https://github.com/your-org/my-module.git external-my-module
+```
+
+The result should look like this:
+
+```
+backend/omni/src/modai/modules/
+├── health/
+├── session/
+├── ...
+└── external-my-module/    ← your module
+```
+
+---
+
+## Step 2: Update `config.yaml`
+
+Register the module under `modules`. The module's documentation will provide the exact config entry to paste in.
+
+```yaml
+modules:
+  my-module:
+    class: modai.modules.external_my_plugin.module.MyPluginModule
+    config:
+      # Module-specific options (see module documentation)
+      some_option: value
+```
+
+If the module depends on another module (e.g. `session`), add `module_dependencies`. Required dependencies are listed in the module's documentation.
+
+```yaml
+modules:
+  my-module:
+    class: modai.modules.external_my_plugin.module.MyPluginModule
+    config:
+      some_option: value
+    module_dependencies:
+      session: "session"
+```
+
+---
+
+## Step 3: Rebuild and Redeploy
+
+```bash
+cd backend/omni
+docker image build -t your-registry.com/modai-backend:latest .
+```
+
+---
+
+## Step 4: Verify
+
+Check the startup logs for the module's name. A healthy startup lists all loaded modules.
+
+If the module does not appear, check:
+1. The repository was cloned under the correct `external-` prefix.
+2. The class name and `module_dependencies` exactly match the module's documentation.
+3. The Docker image was rebuilt **after** cloning — not before.
+
+---
+
+## Updating a Module
+
+```bash
+cd backend/omni/src/modai/modules/external-my-module
+git pull
+
+cd backend/omni
+docker image build -t your-registry.com/modai-backend:latest .
+```
+
+---
+
+## Removing a Module
+
+1. Delete the cloned directory:
+   ```bash
+   rm -rf backend/omni/src/modai/modules/external-my-module
+   ```
+2. Remove its entry from `config.yaml`.
+3. Rebuild and redeploy.

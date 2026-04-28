@@ -1,0 +1,17 @@
+[
+	{
+		"type": "file",
+		"name": "index",
+		"label": "overview"
+	},
+	{
+		"type": "file",
+		"name": "quickstart",
+		"label": "quickstart"
+	},
+	{
+		"type": "dir-section-header",
+		"name": "modules",
+		"label": "modules"
+	}
+]

@@ -1,0 +1,41 @@
+# modAI Quickstart – single-file Docker Compose for a self-contained local setup.
+#
+# Usage:
+#   curl -O https://raw.githubusercontent.com/modAI-systems/modAI-chat/main/resources/compose-files/compose-quickstart.yaml
+#   docker compose -f compose-quickstart.yaml up -d
+#
+# ⚠️  Change SESSION_SECRET before exposing this to the internet.
+#
+# Browse to http://localhost — login: admin / admin
+---
+services:
+  nanoidp:
+    image: ghcr.io/cdelmonte-zg/nanoidp:latest
+    volumes:
+      - ./nanoidp-settings.yaml:/app/config/settings.yaml:ro
+    ports:
+      - "9000:9000"
+    command: >
+      nanoidp --host 0.0.0.0 --port 9000
+
+  backend:
+    image: ghcr.io/modai-systems/modai-chat-backend:latest
+    depends_on:
+      - nanoidp
+    environment:
+      SESSION_SECRET: change-me-to-a-random-32-char-secret
+      OIDC_ISSUER: http://nanoidp:9000
+      OIDC_CLIENT_ID: test-client
+      OIDC_REDIRECT_URI: http://localhost/api/auth/callback
+      OIDC_POST_LOGIN_URI: http://localhost/
+      OIDC_POST_LOGOUT_URI: http://localhost/
+
+  frontend:
+    image: ghcr.io/modai-systems/modai-chat-frontend:latest
+    depends_on:
+      - backend
+    environment:
+      API_BACKEND_URL: http://backend:8080
+    ports:
+      - "80:80"
+      - "443:443"

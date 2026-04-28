@@ -1,0 +1,17 @@
+orphan: true
+
+repos:
+  - repo: local
+    hooks:
+      - id: biome-check
+        name: biome check
+        language: system
+        entry: pnpm check
+        always_run: true
+        pass_filenames: false
+      - id: i18n-parity
+        name: i18n parity check
+        language: system
+        entry: bash scripts/check-i18n-parity.sh
+        always_run: true
+        pass_filenames: false

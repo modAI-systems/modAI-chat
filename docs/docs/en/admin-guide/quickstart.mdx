@@ -1,0 +1,55 @@
+---
+title: Quickstart
+description: Get modAI running locally in a few minutes using Docker.
+---
+
+import Mermaid from '../../../components/Mermaid'
+
+# Quickstart
+
+Get modAI running locally in a few minutes using Docker.
+
+## What gets started
+
+<Mermaid chart={`
+graph LR
+    Browser["Browser"]
+
+    subgraph modAI
+        Frontend["Frontend\\n:80 / :443"]
+        Backend["Backend"]
+    end
+
+    NanoIDP["NanoIDP\\n:8000"]
+
+    Browser --- Frontend
+    Browser --- NanoIDP
+    Frontend --- Backend
+    Backend --- NanoIDP
+`} />
+
+## Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) with Compose
+
+## 1. Download the Compose file
+
+```bash
+curl -O https://raw.githubusercontent.com/modAI-systems/modAI-chat/main/resources/compose-files/compose-quickstart.yaml
+```
+
+## 2. Start modAI
+
+```bash
+docker compose -f compose-quickstart.yaml up -d
+```
+
+Browse to http://localhost — login: `admin` / `admin`
+
+NanoIDP dashboard: http://localhost:8000
+
+## Stopping
+
+```bash
+docker compose -f compose-quickstart.yaml down
+```
