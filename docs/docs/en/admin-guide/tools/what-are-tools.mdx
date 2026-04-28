@@ -1,0 +1,65 @@
+---
+title: What Are Tools?
+description: Learn how tools extend the AI's capabilities and how modAI enables tool calling.
+---
+
+import Mermaid from '../../../../components/Mermaid';
+
+# What Are Tools?
+
+By default, an AI model can only respond with text. Tools break that boundary — they give the model the ability to take actions and retrieve information from the outside world during a conversation.
+
+When modAI exposes tools to the model, the model can choose to call one mid-response. modAI then executes the call, sends the result back to the model, and the model continues its answer with real data in hand — all transparently from the user's perspective.
+
+## How Tool Calling Works
+
+<Mermaid chart={`sequenceDiagram
+    actor User
+    participant Frontend
+    participant Backend as modAI Backend
+    participant Model as AI Model
+    participant Tool as Tool Server
+
+    User->>Frontend: Send message
+    Frontend->>Backend: POST /chat (message + available tools)
+    Backend->>Model: Forward message + tool definitions
+
+    Model-->>Backend: [tool call 1, tool call 2, tool call N]
+
+    loop For each tool call
+        Backend->>Tool: Call tool with args
+        Tool-->>Backend: Tool result
+    end
+
+    Backend->>Model: All tool results
+    Model-->>Backend: Final answer (stream)
+    Backend-->>Frontend: Stream response
+    Frontend-->>User: Display answer`} />
+
+The key steps are:
+
+1. **Tool definitions are sent with every request.** modAI collects all registered tools and includes their name, description, and parameter schema in the request to the AI model.
+2. **The model decides whether and when to call a tool.** Based on the user's message and the tool descriptions, the model can request one or more tool calls — or none at all.
+3. **modAI executes the call.** The backend calls the appropriate tool server with the arguments the model provided.
+4. **The result feeds back into the model.** The tool output is appended to the conversation context and the model produces its final answer.
+
+This loop can repeat multiple times within a single user message if the model decides to call several tools in sequence.
+
+## Tools in modAI
+
+modAI discovers tools automatically from external **tool servers** — independent HTTP microservices that expose an OpenAPI specification. Each operation described in the OpenAPI spec becomes one callable tool.
+
+<Mermaid chart={`graph LR
+    subgraph modAI["modAI Backend"]
+        Registry["Tool Registry"]
+    end
+    Registry -- "reads OpenAPI spec" --> ToolA["Tool Server A\n/openapi.json"]
+    Registry -- "reads OpenAPI spec" --> ToolB["Tool Server B\n/openapi.json"]
+    Registry -- "calls endpoint" --> ToolA
+    Registry -- "calls endpoint" --> ToolB`} />
+
+Tool servers are independent services — they can be written in any language, deployed anywhere, and reused across multiple modAI instances. modAI only needs the URL of their OpenAPI spec to register all the tools they provide.
+
+---
+
+- [Installing Tools](./installing-tools)

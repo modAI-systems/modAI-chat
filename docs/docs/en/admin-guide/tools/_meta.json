@@ -1,0 +1,4 @@
+[
+	{ "type": "file", "name": "what-are-tools", "label": "whatAreTools" },
+	{ "type": "file", "name": "installing-tools", "label": "installingTools" }
+]

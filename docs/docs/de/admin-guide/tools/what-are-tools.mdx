@@ -1,0 +1,65 @@
+---
+title: Was sind Tools?
+description: Erfahren Sie, wie Tools die Fähigkeiten der KI erweitern und wie modAI Tool-Aufruf ermöglicht.
+---
+
+import Mermaid from '../../../../components/Mermaid';
+
+# Was sind Tools?
+
+Standardmäßig kann ein KI-Modell nur mit Text antworten. Tools durchbrechen diese Grenze — sie geben dem Modell die Möglichkeit, während eines Gesprächs Aktionen auszuführen und Informationen aus der Außenwelt abzurufen.
+
+Wenn modAI dem Modell Tools zur Verfügung stellt, kann das Modell mitten in einer Antwort entscheiden, eines davon aufzurufen. modAI führt den Aufruf dann aus, sendet das Ergebnis zurück an das Modell, und das Modell setzt seine Antwort mit echten Daten fort — für den Nutzer vollständig transparent.
+
+## Wie Tool-Aufruf funktioniert
+
+<Mermaid chart={`sequenceDiagram
+    actor User as Nutzer
+    participant Frontend
+    participant Backend as modAI Backend
+    participant Model as KI-Modell
+    participant Tool as Tool-Server
+
+    User->>Frontend: Nachricht senden
+    Frontend->>Backend: POST /chat (Nachricht + verfügbare Tools)
+    Backend->>Model: Nachricht + Tool-Definitionen weiterleiten
+
+    Model-->>Backend: [Tool-Aufruf 1, Tool-Aufruf 2, Tool-Aufruf N]
+
+    loop Für jeden Tool-Aufruf
+        Backend->>Tool: Tool mit Argumenten aufrufen
+        Tool-->>Backend: Tool-Ergebnis
+    end
+
+    Backend->>Model: Alle Tool-Ergebnisse
+    Model-->>Backend: Endgültige Antwort (Stream)
+    Backend-->>Frontend: Antwort streamen
+    Frontend-->>User: Antwort anzeigen`} />
+
+Die wichtigsten Schritte:
+
+1. **Tool-Definitionen werden mit jeder Anfrage gesendet.** modAI sammelt alle registrierten Tools und fügt deren Name, Beschreibung und Parameter-Schema in die Anfrage an das KI-Modell ein.
+2. **Das Modell entscheidet, ob und wann es ein Tool aufruft.** Anhand der Nutzernachricht und der Tool-Beschreibungen kann das Modell einen oder mehrere Tool-Aufrufe anfordern — oder auch keinen.
+3. **modAI führt den Aufruf aus.** Das Backend ruft den entsprechenden Tool-Server mit den vom Modell angegebenen Argumenten auf.
+4. **Das Ergebnis fließt zurück ins Modell.** Die Tool-Ausgabe wird dem Gesprächskontext hinzugefügt und das Modell erzeugt seine endgültige Antwort.
+
+Diese Schleife kann sich innerhalb einer einzigen Nutzernachricht mehrmals wiederholen, wenn das Modell entscheidet, mehrere Tools nacheinander aufzurufen.
+
+## Tools in modAI
+
+modAI entdeckt Tools automatisch von externen **Tool-Servern** — unabhängigen HTTP-Microservices, die eine OpenAPI-Spezifikation bereitstellen. Jede in der OpenAPI-Spezifikation beschriebene Operation wird zu einem aufrufbaren Tool.
+
+<Mermaid chart={`graph LR
+    subgraph modAI["modAI Backend"]
+        Registry["Tool Registry"]
+    end
+    Registry -- "liest OpenAPI-Spezifikation" --> ToolA["Tool-Server A\n/openapi.json"]
+    Registry -- "liest OpenAPI-Spezifikation" --> ToolB["Tool-Server B\n/openapi.json"]
+    Registry -- "ruft Endpunkt auf" --> ToolA
+    Registry -- "ruft Endpunkt auf" --> ToolB`} />
+
+Tool-Server sind unabhängige Dienste — sie können in beliebiger Sprache geschrieben, überall deployed und in mehreren modAI-Instanzen wiederverwendet werden. modAI benötigt lediglich die URL ihrer OpenAPI-Spezifikation, um alle bereitgestellten Tools zu registrieren.
+
+---
+
+- [Tools installieren](./installing-tools)

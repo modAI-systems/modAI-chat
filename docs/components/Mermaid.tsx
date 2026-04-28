@@ -4,17 +4,20 @@ interface MermaidProps {
 	chart: string;
 }
 
-let mermaidLoaded = false;
+function isDarkMode(): boolean {
+	return document.documentElement.classList.contains("dark");
+}
 
-async function loadMermaid() {
-	if (mermaidLoaded) return;
+async function renderChart(chart: string, dark: boolean): Promise<string> {
 	const mermaid = (await import("mermaid")).default;
 	mermaid.initialize({
 		startOnLoad: false,
-		theme: "default",
+		theme: dark ? "dark" : "default",
 		securityLevel: "loose",
 	});
-	mermaidLoaded = true;
+	const id = `mermaid-${Math.random().toString(36).slice(2)}`;
+	const { svg } = await mermaid.render(id, chart.trim());
+	return svg;
 }
 
 export default function Mermaid({ chart }: MermaidProps) {
@@ -27,19 +30,30 @@ export default function Mermaid({ chart }: MermaidProps) {
 
 		async function render() {
 			try {
-				await loadMermaid();
-				const mermaid = (await import("mermaid")).default;
-				const id = `mermaid-${Math.random().toString(36).slice(2)}`;
-				const { svg: renderedSvg } = await mermaid.render(id, chart.trim());
-				if (!cancelled) setSvg(renderedSvg);
+				const dark = isDarkMode();
+				const renderedSvg = await renderChart(chart, dark);
+				if (!cancelled) {
+					setSvg(renderedSvg);
+					setError("");
+				}
 			} catch (err) {
 				if (!cancelled) setError(String(err));
 			}
 		}
 
 		render();
+
+		const observer = new MutationObserver(() => {
+			render();
+		});
+		observer.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ["class"],
+		});
+
 		return () => {
 			cancelled = true;
+			observer.disconnect();
 		};
 	}, [chart]);
 
