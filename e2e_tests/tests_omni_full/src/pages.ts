@@ -96,7 +96,8 @@ export class NanoIdpLoginPage {
         await passwordInput.waitFor({ state: "visible", timeout: 5000 });
         await passwordInput.fill(password);
 
-        await this.page.getByRole("button", { name: /authorize/i }).click();
+        // Submit via keyboard to avoid pointer-interception flakiness in CI
+        await this.page.locator("#password").press("Enter");
 
         // Wait for backend callback to complete and redirect back to the frontend
         await this.page.waitForURL(/localhost:4173/, { timeout: 30000 });
