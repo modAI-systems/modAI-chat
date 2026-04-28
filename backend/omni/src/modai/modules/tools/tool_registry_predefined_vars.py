@@ -1,20 +1,17 @@
 """Composing tool registry that hides pre-known variables from tool definitions.
 
-A caller of the tool registry may already have values for certain tool
-parameters (e.g. ``_session_id``, ``_bearer_token``).  By passing these as
-``predefined_params`` to :meth:`get_tools` / :meth:`get_tool_by_name`, the
-``PredefinedVariablesToolRegistryModule`` removes the corresponding properties
-from each tool's definition so the LLM is never asked to supply them.
+``_extract_predefined_params`` builds a flat look-up dict from the incoming
+request headers.  Every header is stored under two keys so that a simple
+``prop in predefined_params`` (or ``prop.lower() in predefined_params``) is
+sufficient at match time:
 
-By default a predefined key ``_session_id`` maps to the tool parameter named
-``session_id`` (underscore stripped).  A ``variable_mappings`` config section
-lets you override this for any tool parameter whose name differs from the
-predefined variable name — for example mapping ``X-Session-Id`` to
-``session_id``.
+* The Starlette-lowercased, **hyphen** form: ``x-session-id``.
+* The **underscore** form: ``x_session_id``.
 
-At invocation time predefined values are re-injected, translating each
-prefixed predefined key to its tool parameter name, before delegating to the
-inner tool so URL-path substitution and body serialisation work as normal.
+Explicit ``variable_mappings`` are applied inside the same function: if the
+named header is present its value is additionally stored under the target tool
+param name (e.g. ``session_id``) so that it is treated exactly like any other
+predefined value — no separate logic needed.
 
 This module is a pure decorator/composite: it has no knowledge of URLs,
 HTTP, or OpenAPI — all actual tool work is performed by the inner registry
@@ -29,32 +26,51 @@ from modai.module import ModuleDependencies
 from modai.modules.tools.module import ToolDefinition, ToolRegistryModule
 
 
-def _extract_predefined_params(request: Request) -> dict[str, Any]:
-    """Extract predefined tool params from all request headers."""
-    return {
-        f"_{header_name.lower().replace('-', '_')}": value
-        for header_name, value in request.headers.items()
-    }
+def _extract_predefined_params(
+    request: Request,
+    variable_mappings: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
+    """Build a flat look-up dict of predefined values from request headers.
+
+    Each header is indexed under two keys (hyphen and underscore form) so that
+    downstream code can match tool parameters with a plain ``in`` check:
+
+    * ``x-session-id`` — Starlette-lowercased hyphen form.
+    * ``x_session_id`` — underscore-normalised form.
+
+    Explicit ``variable_mappings`` are applied here: if the source header is
+    present, its value is also stored under the ``to_tool_parameter`` key so
+    that explicit targets are treated the same as auto-matched ones.
+    """
+    result: dict[str, Any] = {}
+    for header_name, value in request.headers.items():
+        result[header_name] = value  # e.g. "x-session-id"
+        result[header_name.replace("-", "_")] = value  # e.g. "x_session_id"
+
+    for mapping in variable_mappings or []:
+        var_name = mapping["from_modai_header"].lower()
+        if var_name in result:
+            result[mapping["to_tool_parameter"]] = result[var_name]
+
+    return result
 
 
 class PredefinedVariablesToolRegistryModule(ToolRegistryModule):
     """Tool registry decorator that strips pre-supplied variables from definitions.
 
     Wraps another :class:`~modai.modules.tools.module.ToolRegistryModule` and
-    filters its tool definitions based on ``predefined_params`` passed by the
-    caller.  By default a predefined key like ``_session_id`` hides the tool
-    parameter ``session_id`` (leading ``_`` stripped).  The optional
-    ``variable_mappings`` config allows overriding this for tool parameters
-    whose names differ from the predefined variable name.
+    filters its tool definitions based on headers from the incoming request.
+    Header ``X-Session-Id`` automatically fills both a tool parameter named
+    ``x_session_id`` (underscore form) and one named ``X-Session-Id``
+    (header form) — no configuration required.
 
-    At run time each hidden parameter is supplied from its predefined value
-    before delegating to the inner tool.
+    An explicit ``variable_mappings`` list is only needed when the tool
+    parameter name cannot be derived from the header name by normalisation.
 
     Configuration:
-        variable_mappings: optional dict mapping tool parameter names to
-            predefined variable names (without the leading ``_``).  Use this
-            when a tool parameter name differs from the predefined variable
-            name.
+        variable_mappings: optional list of mappings, each with
+            ``from_modai_header`` (the request header name) and
+            ``to_tool_parameter`` (the tool parameter name to fill).
 
     Module Dependencies:
         delegate_registry: the concrete :class:`ToolRegistryModule` that does
@@ -63,17 +79,14 @@ class PredefinedVariablesToolRegistryModule(ToolRegistryModule):
     Example config.yaml::
 
         modules:
-          openapi_registry:
-            type: OpenAPIToolRegistryModule
-            ...
-
           tool_registry:
             type: PredefinedVariablesToolRegistryModule
             module_dependencies:
               delegate_registry: openapi_registry
             config:
               variable_mappings:
-                X-Session-Id: session_id   # _session_id fills X-Session-Id header
+                - from_modai_header: X-Session-Id
+                  to_tool_parameter: session_id
     """
 
     def __init__(self, dependencies: ModuleDependencies, config: dict[str, Any]):
@@ -81,20 +94,20 @@ class PredefinedVariablesToolRegistryModule(ToolRegistryModule):
         self._inner_registry: ToolRegistryModule = dependencies.get_module(
             "delegate_registry"
         )  # type: ignore[assignment]
-        self._variable_mappings: dict[str, str] = config.get("variable_mappings", {})
+        self._variable_mappings: list[dict[str, str]] = config.get(
+            "variable_mappings", []
+        )
 
     async def get_tools(self, request: Request) -> list[ToolDefinition]:
         tools = await self._inner_registry.get_tools(request)
-        predefined_params = _extract_predefined_params(request)
+        predefined_params = _extract_predefined_params(request, self._variable_mappings)
         return [
-            _filter_tool_definition(
-                definition, predefined_params, self._variable_mappings
-            )
+            _filter_tool_definition(definition, predefined_params)
             for definition in tools
         ]
 
     async def run_tool(self, request: Request, params: dict[str, Any]) -> Any:
-        predefined_params = _extract_predefined_params(request)
+        predefined_params = _extract_predefined_params(request, self._variable_mappings)
         name = params.get("name")
         if not isinstance(name, str) or not name:
             raise ValueError("Tool invocation requires a non-empty 'name'")
@@ -112,59 +125,35 @@ class PredefinedVariablesToolRegistryModule(ToolRegistryModule):
             raise ValueError("Tool invocation 'arguments' must be an object")
 
         translated_arguments = dict(raw_arguments)
-        translations = _build_translations(
-            definition=definition,
-            predefined_params=predefined_params,
-            variable_mappings=self._variable_mappings,
-        )
-        for tool_param, prefixed_key in translations.items():
-            predefined_value = predefined_params.get(prefixed_key)
-            if predefined_value is not None and tool_param not in translated_arguments:
-                translated_arguments[tool_param] = predefined_value
+        schema = definition.get("parameters") or {}
+        for prop in schema.get("properties", {}).keys():
+            lookup = (
+                prop
+                if prop in predefined_params
+                else prop.lower()
+                if prop.lower() in predefined_params
+                else None
+            )
+            if lookup is not None and prop not in translated_arguments:
+                translated_arguments[prop] = predefined_params[lookup]
 
         translated_params["arguments"] = translated_arguments
         return await self._inner_registry.run_tool(request, translated_params)
 
 
-def _build_translations(
-    definition: ToolDefinition,
-    predefined_params: dict[str, Any],
-    variable_mappings: dict[str, str],
-) -> dict[str, str]:
-    schema = definition.get("parameters") or {}
-    schema_properties = set(schema.get("properties", {}).keys())
-    translations: dict[str, str] = {}
-
-    for prefixed_key in predefined_params:
-        if not prefixed_key.startswith("_"):
-            continue
-        var_name = prefixed_key[1:]
-        if var_name in schema_properties:
-            translations[var_name] = prefixed_key
-
-    for tool_param, var_name in variable_mappings.items():
-        prefixed_key = f"_{var_name}"
-        if prefixed_key not in predefined_params:
-            continue
-        if tool_param not in schema_properties:
-            continue
-        translations.pop(var_name, None)
-        translations[tool_param] = prefixed_key
-
-    return translations
-
-
 def _filter_tool_definition(
     definition: ToolDefinition,
     predefined_params: dict[str, Any],
-    variable_mappings: dict[str, str],
 ) -> ToolDefinition:
-    translations = _build_translations(definition, predefined_params, variable_mappings)
-    if not translations:
+    parameters = definition.get("parameters") or {}
+    hidden_properties = {
+        prop
+        for prop in parameters.get("properties", {}).keys()
+        if prop in predefined_params or prop.lower() in predefined_params
+    }
+    if not hidden_properties:
         return definition
 
-    hidden_properties = set(translations.keys())
-    parameters = definition.get("parameters") or {}
     new_properties = {
         k: v
         for k, v in parameters.get("properties", {}).items()
