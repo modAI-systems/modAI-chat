@@ -20,6 +20,10 @@ jobs:
           - name: frontend
             context: frontend/omni
             package: modai-chat-frontend
+          - name: docs
+            context: .
+            dockerfile: docs/Dockerfile
+            package: modai-chat-docs
     permissions:
       contents: read
       packages: write
@@ -51,6 +55,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile || format('{0}/Dockerfile', matrix.context) }}
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
@@ -69,6 +74,8 @@ jobs:
             package: modai-chat-backend
           - name: frontend
             package: modai-chat-frontend
+          - name: docs
+            package: modai-chat-docs
     permissions:
       packages: write
     steps:

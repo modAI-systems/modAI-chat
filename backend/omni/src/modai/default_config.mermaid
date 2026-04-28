@@ -1,0 +1,55 @@
+graph TD
+    subgraph Auth["🔐 Auth & Session"]
+        session["session"]
+        auth_oidc["auth_oidc"]
+        user["user"]
+    end
+
+    subgraph UserData["👤 User Data"]
+        user_store["user_store"]
+        user_settings["user_settings"]
+        user_settings_store["user_settings_store"]
+    end
+
+    subgraph Chat["💬 Chat"]
+        chat_router["chat_router"]
+        chat_openai["chat_openai"]
+    end
+
+    subgraph ModelProvider["🤖 Model Provider"]
+        openai_model_provider["openai_model_provider"]
+        model_provider_store["model_provider_store"]
+        central_model_provider_router["central_model_provider_router"]
+    end
+
+    subgraph Tools["🔧 Tools"]
+        tool_registry["tool_registry"]
+        openapi_tool_registry["openapi_tool_registry"]
+        predefined_tool_registry["predefined_tool_registry"]
+        http_client["http_client"]
+    end
+
+    subgraph Infra["⚙️ Infra"]
+        health["health"]
+        full_reset["full_reset"]
+    end
+
+    chat_router --> chat_openai
+    chat_router --> session
+    chat_openai --> openai_model_provider
+    chat_openai --> tool_registry
+    openai_model_provider --> model_provider_store
+    openai_model_provider --> session
+    central_model_provider_router --> openai_model_provider
+    central_model_provider_router --> session
+    auth_oidc --> session
+    user --> session
+    user --> user_store
+    user_settings --> session
+    user_settings --> user_settings_store
+    tool_registry --> predefined_tool_registry
+    predefined_tool_registry --> openapi_tool_registry
+    openapi_tool_registry --> http_client
+    full_reset --> model_provider_store
+    full_reset --> user_store
+    full_reset --> user_settings_store

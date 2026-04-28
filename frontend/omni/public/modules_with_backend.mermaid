@@ -1,0 +1,75 @@
+graph TD
+    subgraph AppShell["🏗️ App Shell"]
+        app-root["app-root"]
+        main-app-session-gated["main-app-session-gated"]
+        routing-main["routing-main"]
+        sidebar-layout["sidebar-layout"]
+        sidebar-layout-route["sidebar-layout-route"]
+    end
+
+    subgraph Session["🔐 Session"]
+        session-service["session-service"]
+        no-session-action["no-session-action"]
+        fetch-service["fetch-service"]
+        plain-fetch-service["plain-fetch-service"]
+    end
+
+    subgraph Chat["💬 Chat"]
+        chat["chat"]
+        chat-route["chat-route"]
+        chat-fallback-route["chat-fallback-route"]
+        chat-navigation-item["chat-navigation-item"]
+        chat-service["chat-service"]
+    end
+
+    subgraph LLMProvider["🤖 LLM Provider"]
+        llm-provider-service["llm-provider-service"]
+        llm-provider-management["llm-provider-management"]
+        providers-navigation-item["providers-navigation-item"]
+        providers-route["providers-route"]
+    end
+
+    subgraph Tools["🔧 Tools"]
+        tools-service["tools-service"]
+    end
+
+    subgraph Rendering["✍️ Rendering"]
+        katex-renderer["katex-renderer"]
+        marked-renderer["marked-renderer"]
+    end
+
+    subgraph User["👤 User"]
+        logout-item["logout-item"]
+        user-avatar-item["user-avatar-item"]
+    end
+
+    app-root --> main-app-session-gated
+    main-app-session-gated --> session-service
+    main-app-session-gated --> no-session-action
+    main-app-session-gated --> routing-main
+    routing-main --> chat-route
+    routing-main --> providers-route
+    routing-main --> chat-fallback-route
+    routing-main --> sidebar-layout-route
+    sidebar-layout --> chat-navigation-item
+    sidebar-layout --> providers-navigation-item
+    sidebar-layout --> logout-item
+    sidebar-layout --> user-avatar-item
+    fetch-service --> plain-fetch-service
+    fetch-service --> session-service
+    fetch-service --> no-session-action
+    session-service --> plain-fetch-service
+    llm-provider-service --> fetch-service
+    chat-service --> fetch-service
+    chat --> chat-service
+    chat --> llm-provider-service
+    chat --> tools-service
+    chat --> katex-renderer
+    chat --> marked-renderer
+    chat-route --> chat
+    chat-fallback-route --> chat
+    llm-provider-management --> llm-provider-service
+    tools-service --> fetch-service
+    providers-route --> llm-provider-management
+    logout-item --> fetch-service
+    user-avatar-item --> session-service

@@ -1,0 +1,79 @@
+---
+title: Was sind Module?
+description: In modAI ist alles ein Modul. Erfahren Sie, wie das Modulsystem funktioniert.
+---
+
+import Mermaid from '../../../../components/Mermaid';
+import moduleOverview from '@modai-backend/default_config.mermaid';
+import frontendModuleOverview from '@modai-frontend/modules_with_backend.mermaid';
+
+# Module
+
+In modAI ist alles ein Modul. Es gibt keinen separaten Kern — die Chat-Oberfläche, Authentifizierung, KI-Anbieterverbindungen und alle anderen Funktionen sind jeweils eigene Module, die über die Konfiguration miteinander verbunden werden.
+
+Das Hinzufügen eines neuen Moduls funktioniert genauso wie bei den eingebauten.
+
+<Mermaid chart={`graph LR
+    subgraph Browser["🌐 Browser"]
+        Frontend["modAI Frontend"]
+    end
+    subgraph Server["🖥️ Server"]
+        Backend["modAI Backend"]
+    end
+    Frontend -- "HTTP / SSE" --> Backend`} />
+
+modAI teilt sich in zwei Hälften: Das **Frontend** läuft im Browser des Nutzers und ist für alles Sichtbare zuständig, während das **Backend** auf dem Server läuft und Daten, KI-Verbindungen sowie die Geschäftslogik verwaltet. Die Kommunikation erfolgt über HTTP und Server-Sent Events (SSE) für das Streaming.
+
+Beide Hälften sind vollständig modular aufgebaut — in den folgenden Abschnitten erfahren Sie, welche Module die jeweilige Seite ausmachen.
+
+
+## Backend-Module
+
+Backend-Module laufen auf dem Server — sie stellen API-Endpunkte bereit, verwalten Daten und verbinden sich mit externen Diensten.
+
+<Mermaid chart={moduleOverview} />
+
+:::tip
+Das obige Diagramm zeigt das **Standard-modAI-Backend** — die vollständige Menge der Module, die von Haus aus mitgeliefert werden, und wie sie voneinander abhängen. Diese Kombination macht modAI als Ganzes funktionsfähig. Ein Modul wegzulassen entfernt genau die Funktionalität, die es bereitstellt. Es gibt keinen versteckten Kern: Jede Funktion ist ein Modul.
+:::
+
+```
+backend
+  - session        # authentifiziert Anfragen und stellt die Aufruferidentität bereit
+  - chat           # verarbeitet KI-Chat-Interaktionen und streamt Antworten
+  - model_provider # verbindet sich mit OpenAI-kompatiblen APIs
+  - tools          # verwaltet aufrufbare Tools, die die KI nutzen kann
+  - user_settings  # speichert benutzerspezifische Einstellungen
+  - ...
+```
+
+---
+
+## Frontend-Module
+
+Frontend-Module laufen im Browser — sie rendern die Benutzeroberfläche, verwalten die Navigation und kommunizieren mit dem Backend.
+
+<Mermaid chart={frontendModuleOverview} />
+
+:::tip
+Das obige Diagramm zeigt das **Standard-modAI-Frontend** — die vollständige Menge der Module, die von Haus aus mitgeliefert werden, und wie sie voneinander abhängen. Diese Kombination macht modAI als Ganzes funktionsfähig. Ein Modul wegzulassen entfernt genau die Funktionalität, die es bereitstellt. Es gibt keinen versteckten Kern: Jede Funktion ist ein Modul.
+:::
+
+```
+frontend
+  - router                  # verwaltet die Seitennavigation
+  - chat                    # rendert die Chat-Oberfläche
+  - authentication          # verwaltet Login, Logout und Sitzungsstatus
+  - llm-provider-management # Benutzeroberfläche zur Konfiguration von KI-Anbieterverbindungen
+  - chat-service            # abstrahiert die KI-Streaming-API
+  - ...
+```
+
+---
+
+## Zusätzliche Module installieren
+
+Die Dokumentation eines Moduls muss klar angeben, ob es sich um ein **Backend-Modul**, ein **Frontend-Modul** oder beides handelt.
+
+- [Backend-Module installieren](./installing-backend-modules)
+- [Frontend-Module installieren](./installing-frontend-modules)

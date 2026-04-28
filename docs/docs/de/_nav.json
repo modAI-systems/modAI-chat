@@ -1,0 +1,14 @@
+[
+	{
+		"text": "userManual",
+		"link": "/de/user-guide/"
+	},
+	{
+		"text": "adminManual",
+		"link": "/de/admin-guide/"
+	},
+	{
+		"text": "devDocs",
+		"link": "/de/dev-guide/"
+	}
+]

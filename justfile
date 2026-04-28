@@ -5,6 +5,7 @@ install:
     just --justfile frontend/omni/justfile install
     just --justfile e2e_tests/tests_omni_full/justfile install
     just --justfile e2e_tests/tests_omni_light/justfile install
+    just --justfile docs/justfile install
 
 # Run format in all sub-projects
 format:
@@ -13,3 +14,4 @@ format:
     just --justfile frontend/omni/justfile format
     just --justfile e2e_tests/tests_omni_full/justfile format
     just --justfile e2e_tests/tests_omni_light/justfile format
+    just --justfile docs/justfile format

@@ -1,0 +1,115 @@
+---
+title: Installing Frontend Modules
+description: How to install frontend modules into a modAI Docker image.
+---
+
+# Installing Frontend Modules
+
+A frontend module extends the modAI browser application. Depending on what it does, it can add new pages and routes, contribute items to the sidebar, provide services that other modules consume, or replace a built-in UI component entirely. The steps below walk through cloning a module and wiring it into the module configuration.
+
+:::info
+Frontend modules are compiled into the Docker image at **build time**. Installing a module always requires rebuilding the frontend image. Runtime installation without a rebuild is not supported.
+:::
+
+
+## Step 1: Clone the Module Repository
+
+Clone the module repository into the frontend modules directory using the `external-` prefix:
+
+```bash
+cd frontend/omni/src/modules
+git clone <MODULE_REPOSITORY_URL> external-<module-name>
+```
+
+**Example:**
+```bash
+git clone https://github.com/your-org/my-module-ui.git external-my-module-ui
+```
+
+The result should look like this:
+
+```
+frontend/omni/src/modules/
+├── fetch-service/
+├── router/
+├── ...
+└── external-my-module-ui/   ← your module
+```
+
+---
+
+## Step 2: Update `modules.json`
+
+Open your `public/modules.json` (or create a custom one based on a preset). The module's documentation will list the exact entries to add.
+
+The simplest approach is to use `includes` so you only need to add the new module entries on top of a built-in preset:
+
+**`public/modules.json`** (example):
+```json
+{
+  "version": "1.0.0",
+  "includes": [
+    { "path": "modules_with_backend.json" }
+  ],
+  "modules": [
+    {
+      "id": "my-module-route",
+      "type": "Routes",
+      "path": "@/modules/external-my-module-ui/routes/create",
+      "dependencies": {}
+    },
+    {
+      "id": "routing-main",
+      "collisionStrategy": "merge",
+      "dependencies": {
+        "module:routes": ["my-module-route"]
+      }
+    }
+  ]
+}
+```
+
+Refer to the module's documentation for the exact `path` value and any required `dependencies`.
+
+---
+
+## Step 3: Rebuild and Redeploy
+
+```bash
+cd frontend/omni
+docker image build -t your-registry.com/modai-frontend:latest .
+```
+
+---
+
+## Step 4: Verify
+
+Open the application in a browser and confirm the module's page or feature is visible.
+
+If the module does not appear, check:
+1. The repository was cloned under the correct `external-` prefix.
+2. The `path` and module IDs in `modules.json` exactly match the module's documentation.
+3. The Docker image was rebuilt **after** cloning — not before.
+
+---
+
+## Updating a Module
+
+```bash
+cd frontend/omni/src/modules/external-my-module-ui
+git pull
+
+cd frontend/omni
+docker image build -t your-registry.com/modai-frontend:latest .
+```
+
+---
+
+## Removing a Module
+
+1. Delete the cloned directory:
+   ```bash
+   rm -rf frontend/omni/src/modules/external-my-module-ui
+   ```
+2. Remove its entries from `modules.json`.
+3. Rebuild and redeploy.
