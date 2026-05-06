@@ -198,4 +198,53 @@ export class Sidebar {
                 .click();
         }
     }
+
+    async openUserSettingsSection(): Promise<void> {
+        await this.open();
+        // User Settings uses shadcn Collapsible.Root (bind:open), so the
+        // Language & Region sub-button is only visible when the section is expanded.
+        const languageButton = this.page.locator(
+            '[data-sidebar="menu-sub-button"]',
+            { hasText: "Language & Region" },
+        );
+        const isAlreadyOpen = await languageButton.isVisible();
+        if (!isAlreadyOpen) {
+            await this.page
+                .getByRole("button", { name: "User Settings", exact: true })
+                .click();
+        }
+    }
+}
+
+export class UserSettingsPage {
+    constructor(private page: Page) {}
+
+    async goto(): Promise<void> {
+        await this.page.goto("/user-settings/localization");
+    }
+
+    async navigateTo(): Promise<void> {
+        const sidebar = new Sidebar(this.page);
+        await sidebar.openUserSettingsSection();
+        await this.page
+            .locator('[data-sidebar="menu-sub-button"]', {
+                hasText: "Language & Region",
+            })
+            .click();
+        await expect(this.page).toHaveURL("/user-settings/localization");
+    }
+
+    async assertLanguageSelectorVisible(): Promise<void> {
+        await expect(this.page.locator("#language-select")).toBeVisible();
+    }
+
+    async selectLanguage(langCode: string): Promise<void> {
+        await this.page.locator("#language-select").selectOption(langCode);
+    }
+
+    async assertSelectedLanguage(langCode: string): Promise<void> {
+        await expect(this.page.locator("#language-select")).toHaveValue(
+            langCode,
+        );
+    }
 }

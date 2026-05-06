@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds and starts the Vite preview server for e2e light tests.
+# Builds the frontend and starts a Caddy Docker container serving the dist for e2e light tests.
 #
 # Uses frontend/omni browser-only manifest composed with the test fixtures
 # modules.json (which includes modules_browser_only.json and adds the external
@@ -22,4 +22,14 @@ cp "$LIGHT_TESTS_DIR/fixtures/modules.json" public/modules.json
 
 pnpm install
 pnpm build
-exec pnpm preview
+
+docker container run --rm -i \
+    -p 4173:80 \
+    -v "$FRONTEND_DIR/dist:/usr/share/caddy:ro" \
+    caddy:alpine caddy run --adapter caddyfile --config /dev/stdin <<'CADDYEOF'
+:80 {
+    root * /usr/share/caddy
+    try_files {path} /index.html
+    file_server
+}
+CADDYEOF
