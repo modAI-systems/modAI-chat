@@ -6,6 +6,9 @@ default:
 # Install dependencies
 install:
     pnpm install
+
+# Install additional playwright dependencies
+install-playwright:
     pnpm exec playwright install --with-deps
 
 # Run e2e tests
