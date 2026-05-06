@@ -42,7 +42,7 @@ export default defineConfig({
     webServer: [
         {
             name: "NanoIDP",
-            command: "bash scripts/start-nanoidp.sh",
+            command: "bash scripts/run-nanoidp.sh",
             url: "http://localhost:9000/api/health",
             reuseExistingServer: !process.env.CI,
             gracefulShutdown: { signal: "SIGTERM", timeout: 10_000 },
@@ -63,13 +63,12 @@ export default defineConfig({
             timeout: 120_000,
         },
         {
-            name: "LLMock",
-            command:
-                "docker container run --rm -p 3001:8000 -e LLMOCK_DEBUG=true ghcr.io/modai-systems/llmock:latest",
-            url: "http://localhost:3001/health",
+            name: "AIMock",
+            command: "bash scripts/run-aimock.sh",
+            url: "http://localhost:4010/health",
             reuseExistingServer: !process.env.CI,
-            gracefulShutdown: { signal: "SIGTERM", timeout: 5_000 },
-            timeout: 30_000,
+            gracefulShutdown: { signal: "SIGTERM", timeout: 10_000 },
+            timeout: 120_000,
         },
         {
             name: "Dice Roller",

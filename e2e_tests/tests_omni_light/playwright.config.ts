@@ -48,13 +48,12 @@ export default defineConfig({
             timeout: 120_000,
         },
         {
-            name: "LLMock",
-            command:
-                "docker container run --rm --platform linux/amd64 -p 3001:8000 -e LLMOCK_CORS_ALLOW_ORIGINS='[\"http://localhost:4173\"]' ghcr.io/modai-systems/llmock:latest",
-            url: "http://localhost:3001/health",
+            name: "AIMock",
+            command: "bash scripts/run-aimock.sh",
+            url: "http://localhost:4010/health",
             reuseExistingServer: !process.env.CI,
-            gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },
-            timeout: 30_000,
+            gracefulShutdown: { signal: "SIGTERM", timeout: 10_000 },
+            timeout: 120_000,
         },
     ],
 });

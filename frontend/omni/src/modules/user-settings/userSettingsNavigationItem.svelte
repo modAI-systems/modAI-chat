@@ -1,5 +1,5 @@
 <script lang="ts">
-import { ChevronRight, MessageSquare } from "lucide-svelte";
+import { ChevronRight, UserCog } from "lucide-svelte";
 import type { Component } from "svelte";
 import { getModuleDeps } from "@/core/module-system";
 import { getT } from "@/modules/i18n/index.svelte.js";
@@ -8,14 +8,19 @@ import { getRouterApi } from "@/modules/router/index.svelte";
 import * as Collapsible from "$lib/shadcnui/components/ui/collapsible/index.js";
 import * as Sidebar from "$lib/shadcnui/components/ui/sidebar/index.js";
 import { cn } from "$lib/shadcnui/utils.js";
-import { CHAT_PATH } from "./chatRouteDefinition.svelte";
 
-const t = getT("chat");
-const deps = getModuleDeps("@/modules/chat/chatNavigationItem");
-const chatSidebarItems = $derived(deps.getAll<Component>("chatSidebarItems"));
+const USER_SETTINGS_PATH = "/user-settings";
+
+const t = getT("user-settings");
+const deps = getModuleDeps(
+    "@/modules/user-settings/userSettingsNavigationItem",
+);
+const sidebarItems = $derived(
+    deps.getAll<Component>("userSettingsSidebarItems"),
+);
 
 const router = getRouterApi();
-let isOpen = $state(router.isActive.startsWith(CHAT_PATH));
+let isOpen = $state(router.isActive.startsWith(USER_SETTINGS_PATH));
 </script>
 
 <Collapsible.Root bind:open={isOpen} class="group/collapsible">
@@ -27,16 +32,16 @@ let isOpen = $state(router.isActive.startsWith(CHAT_PATH));
 				isOpen = !isOpen;
 			}}
 		>
-			<MessageSquare />
-			<span>{t("chatLabel", { defaultValue: "Chat" })}</span>
+			<UserCog />
+			<span>{t("navLabel", { defaultValue: "User Settings" })}</span>
 			<ChevronRight
 				class={cn("ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90")}
 			/>
 		</Sidebar.MenuButton>
 		<Collapsible.Content>
 			<Sidebar.MenuSub>
-				{#each chatSidebarItems as ChatSidebarItem, index (index)}
-					<ChatSidebarItem />
+				{#each sidebarItems as SidebarItem, index (index)}
+					<SidebarItem />
 				{/each}
 			</Sidebar.MenuSub>
 		</Collapsible.Content>

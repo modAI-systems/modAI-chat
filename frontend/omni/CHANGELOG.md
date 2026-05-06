@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The sidebar is now resizable.
+- Chat sidebar entry is now a collapsible menu.
+
 ### Fixed
 
 - Added missing favicon `<link>` tags to `index.html`; browsers now display the modAI icon. Added `favicon.png` (32×32) as a PNG fallback alongside the existing `modai.svg`.

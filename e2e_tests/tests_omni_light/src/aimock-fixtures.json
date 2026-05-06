@@ -1,0 +1,24 @@
+{
+  "fixtures": [
+    {
+      "match": { "userMessage": "first message" },
+      "response": { "content": "first message" }
+    },
+    {
+      "match": { "userMessage": "second message" },
+      "response": { "content": "second message" }
+    },
+    {
+      "match": { "userMessage": "world" },
+      "response": { "content": "world" }
+    },
+    {
+      "match": { "userMessage": "hello" },
+      "response": { "content": "hello" }
+    },
+    {
+      "match": {},
+      "response": { "content": "mock response" }
+    }
+  ]
+}

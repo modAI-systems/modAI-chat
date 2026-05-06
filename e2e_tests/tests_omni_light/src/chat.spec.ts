@@ -1,26 +1,28 @@
 import { test } from "@playwright/test";
 import { ChatPage } from "./pages";
 
+const AIMOCK_PORT = 4010;
+
 test.describe("Chat", () => {
     test.beforeEach(async ({ page }) => {
         await page.goto("/chat");
         await page.evaluate(() => {
             localStorage.clear();
         });
-        await page.evaluate(() => {
+        await page.evaluate((port) => {
             localStorage.setItem(
                 "llm_providers",
                 JSON.stringify([
                     {
-                        id: "llmmock",
-                        name: "LLMMock",
+                        id: "aimock",
+                        name: "AIMock",
                         type: "openai",
-                        base_url: "http://localhost:3001",
+                        base_url: `http://localhost:${port}/v1`,
                         api_key: "",
                     },
                 ]),
             );
-        });
+        }, AIMOCK_PORT);
         await page.goto("/chat");
         await page
             .getByText("How can I help you today?")
@@ -30,7 +32,7 @@ test.describe("Chat", () => {
     test("Chat responds", async ({ page }) => {
         const chatPage = new ChatPage(page);
         await chatPage.navigateTo();
-        await chatPage.selectFirstModel();
+        await chatPage.selectModel("gpt-4o");
 
         await chatPage.sendMessage("hello");
         await chatPage.assertLastResponse("hello");
@@ -40,7 +42,7 @@ test.describe("Chat", () => {
         const chatPage = new ChatPage(page);
 
         await chatPage.navigateTo();
-        await chatPage.selectFirstModel();
+        await chatPage.selectModel("gpt-4o");
 
         await chatPage.sendMessage("hello");
         await chatPage.assertLastResponse("hello");
@@ -54,10 +56,10 @@ test.describe("Chat", () => {
     }) => {
         const chatPage = new ChatPage(page);
         await chatPage.navigateTo();
-        await chatPage.selectFirstModel();
+        await chatPage.selectModel("gpt-4o");
 
         // Send a message that will be echoed back as a wide markdown table.
-        // llmock mirrors the input, so this table becomes the assistant response.
+        // AIMock echoes the input, so this table becomes the assistant response.
         const wideTable =
             "| Column A | Column B | Column C | Column D | Column E |\n" +
             "|----------|----------|----------|----------|----------|\n" +
@@ -82,21 +84,21 @@ test.describe("Chat", () => {
         await chatPage.assertLastResponse("first message");
         await chatPage.waitForIdle();
 
-        await chatPage.selectModel("gpt-4o-mini");
+        await chatPage.selectModel("gpt-4");
 
         await chatPage.sendMessage("second message");
         await chatPage.assertLastResponse("second message");
         await chatPage.waitForIdle();
 
         await chatPage.assertAssistantMessageModelName(0, "gpt-4o");
-        await chatPage.assertAssistantMessageModelName(1, "gpt-4o-mini");
+        await chatPage.assertAssistantMessageModelName(1, "gpt-4");
     });
 
     test("New Chat sidebar item clears the conversation", async ({ page }) => {
         const chatPage = new ChatPage(page);
 
         await chatPage.navigateTo();
-        await chatPage.selectFirstModel();
+        await chatPage.selectModel("gpt-4o");
 
         await chatPage.sendMessage("hello");
         await chatPage.assertLastResponse("hello");
