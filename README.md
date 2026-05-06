@@ -26,6 +26,7 @@ modAI-chat/
 ├── backend/
 │   ├── omni/              # Python FastAPI backend
 │   └── tools/dice-roller/ # Example tool microservice
+├── docs/                  # User, admin & developer documentation
 ├── frontend/
 │   └── omni/              # Svelte TypeScript SPA
 └── e2e_tests/
@@ -43,9 +44,18 @@ Why more than one frontend: because there are different use cases. e.g. one full
 ### Prerequisites
 - Python 3.13+
 - Node.js 24+
-- UV package manager
-- Docker (for NanoIDP identity provider)
-- Optional: [just](https://github.com/casey/just)
+- [pnpm](http://pnpm.io)
+- [uv](https://docs.astral.sh/uv)
+- Docker
+- [just](https://github.com/casey/just)
+
+For easy dependency installation of the whole repo, run
+
+```bash
+just install
+```
+
+this installes the python/npm dependencies for all subprojects.
 
 ### NanoIDP Setup (Identity Provider)
 Start the lightweight local OIDC identity provider (runs on port 9000):
@@ -59,16 +69,16 @@ nanoidp Dashboard: http://localhost:9000
 ```bash
 cd backend/omni
 cp .env.sample .env
-uv sync
-uv run uvicorn modai.main:app --reload
+just install
+just start
 ```
 
 ### Frontend Setup
 ```bash
 cd frontend/omni
 ln -sf modules_with_backend.json public/modules.json
-pnpm install
-pnpm dev
+just install
+just start
 ```
 
 Browse to http://localhost:5173/

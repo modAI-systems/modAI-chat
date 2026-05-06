@@ -14,6 +14,8 @@
   "thinking": "Denke nach...",
   "generating": "Generiere...",
   "navLabel": "Neuer Chat",
+  "chatLabel": "Chat",
+  "newLabel": "Neu",
   "suggestions": [
     "Was sind die neuesten KI-Trends?",
     "Wie funktioniert maschinelles Lernen?",

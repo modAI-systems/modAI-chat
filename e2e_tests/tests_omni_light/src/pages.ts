@@ -32,31 +32,19 @@ export class ChatPage {
 
     async navigateTo(): Promise<void> {
         const sidebar = new Sidebar(this.page);
-        await sidebar.navigateTo("New Chat");
+        const wasOpen = await sidebar.isOpen();
+        await sidebar.openChatSection();
+        await this.page
+            .locator('[data-sidebar="menu-sub-button"]', { hasText: "New" })
+            .click();
         await expect(this.page).toHaveURL(/\/chat\/[\w-]+/);
-    }
-
-    async selectFirstModel(): Promise<void> {
-        // Open the model selector popover and click the first option
-        const modelButton = this.page
-            .locator("button")
-            .filter({
-                hasText: /Select model|gpt-/i,
-            })
-            .first();
-        await modelButton.waitFor({ state: "visible", timeout: 10000 });
-        await modelButton.click();
-        // Click the first option in the popover/command list
-        const firstOption = this.page.locator('[role="option"]').first();
-        await firstOption.waitFor({ state: "visible", timeout: 5000 });
-        await firstOption.click();
+        if (!wasOpen) {
+            await sidebar.close();
+        }
     }
 
     async selectModel(modelName: string): Promise<void> {
-        const modelButton = this.page
-            .locator("button")
-            .filter({ hasText: /Select model|gpt-/i })
-            .first();
+        const modelButton = this.page.getByTestId("model-selector-button");
         await modelButton.waitFor({ state: "visible", timeout: 10000 });
         await modelButton.click();
         const option = this.page
@@ -69,7 +57,14 @@ export class ChatPage {
 
     async startNewChat(): Promise<void> {
         const sidebar = new Sidebar(this.page);
-        await sidebar.navigateTo("New Chat");
+        const wasOpen = await sidebar.isOpen();
+        await sidebar.openChatSection();
+        await this.page
+            .locator('[data-sidebar="menu-sub-button"]', { hasText: "New" })
+            .click();
+        if (!wasOpen) {
+            await sidebar.close();
+        }
     }
 
     async assertChatIsEmpty(): Promise<void> {
@@ -175,5 +170,93 @@ export class Sidebar {
         if (!wasOpen) {
             await this.close();
         }
+    }
+
+    async openChatSection(): Promise<void> {
+        await this.open();
+        // Expand the Chat collapsible if not already open.
+        // chatNavigationItem uses a Svelte $state toggle (no data-state attribute),
+        // so we detect the open state by checking if the "New" sub-button is visible.
+        const newButton = this.page.locator(
+            '[data-sidebar="menu-sub-button"]',
+            {
+                hasText: "New",
+            },
+        );
+        const isAlreadyOpen = await newButton.isVisible();
+        if (!isAlreadyOpen) {
+            await this.page
+                .getByRole("button", { name: "Chat", exact: true })
+                .click();
+        }
+    }
+
+    async openGlobalSettingsSection(): Promise<void> {
+        await this.open();
+        // Global Settings uses shadcn Collapsible.Root (bind:open), so the
+        // Providers sub-button is only visible when the section is expanded.
+        const providersButton = this.page.locator(
+            '[data-sidebar="menu-sub-button"]',
+            { hasText: "Providers" },
+        );
+        const isAlreadyOpen = await providersButton.isVisible();
+        if (!isAlreadyOpen) {
+            await this.page
+                .getByRole("button", { name: "Global Settings", exact: true })
+                .click();
+        }
+    }
+
+    async openUserSettingsSection(): Promise<void> {
+        await this.open();
+        // User Settings uses shadcn Collapsible.Root (bind:open), so the
+        // Language & Region sub-button is only visible when the section is expanded.
+        const languageButton = this.page.locator(
+            '[data-sidebar="menu-sub-button"]',
+            { hasText: "Language & Region" },
+        );
+        const isAlreadyOpen = await languageButton.isVisible();
+        if (!isAlreadyOpen) {
+            await this.page
+                .getByRole("button", { name: "User Settings", exact: true })
+                .click();
+        }
+    }
+}
+
+export class UserSettingsPage {
+    constructor(private page: Page) {}
+
+    async goto(): Promise<void> {
+        await this.page.goto("/user-settings/localization");
+    }
+
+    async navigateTo(): Promise<void> {
+        const sidebar = new Sidebar(this.page);
+        const wasOpen = await sidebar.isOpen();
+        await sidebar.openUserSettingsSection();
+        await this.page
+            .locator('[data-sidebar="menu-sub-button"]', {
+                hasText: "Language & Region",
+            })
+            .click();
+        await expect(this.page).toHaveURL("/user-settings/localization");
+        if (!wasOpen) {
+            await sidebar.close();
+        }
+    }
+
+    async assertLanguageSelectorVisible(): Promise<void> {
+        await expect(this.page.locator("#language-select")).toBeVisible();
+    }
+
+    async selectLanguage(langCode: string): Promise<void> {
+        await this.page.locator("#language-select").selectOption(langCode);
+    }
+
+    async assertSelectedLanguage(langCode: string): Promise<void> {
+        await expect(this.page.locator("#language-select")).toHaveValue(
+            langCode,
+        );
     }
 }

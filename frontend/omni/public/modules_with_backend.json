@@ -27,6 +27,7 @@
         "module:routes": [
           "chat-route",
           "providers-route",
+          "localization-route",
           "chat-fallback-route",
           "sidebar-layout-route"
         ]
@@ -39,7 +40,8 @@
       "dependencies": {
         "module:sidebarTopItems": [
           "chat-navigation-item",
-          "providers-navigation-item"
+          "user-settings-navigation-item",
+          "global-settings-navigation-item"
         ],
         "module:sidebarBottomItems": ["logout-item", "user-avatar-item"]
       }
@@ -121,6 +123,14 @@
       "id": "chat-navigation-item",
       "type": "SidebarTopItem",
       "path": "@/modules/chat/chatNavigationItem",
+      "dependencies": {
+        "module:chatSidebarItems": ["chat-new-item"]
+      }
+    },
+    {
+      "id": "chat-new-item",
+      "type": "ChatSidebarItem",
+      "path": "@/modules/chat/chatNewItem",
       "dependencies": {}
     },
     {
@@ -156,8 +166,16 @@
       }
     },
     {
-      "id": "providers-navigation-item",
+      "id": "global-settings-navigation-item",
       "type": "SidebarTopItem",
+      "path": "@/modules/global-settings/globalSettingsNavigationItem",
+      "dependencies": {
+        "module:globalSettingsSidebarItems": ["providers-navigation-item"]
+      }
+    },
+    {
+      "id": "providers-navigation-item",
+      "type": "GlobalSettingsSidebarItem",
       "path": "@/modules/llm-provider-management/providersNavigationItem",
       "dependencies": {}
     },
@@ -168,6 +186,26 @@
       "dependencies": {
         "module:providerManagement": ["llm-provider-management"]
       }
+    },
+    {
+      "id": "user-settings-navigation-item",
+      "type": "SidebarTopItem",
+      "path": "@/modules/user-settings/userSettingsNavigationItem",
+      "dependencies": {
+        "module:userSettingsSidebarItems": ["localization-navigation-item"]
+      }
+    },
+    {
+      "id": "localization-navigation-item",
+      "type": "UserSettingsSidebarItem",
+      "path": "@/modules/user-settings/localizationNavigationItem",
+      "dependencies": {}
+    },
+    {
+      "id": "localization-route",
+      "type": "Route",
+      "path": "@/modules/user-settings/localizationRouteDefinition/create",
+      "dependencies": {}
     },
     {
       "id": "logout-item",
