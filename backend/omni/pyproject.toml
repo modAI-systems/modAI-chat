@@ -27,7 +27,7 @@ dev = [
     "pytest-asyncio",
     "pytest-httpserver",
     "ruff",
-    "testcontainers",
+    "testcontainers>=4.15.0rc2",
 ]
 
 [tool.pytest.ini_options]

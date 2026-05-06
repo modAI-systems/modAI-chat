@@ -34,6 +34,7 @@ function handleSelect(selectId: string) {
 				variant="ghost"
 				size="sm"
 				class="text-muted-foreground h-auto gap-1.5 px-2 py-1 text-xs"
+				data-testid="model-selector-button"
 				{...props}
 			>
 				{selectedModelData?.modelName ?? t("selectModel", { defaultValue: "Select model" })}
