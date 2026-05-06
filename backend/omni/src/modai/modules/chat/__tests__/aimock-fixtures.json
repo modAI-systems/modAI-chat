@@ -1,0 +1,53 @@
+{
+  "fixtures": [
+    {
+      "match": { "toolName": "calculate", "hasToolResult": false },
+      "response": {
+        "toolCalls": [{ "name": "calculate", "arguments": { "expression": "mock_value" } }],
+        "usage": { "prompt_tokens": 10, "completion_tokens": 10, "input_tokens": 10, "output_tokens": 10, "total_tokens": 20 }
+      }
+    },
+    {
+      "match": { "toolName": "nonexistent_tool", "hasToolResult": false },
+      "response": {
+        "toolCalls": [{ "name": "nonexistent_tool", "arguments": {} }],
+        "usage": { "prompt_tokens": 10, "completion_tokens": 10, "input_tokens": 10, "output_tokens": 10, "total_tokens": 20 }
+      }
+    },
+    {
+      "match": { "toolName": "broken_tool", "hasToolResult": false },
+      "response": {
+        "toolCalls": [{ "name": "broken_tool", "arguments": {} }],
+        "usage": { "prompt_tokens": 10, "completion_tokens": 10, "input_tokens": 10, "output_tokens": 10, "total_tokens": 20 }
+      }
+    },
+    {
+      "match": { "hasToolResult": true },
+      "response": {
+        "content": "result processed",
+        "usage": { "prompt_tokens": 10, "completion_tokens": 10, "input_tokens": 10, "output_tokens": 10, "total_tokens": 20 }
+      }
+    },
+    {
+      "match": { "userMessage": "world" },
+      "response": {
+        "content": "world",
+        "usage": { "prompt_tokens": 10, "completion_tokens": 10, "input_tokens": 10, "output_tokens": 10, "total_tokens": 20 }
+      }
+    },
+    {
+      "match": { "userMessage": "hello" },
+      "response": {
+        "content": "hello",
+        "usage": { "prompt_tokens": 10, "completion_tokens": 10, "input_tokens": 10, "output_tokens": 10, "total_tokens": 20 }
+      }
+    },
+    {
+      "match": {},
+      "response": {
+        "content": "mock response",
+        "usage": { "prompt_tokens": 10, "completion_tokens": 10, "input_tokens": 10, "output_tokens": 10, "total_tokens": 20 }
+      }
+    }
+  ]
+}

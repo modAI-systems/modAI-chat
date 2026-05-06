@@ -965,7 +965,7 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "pytest-httpserver" },
     { name = "ruff" },
-    { name = "testcontainers" },
+    { name = "testcontainers", specifier = ">=4.15.0rc2" },
 ]
 
 [[package]]
@@ -1914,7 +1914,7 @@ wheels = [
 
 [[package]]
 name = "testcontainers"
-version = "4.14.2"
+version = "4.15.0rc2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docker" },
@@ -1923,9 +1923,9 @@ dependencies = [
     { name = "urllib3" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ca/ac/a597c3a0e02b26cbed6dd07df68be1e57684766fd1c381dee9b170a99690/testcontainers-4.14.2.tar.gz", hash = "sha256:1340ccf16fe3acd9389a6c9e1d9ab21d9fe99a8afdf8165f89c3e69c1967d239", size = 166841, upload-time = "2026-03-18T05:19:16.696Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/3c/775a4635a517ab2e4f1c36adc4d43f6a80146040a9b104dc40c1f4f7b635/testcontainers-4.15.0rc2.tar.gz", hash = "sha256:4764016e73da0fa960eb8360687d22710cd68bcc01a4d03189fbe1da896a805d", size = 185257, upload-time = "2026-04-30T00:47:57.244Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/13/2d/26b8b30067d94339afee62c3edc9b803a6eb9332f521ba77d8aaab5de873/testcontainers-4.14.2-py3-none-any.whl", hash = "sha256:0d0522c3cd8f8d9627cda41f7a6b51b639fa57bdc492923c045117933c668d68", size = 125712, upload-time = "2026-03-18T05:19:15.29Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/a6/5833ae272ae79dceeea58b6c7381c47cbcbd0113d0d0b04da8ae1ac45e48/testcontainers-4.15.0rc2-py3-none-any.whl", hash = "sha256:e55b9045842c5bdfdd295e0d0b09aeafb3c1fb9d6f30bd8e718df8fd48dcdc41", size = 138103, upload-time = "2026-04-30T00:47:55.514Z" },
 ]
 
 [[package]]

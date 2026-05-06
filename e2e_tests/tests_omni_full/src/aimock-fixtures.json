@@ -1,0 +1,24 @@
+{
+  "fixtures": [
+    {
+      "match": { "userMessage": "Hi" },
+      "response": { "content": "Hi" }
+    },
+    {
+      "match": { "userMessage": "Hello again" },
+      "response": { "content": "Hello again" }
+    },
+    {
+      "match": { "toolName": "roll_dice", "hasToolResult": false },
+      "response": { "toolCalls": [{ "name": "roll_dice", "arguments": {} }] }
+    },
+    {
+      "match": { "hasToolResult": true },
+      "response": { "content": "last tool call result is tool output" }
+    },
+    {
+      "match": {},
+      "response": { "content": "mock response" }
+    }
+  ]
+}

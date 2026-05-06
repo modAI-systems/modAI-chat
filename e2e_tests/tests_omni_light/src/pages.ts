@@ -32,31 +32,15 @@ export class ChatPage {
 
     async navigateTo(): Promise<void> {
         const sidebar = new Sidebar(this.page);
-        await sidebar.navigateTo("New Chat");
+        await sidebar.openChatSection();
+        await this.page
+            .locator('[data-sidebar="menu-sub-button"]', { hasText: "New" })
+            .click();
         await expect(this.page).toHaveURL(/\/chat\/[\w-]+/);
     }
 
-    async selectFirstModel(): Promise<void> {
-        // Open the model selector popover and click the first option
-        const modelButton = this.page
-            .locator("button")
-            .filter({
-                hasText: /Select model|gpt-/i,
-            })
-            .first();
-        await modelButton.waitFor({ state: "visible", timeout: 10000 });
-        await modelButton.click();
-        // Click the first option in the popover/command list
-        const firstOption = this.page.locator('[role="option"]').first();
-        await firstOption.waitFor({ state: "visible", timeout: 5000 });
-        await firstOption.click();
-    }
-
     async selectModel(modelName: string): Promise<void> {
-        const modelButton = this.page
-            .locator("button")
-            .filter({ hasText: /Select model|gpt-/i })
-            .first();
+        const modelButton = this.page.getByTestId("model-selector-button");
         await modelButton.waitFor({ state: "visible", timeout: 10000 });
         await modelButton.click();
         const option = this.page
@@ -69,7 +53,10 @@ export class ChatPage {
 
     async startNewChat(): Promise<void> {
         const sidebar = new Sidebar(this.page);
-        await sidebar.navigateTo("New Chat");
+        await sidebar.openChatSection();
+        await this.page
+            .locator('[data-sidebar="menu-sub-button"]', { hasText: "New" })
+            .click();
     }
 
     async assertChatIsEmpty(): Promise<void> {
@@ -174,6 +161,41 @@ export class Sidebar {
 
         if (!wasOpen) {
             await this.close();
+        }
+    }
+
+    async openChatSection(): Promise<void> {
+        await this.open();
+        // Expand the Chat collapsible if not already open.
+        // chatNavigationItem uses a Svelte $state toggle (no data-state attribute),
+        // so we detect the open state by checking if the "New" sub-button is visible.
+        const newButton = this.page.locator(
+            '[data-sidebar="menu-sub-button"]',
+            {
+                hasText: "New",
+            },
+        );
+        const isAlreadyOpen = await newButton.isVisible();
+        if (!isAlreadyOpen) {
+            await this.page
+                .getByRole("button", { name: "Chat", exact: true })
+                .click();
+        }
+    }
+
+    async openGlobalSettingsSection(): Promise<void> {
+        await this.open();
+        // Global Settings uses shadcn Collapsible.Root (bind:open), so the
+        // Providers sub-button is only visible when the section is expanded.
+        const providersButton = this.page.locator(
+            '[data-sidebar="menu-sub-button"]',
+            { hasText: "Providers" },
+        );
+        const isAlreadyOpen = await providersButton.isVisible();
+        if (!isAlreadyOpen) {
+            await this.page
+                .getByRole("button", { name: "Global Settings", exact: true })
+                .click();
         }
     }
 }

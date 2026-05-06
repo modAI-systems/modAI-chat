@@ -63,13 +63,12 @@ export default defineConfig({
             timeout: 120_000,
         },
         {
-            name: "LLMock",
-            command:
-                "docker container run --rm -p 3001:8000 -e LLMOCK_DEBUG=true ghcr.io/modai-systems/llmock:latest",
-            url: "http://localhost:3001/health",
+            name: "AIMock",
+            command: "bash scripts/start-aimock.sh",
+            url: "http://localhost:4010/health",
             reuseExistingServer: !process.env.CI,
-            gracefulShutdown: { signal: "SIGTERM", timeout: 5_000 },
-            timeout: 30_000,
+            gracefulShutdown: { signal: "SIGTERM", timeout: 10_000 },
+            timeout: 120_000,
         },
         {
             name: "Dice Roller",
