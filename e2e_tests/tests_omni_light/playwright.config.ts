@@ -49,7 +49,7 @@ export default defineConfig({
         },
         {
             name: "AIMock",
-            command: "bash scripts/start-aimock.sh",
+            command: "bash scripts/run-aimock.sh",
             url: "http://localhost:4010/health",
             reuseExistingServer: !process.env.CI,
             gracefulShutdown: { signal: "SIGTERM", timeout: 10_000 },
