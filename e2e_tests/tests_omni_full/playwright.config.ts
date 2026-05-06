@@ -42,7 +42,7 @@ export default defineConfig({
     webServer: [
         {
             name: "NanoIDP",
-            command: "bash scripts/start-nanoidp.sh",
+            command: "bash scripts/run-nanoidp.sh",
             url: "http://localhost:9000/api/health",
             reuseExistingServer: !process.env.CI,
             gracefulShutdown: { signal: "SIGTERM", timeout: 10_000 },
@@ -64,7 +64,7 @@ export default defineConfig({
         },
         {
             name: "AIMock",
-            command: "bash scripts/start-aimock.sh",
+            command: "bash scripts/run-aimock.sh",
             url: "http://localhost:4010/health",
             reuseExistingServer: !process.env.CI,
             gracefulShutdown: { signal: "SIGTERM", timeout: 10_000 },

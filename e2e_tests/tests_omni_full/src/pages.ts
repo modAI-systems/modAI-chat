@@ -239,10 +239,14 @@ export class Sidebar {
     }
 
     async openChatSubMenu(subItem: string): Promise<void> {
+        const wasOpen = await this.isOpen();
         await this.openChatSection();
         await this.page
             .locator('[data-sidebar="menu-sub-button"]', { hasText: subItem })
             .click();
+        if (!wasOpen) {
+            await this.close();
+        }
     }
 
     async openGlobalSettingsSection(): Promise<void> {
@@ -262,10 +266,14 @@ export class Sidebar {
     }
 
     async openGlobalSettingsSubMenu(subItem: string): Promise<void> {
+        const wasOpen = await this.isOpen();
         await this.openGlobalSettingsSection();
         await this.page
             .locator('[data-sidebar="menu-sub-button"]', { hasText: subItem })
             .click();
+        if (!wasOpen) {
+            await this.close();
+        }
     }
 
     async logout(): Promise<void> {

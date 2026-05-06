@@ -32,11 +32,15 @@ export class ChatPage {
 
     async navigateTo(): Promise<void> {
         const sidebar = new Sidebar(this.page);
+        const wasOpen = await sidebar.isOpen();
         await sidebar.openChatSection();
         await this.page
             .locator('[data-sidebar="menu-sub-button"]', { hasText: "New" })
             .click();
         await expect(this.page).toHaveURL(/\/chat\/[\w-]+/);
+        if (!wasOpen) {
+            await sidebar.close();
+        }
     }
 
     async selectModel(modelName: string): Promise<void> {
@@ -53,10 +57,14 @@ export class ChatPage {
 
     async startNewChat(): Promise<void> {
         const sidebar = new Sidebar(this.page);
+        const wasOpen = await sidebar.isOpen();
         await sidebar.openChatSection();
         await this.page
             .locator('[data-sidebar="menu-sub-button"]', { hasText: "New" })
             .click();
+        if (!wasOpen) {
+            await sidebar.close();
+        }
     }
 
     async assertChatIsEmpty(): Promise<void> {
@@ -225,6 +233,7 @@ export class UserSettingsPage {
 
     async navigateTo(): Promise<void> {
         const sidebar = new Sidebar(this.page);
+        const wasOpen = await sidebar.isOpen();
         await sidebar.openUserSettingsSection();
         await this.page
             .locator('[data-sidebar="menu-sub-button"]', {
@@ -232,6 +241,9 @@ export class UserSettingsPage {
             })
             .click();
         await expect(this.page).toHaveURL("/user-settings/localization");
+        if (!wasOpen) {
+            await sidebar.close();
+        }
     }
 
     async assertLanguageSelectorVisible(): Promise<void> {
