@@ -22,4 +22,4 @@ cp "$LIGHT_TESTS_DIR/fixtures/modules.json" public/modules.json
 
 pnpm install
 pnpm build
-exec pnpm preview
+pnpm preview
