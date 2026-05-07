@@ -18,4 +18,4 @@ export VITE_API_URL="http://localhost:8000"
 
 ln -sf modules_with_backend.json public/modules.json
 pnpm build
-exec pnpm preview
+pnpm preview

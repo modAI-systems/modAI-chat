@@ -23,4 +23,4 @@ export OIDC_POST_LOGOUT_URI="http://localhost:4173/"
 export SESSION_SECRET="e2e-test-session-secret-32-chars!!"
 export CORS_ORIGINS="http://localhost:4173"
 
-exec uv run uvicorn modai.main:app
+uv run uvicorn modai.main:app
