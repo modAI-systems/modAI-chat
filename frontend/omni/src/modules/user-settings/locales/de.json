@@ -3,5 +3,7 @@
   "localizationNavLabel": "Sprache & Region",
   "localizationTitle": "Sprache & Lokalisierung",
   "localizationSubtitle": "Konfigurieren Sie Ihre bevorzugte Sprache.",
-  "languageLabel": "Sprache"
+  "languageLabel": "Sprache",
+  "searchLanguage": "Sprache suchen...",
+  "noLanguageFound": "Keine Sprache gefunden."
 }
