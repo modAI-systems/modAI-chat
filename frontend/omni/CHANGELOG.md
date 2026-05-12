@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The sidebar is now resizable.
 - Chat sidebar entry is now a collapsible menu.
+- LLM provider management: replaced the always-visible "Add Provider" form with a "New" button. Clicking it reveals an inline form with Save and Cancel actions.
 
 ### Fixed
 

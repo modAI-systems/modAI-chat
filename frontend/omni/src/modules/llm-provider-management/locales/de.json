@@ -1,6 +1,8 @@
 {
   "title": "LLM-Anbieter",
   "subtitle": "Verwalten Sie Ihre OpenAI-kompatiblen LLM-Anbieter.",
+  "new": "Neu",
+  "newProvider": "Neuer Anbieter",
   "addProvider": "Anbieter hinzufügen",
   "providerName": "Anbieter-Name",
   "providerNamePlaceholder": "Mein Anbieter",

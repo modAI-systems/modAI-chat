@@ -1,5 +1,5 @@
 <script lang="ts">
-import { AlertTriangle, ChevronDown } from "lucide-svelte";
+import { PlusIcon } from "lucide-svelte";
 import { getModuleDeps } from "@/core/module-system/index.js";
 import { getT } from "@/modules/i18n/index.svelte.js";
 import AddProviderForm from "@/modules/llm-provider-management/AddProviderForm.svelte";
@@ -10,8 +10,6 @@ import type {
     Provider,
 } from "@/modules/llm-provider-service/index.svelte.js";
 import { Button } from "$lib/shadcnui/components/ui/button/index.js";
-import * as Card from "$lib/shadcnui/components/ui/card/index.js";
-import * as Collapsible from "$lib/shadcnui/components/ui/collapsible/index.js";
 
 const deps = getModuleDeps(
     "@/modules/llm-provider-management/LLMProviderManagementComponent",
@@ -20,6 +18,7 @@ const llmProviderService =
     deps.getOne<LLMProviderService>("llmProviderService");
 const t = getT("llm-provider-management");
 let providers = $state<Provider[]>([]);
+let showAddForm = $state(false);
 
 $effect(() => {
     void refreshProviders();
@@ -62,11 +61,13 @@ async function handleCheckProviderHealth(provider: Provider): Promise<boolean> {
 </script>
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">
-	<div>
-		<h2 class="text-2xl font-semibold tracking-tight">{t("title", { defaultValue: "LLM Providers" })}</h2>
-		<p class="text-muted-foreground mt-1 text-sm">
-			{t("subtitle", { defaultValue: "Manage your OpenAI-compatible LLM providers." })}
-		</p>
+	<div class="flex items-start justify-between">
+		<div>
+			<h2 class="text-2xl font-semibold tracking-tight">{t("title", { defaultValue: "LLM Providers" })}</h2>
+			<p class="text-muted-foreground mt-1 text-sm">
+				{t("subtitle", { defaultValue: "Manage your OpenAI-compatible LLM providers." })}
+			</p>
+		</div>
 	</div>
 	<ProviderList
 		{providers}
@@ -74,6 +75,15 @@ async function handleCheckProviderHealth(provider: Provider): Promise<boolean> {
 		onDeleteProvider={handleDeleteProvider}
 		onCheckProviderHealth={handleCheckProviderHealth}
 	/>
-
-	<AddProviderForm onAddProvider={handleAddProvider} />
+	{#if showAddForm}
+		<AddProviderForm
+			onAddProvider={handleAddProvider}
+			onCancel={() => (showAddForm = false)}
+		/>
+	{:else}
+		<Button onclick={() => (showAddForm = true)} class="self-start">
+			<PlusIcon class="mr-2 size-4" />
+			{t("new", { defaultValue: "New" })}
+		</Button>
+	{/if}
 </div>
