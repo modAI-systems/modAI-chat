@@ -146,8 +146,10 @@ class CentralModelProviderRouter(ModaiModule):
                     request, limit=None, offset=None
                 )
 
-                # For each provider, get its models
+                # For each provider, get its models (only enabled ones)
                 for provider in providers_response.providers:
+                    if not provider.enabled:
+                        continue
                     try:
                         models_response = await provider_module.get_models(
                             request, provider.id

@@ -14,6 +14,7 @@ import type {
 import { Button } from "$lib/shadcnui/components/ui/button/index.js";
 import * as Card from "$lib/shadcnui/components/ui/card/index.js";
 import { Input } from "$lib/shadcnui/components/ui/input/index.js";
+import { Switch } from "$lib/shadcnui/components/ui/switch/index.js";
 
 const t = getT("llm-provider-management");
 
@@ -77,6 +78,10 @@ async function checkHealth(provider: Provider) {
         [provider.id]: healthy ? "ok" : "fail",
     };
 }
+
+async function toggleEnabled(provider: Provider) {
+    await onUpdateProvider(provider.id, { enabled: !provider.enabled });
+}
 </script>
 
 {#if providers.length > 0}
@@ -114,7 +119,7 @@ async function checkHealth(provider: Provider) {
 									{provider.base_url}
 								</p>
 							</button>
-							<div class="flex gap-1">
+							<div class="flex items-center gap-1">
 								<Button
 									variant="ghost"
 									size="sm"
@@ -140,6 +145,15 @@ async function checkHealth(provider: Provider) {
 								>
 									<Trash2 class="size-4" />
 								</Button>
+								<!-- svelte-ignore a11y_no_static_element_interactions -->
+								<span class="inline-flex items-center" onclick={(e) => e.stopPropagation()} role="presentation">
+									<Switch
+										checked={provider.enabled ?? false}
+										class={provider.enabled ? "data-[state=checked]:bg-green-600" : ""}
+										title={provider.enabled ? t("disableProvider", { defaultValue: "Disable provider" }) : t("enableProvider", { defaultValue: "Enable provider" })}
+										onCheckedChange={() => void toggleEnabled(provider)}
+									/>
+								</span>
 							</div>
 						</div>
 					{/if}

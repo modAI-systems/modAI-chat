@@ -17,6 +17,7 @@ type BackendProvider = {
     name: string;
     base_url: string;
     api_key: string;
+    enabled: boolean;
     properties: Record<string, unknown>;
     created_at: string | null;
     updated_at: string | null;
@@ -40,6 +41,7 @@ function mapProvider(p: BackendProvider): Provider {
         name: p.name,
         base_url: p.base_url,
         api_key: p.api_key,
+        enabled: p.enabled,
         created_at: p.created_at ?? new Date().toISOString(),
         updated_at: p.updated_at ?? new Date().toISOString(),
     };
@@ -100,6 +102,8 @@ export class ModaiBackendLLMProviderService implements LLMProviderService {
             name: data.name ?? current.name,
             base_url: data.base_url ?? current.base_url,
             api_key: data.api_key ?? current.api_key,
+            enabled:
+                data.enabled !== undefined ? data.enabled : current.enabled,
             properties: current.properties,
         };
 

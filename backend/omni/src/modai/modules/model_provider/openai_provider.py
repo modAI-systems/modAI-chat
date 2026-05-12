@@ -95,11 +95,12 @@ class OpenAIProviderModule(ModelProviderModule):
             properties = (provider_data.properties or {}).copy()
             properties["api_key"] = provider_data.api_key
 
-            # Create new provider
+            # Create new provider (disabled by default)
             provider = await self.provider_store.add_provider(
                 name=provider_data.name,
                 url=provider_data.base_url,
                 properties=properties,
+                enabled=False,
             )
 
             return self._create_provider_response(provider)
@@ -129,6 +130,7 @@ class OpenAIProviderModule(ModelProviderModule):
                 name=provider_data.name,
                 url=provider_data.base_url,
                 properties=properties,
+                enabled=provider_data.enabled,
             )
             if not provider:
                 raise HTTPException(
@@ -208,6 +210,7 @@ class OpenAIProviderModule(ModelProviderModule):
             name=provider.name,
             base_url=provider.url,
             api_key=api_key,
+            enabled=provider.enabled,
             properties=properties,
             created_at=provider.created_at.isoformat() if provider.created_at else None,
             updated_at=provider.updated_at.isoformat() if provider.updated_at else None,

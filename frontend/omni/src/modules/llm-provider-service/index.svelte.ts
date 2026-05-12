@@ -3,6 +3,7 @@ export interface Provider {
     name: string;
     base_url: string;
     api_key: string;
+    enabled: boolean;
     created_at: string;
     updated_at: string;
 }
@@ -20,6 +21,7 @@ export interface CreateProviderRequest {
     name: string;
     base_url: string;
     api_key: string;
+    enabled?: boolean;
 }
 
 /**

@@ -15,5 +15,7 @@
   "save": "Speichern",
   "cancel": "Abbrechen",
   "checkHealth": "Anbieterstatus prüfen",
+  "enableProvider": "Anbieter aktivieren",
+  "disableProvider": "Anbieter deaktivieren",
   "navLabel": "Anbieter"
 }

@@ -21,6 +21,7 @@ class ModelProvider:
     name: str
     url: str
     properties: dict[str, Any]
+    enabled: bool = False
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -67,7 +68,7 @@ class ModelProviderStore(ModaiModule, ABC):
 
     @abstractmethod
     async def add_provider(
-        self, name: str, url: str, properties: dict[str, Any]
+        self, name: str, url: str, properties: dict[str, Any], enabled: bool = False
     ) -> ModelProvider:
         """
         Adds a new model provider configuration.
@@ -75,6 +76,7 @@ class ModelProviderStore(ModaiModule, ABC):
             name: Human-readable name for the provider
             url: API endpoint URL for the provider
             properties: Configuration properties specific to the provider
+            enabled: Whether the provider is active (default: False)
 
         Returns:
             Created ModelProvider object
@@ -91,6 +93,7 @@ class ModelProviderStore(ModaiModule, ABC):
         name: str,
         url: str,
         properties: dict[str, Any],
+        enabled: bool | None = None,
     ) -> ModelProvider | None:
         """
         Updates an existing model provider configuration.
@@ -100,6 +103,7 @@ class ModelProviderStore(ModaiModule, ABC):
             name: New name for the provider (optional)
             url: New URL for the provider (optional)
             properties: New properties for the provider (optional)
+            enabled: Whether the provider is active (None = keep current)
 
         Returns:
             Updated ModelProvider object if found, None otherwise

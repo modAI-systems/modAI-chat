@@ -15,6 +15,7 @@ describe("LocalStorageLLMProviderService", () => {
             name: "provider-a",
             base_url: "https://example.test/",
             api_key: "secret",
+            enabled: true,
         });
         const fetchMock = vi.fn(
             async () =>

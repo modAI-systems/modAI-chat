@@ -73,6 +73,7 @@ class TestCentralModelProviderRouter:
             name="OpenAI Production",
             base_url="https://api.openai.com/v1",
             api_key="sk-...",
+            enabled=True,
             properties={},
             created_at="2024-01-15T10:30:00Z",
             updated_at="2024-01-15T10:30:00Z",
@@ -106,6 +107,7 @@ class TestCentralModelProviderRouter:
             name="Local Ollama",
             base_url="http://localhost:11434",
             api_key="",
+            enabled=True,
             properties={},
             created_at="2024-01-16T14:20:00Z",
             updated_at="2024-01-16T14:20:00Z",
@@ -202,6 +204,49 @@ class TestCentralModelProviderRouter:
             assert model["object"] == "model"
             assert "created" in model
             assert "owned_by" in model
+
+    def test_get_all_models_excludes_disabled_providers(self, mock_session_module):
+        """Test GET /models does not return models from disabled providers."""
+        disabled_provider = ModelProviderResponse(
+            id="openai-disabled",
+            type="openai",
+            name="Disabled Provider",
+            base_url="https://api.disabled.com/v1",
+            api_key="sk-disabled",
+            enabled=False,
+            properties={},
+            created_at="2024-01-15T10:30:00Z",
+            updated_at="2024-01-15T10:30:00Z",
+        )
+        disabled_models = ModelResponse(
+            data=[
+                {
+                    "id": "gpt-secret",
+                    "object": "model",
+                    "created": 1686935002,
+                    "owned_by": "openai",
+                }
+            ]
+        )
+        disabled_module = DummyModelProviderModule(
+            "openai", [disabled_provider], {"openai-disabled": disabled_models}
+        )
+
+        dependencies = ModuleDependencies(
+            {"disabled_provider": disabled_module, "session": mock_session_module}
+        )
+        router = CentralModelProviderRouter(dependencies, config={})
+        app = FastAPI()
+        app.include_router(router.router)
+        client = TestClient(app)
+
+        response = client.get("/api/models")
+
+        assert response.status_code == 200
+        data = response.json()
+        model_ids = [m["id"] for m in data["data"]]
+        assert not any("gpt-secret" in mid for mid in model_ids)
+        assert data["data"] == []
 
     def test_get_all_providers_with_pagination(self, test_client):
         """Test GET /api/models/providers with pagination"""

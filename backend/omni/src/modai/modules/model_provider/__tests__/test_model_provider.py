@@ -224,6 +224,7 @@ class TestModelProviderModule:
             name="NewProvider",
             url="https://api.new.com",
             properties=expected_properties,
+            enabled=False,
         )
 
     def test_create_provider_validation_error(
@@ -295,6 +296,7 @@ class TestModelProviderModule:
             name="UpdatedProvider",
             url="https://api.updated.com",
             properties=expected_properties,
+            enabled=None,
         )
 
     def test_update_provider_not_found(
@@ -379,6 +381,7 @@ class TestModelProviderModule:
             name="ComplexProvider",
             url="https://api.complex.com",
             properties=expected_properties,
+            enabled=False,
         )
 
     @pytest.mark.skipif(
