@@ -4,7 +4,6 @@ import {
     CircleX,
     HeartPulse,
     LoaderCircle,
-    Settings2,
     Trash2,
 } from "lucide-svelte";
 import { getT } from "@/modules/i18n/index.svelte.js";
@@ -84,8 +83,8 @@ async function checkHealth(provider: Provider) {
 	<div class="flex flex-col gap-3">
 		{#each providers as provider (provider.id)}
 			{@const healthState = healthByProviderId[provider.id] ?? "idle"}
-			<Card.Root>
-				<Card.Content class="flex flex-col gap-3 p-4">
+			<Card.Root size="sm" class="py-0">
+				<Card.Content class="flex flex-col gap-2 py-2 px-3">
 					{#if editingId === provider.id}
 						<div class="flex flex-col gap-2">
 						<Input bind:value={editName} placeholder={t("editProviderNamePlaceholder", { defaultValue: "Provider Name" })} />
@@ -106,19 +105,22 @@ async function checkHealth(provider: Provider) {
 						</div>
 					{:else}
 						<div class="flex items-center justify-between">
-							<div>
+							<button
+								class="hover:text-foreground flex min-w-0 flex-1 cursor-pointer flex-col items-start text-left"
+								onclick={() => startEdit(provider)}
+							>
 								<p class="font-medium">{provider.name}</p>
-								<p class="text-muted-foreground text-xs">
+								<p class="text-muted-foreground truncate text-xs">
 									{provider.base_url}
 								</p>
-							</div>
+							</button>
 							<div class="flex gap-1">
 								<Button
 									variant="ghost"
 									size="sm"
 									class="size-8 p-0 {healthState === 'ok' ? 'text-green-600 hover:text-green-700' : ''} {healthState === 'fail' ? 'text-red-600 hover:text-red-700' : ''}"
 									title={t("checkHealth", { defaultValue: "Check provider health" })}
-								onclick={() => checkHealth(provider)}
+									onclick={() => checkHealth(provider)}
 								>
 									{#if healthState === "checking"}
 										<LoaderCircle class="size-4 animate-spin" />
@@ -129,14 +131,6 @@ async function checkHealth(provider: Provider) {
 									{:else}
 										<HeartPulse class="size-4" />
 									{/if}
-								</Button>
-								<Button
-									variant="ghost"
-									size="sm"
-									class="size-8 p-0"
-									onclick={() => startEdit(provider)}
-								>
-									<Settings2 class="size-4" />
 								</Button>
 								<Button
 									variant="ghost"
