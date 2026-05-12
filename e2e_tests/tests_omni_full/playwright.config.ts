@@ -20,23 +20,46 @@ export default defineConfig({
     projects: [
         {
             name: "chromium",
+            testIgnore: "src/voice.spec.ts",
             use: { ...devices["Desktop Chrome"] },
         },
         {
             name: "firefox",
+            testIgnore: "src/voice.spec.ts",
             use: { ...devices["Desktop Firefox"] },
         },
         {
             name: "webkit",
+            testIgnore: "src/voice.spec.ts",
             use: { ...devices["Desktop Safari"] },
         },
         {
             name: "mobile-chrome",
+            testIgnore: "src/voice.spec.ts",
             use: { ...devices["Pixel 7"] },
         },
         {
             name: "mobile-safari",
+            testIgnore: "src/voice.spec.ts",
             use: { ...devices["iPhone 14"] },
+        },
+        // Voice tests run only on Chromium because --use-fake-device-for-media-stream
+        // and --use-fake-ui-for-media-stream are Chromium-exclusive flags.
+        {
+            name: "chromium-voice",
+            testMatch: "src/voice.spec.ts",
+            use: {
+                ...devices["Desktop Chrome"],
+                permissions: ["microphone"],
+                launchOptions: {
+                    args: [
+                        // Auto-grant the microphone permission prompt.
+                        "--use-fake-ui-for-media-stream",
+                        // Inject a synthetic sine-wave stream as the microphone.
+                        "--use-fake-device-for-media-stream",
+                    ],
+                },
+            },
         },
     ],
     webServer: [
