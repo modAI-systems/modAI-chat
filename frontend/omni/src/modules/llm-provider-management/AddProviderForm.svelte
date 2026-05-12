@@ -1,5 +1,5 @@
 <script lang="ts">
-import { LoaderCircle, PlusIcon } from "lucide-svelte";
+import { LoaderCircle } from "lucide-svelte";
 import { getT } from "@/modules/i18n/index.svelte.js";
 import type { CreateProviderRequest } from "@/modules/llm-provider-service/index.svelte";
 import { Button } from "$lib/shadcnui/components/ui/button/index.js";
@@ -8,8 +8,9 @@ import { Input } from "$lib/shadcnui/components/ui/input/index.js";
 
 const t = getT("llm-provider-management");
 
-let { onAddProvider } = $props<{
+let { onAddProvider, onCancel } = $props<{
     onAddProvider: (data: CreateProviderRequest) => void | Promise<void>;
+    onCancel: () => void;
 }>();
 
 let newProviderName = $state("");
@@ -31,6 +32,7 @@ async function handleAddProvider(e: SubmitEvent) {
         newProviderName = "";
         newProviderBaseUrl = "";
         newProviderApiKey = "";
+        onCancel();
     } catch (err) {
         addProviderError =
             err instanceof Error
@@ -44,9 +46,8 @@ async function handleAddProvider(e: SubmitEvent) {
 
 <Card.Root>
 	<Card.Header>
-		<Card.Title class="flex items-center gap-2 text-base">
-			<PlusIcon class="size-4" />
-			{t("addProvider", { defaultValue: "Add Provider" })}
+		<Card.Title class="text-base">
+			{t("newProvider", { defaultValue: "New Provider" })}
 		</Card.Title>
 	</Card.Header>
 	<Card.Content>
@@ -87,12 +88,17 @@ async function handleAddProvider(e: SubmitEvent) {
 			{#if addProviderError}
 				<p class="text-destructive text-sm">{addProviderError}</p>
 			{/if}
-			<Button type="submit" disabled={addingProvider}>
-				{#if addingProvider}
-					<LoaderCircle class="mr-2 size-4 animate-spin" />
-				{/if}
-				{t("addProvider", { defaultValue: "Add Provider" })}
-			</Button>
+			<div class="flex gap-2">
+				<Button type="submit" disabled={addingProvider}>
+					{#if addingProvider}
+						<LoaderCircle class="mr-2 size-4 animate-spin" />
+					{/if}
+					{t("save", { defaultValue: "Save" })}
+				</Button>
+				<Button type="button" variant="outline" onclick={onCancel}>
+					{t("cancel", { defaultValue: "Cancel" })}
+				</Button>
+			</div>
 		</form>
 	</Card.Content>
 </Card.Root>
