@@ -11,11 +11,13 @@ let {
     canChat,
     isIdle,
     children,
+    rightActions,
     onsend,
 }: {
     canChat: boolean;
     isIdle: boolean;
     children?: Snippet;
+    rightActions?: Snippet;
     onsend: (text: string) => void;
 } = $props();
 
@@ -59,6 +61,8 @@ function sendMessage() {
 					{@render children?.()}
 
 					<div class="flex-1"></div>
+
+					{@render rightActions?.()}
 
 					<Button
 						type="submit"
