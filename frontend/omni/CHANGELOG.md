@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- LLM provider management: each provider card now has a toggle switch to enable or disable the provider. Disabled providers are hidden from the model selection list.
+
 ### Changed
 
 - The sidebar is now resizable.

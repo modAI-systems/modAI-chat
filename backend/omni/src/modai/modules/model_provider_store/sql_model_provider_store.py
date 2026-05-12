@@ -9,6 +9,7 @@ import uuid
 import json
 
 from sqlalchemy import (
+    Boolean,
     create_engine,
     MetaData,
     Table,
@@ -58,6 +59,9 @@ class SQLAlchemyModelProviderStore(ModelProviderStore, PersistenceModule, Resett
             Column("name", String(128), unique=True, index=True),
             Column("url", String(1000)),
             Column("properties", JSON),
+            Column(
+                "enabled", Boolean, default=False, nullable=False, server_default="0"
+            ),
             Column("created_at", DateTime, default=datetime.now),
             Column("updated_at", DateTime, default=datetime.now),
         )
@@ -85,6 +89,7 @@ class SQLAlchemyModelProviderStore(ModelProviderStore, PersistenceModule, Resett
             name=row.name,
             url=row.url,
             properties=properties,
+            enabled=bool(row.enabled) if row.enabled is not None else False,
             created_at=row.created_at,
             updated_at=row.updated_at,
         )
@@ -131,7 +136,7 @@ class SQLAlchemyModelProviderStore(ModelProviderStore, PersistenceModule, Resett
             return None
 
     async def add_provider(
-        self, name: str, url: str, properties: dict[str, Any]
+        self, name: str, url: str, properties: dict[str, Any], enabled: bool = False
     ) -> ModelProvider:
         provider_id = self._generate_provider_id()
         with self._get_session() as session:
@@ -146,6 +151,7 @@ class SQLAlchemyModelProviderStore(ModelProviderStore, PersistenceModule, Resett
                 name=name.strip(),
                 url=url.strip(),
                 properties=properties,
+                enabled=enabled,
                 created_at=now,
                 updated_at=now,
             )
@@ -159,6 +165,7 @@ class SQLAlchemyModelProviderStore(ModelProviderStore, PersistenceModule, Resett
                 name=name.strip(),
                 url=url.strip(),
                 properties=properties,
+                enabled=enabled,
                 created_at=now,
                 updated_at=now,
             )
@@ -169,6 +176,7 @@ class SQLAlchemyModelProviderStore(ModelProviderStore, PersistenceModule, Resett
         name: str,
         url: str,
         properties: dict[str, Any],
+        enabled: bool | None = None,
     ) -> ModelProvider | None:
         with self._get_session() as session:
             # Check if provider exists first
@@ -185,6 +193,7 @@ class SQLAlchemyModelProviderStore(ModelProviderStore, PersistenceModule, Resett
                 properties = {}
 
             now = datetime.now()
+            new_enabled = enabled if enabled is not None else bool(existing_row.enabled)
 
             # Update the provider
             update_stmt = (
@@ -194,6 +203,7 @@ class SQLAlchemyModelProviderStore(ModelProviderStore, PersistenceModule, Resett
                     name=name.strip(),
                     url=url.strip(),
                     properties=properties,
+                    enabled=new_enabled,
                     updated_at=now,
                 )
             )
@@ -207,6 +217,7 @@ class SQLAlchemyModelProviderStore(ModelProviderStore, PersistenceModule, Resett
                 name=name.strip(),
                 url=url.strip(),
                 properties=properties,
+                enabled=new_enabled,
                 created_at=existing_row.created_at,
                 updated_at=now,
             )

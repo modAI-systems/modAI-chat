@@ -31,6 +31,7 @@ export class LocalStorageLLMProviderService implements LLMProviderService {
      * Returns an empty array if the provider is unreachable or returns an error.
      */
     async fetchModels(provider: Provider): Promise<ProviderModel[]> {
+        if (provider.enabled === false) return [];
         try {
             const response = await fetch(
                 `${trimTrailingSlash(provider.base_url)}/models`,
@@ -68,6 +69,7 @@ export class LocalStorageLLMProviderService implements LLMProviderService {
             name: data.name,
             base_url: data.base_url,
             api_key: data.api_key,
+            enabled: data.enabled ?? false,
             created_at: now,
             updated_at: now,
         };
@@ -91,6 +93,10 @@ export class LocalStorageLLMProviderService implements LLMProviderService {
         const updated: Provider = {
             ...providers[idx],
             ...data,
+            enabled:
+                data.enabled !== undefined
+                    ? data.enabled
+                    : providers[idx].enabled,
             updated_at: new Date().toISOString(),
         };
         this.#save(providers.map((p, i) => (i === idx ? updated : p)));

@@ -19,6 +19,7 @@ class ModelProviderResponse(BaseModel):
     name: str
     base_url: str
     api_key: str
+    enabled: bool
     properties: dict[str, Any]
     created_at: str | None
     updated_at: str | None
@@ -30,6 +31,7 @@ class ModelProviderCreateRequest(BaseModel):
     name: str
     base_url: str
     api_key: str
+    enabled: bool | None = None
     properties: dict[str, Any] = {}
 
 

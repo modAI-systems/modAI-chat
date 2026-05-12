@@ -36,6 +36,7 @@
     "@tailwindcss/vite": "^4.3.0",
     "bits-ui": "^2.18.1",
     "happy-dom": "^20.9.0",
+    "shadcn-svelte": "^1.2.7",
     "tailwind-variants": "^3.2.2",
     "typescript": "^6.0.3",
     "vite": "^8.0.12",

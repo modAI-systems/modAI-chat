@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "shadcn-svelte/tailwind.css";
 @plugin "@tailwindcss/typography";
 
 @theme inline {
