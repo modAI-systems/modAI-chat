@@ -93,7 +93,7 @@ class PredefinedVariablesToolRegistryModule(ToolRegistryModule):
         super().__init__(dependencies, config)
         self._inner_registry: ToolRegistryModule = dependencies.get_module(
             "delegate_registry"
-        )  # type: ignore[assignment]
+        )
         self._variable_mappings: list[dict[str, str]] = config.get(
             "variable_mappings", []
         )

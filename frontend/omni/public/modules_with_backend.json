@@ -28,6 +28,7 @@
           "chat-route",
           "providers-route",
           "localization-route",
+          "audio-route",
           "chat-fallback-route",
           "sidebar-layout-route"
         ]
@@ -109,6 +110,12 @@
       "dependencies": {}
     },
     {
+      "id": "audio-service",
+      "type": "AudioService",
+      "path": "@/modules/audio-service/webAudioService/create",
+      "dependencies": {}
+    },
+    {
       "id": "chat",
       "type": "ChatComponent",
       "path": "@/modules/chat/ChatComponent",
@@ -116,6 +123,7 @@
         "module:chatService": "chat-service",
         "module:llmProviderService": "llm-provider-service",
         "module:toolsService": "tools-service",
+        "module:audioService": "audio-service",
         "module:markdownRenderers": ["katex-renderer", "marked-renderer"]
       }
     },
@@ -170,7 +178,10 @@
       "type": "SidebarTopItem",
       "path": "@/modules/global-settings/globalSettingsNavigationItem",
       "dependencies": {
-        "module:globalSettingsSidebarItems": ["providers-navigation-item"]
+        "module:globalSettingsSidebarItems": [
+          "providers-navigation-item",
+          "audio-navigation-item"
+        ]
       }
     },
     {
@@ -206,6 +217,20 @@
       "type": "Route",
       "path": "@/modules/user-settings/localizationRouteDefinition/create",
       "dependencies": {}
+    },
+    {
+      "id": "audio-navigation-item",
+      "type": "GlobalSettingsSidebarItem",
+      "path": "@/modules/audio-settings/audioNavigationItem",
+      "dependencies": {}
+    },
+    {
+      "id": "audio-route",
+      "type": "Route",
+      "path": "@/modules/audio-settings/audioRouteDefinition/create",
+      "dependencies": {
+        "module:llmProviderService": "llm-provider-service"
+      }
     },
     {
       "id": "logout-item",

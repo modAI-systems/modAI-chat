@@ -14,14 +14,15 @@ dependencies = [
     "sqlalchemy",
     "strands-agents",
     "strands-agents-tools",
-    "httpx>=0.28.1",
-    "itsdangerous>=2.2.0",
-    "authlib[httpx]>=1.6.9",
+    "httpx",
+    "itsdangerous",
+    "authlib[httpx]",
+    "websockets",
 ]
 
 [dependency-groups]
 dev = [
-    "cryptography>=46.0.7",
+    "cryptography",
     "datamodel-code-generator[ruff]",
     "pytest",
     "pytest-asyncio",

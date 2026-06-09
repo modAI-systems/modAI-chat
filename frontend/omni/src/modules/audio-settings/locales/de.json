@@ -1,0 +1,12 @@
+{
+  "navLabel": "Audio",
+  "title": "Audio",
+  "subtitle": "Konfigurieren Sie das Modell für Echtzeit-Sprachgespräche.",
+  "modelLabel": "Realtime-Sprachmodell",
+  "loadingModels": "Modelle werden geladen...",
+  "noProviders": "Keine Anbieter konfiguriert. Fügen Sie zuerst einen Anbieter unter Globale Einstellungen → Anbieter hinzu.",
+  "noRealtimeModels": "Keine dedizierten Realtime-Modelle gefunden – alle Modelle werden angezeigt. Nur Modelle mit 'realtime' im Namen unterstützen Sprache.",
+  "modelHint": "Nur gpt-4o-realtime-preview oder gpt-4o-mini-realtime-preview funktionieren für Sprachgespräche.",
+  "searchModels": "Modelle suchen...",
+  "noModelsFound": "Keine Modelle gefunden."
+}

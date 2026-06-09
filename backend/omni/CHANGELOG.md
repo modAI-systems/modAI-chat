@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Real-time audio voice chat - websocket based.
 - `enabled` field on `ModelProvider`
 - `GET /api/models` now skips providers where `enabled=False`, so only active providers contribute models to the aggregated list.
 

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Voice button in the chat input: speak directly to the AI and hear its response out loud. Conversations appear in the chat window.
+- **Audio settings page** (Global Settings → Audio)
 - LLM provider management: each provider card now has a toggle switch to enable or disable the provider. Disabled providers are hidden from the model selection list.
 
 ### Changed

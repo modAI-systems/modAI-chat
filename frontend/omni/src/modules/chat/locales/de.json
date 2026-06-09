@@ -16,6 +16,11 @@
   "navLabel": "Neuer Chat",
   "chatLabel": "Chat",
   "newLabel": "Neu",
+  "startVoice": "Sprache",
+  "stopVoice": "Sprache beenden",
+  "connectingVoice": "Verbinde...",
+  "retryVoice": "Sprache erneut versuchen",
+  "voiceError": "Sprache fehlgeschlagen – Klicken zum Wiederholen",
   "suggestions": [
     "Was sind die neuesten KI-Trends?",
     "Wie funktioniert maschinelles Lernen?",

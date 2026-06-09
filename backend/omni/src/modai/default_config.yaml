@@ -104,6 +104,12 @@ modules:
     module_dependencies:
       predefined: "predefined_tool_registry"
 
+  audio_realtime_router:
+    class: modai.modules.audio_realtime.openai_audio_realtime.OpenAIAudioRealtimeModule
+    module_dependencies:
+      llm_provider_module: openai_model_provider
+      session: "session"
+
   full_reset:
     class: modai.modules.reset.reset_web_module.ResetWebModule
     module_dependencies:
