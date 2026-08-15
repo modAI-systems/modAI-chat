@@ -187,7 +187,7 @@ user_settings:
 
 ## Usage Examples
 
-### Frontend Integration
+### Client Integration
 ```typescript
 // Get all user settings
 const allSettings = await fetch('/api/user/123/settings', {

@@ -1,5 +1,9 @@
 <script lang="ts">
+import { Check, ChevronsUpDown } from "lucide-svelte";
 import { getT, i18n } from "@/modules/i18n/index.svelte.js";
+import { Button } from "$lib/shadcnui/components/ui/button/index.js";
+import * as Command from "$lib/shadcnui/components/ui/command/index.js";
+import * as Popover from "$lib/shadcnui/components/ui/popover/index.js";
 
 const t = getT("user-settings");
 
@@ -9,11 +13,17 @@ const languages = [
 ];
 
 let selectedLanguage = $state(i18n.language?.slice(0, 2) ?? "en");
+let open = $state(false);
 
-function handleLanguageChange(event: Event) {
-    const lang = (event.target as HTMLSelectElement).value;
-    selectedLanguage = lang;
-    void i18n.changeLanguage(lang);
+const selectedLabel = $derived(
+    languages.find((l) => l.code === selectedLanguage)?.label ??
+        selectedLanguage,
+);
+
+function handleSelect(code: string) {
+    selectedLanguage = code;
+    open = false;
+    void i18n.changeLanguage(code);
 }
 </script>
 
@@ -28,18 +38,41 @@ function handleLanguageChange(event: Event) {
 	</div>
 
 	<div class="flex flex-col gap-2">
-		<label class="text-sm font-medium" for="language-select">
+		<span class="text-sm font-medium">
 			{t("languageLabel", { defaultValue: "Language" })}
-		</label>
-		<select
-			id="language-select"
-			class="border-input bg-background ring-offset-background focus-visible:ring-ring h-10 w-full max-w-xs rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-			value={selectedLanguage}
-			onchange={handleLanguageChange}
-		>
-			{#each languages as lang (lang.code)}
-				<option value={lang.code}>{lang.label}</option>
-			{/each}
-		</select>
+		</span>
+		<Popover.Root bind:open>
+			<Popover.Trigger>
+				{#snippet child({ props })}
+					<Button
+						variant="outline"
+						class="justify-between font-normal"
+						{...props}
+					>
+						<span>{selectedLabel}</span>
+						<ChevronsUpDown class="ml-2 size-4 shrink-0 opacity-50" />
+					</Button>
+				{/snippet}
+			</Popover.Trigger>
+			<Popover.Content class="w-[var(--bits-popover-anchor-width)] p-0" align="start">
+				<Command.Root>
+					<Command.Input placeholder={t("searchLanguage", { defaultValue: "Search language..." })} />
+					<Command.List>
+						<Command.Empty>{t("noLanguageFound", { defaultValue: "No language found." })}</Command.Empty>
+						{#each languages as lang (lang.code)}
+							<Command.Item
+								value={lang.code}
+								onSelect={() => handleSelect(lang.code)}
+							>
+								<span class="flex-1">{lang.label}</span>
+								{#if selectedLanguage === lang.code}
+									<Check class="size-4" />
+								{/if}
+							</Command.Item>
+						{/each}
+					</Command.List>
+				</Command.Root>
+			</Popover.Content>
+		</Popover.Root>
 	</div>
 </div>

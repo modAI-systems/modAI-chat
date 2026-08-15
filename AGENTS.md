@@ -63,6 +63,7 @@ This project is designed for AI-first development. All agents MUST follow these 
     2. Add a concise entry under the `Unreleased` section (or the latest version block if no `Unreleased` section is present) describing what was added, changed, or fixed.
     3. Follow the existing format of the file (typically [Keep a Changelog](https://keepachangelog.com/) style).
     4. Update the changelog **before** marking the task as complete.
+- **STYLE**: Entries must be **lean and user-facing**. Describe *what the user or operator gains*, not how it is implemented. No class names, endpoint paths, internal module names, or technical details. One sentence per entry is the target.
 
 
 ## Project Overview

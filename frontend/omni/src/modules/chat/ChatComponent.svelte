@@ -1,6 +1,10 @@
 <script lang="ts">
-import type { UIMessage } from "ai";
 import { getModuleDeps } from "@/core/module-system/index.js";
+import type { AudioService } from "@/modules/audio-service/index.svelte.js";
+import {
+    getRealtimeModel,
+    getTranscriptModel,
+} from "@/modules/audio-settings/audioSettings.svelte.js";
 import type { ChatService } from "@/modules/chat-service/index.svelte.js";
 import type {
     LLMProviderService,
@@ -14,12 +18,15 @@ import type {
 import ChatConversationArea from "./ChatConversationArea.svelte";
 import ChatInputPanel from "./ChatInputPanel.svelte";
 import ChatModelSelector from "./ChatModelSelector.svelte";
+import ChatRealtimeButton from "./ChatRealtimeButton.svelte";
 import ChatSuggestions from "./ChatSuggestions.svelte";
 import ChatToolsSelector from "./ChatToolsSelector.svelte";
+import { createChatMessages } from "./chatMessages.svelte.js";
 import { modelSelectId } from "./utils.js";
 
 const deps = getModuleDeps("@/modules/chat/ChatComponent");
 const chatService = deps.getOne<ChatService>("chatService");
+const audioService = deps.getOne<AudioService>("audioService");
 const llmProviderService =
     deps.getOne<LLMProviderService>("llmProviderService");
 const toolsService = deps.getOne<ToolsService>("toolsService");
@@ -56,7 +63,6 @@ async function loadModels() {
 $effect(() => {
     loadModels();
 });
-
 $effect(() => {
     void loadTools();
 });
@@ -75,6 +81,27 @@ const selectedModelData = $derived(
     availableModels.find((m) => modelSelectId(m) === selectedModel),
 );
 
+function resolveFromAvailable(
+    stored: ProviderModel | null,
+    models: ProviderModel[],
+): ProviderModel | null {
+    if (!stored) return null;
+    return (
+        models.find(
+            (m) =>
+                m.providerName === stored.providerName &&
+                m.modelName === stored.modelName,
+        ) ?? stored
+    );
+}
+
+const resolvedRealtimeModel = $derived(
+    resolveFromAvailable(getRealtimeModel(), availableModels),
+);
+const resolvedTranscriptModel = $derived(
+    resolveFromAvailable(getTranscriptModel(), availableModels),
+);
+
 const providerGroups = $derived(
     [...new Set(availableModels.map((m) => m.providerName))].map((name) => ({
         name,
@@ -82,107 +109,31 @@ const providerGroups = $derived(
     })),
 );
 
-let messages = $state<UIMessage<{ modelName?: string }>[]>([]);
-let chatStatus = $state<"ready" | "submitted" | "streaming">("ready");
+const chat = createChatMessages(chatService);
+const canChat = $derived(Boolean(selectedModelData) && chat.isIdle);
 
-const isIdle = $derived(
-    chatStatus !== "streaming" && chatStatus !== "submitted",
-);
-const canChat = $derived(Boolean(selectedModelData) && isIdle);
-
-async function handleSend(text: string) {
-    if (!selectedModelData) {
-        return;
-    }
-
-    const userMessage: UIMessage = {
-        id: makeMessageId(),
-        role: "user",
-        parts: [{ type: "text", text }],
-    };
-    const assistantMessageId = makeMessageId();
-    const conversationForModel = [...messages, userMessage];
-    messages = [
-        ...conversationForModel,
-        {
-            id: assistantMessageId,
-            role: "assistant",
-            parts: [{ type: "text", text: "" }],
-            metadata: { modelName: selectedModelData.modelName },
-        },
-    ];
-    chatStatus = "submitted";
-
-    try {
-        chatStatus = "streaming";
-        const selectedTools = availableTools.filter((tool) =>
-            selectedToolNames.includes(tool.name),
-        );
-        for await (const textPart of chatService.streamChat(
-            selectedModelData,
-            conversationForModel,
-            selectedTools,
-        )) {
-            messages = messages.map((message) => {
-                if (
-                    message.id !== assistantMessageId ||
-                    message.role !== "assistant"
-                ) {
-                    return message;
-                }
-                const previousText =
-                    message.parts.find((part) => part.type === "text")?.text ??
-                    "";
-                return {
-                    ...message,
-                    parts: [
-                        { type: "text", text: `${previousText}${textPart}` },
-                    ],
-                };
-            });
-        }
-    } catch {
-        messages = messages.map((message) => {
-            if (
-                message.id !== assistantMessageId ||
-                message.role !== "assistant"
-            ) {
-                return message;
-            }
-            return {
-                ...message,
-                parts: [
-                    {
-                        type: "text",
-                        text: "Could not reach the selected provider. Check URL, API key, and CORS settings.",
-                    },
-                ],
-            };
-        });
-    } finally {
-        chatStatus = "ready";
-    }
-}
-
-function makeMessageId(): string {
-    return `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+function handleSend(text: string) {
+    const selectedTools = availableTools.filter((t) =>
+        selectedToolNames.includes(t.name),
+    );
+    void chat.handleSend(text, selectedModelData, selectedTools);
 }
 </script>
 
 <div class="relative flex size-full flex-col divide-y overflow-hidden">
 	<ChatConversationArea
-		{messages}
-		status={chatStatus}
+		messages={chat.messages}
+		status={chat.chatStatus}
 		{modelsLoading}
 		hasModels={availableModels.length > 0}
 		renderers={markdownRenderers}
 	/>
-	{#if messages.length === 0 && availableModels.length > 0}
+	{#if chat.messages.length === 0 && availableModels.length > 0}
 		<ChatSuggestions onselect={handleSend} />
 	{/if}
 	<ChatInputPanel
 		{canChat}
-		{isIdle}
+		isIdle={chat.isIdle}
 		onsend={handleSend}
 	>
 		{#if availableTools.length > 0}
@@ -198,5 +149,17 @@ function makeMessageId(): string {
 			bind:selectedModel
 			{selectedModelData}
 		/>
+
+		{#snippet rightActions()}
+			{#if resolvedRealtimeModel}
+				<ChatRealtimeButton
+					{audioService}
+					model={resolvedRealtimeModel}
+					transcriptModel={resolvedTranscriptModel}
+					disabled={!canChat}
+					onmessage={chat.realtimeCallbacks}
+				/>
+			{/if}
+		{/snippet}
 	</ChatInputPanel>
 </div>
